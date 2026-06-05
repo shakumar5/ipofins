@@ -63,15 +63,77 @@ async function fetchBSEIPOs() {
   console.log('\n  📊 [BSE] Fetching live IPO data...');
   
   try {
+    // BSE renders table via JavaScript — try their API endpoint instead
     const response = await fetchWithHeaders('https://www.bseindia.com/publicissue.html');
     if (!response.ok) throw new Error(`BSE returned ${response.status}`);
     
     const html = await response.text();
     const ipos = parseBSEHtml(html);
+    
+    if (ipos.length === 0) {
+      console.log('    BSE HTML parsing returned 0 (JS-rendered page). Trying alternative...');
+      // Fallback: try Chittorgarh for IPO data
+      return await fetchChittorgarhIPOs();
+    }
+    
     console.log(`    Found ${ipos.length} entries from BSE`);
     return ipos;
   } catch (error) {
     console.log(`    ⚠️ BSE fetch failed: ${error.message}`);
+    return await fetchChittorgarhIPOs();
+  }
+}
+
+async function fetchChittorgarhIPOs() {
+  console.log('    Trying Chittorgarh as fallback...');
+  try {
+    const response = await fetchWithHeaders('https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/');
+    if (!response.ok) throw new Error(`Chittorgarh returned ${response.status}`);
+    
+    const html = await response.text();
+    const ipos = [];
+    
+    // Chittorgarh uses tables with IPO data
+    // Look for rows containing IPO info
+    const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    
+    let match;
+    while ((match = rowPattern.exec(html)) !== null) {
+      const row = match[1];
+      const cells = [];
+      let cellMatch;
+      while ((cellMatch = cellPattern.exec(row)) !== null) {
+        cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
+      }
+      
+      // Chittorgarh table typically has: Company | Open | Close | Price | Size | Type
+      if (cells.length >= 4) {
+        const name = cells[0]?.replace(/\s+/g, ' ').trim();
+        if (name && name.length > 3 && !name.includes('Company') && !name.includes('IPO Name')) {
+          // Check if it looks like an IPO entry (has date-like values)
+          const hasDate = cells.some(c => /\d{2}[\s-]\w{3}[\s-]\d{4}|\d{2}[\s-]\d{2}[\s-]\d{4}/.test(c));
+          if (hasDate) {
+            ipos.push({
+              name,
+              slug: slugify(name),
+              priceRange: cells.find(c => /^\d+[\s-]+\d+$|^\d+$/.test(c.replace(/[₹,]/g, ''))) || '0',
+              lotSize: 0,
+              openDate: '',
+              closeDate: '',
+              status: 'live',
+              type: name.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
+              sector: 'Others',
+            });
+          }
+        }
+      }
+    }
+    
+    console.log(`    Found ${ipos.length} entries from Chittorgarh`);
+    return ipos;
+  } catch (error) {
+    console.log(`    ⚠️ Chittorgarh fallback also failed: ${error.message}`);
     return [];
   }
 }
@@ -234,13 +296,13 @@ async function fetchAMFINAVs() {
     if (!response.ok) throw new Error(`AMFI returned ${response.status}`);
     
     const text = await response.text();
-    const navMap = parseAMFIData(text);
-    console.log(`    Parsed ${navMap.size} fund NAVs`);
+    const allFunds = parseAMFIFunds(text);
+    console.log(`    Parsed ${allFunds.length} equity growth funds from AMFI`);
     
-    // Update existing mutual fund data with fresh NAVs
+    // Merge with existing data (preserve our curated fields like rating, riskLevel)
     const existing = readExisting('mutual-funds.json');
-    const updated = updateFundNAVs(existing, navMap);
-    writeData('mutual-funds.json', updated);
+    const merged = mergeAMFIData(existing, allFunds);
+    writeData('mutual-funds.json', merged);
     
   } catch (error) {
     console.log(`    ⚠️ AMFI NAV fetch failed: ${error.message}`);
@@ -248,51 +310,124 @@ async function fetchAMFINAVs() {
   }
 }
 
-function parseAMFIData(text) {
-  const navMap = new Map();
+function parseAMFIFunds(text) {
+  const funds = [];
   const lines = text.split('\n');
+  let currentAMC = '';
+  let currentCategory = '';
   
   for (const line of lines) {
-    const parts = line.split(';');
-    // Format: SchemeCode;ISIN;ISIN2;SchemeName;NAV;Date
-    if (parts.length >= 5 && parts[4] && !isNaN(parseFloat(parts[4]))) {
-      const schemeName = parts[3]?.trim();
-      const nav = parseFloat(parts[4]);
-      if (schemeName && nav > 0) {
-        navMap.set(schemeName.toLowerCase(), { name: schemeName, nav, schemeCode: parts[0] });
+    const trimmed = line.trim();
+    
+    // Detect AMC name (lines with just text, no semicolons, after blank line)
+    if (trimmed && !trimmed.includes(';') && !trimmed.startsWith('Scheme') && !trimmed.startsWith('Open Ended')) {
+      if (trimmed.includes('Mutual Fund')) {
+        currentAMC = trimmed;
+      } else if (trimmed.startsWith('Open Ended Schemes')) {
+        // Category line like "Open Ended Schemes(Equity Scheme - Large Cap Fund)"
+        const catMatch = trimmed.match(/Open Ended Schemes\((.+)\)/);
+        if (catMatch) currentCategory = catMatch[1];
       }
+      continue;
+    }
+    
+    const parts = trimmed.split(';');
+    if (parts.length < 5 || !parts[4] || isNaN(parseFloat(parts[4]))) continue;
+    
+    const schemeName = parts[3]?.trim() || '';
+    const nav = parseFloat(parts[4]);
+    const schemeCode = parts[0]?.trim();
+    
+    // Only include Direct Plan Growth schemes of Equity funds
+    if (!schemeName || nav <= 0) continue;
+    if (!schemeName.toLowerCase().includes('direct')) continue;
+    if (!schemeName.toLowerCase().includes('growth')) continue;
+    
+    // Filter for equity categories only
+    const isEquity = currentCategory.toLowerCase().includes('equity') || 
+                     currentCategory.toLowerCase().includes('elss') ||
+                     currentCategory.toLowerCase().includes('hybrid') ||
+                     currentCategory.toLowerCase().includes('flexi') ||
+                     schemeName.toLowerCase().includes('flexi cap') ||
+                     schemeName.toLowerCase().includes('small cap') ||
+                     schemeName.toLowerCase().includes('mid cap') ||
+                     schemeName.toLowerCase().includes('large cap') ||
+                     schemeName.toLowerCase().includes('bluechip') ||
+                     schemeName.toLowerCase().includes('elss') ||
+                     schemeName.toLowerCase().includes('hybrid') ||
+                     schemeName.toLowerCase().includes('balanced');
+    
+    if (!isEquity) continue;
+    
+    // Determine category
+    let category = 'Others';
+    const nameLower = schemeName.toLowerCase();
+    if (nameLower.includes('small cap') || nameLower.includes('smallcap')) category = 'Small Cap';
+    else if (nameLower.includes('mid cap') || nameLower.includes('midcap')) category = 'Mid Cap';
+    else if (nameLower.includes('large cap') || nameLower.includes('largecap') || nameLower.includes('bluechip')) category = 'Large Cap';
+    else if (nameLower.includes('flexi cap') || nameLower.includes('flexicap') || nameLower.includes('multi cap') || nameLower.includes('multicap')) category = 'Flexi Cap';
+    else if (nameLower.includes('elss') || nameLower.includes('tax') || nameLower.includes('long term equity')) category = 'ELSS';
+    else if (nameLower.includes('hybrid') || nameLower.includes('balanced') || nameLower.includes('equity & debt') || nameLower.includes('aggressive')) category = 'Hybrid';
+    else if (nameLower.includes('focused') || nameLower.includes('value') || nameLower.includes('contra') || nameLower.includes('dividend yield')) category = 'Flexi Cap';
+    
+    if (category === 'Others') continue; // Skip unrecognized categories
+    
+    // Clean fund name
+    let cleanName = schemeName
+      .replace(/- direct plan -? ?growth/i, '')
+      .replace(/-? ?direct -? ?growth/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    funds.push({
+      name: cleanName,
+      slug: slugify(cleanName),
+      category,
+      nav,
+      schemeCode,
+      amc: currentAMC.replace(' Mutual Fund', ''),
+      riskLevel: category === 'Small Cap' ? 'very-high' : category === 'Mid Cap' ? 'high' : category === 'Large Cap' ? 'moderate' : category === 'ELSS' ? 'moderate' : category === 'Hybrid' ? 'moderate' : 'moderate',
+    });
+  }
+  
+  // Deduplicate by slug, keep first occurrence
+  const seen = new Set();
+  const unique = funds.filter(f => {
+    if (seen.has(f.slug)) return false;
+    seen.add(f.slug);
+    return true;
+  });
+  
+  return unique;
+}
+
+function mergeAMFIData(existing, amfiFunds) {
+  const existingMap = new Map(existing.map(f => [f.slug, f]));
+  
+  // Update existing funds with fresh NAV
+  for (const amfiFund of amfiFunds) {
+    if (existingMap.has(amfiFund.slug)) {
+      const curr = existingMap.get(amfiFund.slug);
+      curr.nav = amfiFund.nav; // Update NAV
+    } else {
+      // Add new fund (without returns/rating — those need historical data)
+      existingMap.set(amfiFund.slug, {
+        name: amfiFund.name,
+        slug: amfiFund.slug,
+        category: amfiFund.category,
+        nav: amfiFund.nav,
+        rating: null,
+        returns1y: null,
+        returns3y: null,
+        returns5y: null,
+        aum: '',
+        riskLevel: amfiFund.riskLevel,
+      });
     }
   }
   
-  return navMap;
+  return Array.from(existingMap.values());
 }
-
-function updateFundNAVs(funds, navMap) {
-  // Match keywords to find correct AMFI scheme
-  const matchKeywords = {
-    'parag-parikh-flexi-cap': ['parag parikh flexi cap fund - direct plan - growth'],
-    'quant-small-cap': ['quant small cap fund - direct plan - growth'],
-    'hdfc-midcap-opportunities': ['hdfc mid-cap opportunities fund - direct plan - growth'],
-    'icici-pru-bluechip': ['icici prudential bluechip fund - direct plan - growth'],
-    'sbi-equity-hybrid': ['sbi equity hybrid fund - direct plan - growth'],
-    'axis-long-term-equity': ['axis long term equity fund - direct plan - growth'],
-  };
-  
-  return funds.map(fund => {
-    const keywords = matchKeywords[fund.slug] || [];
-    
-    for (const [amfiName, data] of navMap) {
-      for (const keyword of keywords) {
-        if (amfiName.includes(keyword)) {
-          return { ...fund, nav: data.nav };
-        }
-      }
-    }
-    
-    // Fallback: fuzzy match by fund name
-    const fundNameLower = fund.name.toLowerCase();
-    for (const [amfiName, data] of navMap) {
-      if (amfiName.includes(fundNameLower.split(' ').slice(0, 3).join(' ')) && 
           amfiName.includes('direct') && amfiName.includes('growth')) {
         return { ...fund, nav: data.nav };
       }
