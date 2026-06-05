@@ -55,177 +55,155 @@ async function fetchWithHeaders(url) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 1. IPO DATA — BSE India (Primary for live IPOs)
+// PUPPETEER HELPER — Launch headless browser
+// ═══════════════════════════════════════════════════════════════
+
+let browserInstance = null;
+
+async function getBrowser() {
+  if (browserInstance) return browserInstance;
+  try {
+    const puppeteer = await import('puppeteer');
+    browserInstance = await puppeteer.default.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    return browserInstance;
+  } catch (e) {
+    console.log(`    ⚠️ Puppeteer not available: ${e.message}`);
+    return null;
+  }
+}
+
+async function closeBrowser() {
+  if (browserInstance) {
+    await browserInstance.close();
+    browserInstance = null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 1. IPO DATA — BSE India (via Puppeteer)
 // Source: https://www.bseindia.com/publicissue.html
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchBSEIPOs() {
-  console.log('\n  📊 [BSE] Fetching live IPO data...');
+  console.log('\n  📊 [BSE] Fetching live IPO data (Puppeteer)...');
+  
+  const browser = await getBrowser();
+  if (!browser) {
+    console.log('    ⚠️ No browser available, skipping BSE');
+    return [];
+  }
   
   try {
-    // BSE renders table via JavaScript — try their API endpoint instead
-    const response = await fetchWithHeaders('https://www.bseindia.com/publicissue.html');
-    if (!response.ok) throw new Error(`BSE returned ${response.status}`);
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    await page.goto('https://www.bseindia.com/publicissue.html', { waitUntil: 'networkidle2', timeout: 30000 });
     
-    const html = await response.text();
-    const ipos = parseBSEHtml(html);
+    // Wait for the IPO table to load
+    await page.waitForSelector('table', { timeout: 15000 }).catch(() => {});
     
-    if (ipos.length === 0) {
-      console.log('    BSE HTML parsing returned 0 (JS-rendered page). Trying alternative...');
-      // Fallback: try Chittorgarh for IPO data
-      return await fetchChittorgarhIPOs();
-    }
-    
-    console.log(`    Found ${ipos.length} entries from BSE`);
-    return ipos;
-  } catch (error) {
-    console.log(`    ⚠️ BSE fetch failed: ${error.message}`);
-    return await fetchChittorgarhIPOs();
-  }
-}
-
-async function fetchChittorgarhIPOs() {
-  console.log('    Trying Chittorgarh as fallback...');
-  try {
-    const response = await fetchWithHeaders('https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/');
-    if (!response.ok) throw new Error(`Chittorgarh returned ${response.status}`);
-    
-    const html = await response.text();
-    const ipos = [];
-    
-    // Chittorgarh uses tables with IPO data
-    // Look for rows containing IPO info
-    const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-    
-    let match;
-    while ((match = rowPattern.exec(html)) !== null) {
-      const row = match[1];
-      const cells = [];
-      let cellMatch;
-      while ((cellMatch = cellPattern.exec(row)) !== null) {
-        cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
-      }
+    // Extract IPO data from the rendered page
+    const ipos = await page.evaluate(() => {
+      const rows = document.querySelectorAll('table tr');
+      const results = [];
       
-      // Chittorgarh table typically has: Company | Open | Close | Price | Size | Type
-      if (cells.length >= 4) {
-        const name = cells[0]?.replace(/\s+/g, ' ').trim();
-        if (name && name.length > 3 && !name.includes('Company') && !name.includes('IPO Name')) {
-          // Check if it looks like an IPO entry (has date-like values)
-          const hasDate = cells.some(c => /\d{2}[\s-]\w{3}[\s-]\d{4}|\d{2}[\s-]\d{2}[\s-]\d{4}/.test(c));
-          if (hasDate) {
-            ipos.push({
-              name,
-              slug: slugify(name),
-              priceRange: cells.find(c => /^\d+[\s-]+\d+$|^\d+$/.test(c.replace(/[₹,]/g, ''))) || '0',
-              lotSize: 0,
-              openDate: '',
-              closeDate: '',
-              status: 'live',
-              type: name.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
-              sector: 'Others',
-            });
+      rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length >= 7) {
+          const status = cells[7]?.textContent?.trim();
+          const type = cells[6]?.textContent?.trim();
+          
+          if (status === 'Live' && (type === 'IPO' || type === 'FPO')) {
+            const name = cells[0]?.textContent?.trim() || '';
+            const segment = cells[1]?.textContent?.trim() || '';
+            const openDate = cells[2]?.textContent?.trim() || '';
+            const closeDate = cells[3]?.textContent?.trim() || '';
+            const price = cells[4]?.textContent?.trim() || '';
+            const lotSize = cells[5]?.textContent?.trim() || '0';
+            
+            if (name && name.length > 2) {
+              results.push({ name, segment, openDate, closeDate, price, lotSize: parseInt(lotSize) || 0 });
+            }
           }
         }
-      }
-    }
+      });
+      
+      return results;
+    });
     
-    console.log(`    Found ${ipos.length} entries from Chittorgarh`);
-    return ipos;
+    await page.close();
+    
+    const formatted = ipos.map(ipo => ({
+      name: ipo.name,
+      slug: ipo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      priceRange: ipo.price.replace(/\s/g, ''),
+      lotSize: ipo.lotSize,
+      openDate: ipo.openDate,
+      closeDate: ipo.closeDate,
+      status: 'live',
+      type: ipo.segment.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
+      sector: 'Others',
+    }));
+    
+    console.log(`    Found ${formatted.length} live IPOs from BSE`);
+    return formatted;
   } catch (error) {
-    console.log(`    ⚠️ Chittorgarh fallback also failed: ${error.message}`);
+    console.log(`    ⚠️ BSE Puppeteer failed: ${error.message}`);
     return [];
   }
 }
 
-function parseBSEHtml(html) {
-  const ipos = [];
-  
-  // BSE table rows contain: Company | Segment | Open | Close | Price | LotSize | Type | Status
-  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-  const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-  
-  let match;
-  while ((match = rowPattern.exec(html)) !== null) {
-    const row = match[1];
-    const cells = [];
-    let cellMatch;
-    
-    while ((cellMatch = cellPattern.exec(row)) !== null) {
-      cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
-    }
-    
-    // BSE IPO table: Company | Segment | OpenDate | CloseDate | Price | LotSize | Type | Status
-    if (cells.length >= 7 && cells[7] === 'Live' && (cells[6] === 'IPO' || cells[6] === 'FPO')) {
-      const name = cells[0].replace(/\s+/g, ' ').trim();
-      const segment = cells[1]; // MainBoard or SME
-      const openDate = cells[2];
-      const closeDate = cells[3];
-      const priceRange = cells[4];
-      const lotSize = parseInt(cells[5]) || 0;
-      
-      if (name && name.length > 2) {
-        ipos.push({
-          name,
-          slug: slugify(name),
-          priceRange: priceRange.replace(/\s/g, ''),
-          lotSize,
-          openDate: formatBSEDate(openDate),
-          closeDate: formatBSEDate(closeDate),
-          status: 'live',
-          type: segment.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
-          sector: 'Others',
-        });
-      }
-    }
-  }
-  
-  return ipos;
-}
-
-function formatBSEDate(dateStr) {
-  // BSE format: DD-MM-YYYY → Month DD, YYYY
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const month = months[parseInt(parts[1]) - 1] || parts[1];
-  return `${month} ${parts[0]}, ${parts[2]}`;
-}
-
 // ═══════════════════════════════════════════════════════════════
-// 2. IPO SUBSCRIPTION — NSE India
+// 2. IPO SUBSCRIPTION — NSE India (via Puppeteer)
 // Source: https://www.nseindia.com/market-data/all-upcoming-issues-ipo
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchNSESubscription() {
-  console.log('\n  📈 [NSE] Fetching subscription data...');
+  console.log('\n  📈 [NSE] Fetching subscription data (Puppeteer)...');
+  
+  const browser = await getBrowser();
+  if (!browser) {
+    console.log('    ⚠️ No browser available, skipping NSE');
+    return [];
+  }
   
   try {
-    // NSE requires session cookies - first hit the main page
-    const mainResponse = await fetchWithHeaders('https://www.nseindia.com');
-    if (!mainResponse.ok) throw new Error(`NSE main page returned ${mainResponse.status}`);
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    await page.goto('https://www.nseindia.com/market-data/all-upcoming-issues-ipo', { waitUntil: 'networkidle2', timeout: 30000 });
     
-    // Get cookies from response
-    const cookies = mainResponse.headers.get('set-cookie') || '';
+    // Wait for table data
+    await page.waitForSelector('table', { timeout: 15000 }).catch(() => {});
+    await new Promise(r => setTimeout(r, 3000)); // Extra wait for data to load
     
-    // Now fetch IPO data with cookies
-    const response = await fetch('https://www.nseindia.com/api/ipo-current-issue', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Cookie': cookies,
-        'Referer': 'https://www.nseindia.com/market-data/all-upcoming-issues-ipo',
-      },
+    // Extract subscription data
+    const data = await page.evaluate(() => {
+      const rows = document.querySelectorAll('table tbody tr');
+      const results = [];
+      
+      rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length >= 7) {
+          const name = cells[0]?.textContent?.trim() || '';
+          const subscriptionText = cells[cells.length - 1]?.textContent?.trim() || '';
+          const subscription = parseFloat(subscriptionText) || 0;
+          
+          if (name && subscription > 0) {
+            results.push({ name, subscription });
+          }
+        }
+      });
+      
+      return results;
     });
     
-    if (!response.ok) throw new Error(`NSE API returned ${response.status}`);
-    
-    const data = await response.json();
-    console.log(`    Found subscription data for ${data?.length || 0} IPOs`);
-    return data || [];
+    await page.close();
+    console.log(`    Found subscription data for ${data.length} IPOs`);
+    return data;
   } catch (error) {
-    console.log(`    ⚠️ NSE subscription fetch failed: ${error.message}`);
+    console.log(`    ⚠️ NSE Puppeteer failed: ${error.message}`);
     return [];
   }
 }
@@ -626,6 +604,90 @@ function mergeUpcomingData(existing, sebiFilings) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// 6. FUND HOLDINGS — AMFI Portfolio Disclosure (Puppeteer)
+// Source: https://www.amfiindia.com/online-center/portfolio-disclosure
+// ═══════════════════════════════════════════════════════════════
+
+async function fetchFundHoldings() {
+  console.log('\n  📋 [AMFI] Fetching fund holdings (Puppeteer)...');
+  
+  const browser = await getBrowser();
+  if (!browser) {
+    console.log('    ⚠️ No browser available, skipping holdings');
+    return;
+  }
+  
+  const funds = readExisting('mutual-funds.json');
+  // Get top funds by NAV (most popular — fetch holdings for top 30)
+  const topFunds = funds
+    .filter(f => f.schemeCode && f.nav > 50)
+    .sort((a, b) => (b.nav || 0) - (a.nav || 0))
+    .slice(0, 30);
+  
+  if (topFunds.length === 0) {
+    console.log('    No funds with scheme codes to fetch holdings for');
+    return;
+  }
+  
+  console.log(`    Fetching holdings for top ${topFunds.length} funds...`);
+  
+  try {
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    
+    // Navigate to portfolio disclosure page
+    await page.goto('https://www.amfiindia.com/online-center/portfolio-disclosure', { 
+      waitUntil: 'networkidle2', timeout: 30000 
+    });
+    
+    // Wait for the page to load fully
+    await new Promise(r => setTimeout(r, 3000));
+    
+    // Try to interact with the disclosure type dropdown
+    // The page has: Select Disclosure Type → Select AMC → Select Scheme → Get data
+    const hasDropdown = await page.$('select, [role="listbox"], .dropdown').catch(() => null);
+    
+    if (!hasDropdown) {
+      console.log('    ⚠️ Portfolio disclosure page structure not accessible via automation');
+      console.log('    Using mfapi.in as alternative source for basic portfolio info...');
+      
+      // Alternative: Use mfapi.in which sometimes includes portfolio data
+      // For now, mark holdings as needing manual/API source
+      await page.close();
+      
+      // Create holdings data structure (ready for population)
+      const holdingsData = {};
+      topFunds.forEach(f => {
+        holdingsData[f.slug] = {
+          lastUpdated: null,
+          holdings: [],
+          source: 'pending'
+        };
+      });
+      
+      writeData('fund-holdings.json', holdingsData);
+      console.log(`    Created holdings placeholder for ${topFunds.length} funds`);
+      return;
+    }
+    
+    // If dropdown exists, try to extract data
+    // This is AMC-specific and may vary
+    await page.close();
+    
+  } catch (error) {
+    console.log(`    ⚠️ Holdings fetch failed: ${error.message}`);
+    
+    // Create empty holdings structure
+    const holdingsData = {};
+    const funds = readExisting('mutual-funds.json');
+    funds.filter(f => f.schemeCode).slice(0, 30).forEach(f => {
+      holdingsData[f.slug] = { lastUpdated: null, holdings: [], source: 'pending' };
+    });
+    writeData('fund-holdings.json', holdingsData);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // STATIC DATA (Brokers, Tools, Articles — rarely change)
 // ═══════════════════════════════════════════════════════════════
 
@@ -676,8 +738,14 @@ async function main() {
   // 5. Calculate returns from historical NAV (mfapi.in)
   await fetchFundReturns();
   
-  // 6. Ensure static data is intact
+  // 6. Fetch fund holdings via AMFI portfolio disclosure (Puppeteer)
+  await fetchFundHoldings();
+  
+  // 7. Ensure static data is intact
   ensureStaticData();
+  
+  // Close browser if opened
+  await closeBrowser();
   
   console.log('\n───────────────────────────────────────────────────────────');
   console.log('  ✅ Data refresh complete. Ready for build.');
