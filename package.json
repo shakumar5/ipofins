@@ -1,0 +1,29 @@
+{
+  "name": "ipofins",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "IPOfin - Next-Gen IPO & Finance Intelligence Platform",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "fetch-data": "node scripts/fetch-all-data.mjs",
+    "prebuild": "node scripts/fetch-all-data.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "@astrojs/react": "^4.0.0",
+    "@astrojs/sitemap": "^3.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.5.0"
+  }
+}

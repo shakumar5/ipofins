@@ -1,0 +1,88 @@
+---
+const footerSections = [
+  {
+    title: 'IPOs',
+    links: [
+      { label: 'Mainboard IPOs', href: '/ipo/mainboard' },
+      { label: 'SME IPOs', href: '/ipo/sme' },
+      { label: 'Upcoming IPOs', href: '/ipo/upcoming' },
+      { label: 'IPO Performance', href: '/ipo/performance/2026' },
+      { label: 'GMP Today', href: '/ipo/gmp-today' },
+    ],
+  },
+  {
+    title: 'Tools',
+    links: [
+      { label: 'SIP Calculator', href: '/tools/sip-calculator' },
+      { label: 'CAGR Calculator', href: '/tools/cagr-calculator' },
+      { label: 'EMI Calculator', href: '/tools/emi-calculator' },
+      { label: 'IPO Profit Calculator', href: '/tools/ipo-profit-calculator' },
+      { label: 'Risk Analyzer', href: '/tools/return-simulator' },
+    ],
+  },
+  {
+    title: 'Brokers',
+    links: [
+      { label: 'Compare Brokers', href: '/broker/compare' },
+      { label: 'Zerodha Review', href: '/broker/zerodha' },
+      { label: 'Groww Review', href: '/broker/groww' },
+      { label: 'Upstox Review', href: '/broker/upstox' },
+      { label: 'Angel One Review', href: '/broker/angel-one' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', href: '/about' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Use', href: '/terms' },
+      { label: 'Disclaimer', href: '/disclaimer' },
+    ],
+  },
+];
+---
+
+<footer class="bg-surface-50 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-700 mt-20">
+  <div class="container-wide py-12 lg:py-16">
+    <!-- Top section -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+      {footerSections.map((section) => (
+        <div>
+          <h3 class="text-sm font-semibold text-surface-900 dark:text-white uppercase tracking-wider mb-4">
+            {section.title}
+          </h3>
+          <ul class="space-y-2.5">
+            {section.links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  class="text-sm text-surface-500 dark:text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <!-- Bottom section -->
+    <div class="mt-12 pt-8 border-t border-surface-200 dark:border-surface-700">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 bg-gradient-to-br from-primary-500 to-primary-700 rounded-md flex items-center justify-center">
+            <span class="text-white font-bold text-xs">F</span>
+          </div>
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            © 2026 ipofins. All rights reserved.
+          </span>
+        </div>
+        <p class="text-xs text-surface-400 dark:text-surface-500 text-center md:text-right max-w-md">
+          Investment in securities market are subject to market risks. Read all the related documents carefully before investing. SEBI Registration not applicable.
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>

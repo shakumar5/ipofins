@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import fundsData from '../../data/mutual-funds.json';
+
+const categories = [...new Set(fundsData.map(f => f.category))];
+const totalFunds = fundsData.length;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Mutual Funds India 2026",
+  "url": "https://ipofins.com/mutual-funds",
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a mutual fund?", "acceptedAnswer": { "@type": "Answer", "text": "A mutual fund pools money from multiple investors and invests it in stocks, bonds, or other securities managed by a professional fund manager (AMC). Returns are shared proportionally based on units held." } },
+    { "@type": "Question", "name": "What is NAV in mutual funds?", "acceptedAnswer": { "@type": "Answer", "text": "NAV (Net Asset Value) is the per-unit market value of a mutual fund calculated daily as (Total Assets - Liabilities) ÷ Number of Units. Buy/sell transactions happen at the day's NAV." } },
+    { "@type": "Question", "name": "What is SIP in mutual fund?", "acceptedAnswer": { "@type": "Answer", "text": "SIP (Systematic Investment Plan) lets you invest a fixed amount monthly into a mutual fund. It averages purchase cost (rupee cost averaging) and builds wealth through compounding." } },
+    { "@type": "Question", "name": "Which mutual fund is best for SIP?", "acceptedAnswer": { "@type": "Answer", "text": "For long-term (7+ years): Flexi Cap or Mid Cap. Moderate risk: Large Cap or Hybrid. Tax saving: ELSS. Aggressive: Small Cap. Always choose Direct-Growth plan." } },
+    { "@type": "Question", "name": "How are mutual fund returns taxed?", "acceptedAnswer": { "@type": "Answer", "text": "Equity funds: STCG (<1 year) at 15%, LTCG (>1 year) at 10% above ₹1 lakh. Debt funds: taxed at income slab rate. ELSS has 3-year lock-in with equity taxation." } }
+  ]
+};
+---
+
+<BaseLayout title="Mutual Funds India 2026 - Best & All Funds | IPOfins" description="Compare India's best mutual funds. Large cap, mid cap, small cap, ELSS, hybrid. Sorted by returns with ratings." jsonLd={jsonLd}>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Mutual Funds</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white tracking-tight">Mutual Funds India 2026</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300">{totalFunds} funds tracked across {categories.length} categories. NAVs from AMFI India.</p>
+
+    <!-- Main Tabs -->
+    <div class="mt-6 flex gap-3">
+      <a href="/mutual-funds/best" class="btn-primary px-6 py-3">🏆 Best Mutual Funds</a>
+      <a href="/mutual-funds/all" class="btn-secondary px-6 py-3">📊 All Mutual Funds</a>
+      <a href="/mutual-funds/holdings-changes" class="btn-secondary px-6 py-3">📋 Holdings Changes</a>
+    </div>
+  </section>
+
+  <!-- Category Cards -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Browse by Category</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {categories.map(cat => {
+        const count = fundsData.filter(f => f.category === cat).length;
+        const topFund = fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0))[0];
+        return (
+          <a href={`/mutual-funds/all`} class="card-compact text-center group hover:shadow-md transition-shadow">
+            <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{cat}</p>
+            <p class="text-xs text-surface-500 mt-0.5">{count} funds</p>
+            {topFund && <p class="text-xs font-bold text-success-500 mt-1">Best 1Y: +{topFund.returns1y}%</p>}
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- Quick Preview -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Top Funds by 3Y Returns</h2>
+    <div class="space-y-2">
+      {fundsData.sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).map((fund, i) => (
+        <a href={`/mutual-funds/fund/${fund.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{i+1}. {fund.name}</h3>
+              <p class="text-xs text-surface-500">{fund.category} • {fund.aum}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-bold text-success-500">+{fund.returns3y}%</p>
+              <p class="text-[10px] text-surface-400">3Y return</p>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+    <a href="/mutual-funds/all" class="mt-4 inline-flex text-sm text-primary-600 hover:underline">View all {totalFunds} funds →</a>
+  </section>
+
+  <!-- SIP CTA -->
+  <section class="container-wide py-8">
+    <div class="card bg-gradient-to-r from-success-50 to-primary-50 dark:from-success-950/20 dark:to-primary-950/20 border-success-200 dark:border-success-800 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div>
+        <h3 class="text-lg font-bold text-surface-900 dark:text-white">Plan your SIP</h3>
+        <p class="text-sm text-surface-600 dark:text-surface-300 mt-1">See how ₹5,000/month grows with our calculator</p>
+      </div>
+      <a href="/tools/sip-calculator" class="btn-primary">SIP Calculator →</a>
+    </div>
+  </section>
+
+  <!-- FAQ Section (High-volume Google searches) -->
+  <section class="container-wide py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-3 max-w-3xl">
+      <details class="card-compact group" open>
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a mutual fund?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A mutual fund pools money from multiple investors and invests it in stocks, bonds, or other securities. It is managed by a professional fund manager (AMC). Investors get units proportional to their investment. Returns are shared based on units held.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is NAV in mutual funds?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">NAV (Net Asset Value) is the per-unit market value of a mutual fund. It is calculated daily as: (Total Assets - Total Liabilities) ÷ Number of Units. When you buy or sell mutual fund units, the transaction happens at the day's NAV.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is SIP in mutual fund?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SIP (Systematic Investment Plan) lets you invest a fixed amount (e.g., ₹500 or ₹5,000) every month into a mutual fund automatically. It averages your purchase cost over time (rupee cost averaging) and builds wealth through compounding. You can start, stop, or modify SIP anytime.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which mutual fund is best for SIP?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">For long-term SIP (7+ years): Flexi Cap or Mid Cap funds. For moderate risk: Large Cap or Hybrid funds. For tax saving: ELSS funds (3-year lock-in). For aggressive growth: Small Cap funds. Always choose Direct-Growth plan for maximum returns. Check our "Best Mutual Funds" section for top picks.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between Direct and Regular mutual fund?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Direct plans have no distributor commission, so they give 0.5-1% higher returns annually. Regular plans pay commission to distributors (brokers). Always invest in Direct plans through platforms like Groww, Zerodha Coin, or AMC websites for better returns.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to choose the best mutual fund?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check: 1) Consistent 3Y and 5Y returns vs benchmark, 2) Fund manager track record, 3) Expense ratio (lower is better), 4) AUM size (₹5,000+ Cr for stability), 5) Risk level matching your goals. Our "Best" section filters funds that meet multiple quality criteria.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are mutual funds safe?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Mutual funds are market-linked and carry risk. However, they are regulated by SEBI, managed by professionals, and diversified across many stocks. Debt funds are lower risk, equity funds are higher risk. For safety: invest via SIP, choose large-cap or hybrid, and stay invested 5+ years.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is ELSS mutual fund?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">ELSS (Equity Linked Savings Scheme) is a tax-saving mutual fund. You get income tax deduction up to ₹1.5 lakh/year under Section 80C. Lock-in period is 3 years (shortest among tax-saving instruments). Returns are typically 12-18% CAGR over long term.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How are mutual fund returns taxed?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Equity funds: STCG (held &lt;1 year) taxed at 15%. LTCG (held &gt;1 year) taxed at 10% above ₹1 lakh exemption. Debt funds: All gains taxed at your income tax slab rate regardless of holding period (as per 2023 rules). ELSS has 3-year lock-in.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How much should I invest in mutual funds per month?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A common rule: invest 20-30% of your monthly income. Start with ₹500-₹5,000 if you're a beginner. Increase by 10% annually (step-up SIP). For ₹1 Cr corpus in 15 years at 12% returns, you need approximately ₹20,000/month SIP.</p>
+      </details>
+    </div>
+    <a href="/blogs/mutual-funds" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
+      More Mutual Fund FAQs (30+ questions) →
+    </a>
+  </section>
+</BaseLayout>

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Zerodha",
+    "slug": "zerodha",
+    "logo": "Z",
+    "type": "discount",
+    "rating": 4.5,
+    "tradingFee": "₹20/trade",
+    "accountOpening": "Free",
+    "amc": "₹300/year",
+    "platforms": ["Kite Web", "Kite Mobile", "Console"],
+    "pros": ["Best trading platform (Kite)", "Zero brokerage on equity delivery", "Excellent charting tools"],
+    "cons": ["No research reports", "No advisory services", "Call & trade charges ₹50"],
+    "affiliateUrl": "#"
+  },
+  {
+    "name": "Groww",
+    "slug": "groww",
+    "logo": "G",
+    "type": "discount",
+    "rating": 4.3,
+    "tradingFee": "₹20/trade",
+    "accountOpening": "Free",
+    "amc": "Free",
+    "platforms": ["Groww App", "Groww Web"],
+    "pros": ["Simplest UI for beginners", "Free AMC", "Mutual fund direct plans"],
+    "cons": ["Limited charting", "No commodity trading", "Basic order types only"],
+    "affiliateUrl": "#"
+  },
+  {
+    "name": "Upstox",
+    "slug": "upstox",
+    "logo": "U",
+    "type": "discount",
+    "rating": 4.1,
+    "tradingFee": "₹20/trade",
+    "accountOpening": "Free",
+    "amc": "Free",
+    "platforms": ["Upstox Pro Web", "Upstox Mobile"],
+    "pros": ["Free account opening & AMC", "Good charting (TradingView)", "Fast order execution"],
+    "cons": ["Customer support issues", "Platform stability concerns", "Limited research"],
+    "affiliateUrl": "#"
+  },
+  {
+    "name": "Angel One",
+    "slug": "angel-one",
+    "logo": "A",
+    "type": "full-service",
+    "rating": 4.0,
+    "tradingFee": "₹20/trade",
+    "accountOpening": "Free",
+    "amc": "Free",
+    "platforms": ["Angel One App", "Angel One Web", "SmartAPI"],
+    "pros": ["Research & advisory included", "SmartAPI for algo trading", "Wide product range"],
+    "cons": ["App can be slow", "Upselling of services", "Hidden charges reported"],
+    "affiliateUrl": "#"
+  },
+  {
+    "name": "ICICI Direct",
+    "slug": "icici-direct",
+    "logo": "I",
+    "type": "full-service",
+    "rating": 3.8,
+    "tradingFee": "0.275%",
+    "accountOpening": "Free",
+    "amc": "₹700/year",
+    "platforms": ["ICICIdirect Web", "Markets App"],
+    "pros": ["3-in-1 account (Bank+Demat+Trading)", "Strong research team", "Wide product range"],
+    "cons": ["High brokerage fees", "Complex platform", "Expensive for active traders"],
+    "affiliateUrl": "#"
+  }
+]

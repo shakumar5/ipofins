@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FundTable from '../../components/funds/FundTable.tsx';
+import fundsData from '../../data/mutual-funds.json';
+
+const categories = [...new Set(fundsData.map(f => f.category))];
+---
+
+<BaseLayout title="All Mutual Funds India 2026 - Compare Returns | IPOfins" description="Complete list of mutual funds in India. Filter by category, sort by 1Y/3Y/5Y returns. Large cap, mid cap, small cap, ELSS, hybrid.">
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">All Funds</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">All Mutual Funds 2026</h1>
+    <p class="mt-1 text-sm text-surface-500">{fundsData.length} funds • Filter by category • Sort by returns</p>
+
+    <!-- Main Tabs -->
+    <div class="mt-4 flex gap-2">
+      <a href="/mutual-funds/best" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Best Funds</a>
+      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">All Funds</span>
+      <a href="/mutual-funds/holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
+    </div>
+  </section>
+
+  <section class="container-wide py-4">
+    <FundTable client:load funds={fundsData} categories={categories} />
+  </section>
+</BaseLayout>

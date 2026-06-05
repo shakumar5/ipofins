@@ -1,0 +1,50 @@
+[
+  {
+    "title": "SIP Calculator",
+    "slug": "sip-calculator",
+    "description": "Calculate your wealth growth through Systematic Investment Plans. See how small monthly investments compound over time.",
+    "icon": "📈",
+    "color": "primary",
+    "category": "investment"
+  },
+  {
+    "title": "CAGR Calculator",
+    "slug": "cagr-calculator",
+    "description": "Find the Compound Annual Growth Rate of your investments. Compare performance across different time periods.",
+    "icon": "📊",
+    "color": "success",
+    "category": "investment"
+  },
+  {
+    "title": "EMI Calculator",
+    "slug": "emi-calculator",
+    "description": "Calculate your monthly EMI for home loans, car loans, or personal loans. Visualize your repayment schedule.",
+    "icon": "🏦",
+    "color": "warning",
+    "category": "loan"
+  },
+  {
+    "title": "IPO Profit Calculator",
+    "slug": "ipo-profit-calculator",
+    "description": "Estimate your potential profit or loss from an IPO based on listing price, lot size, and application amount.",
+    "icon": "💰",
+    "color": "success",
+    "category": "ipo"
+  },
+  {
+    "title": "Return Simulator",
+    "slug": "return-simulator",
+    "description": "Simulate investment returns with different scenarios. Model best-case, worst-case, and expected outcomes.",
+    "icon": "🎯",
+    "color": "primary",
+    "category": "investment"
+  },
+  {
+    "title": "Risk Analyzer",
+    "slug": "return-simulator",
+    "description": "Analyze the risk profile of any investment using AI-powered scoring. Get a comprehensive risk breakdown.",
+    "icon": "⚡",
+    "color": "danger",
+    "category": "analysis"
+  }
+]

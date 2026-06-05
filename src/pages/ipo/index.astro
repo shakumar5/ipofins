@@ -1,0 +1,111 @@
+---
+import IPOLayout from '../../layouts/IPOLayout.astro';
+import iposData from '../../data/ipos.json';
+import upcomingData from '../../data/upcoming-ipos.json';
+
+const allIPOs = iposData.filter(i => i.status === 'live' || i.status === 'listed');
+const liveCount = iposData.filter(i => i.status === 'live').length;
+const listedCount = iposData.filter(i => i.status === 'listed').length;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "IPO Listings India 2026",
+  "url": "https://ipofins.com/ipo",
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is an IPO?", "acceptedAnswer": { "@type": "Answer", "text": "IPO (Initial Public Offering) is when a private company sells its shares to the public for the first time on a stock exchange (BSE/NSE). After the IPO, anyone can buy and sell the company's shares on the market." } },
+    { "@type": "Question", "name": "How to apply for IPO in India?", "acceptedAnswer": { "@type": "Answer", "text": "Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot." } },
+    { "@type": "Question", "name": "What is IPO GMP?", "acceptedAnswer": { "@type": "Answer", "text": "GMP (Grey Market Premium) is the unofficial premium at which IPO shares trade before listing. If GMP is ₹50 on a ₹100 IPO, expected listing price is ₹150. GMP is not regulated and can change rapidly." } },
+    { "@type": "Question", "name": "What is the minimum amount to invest in IPO?", "acceptedAnswer": { "@type": "Answer", "text": "Minimum is 1 lot × upper price band. For example, if lot size is 30 shares at ₹500, minimum investment = ₹15,000. The maximum for retail investors is ₹2,00,000." } },
+    { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN number or application number. Allotment is typically announced 6 days after the IPO closes." } }
+  ]
+};
+---
+
+<IPOLayout title="All IPOs India 2026 - Mainboard & SME | IPOfins" description="Complete list of all IPOs in India 2026. Mainboard, SME, live, upcoming, and listed IPOs with GMP, subscription data & AI analysis." jsonLd={jsonLd} activeTab="all">
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+
+  <section class="container-wide py-6">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">All IPOs — 2026</h1>
+    <p class="text-sm text-surface-500 mb-6">{allIPOs.length} IPOs • {liveCount} live • {listedCount} listed</p>
+
+    <div class="space-y-2">
+      {allIPOs.map(ipo => (
+        <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
+                <span class={`badge text-[10px] ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'listed' ? 'badge-listed' : 'badge-upcoming'}`}>{ipo.status}</span>
+                <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+              </div>
+              <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
+            </div>
+            <div class="flex items-center gap-5 text-xs">
+              <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+              <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+              {ipo.gmp !== undefined && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+              {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+              {ipo.aiScore && <div><span class="text-surface-400">AI </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="container-wide py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-3 max-w-3xl">
+      <details class="card-compact group" open>
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is an IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPO (Initial Public Offering) is when a private company sells its shares to the public for the first time on a stock exchange (BSE/NSE). After the IPO, anyone can buy and sell the company's shares on the market.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to apply for IPO in India?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO GMP (Grey Market Premium)?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">GMP is the unofficial premium at which IPO shares trade before listing. If GMP is ₹50 on a ₹100 IPO, expected listing price is ~₹150. GMP is not SEBI-regulated and can change rapidly based on market sentiment.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the minimum amount to invest in IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Minimum = 1 lot × upper price band. Example: lot size 30 shares at ₹500 = ₹15,000 minimum. Maximum for retail category is ₹2,00,000. You must apply in lot multiples.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to check IPO allotment status?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN or application number. Allotment is announced ~6 days after close. If not allotted, money is unblocked automatically.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between Mainboard and SME IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Mainboard IPOs are for larger companies (issue size ₹500+ Cr) listed on main BSE/NSE. SME IPOs are for smaller companies on BSE SME/NSE Emerge platform. SME IPOs have higher risk but sometimes give higher listing gains.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What happens after IPO allotment?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">If allotted: shares are credited to your Demat account before listing day. If not allotted: blocked amount is released to your bank within 1-2 days. On listing day, you can hold or sell the shares at market price.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is IPO investment risky?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes, IPO investment carries risk. Not all IPOs list at a premium — some list below issue price (loss). Risk factors: company fundamentals, market conditions, overvaluation, sector outlook. Always research before applying.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to increase IPO allotment chances?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Apply for 1 lot only (all 1-lot applications have equal lottery chance in retail). Apply from multiple Demat accounts (family members). Applying for more lots from same PAN doesn't increase probability.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is DRHP and RHP in IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">DRHP (Draft Red Herring Prospectus) is filed with SEBI for approval — contains all details except final price. RHP (Red Herring Prospectus) is the final document with confirmed price band, filed after SEBI approval, just before IPO opens.</p>
+      </details>
+    </div>
+    <a href="/blogs/ipo" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
+      More IPO FAQs (30+ questions) →
+    </a>
+  </section>
+</IPOLayout>

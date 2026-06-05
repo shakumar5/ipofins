@@ -1,0 +1,105 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  jsonLd?: object;
+}
+
+const {
+  title,
+  description = 'ipofins - AI-powered IPO & finance intelligence platform. Track IPOs, mutual funds, compare brokers, and get AI-driven investment insights.',
+  ogImage = '/og-default.png',
+  canonicalUrl,
+  jsonLd,
+} = Astro.props;
+
+const siteUrl = 'https://ipofins.com';
+const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary Meta -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${siteUrl}${ogImage}`} />
+    <meta property="og:site_name" content="ipofins" />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
+
+    <!-- Additional SEO -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="ipofins" />
+    <meta name="geo.region" content="IN" />
+    <meta name="geo.placename" content="India" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- JSON-LD -->
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    )}
+
+    <!-- Dark Mode Script (prevent flash) -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+
+    <!-- AI Chatbot (Phase 3) -->
+    <div id="ai-chatbot-root"></div>
+    <script>
+      import AIChatbot from '../components/ai/AIChatbot.tsx';
+      import { createElement } from 'react';
+      import { createRoot } from 'react-dom/client';
+
+      const container = document.getElementById('ai-chatbot-root');
+      if (container) {
+        const root = createRoot(container);
+        root.render(createElement(AIChatbot));
+      }
+    </script>
+  </body>
+</html>

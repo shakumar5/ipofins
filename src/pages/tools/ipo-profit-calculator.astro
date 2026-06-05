@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import IPOProfitCalculator from '../../components/calculators/IPOProfitCalculator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "IPO Profit Calculator",
+  "description": "Calculate potential profit or loss from IPO investments based on issue price, expected listing price, and lot size.",
+  "url": "https://ipofins.com/tools/ipo-profit-calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "IPO Profit Calculator", "item": "https://ipofins.com/tools/ipo-profit-calculator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How to calculate profit from IPO?", "acceptedAnswer": { "@type": "Answer", "text": "IPO Profit = (Listing Price - Issue Price) × Number of Shares Allotted. For example, if you got 1 lot of 30 shares at ₹500 issue price and it lists at ₹650, your profit = (650-500) × 30 = ₹4,500." } },
+    { "@type": "Question", "name": "How much can I invest in an IPO?", "acceptedAnswer": { "@type": "Answer", "text": "Retail investors can apply for up to ₹2,00,000 worth of shares in an IPO. You must apply in lot multiples. The minimum application is 1 lot. You can apply for multiple lots up to the ₹2L limit." } },
+    { "@type": "Question", "name": "What is the minimum investment for an IPO?", "acceptedAnswer": { "@type": "Answer", "text": "The minimum investment is 1 lot × upper price band. For example, if lot size is 30 shares and price band is ₹480-500, minimum investment = 30 × 500 = ₹15,000." } },
+    { "@type": "Question", "name": "Is IPO profit taxable?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. If you sell on listing day (within 1 year), profit is taxed as Short-Term Capital Gains (STCG) at 15%. If held for over 1 year, it's Long-Term Capital Gains (LTCG) taxed at 10% above ₹1 lakh exemption." } }
+  ]
+};
+---
+
+<BaseLayout title="IPO Profit Calculator 2026 - Calculate IPO Listing Gains" description="Free IPO profit calculator. Estimate your potential profit or loss from IPO listing based on issue price, expected listing price, GMP, and lot size." jsonLd={jsonLd}>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">IPO Profit Calculator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">IPO Profit Calculator</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">Estimate your potential profit or loss from an IPO investment. Enter issue price, expected listing price, lot size, and number of lots applied.</p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <IPOProfitCalculator client:load />
+    </div>
+  </section>
+
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to calculate profit from IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">IPO Profit = (Listing Price - Issue Price) × Number of Shares. Example: 1 lot of 30 shares at ₹500, listed at ₹650 → profit = (650-500) × 30 = ₹4,500.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How much can I invest in an IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Retail investors can apply up to ₹2,00,000. You must apply in lot multiples — minimum is 1 lot, maximum depends on lot size and price band staying within ₹2L.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the minimum investment for IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Minimum is 1 lot × upper price band. If lot size = 30 shares at ₹500, minimum = ₹15,000. This varies per IPO.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is IPO profit taxable in India?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. Selling on listing day = STCG at 15%. Holding over 1 year = LTCG at 10% (above ₹1L exemption). Most IPO investors sell on listing day, so 15% tax applies.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related</h2>
+    <div class="flex flex-wrap gap-3">
+      <a href="/ipo/gmp-today" class="btn-secondary">IPO GMP Today</a>
+      <a href="/ipo" class="btn-secondary">All IPOs</a>
+      <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
+      <a href="/tools/cagr-calculator" class="btn-secondary">CAGR Calculator</a>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,272 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import IPOCard from '../components/IPOCard.astro';
+import AIInsightBox from '../components/AIInsightBox.astro';
+import ToolCard from '../components/ToolCard.astro';
+import iposData from '../data/ipos.json';
+import toolsData from '../data/tools.json';
+
+const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
+const mainboardIPOs = liveIPOs.filter(ipo => ipo.type === 'mainboard');
+const smeIPOs = liveIPOs.filter(ipo => ipo.type === 'sme');
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "ipofins",
+      "url": "https://ipofins.com",
+      "description": "AI-powered IPO & finance intelligence platform for Indian investors",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://ipofins.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Organization",
+      "name": "ipofins",
+      "url": "https://ipofins.com",
+      "logo": "https://ipofins.com/favicon.svg",
+      "description": "Free online finance tools, IPO tracking, and AI-powered investment insights for Indian investors.",
+      "sameAs": []
+    }
+  ]
+};
+---
+
+<BaseLayout title="IPOfins - Free IPO Tracker, SIP Calculator & Finance Tools India" jsonLd={jsonLd}>
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-surface-50 dark:from-surface-900 dark:via-surface-900 dark:to-primary-950/20"></div>
+    <div class="relative container-wide py-16 lg:py-24">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-6">
+          <span class="w-2 h-2 bg-primary-500 rounded-full animate-pulse-subtle"></span>
+          <span class="text-xs font-medium text-primary-700 dark:text-primary-300">AI-Powered Finance Intelligence</span>
+        </div>
+        <h1 class="text-4xl lg:text-5xl font-extrabold text-surface-900 dark:text-white tracking-tight leading-tight">
+          Smarter IPO decisions.<br/>
+          <span class="text-primary-600 dark:text-primary-400">Powered by AI.</span>
+        </h1>
+        <p class="mt-4 text-lg text-surface-600 dark:text-surface-300 max-w-xl leading-relaxed">
+          Track IPOs, analyze mutual funds, compare brokers, and get AI-driven investment insights — all in one ultra-fast platform.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/ipo" class="btn-primary px-6 py-3 text-base">
+            Explore IPOs
+            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a href="/tools" class="btn-secondary px-6 py-3 text-base">
+            Finance Tools
+          </a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+        <div class="card-compact text-center">
+          <p class="text-2xl font-bold text-surface-900 dark:text-white">156</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">IPOs Tracked (2026)</p>
+        </div>
+        <div class="card-compact text-center">
+          <p class="text-2xl font-bold text-success-500">68%</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Gave Positive Returns</p>
+        </div>
+        <div class="card-compact text-center">
+          <p class="text-2xl font-bold text-surface-900 dark:text-white">25+</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Brokers Compared</p>
+        </div>
+        <div class="card-compact text-center">
+          <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">AI</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Powered Insights</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live IPOs Section -->
+  <section class="container-wide py-12 lg:py-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="section-title">Live IPOs</h2>
+        <p class="section-subtitle">Currently open for subscription</p>
+      </div>
+      <a href="/ipo" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors hidden sm:inline-flex items-center gap-1">
+        View all
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Mainboard -->
+    {mainboardIPOs.length > 0 && (
+      <div class="mb-8">
+        <h3 class="text-sm font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">Mainboard</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {mainboardIPOs.map(ipo => (
+            <IPOCard {...ipo} />
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- SME -->
+    {smeIPOs.length > 0 && (
+      <div>
+        <h3 class="text-sm font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">SME</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {smeIPOs.map(ipo => (
+            <IPOCard {...ipo} />
+          ))}
+        </div>
+      </div>
+    )}
+  </section>
+
+  <!-- AI Insight Section -->
+  <section class="container-wide py-12 lg:py-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="section-title">AI Market Insights</h2>
+        <p class="section-subtitle">AI-powered analysis updated daily</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <AIInsightBox
+        title="IPO Market Outlook"
+        summary="The current IPO market shows strong momentum with 8 out of 10 recent listings giving positive returns. Green energy and healthcare sectors are seeing particularly high demand. Subscription trends suggest retail enthusiasm remains elevated."
+        riskScore={4}
+        verdict="apply"
+        highlights={[
+          "Green Energy IPOs oversubscribed by avg 12x",
+          "SME segment showing mixed signals - be selective",
+          "Mainboard quality has improved vs last quarter"
+        ]}
+      />
+      <AIInsightBox
+        title="Top Pick: CMR Green Technologies"
+        summary="Strong order book of ₹2,400 Cr provides 2-year revenue visibility. Government push for green energy creates favorable policy environment. Subscription at 8.5x confirms institutional interest."
+        riskScore={3}
+        verdict="apply"
+        highlights={[
+          "Peer group trades at 25x PE vs CMR at 18x",
+          "Institutional investors heavily subscribed",
+          "Clear growth runway with government contracts"
+        ]}
+      />
+    </div>
+  </section>
+
+  <!-- Tools Section -->
+  <section class="container-wide py-12 lg:py-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="section-title">Finance Tools</h2>
+        <p class="section-subtitle">Calculators and analyzers for smarter decisions</p>
+      </div>
+      <a href="/tools" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors hidden sm:inline-flex items-center gap-1">
+        All tools
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {toolsData.map(tool => (
+        <ToolCard
+          title={tool.title}
+          description={tool.description}
+          href={`/tools/${tool.slug}`}
+          icon={tool.icon}
+          color={tool.color}
+        />
+      ))}
+    </div>
+  </section>
+
+  <!-- Broker Section -->
+  <section class="container-wide py-12 lg:py-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="section-title">Compare Brokers</h2>
+        <p class="section-subtitle">Find the perfect broker for your trading style</p>
+      </div>
+      <a href="/broker" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors hidden sm:inline-flex items-center gap-1">
+        Compare all
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <a href="/broker/zerodha" class="card group block">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-surface-900 dark:bg-white rounded-lg flex items-center justify-center">
+            <span class="text-white dark:text-surface-900 font-bold">Z</span>
+          </div>
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">Zerodha</h3>
+            <p class="text-xs text-surface-500">Discount Broker</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-surface-500 dark:text-surface-400">₹20/trade</span>
+          <span class="text-warning-500 font-medium">★ 4.5</span>
+        </div>
+      </a>
+      <a href="/broker/groww" class="card group block">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-success-500 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold">G</span>
+          </div>
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">Groww</h3>
+            <p class="text-xs text-surface-500">Discount Broker</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-surface-500 dark:text-surface-400">₹20/trade</span>
+          <span class="text-warning-500 font-medium">★ 4.3</span>
+        </div>
+      </a>
+      <a href="/broker/upstox" class="card group block">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold">U</span>
+          </div>
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">Upstox</h3>
+            <p class="text-xs text-surface-500">Discount Broker</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-surface-500 dark:text-surface-400">₹20/trade</span>
+          <span class="text-warning-500 font-medium">★ 4.1</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="container-wide py-12 lg:py-16">
+    <div class="bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-8 lg:p-12 text-center">
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mb-3">Ready to invest smarter?</h2>
+      <p class="text-primary-100 max-w-lg mx-auto mb-6">
+        Get AI-powered insights, real-time alerts, and comprehensive analysis for every IPO and investment opportunity.
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a href="/ipo" class="inline-flex items-center px-6 py-3 bg-white text-primary-700 font-semibold rounded-lg hover:bg-primary-50 transition-colors">
+          Get Started Free
+        </a>
+        <a href="/tools" class="inline-flex items-center px-6 py-3 border border-white/30 text-white font-medium rounded-lg hover:bg-white/10 transition-colors">
+          Explore Tools
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

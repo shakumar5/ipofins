@@ -1,0 +1,181 @@
+---
+import IPOLayout from '../../../layouts/IPOLayout.astro';
+import upcomingData from '../../../data/upcoming-ipos.json';
+
+export function getStaticPaths() {
+  return upcomingData.map(ipo => ({
+    params: { slug: ipo.slug },
+    props: { ipo },
+  }));
+}
+
+const { ipo } = Astro.props;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FinancialProduct",
+  "name": `${ipo.name} IPO`,
+  "description": ipo.description,
+  "url": `https://ipofins.com/ipo/upcoming/${ipo.slug}`,
+};
+---
+
+<IPOLayout
+  activeTab="upcoming"
+  title={`${ipo.name} IPO 2026 - DRHP, Details & Analysis | IPOfins`}
+  description={`${ipo.name} IPO details: Issue size ${ipo.issueSize}, sector ${ipo.sector}. ${ipo.description?.slice(0, 120)}`}
+  jsonLd={jsonLd}
+>
+  <section class="container-wide py-6">
+    <!-- Back link -->
+    <a href="/ipo/upcoming" class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to Upcoming IPOs
+    </a>
+
+    <!-- Header -->
+    <div class="mt-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class={`px-2.5 py-1 text-xs font-medium rounded-full ${ipo.status === 'sebi-approved' ? 'bg-success-50 text-success-600' : 'bg-warning-50 text-warning-600'}`}>
+            {ipo.status === 'sebi-approved' ? '✓ SEBI Approved' : '⏳ DRHP Filed'}
+          </span>
+          <span class="text-xs text-surface-500 uppercase">{ipo.type}</span>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-extrabold text-surface-900 dark:text-white">{ipo.name} IPO</h1>
+        <p class="mt-1 text-surface-500">{ipo.sector} • {ipo.headquarters}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">Issue Size</p>
+        <p class="text-2xl font-extrabold text-primary-600">{ipo.issueSize}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Company Overview -->
+  <section class="container-wide py-4">
+    <div class="card">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">About {ipo.name}</h2>
+      <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{ipo.description}</p>
+    </div>
+  </section>
+
+  <!-- Key Details Grid -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">IPO Details</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Issue Size</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.issueSize}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Sector</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.sector}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Type</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1 uppercase">{ipo.type}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Status</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.status === 'sebi-approved' ? 'SEBI Approved' : 'DRHP Filed'}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Filed Date</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.drhpDate}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Registrar</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.registrar}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Founded</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.founded}</p>
+      </div>
+      <div class="card-compact">
+        <p class="text-xs text-surface-500">Headquarters</p>
+        <p class="text-sm font-bold text-surface-900 dark:text-white mt-1">{ipo.headquarters}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Founders -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Founders & Promoters</h2>
+    <div class="card-compact">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white">{ipo.founders}</p>
+          <p class="text-xs text-surface-500">Founder(s) / Promoter(s)</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Purpose of IPO -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Why This IPO? (Purpose)</h2>
+    <div class="card">
+      <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{ipo.purpose}</p>
+    </div>
+  </section>
+
+  <!-- DRHP Document Link -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Documents</h2>
+    <a
+      href={ipo.drhpUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="card-compact group inline-flex items-center gap-3 hover:shadow-md transition-shadow"
+    >
+      <div class="w-10 h-10 bg-danger-50 dark:bg-danger-500/10 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">DRHP Document (PDF)</p>
+        <p class="text-xs text-surface-500">View on SEBI website →</p>
+      </div>
+    </a>
+  </section>
+
+  <!-- Timeline -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Expected Timeline</h2>
+    <div class="card">
+      <div class="space-y-4">
+        <div class="flex items-center gap-4">
+          <div class="w-3 h-3 bg-success-500 rounded-full flex-shrink-0"></div>
+          <div>
+            <p class="text-sm font-medium text-surface-900 dark:text-white">DRHP Filed — {ipo.drhpDate}</p>
+            <p class="text-xs text-surface-500">Draft documents submitted to SEBI</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class={`w-3 h-3 rounded-full flex-shrink-0 ${ipo.status === 'sebi-approved' ? 'bg-success-500' : 'bg-surface-300 dark:bg-surface-600'}`}></div>
+          <div>
+            <p class="text-sm font-medium text-surface-900 dark:text-white">SEBI Observation {ipo.status === 'sebi-approved' ? '— Received ✓' : '— Pending'}</p>
+            <p class="text-xs text-surface-500">{ipo.status === 'sebi-approved' ? 'Company can now launch IPO within 12 months' : 'Typically takes 30-75 days'}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="w-3 h-3 bg-surface-300 dark:bg-surface-600 rounded-full flex-shrink-0"></div>
+          <div>
+            <p class="text-sm font-medium text-surface-900 dark:text-white">IPO Subscription — TBA</p>
+            <p class="text-xs text-surface-500">Dates to be announced based on market conditions</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="w-3 h-3 bg-surface-300 dark:bg-surface-600 rounded-full flex-shrink-0"></div>
+          <div>
+            <p class="text-sm font-medium text-surface-900 dark:text-white">Listing — TBA</p>
+            <p class="text-xs text-surface-500">Expected 6 days after subscription closes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</IPOLayout>

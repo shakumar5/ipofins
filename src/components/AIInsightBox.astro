@@ -1,0 +1,76 @@
+---
+interface Props {
+  title?: string;
+  summary: string;
+  riskScore?: number;
+  verdict?: 'apply' | 'avoid' | 'neutral';
+  highlights?: string[];
+}
+
+const {
+  title = 'AI Investment Insight',
+  summary,
+  riskScore,
+  verdict,
+  highlights = [],
+} = Astro.props;
+
+const verdictConfig = {
+  apply: { label: 'Consider Applying', color: 'text-success-500', bg: 'bg-success-50 dark:bg-success-500/10' },
+  avoid: { label: 'Exercise Caution', color: 'text-danger-500', bg: 'bg-danger-50 dark:bg-danger-500/10' },
+  neutral: { label: 'Neutral', color: 'text-warning-500', bg: 'bg-warning-50 dark:bg-warning-500/10' },
+};
+
+const verdictInfo = verdict ? verdictConfig[verdict] : null;
+---
+
+<div class="card border-primary-100 dark:border-primary-900/50 bg-gradient-to-br from-primary-50/50 to-white dark:from-primary-950/20 dark:to-surface-800">
+  <!-- Header -->
+  <div class="flex items-center gap-2 mb-3">
+    <div class="w-6 h-6 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+      <svg class="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    </div>
+    <h4 class="text-sm font-semibold text-surface-900 dark:text-white">{title}</h4>
+    <span class="ml-auto badge bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 text-[10px]">
+      AI Powered
+    </span>
+  </div>
+
+  <!-- Summary -->
+  <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed mb-4">
+    {summary}
+  </p>
+
+  <!-- Highlights -->
+  {highlights.length > 0 && (
+    <ul class="space-y-1.5 mb-4">
+      {highlights.map((item) => (
+        <li class="flex items-start gap-2 text-sm text-surface-600 dark:text-surface-300">
+          <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
+          </svg>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <!-- Bottom Metrics -->
+  <div class="flex items-center gap-4 pt-3 border-t border-primary-100 dark:border-primary-900/30">
+    {riskScore !== undefined && (
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs text-surface-500 dark:text-surface-400">Risk:</span>
+        <span class={`text-xs font-bold ${riskScore <= 3 ? 'text-success-500' : riskScore <= 6 ? 'text-warning-500' : 'text-danger-500'}`}>
+          {riskScore}/10
+        </span>
+      </div>
+    )}
+    {verdictInfo && (
+      <span class={`badge ${verdictInfo.bg} ${verdictInfo.color}`}>
+        {verdictInfo.label}
+      </span>
+    )}
+  </div>
+</div>

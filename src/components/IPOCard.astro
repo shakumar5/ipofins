@@ -1,0 +1,118 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  priceRange: string;
+  lotSize: number;
+  openDate: string;
+  closeDate: string;
+  listingDate?: string;
+  status: 'live' | 'upcoming' | 'closed' | 'listed';
+  type: 'mainboard' | 'sme';
+  subscription?: number;
+  gmp?: number;
+  aiScore?: number;
+  sector?: string;
+}
+
+const {
+  name,
+  slug,
+  priceRange,
+  lotSize,
+  openDate,
+  closeDate,
+  listingDate,
+  status,
+  type,
+  subscription,
+  gmp,
+  aiScore,
+  sector,
+} = Astro.props;
+
+const statusConfig = {
+  live: { label: 'Live', class: 'badge-live' },
+  upcoming: { label: 'Upcoming', class: 'badge-upcoming' },
+  closed: { label: 'Closed', class: 'badge-closed' },
+  listed: { label: 'Listed', class: 'badge-listed' },
+};
+
+const statusInfo = statusConfig[status];
+---
+
+<a href={`/ipo/${slug}`} class="card group block">
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-4">
+    <div class="flex-1 min-w-0">
+      <h3 class="text-base font-semibold text-surface-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+        {name}
+      </h3>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase font-medium">
+          {type}
+        </span>
+        {sector && (
+          <span class="text-xs text-surface-400 dark:text-surface-500">• {sector}</span>
+        )}
+      </div>
+    </div>
+    <span class={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
+  </div>
+
+  <!-- Metrics Grid -->
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div>
+      <p class="text-xs text-surface-500 dark:text-surface-400">Price Band</p>
+      <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">₹{priceRange}</p>
+    </div>
+    <div>
+      <p class="text-xs text-surface-500 dark:text-surface-400">Lot Size</p>
+      <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{lotSize} shares</p>
+    </div>
+    <div>
+      <p class="text-xs text-surface-500 dark:text-surface-400">Open</p>
+      <p class="text-sm font-medium text-surface-700 dark:text-surface-300">{openDate}</p>
+    </div>
+    <div>
+      <p class="text-xs text-surface-500 dark:text-surface-400">Close</p>
+      <p class="text-sm font-medium text-surface-700 dark:text-surface-300">{closeDate}</p>
+    </div>
+  </div>
+
+  <!-- Subscription Bar (for live IPOs) -->
+  {subscription !== undefined && status === 'live' && (
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs text-surface-500 dark:text-surface-400">Subscription</span>
+        <span class="text-xs font-semibold text-primary-600 dark:text-primary-400">{subscription}x</span>
+      </div>
+      <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2">
+        <div
+          class="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all duration-500"
+          style={`width: ${Math.min(subscription * 10, 100)}%`}
+        />
+      </div>
+    </div>
+  )}
+
+  <!-- Bottom Row -->
+  <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
+    {gmp !== undefined && (
+      <div class="flex items-center gap-1">
+        <span class="text-xs text-surface-500 dark:text-surface-400">GMP:</span>
+        <span class={`text-xs font-semibold ${gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+          {gmp >= 0 ? '+' : ''}₹{gmp}
+        </span>
+      </div>
+    )}
+    {aiScore !== undefined && (
+      <div class="flex items-center gap-1">
+        <span class="text-xs text-surface-500 dark:text-surface-400">AI Score:</span>
+        <span class={`text-xs font-bold ${aiScore >= 7 ? 'text-success-500' : aiScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>
+          {aiScore}/10
+        </span>
+      </div>
+    )}
+  </div>
+</a>

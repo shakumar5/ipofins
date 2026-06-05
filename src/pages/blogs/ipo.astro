@@ -1,0 +1,219 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is an IPO and how does it work?", "acceptedAnswer": { "@type": "Answer", "text": "An IPO (Initial Public Offering) is when a private company sells shares to the public for the first time. The company files DRHP with SEBI, gets approval, sets a price band, opens subscription for 3 days, allots shares, and lists on BSE/NSE." } },
+    { "@type": "Question", "name": "How to invest in IPO in India online?", "acceptedAnswer": { "@type": "Answer", "text": "Open a Demat account with Zerodha/Groww/Upstox. When IPO opens, apply via broker app using UPI. Select lots, enter UPI ID, approve mandate. Money is blocked until allotment." } },
+    { "@type": "Question", "name": "What is IPO GMP?", "acceptedAnswer": { "@type": "Answer", "text": "GMP (Grey Market Premium) is the unofficial price premium at which IPO shares trade before listing. It indicates expected listing gains but is not guaranteed or regulated by SEBI." } },
+    { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Visit the registrar's website (KFin Technologies or Link Intime/MUFG) and enter your PAN or application number. Allotment is typically announced 6 days after IPO closes." } },
+    { "@type": "Question", "name": "Is IPO investment safe?", "acceptedAnswer": { "@type": "Answer", "text": "IPO investment carries market risk. Some IPOs list at premium (profit), others at discount (loss). Research company fundamentals, check subscription data, GMP trends, and AI scores before investing." } }
+  ]
+};
+---
+
+<BaseLayout title="IPO Guide India 2026 - Complete FAQ & How-To | IPOfins" description="Complete IPO guide: How to apply, GMP explained, allotment process, listing gains, risks, tax implications. 30+ FAQs answered for Indian investors.">
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/blogs" class="hover:text-primary-600 transition-colors">Blogs</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">IPO Guide</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">IPO Guide — Complete FAQ</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300">Everything you need to know about IPO investing in India. 30+ questions answered.</p>
+    
+    <!-- Jump Links removed -->
+  </section>
+
+  <section class="container-narrow py-6 space-y-10">
+    <!-- IPO Basics -->
+    <div id="basics">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🧠 IPO Basics</h2>
+      <div class="space-y-3">
+        <details class="card-compact group" open>
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is an IPO and how does it work?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">An IPO (Initial Public Offering) is when a private company offers its shares to the public for the first time on a stock exchange. The process: Company files DRHP with SEBI → Gets approval (30-75 days) → Sets price band → Opens subscription (3 days) → Allotment via lottery → Shares listed on BSE/NSE. After listing, anyone can buy/sell shares on the exchange.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to invest in IPO in India online?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Step 1: Open Demat + trading account (Zerodha, Groww, Upstox — free). Step 2: When IPO opens, go to IPO section in your broker app. Step 3: Select number of lots, enter bid price (usually upper band). Step 4: Enter UPI ID and submit. Step 5: Approve UPI mandate on your UPI app within 24 hours. Done — money is blocked (not debited) until allotment.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Who is eligible to apply for IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Any Indian resident (18+) with a valid PAN card, Demat account, and bank account linked to UPI. NRIs can also apply through NRE/NRO accounts. No minimum income requirement — you just need enough funds to apply for 1 lot.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the minimum amount required to apply for IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Minimum = 1 lot × upper price band. Example: If lot size is 30 shares and price band is ₹480-500, minimum investment = 30 × 500 = ₹15,000. This varies per IPO. Retail investors can apply up to ₹2,00,000 maximum.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO lot size?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Lot size is the minimum number of shares you must apply for. You can only apply in multiples of lot size. SEBI mandates that 1 lot value should be between ₹13,000-₹15,000. For example, if share price is ₹500, lot size = 30 shares (30 × 500 = ₹15,000).</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is price band in IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Price band is the range within which investors can bid (e.g., ₹480-500). The lower price is floor and upper is cap. Most retail investors bid at the upper band (cut-off price) to maximize allotment chances. The final issue price is decided based on book building demand.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is ASBA in IPO application?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">ASBA (Application Supported by Blocked Amount) means your money is blocked in your bank account but not debited until shares are allotted. If you don't get allotment, money is automatically unblocked. This replaced the old system where money was fully debited upfront.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is UPI mandate in IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">When you apply for IPO via UPI, a mandate (block request) is sent to your UPI app (Google Pay, PhonePe, BHIM). You must approve this within 24 hours. Once approved, the amount is blocked in your bank. If you don't approve, your application is automatically rejected.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Application Process -->
+    <div id="application">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📊 IPO Application Process</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to apply IPO using Groww / Zerodha / Upstox?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">All brokers have similar process: Open app → Go to IPO section → Select the IPO → Choose lots (1 lot recommended for retail) → Enter UPI ID → Submit → Approve mandate on UPI app. Groww has the simplest flow. Zerodha requires Kite login. Upstox is via their app.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I apply IPO from multiple accounts?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes — but only one application per PAN. You can apply from different family members' Demat accounts (each has different PAN). Multiple applications from same PAN are rejected. Using multiple brokers with same PAN also counts as duplicate and will be rejected.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to cancel IPO application?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">You can modify or cancel your IPO application before the issue closes. Go to your broker app → IPO section → Active applications → Modify/Cancel. After the issue closes, cancellation is not possible. If you simply don't approve the UPI mandate, your application is automatically cancelled.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Why is IPO money blocked but not debited?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">This is the ASBA system. Money stays in your bank earning interest but is "blocked" (can't be used). If allotted, only then it's debited. If not allotted, it's unblocked within 1-2 days. This protects investors from having money stuck for weeks.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How many IPO applications allowed per PAN?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Exactly ONE application per PAN per IPO in each category (Retail, HNI). Multiple applications from same PAN are flagged and rejected. To increase chances, apply from different family members' accounts (different PANs).</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Allotment -->
+    <div id="allotment">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🎯 IPO Allotment</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How is IPO allotment done?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">In retail category: If subscription ≤ 1x, everyone gets shares. If oversubscribed, allotment is by computerized lottery — each PAN has equal chance regardless of lots applied. In HNI category: proportional allotment. In QIB: discretionary by book running lead manager.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What are chances of IPO allotment?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">If retail subscription is 10x, approximately 1 in 10 applicants gets allotment (via lottery). At 50x, it's 1 in 50. Applying for 1 lot gives the same probability as applying for max lots — so always apply for 1 lot in retail to maximize capital efficiency.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Why did I not get IPO allotment?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Most likely: IPO was oversubscribed and your PAN wasn't selected in lottery. Other reasons: duplicate application (same PAN), technical rejection (incorrect details), UPI mandate not approved in time, or application made after issue closed.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">When is IPO allotment declared?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Typically T+6 working days (T = close date). Day 1-3: subscription. Day 4: finalization. Day 5: allotment, shares in Demat. Day 6: listing on exchange. SEBI is working to reduce this to T+3.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Listing & Profit -->
+    <div id="listing">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📈 IPO Listing & Profit</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO listing gain?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Listing gain = (Listing Price - Issue Price) × Shares. If you got 30 shares at ₹500 and it lists at ₹650, listing gain = (650-500) × 30 = ₹4,500. This is profit if you sell on listing day. Not all IPOs give listing gains — some list below issue price.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I sell IPO on listing day?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Depends on your strategy. If listing at significant premium (30%+), many investors book profit on Day 1. If you believe in the company long-term, hold. Statistics show ~60% of IPOs give positive listing returns, but long-term holding gives better returns for fundamentally strong companies.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Why does IPO listing price increase or decrease?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Increases when: Strong demand (high subscription), positive GMP, good market sentiment, strong fundamentals. Decreases when: Overvalued pricing, weak market conditions, low subscription, negative news, or sector downturn. The listing price is determined by pure demand-supply on exchange.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- GMP -->
+    <div id="gmp">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🔥 GMP (Grey Market Premium)</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO GMP?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">GMP (Grey Market Premium) is the unofficial premium at which IPO shares and applications trade in the grey market before listing. If GMP is ₹50 on a ₹200 IPO, expected listing is ~₹250. The grey market is unregulated and operates via dealers/brokers outside the exchange system.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is IPO GMP accurate?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">GMP is directionally correct about 70% of the time but not always accurate on exact listing price. GMP can be manipulated, changes multiple times daily, and is heavily influenced by overall market mood. Use as one of many signals — not sole decision factor.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Does GMP guarantee listing gain?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. GMP is just market expectation, not a guarantee. There have been cases where GMP was ₹100+ and stock listed flat or at discount. Similarly, sometimes GMP is low but stock lists at good premium. Always cross-check with subscription data and fundamentals.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Where to check IPO GMP today?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check our <a href="/ipo/gmp-today" class="text-primary-600 hover:underline">GMP Today page</a> — updated every 12 hours. GMP data is sourced from grey market dealers and aggregated. Remember: GMP can change rapidly, especially 1-2 days before listing.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Risks -->
+    <div id="risks">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">⚠️ IPO Risks & Strategy</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is IPO investment safe?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No investment is fully "safe." IPO risk factors include: new listing with no trading history, possible overvaluation, lock-in of promoter shares, market timing risk. However, SEBI regulations ensure transparency. To reduce risk: research fundamentals, check peer valuations, track subscription levels.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to choose a good IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check: 1) Company revenue/profit growth (last 3 years), 2) Purpose of IPO (growth vs debt repay), 3) Peer comparison (PE ratio vs listed peers), 4) Promoter background, 5) Subscription levels (QIB interest), 6) GMP trend, 7) Sector outlook. Our AI score combines these factors.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is oversubscription in IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Oversubscription means more applications received than shares offered. If 10 lakh shares offered and demand is for 50 lakh shares, IPO is 5x oversubscribed. High oversubscription (especially QIB 10x+) is a positive signal for listing. However, for retail investors, higher subscription = lower allotment probability.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Tax & Refund -->
+    <div id="tax">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🧾 IPO Tax & Refund</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">When will IPO refund be credited?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">If you don't get allotment, the blocked amount is unblocked within 1-2 business days after allotment date. With UPI/ASBA, money was never debited — just blocked. The bank simply releases the hold. No action needed from your side.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is IPO profit taxable?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes. If sold within 1 year: Short-Term Capital Gains (STCG) taxed at 15%. If held over 1 year: Long-Term Capital Gains (LTCG) taxed at 10% above ₹1 lakh annual exemption. Most IPO investors sell on listing day, so 15% STCG applies to listing gains.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is STCG and LTCG in IPO?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">STCG (Short-Term Capital Gains): Profit from selling shares held less than 1 year — taxed at flat 15%. LTCG (Long-Term Capital Gains): Profit from selling shares held more than 1 year — taxed at 10% on gains exceeding ₹1 lakh (no tax on first ₹1 lakh gain).</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Related -->
+  <section class="container-narrow py-8 border-t border-surface-200 dark:border-surface-700">
+    <div class="flex flex-wrap gap-3">
+      <a href="/ipo" class="btn-secondary">📊 Live IPOs</a>
+      <a href="/ipo/gmp-today" class="btn-secondary">🔥 GMP Today</a>
+      <a href="/ipo/upcoming" class="btn-secondary">🕐 Upcoming IPOs</a>
+      <a href="/tools/ipo-profit-calculator" class="btn-secondary">💰 IPO Profit Calculator</a>
+      <a href="/blogs/mutual-funds" class="btn-secondary">💰 MF FAQs</a>
+      <a href="/blogs/tools" class="btn-secondary">🔧 Tools FAQs</a>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import brokersData from '../../data/brokers.json';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Best Stock Brokers in India 2026",
+  "description": "Compare the best stock brokers in India. Detailed reviews, pricing, features, and side-by-side comparison of discount and full-service brokers.",
+  "url": "https://ipofins.com/broker",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Brokers", "item": "https://ipofins.com/broker" }
+    ]
+  }
+};
+
+const discountBrokers = brokersData.filter(b => b.type === 'discount');
+const fullServiceBrokers = brokersData.filter(b => b.type === 'full-service');
+---
+
+<BaseLayout
+  title="Best Stock Brokers in India 2026 - Compare & Review"
+  description="Compare India's best stock brokers side-by-side. Reviews of Zerodha, Groww, Upstox, Angel One, ICICI Direct with pricing, features, pros & cons."
+  jsonLd={jsonLd}
+>
+  <!-- Breadcrumb -->
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Brokers</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Best Stock Brokers in India 2026
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Comprehensive reviews and side-by-side comparison of India's top discount and full-service brokers.
+    </p>
+  </section>
+
+  <!-- Discount Brokers -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Discount Brokers</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {discountBrokers.map(broker => (
+        <a href={`/broker/${broker.slug}`} class="card group block">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
+              <span class="text-white font-bold text-lg">{broker.logo}</span>
+            </div>
+            <div>
+              <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{broker.name}</h3>
+              <div class="flex items-center gap-1">
+                <span class="text-warning-500">★</span>
+                <span class="text-sm text-surface-600 dark:text-surface-300">{broker.rating}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div>
+              <p class="text-xs text-surface-500 dark:text-surface-400">Trading Fee</p>
+              <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{broker.tradingFee}</p>
+            </div>
+            <div>
+              <p class="text-xs text-surface-500 dark:text-surface-400">Account</p>
+              <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{broker.accountOpening}</p>
+            </div>
+            <div>
+              <p class="text-xs text-surface-500 dark:text-surface-400">AMC</p>
+              <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{broker.amc}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            {broker.platforms.map(platform => (
+              <span class="px-2 py-0.5 text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">
+                {platform}
+              </span>
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Full Service Brokers -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Full-Service Brokers</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {fullServiceBrokers.map(broker => (
+        <a href={`/broker/${broker.slug}`} class="card group block">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-surface-600 to-surface-800 rounded-xl flex items-center justify-center">
+              <span class="text-white font-bold text-lg">{broker.logo}</span>
+            </div>
+            <div>
+              <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{broker.name}</h3>
+              <div class="flex items-center gap-1">
+                <span class="text-warning-500">★</span>
+                <span class="text-sm text-surface-600 dark:text-surface-300">{broker.rating}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div>
+              <p class="text-xs text-surface-500 dark:text-surface-400">Trading Fee</p>
+              <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{broker.tradingFee}</p>
+            </div>
+            <div>
+              <p class="text-xs text-surface-500 dark:text-surface-400">Account</p>
+              <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{broker.accountOpening}</p>
+            </div>
+            <div>
+              <p class="text-xs text-surface-500 dark:text-surface-400">AMC</p>
+              <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{broker.amc}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            {broker.platforms.map(platform => (
+              <span class="px-2 py-0.5 text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">
+                {platform}
+              </span>
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Comparison CTA -->
+  <section class="container-wide py-8">
+    <div class="card bg-gradient-to-r from-surface-50 to-primary-50 dark:from-surface-800 dark:to-primary-950/20 text-center">
+      <h3 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Can't decide?</h3>
+      <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">Use our comparison tool to see brokers side-by-side</p>
+      <a href="/broker/compare" class="btn-primary">Compare Brokers</a>
+    </div>
+  </section>
+</BaseLayout>

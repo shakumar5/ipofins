@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import brokersData from '../../data/brokers.json';
+
+export function getStaticPaths() {
+  return brokersData.map(broker => ({
+    params: { slug: broker.slug },
+    props: { broker },
+  }));
+}
+
+const { broker } = Astro.props;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Review",
+  "name": `${broker.name} Review 2026`,
+  "description": `Detailed review of ${broker.name} - trading fees, platforms, features, pros and cons.`,
+  "url": `https://ipofins.com/broker/${broker.slug}`,
+  "itemReviewed": {
+    "@type": "FinancialProduct",
+    "name": broker.name,
+  },
+  "reviewRating": {
+    "@type": "Rating",
+    "ratingValue": broker.rating,
+    "bestRating": 5
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Brokers", "item": "https://ipofins.com/broker" },
+      { "@type": "ListItem", "position": 3, "name": broker.name, "item": `https://ipofins.com/broker/${broker.slug}` }
+    ]
+  }
+};
+---
+
+<BaseLayout
+  title={`${broker.name} Review 2026 - Fees, Features & Verdict`}
+  description={`${broker.name} review: ${broker.tradingFee} brokerage, ${broker.accountOpening} account opening, rated ${broker.rating}/5. Complete analysis of features, pros, cons and platforms.`}
+  jsonLd={jsonLd}
+>
+  <!-- Breadcrumb -->
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/broker" class="hover:text-primary-600 transition-colors">Brokers</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{broker.name}</li>
+    </ol>
+  </nav>
+
+  <!-- Header -->
+  <section class="container-wide pt-8 pb-6">
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center">
+        <span class="text-white font-bold text-2xl">{broker.logo}</span>
+      </div>
+      <div>
+        <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">{broker.name}</h1>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-warning-500 text-lg">★</span>
+          <span class="font-semibold text-surface-700 dark:text-surface-300">{broker.rating}/5</span>
+          <span class="badge bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 capitalize">{broker.type}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Metrics -->
+  <section class="container-wide py-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500 dark:text-surface-400">Trading Fee</p>
+        <p class="text-lg font-bold text-surface-900 dark:text-white mt-1">{broker.tradingFee}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500 dark:text-surface-400">Account Opening</p>
+        <p class="text-lg font-bold text-surface-900 dark:text-white mt-1">{broker.accountOpening}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500 dark:text-surface-400">AMC</p>
+        <p class="text-lg font-bold text-surface-900 dark:text-white mt-1">{broker.amc}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500 dark:text-surface-400">Rating</p>
+        <p class="text-lg font-bold text-warning-500 mt-1">★ {broker.rating}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Platforms -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Trading Platforms</h2>
+    <div class="flex flex-wrap gap-3">
+      {broker.platforms.map(platform => (
+        <div class="card-compact flex items-center gap-2">
+          <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">{platform}</span>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Pros & Cons -->
+  <section class="container-wide py-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card">
+        <h3 class="text-lg font-bold text-success-500 mb-4">✓ Pros</h3>
+        <ul class="space-y-3">
+          {broker.pros.map(pro => (
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span class="text-sm text-surface-700 dark:text-surface-300">{pro}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="text-lg font-bold text-danger-500 mb-4">✕ Cons</h3>
+        <ul class="space-y-3">
+          {broker.cons.map(con => (
+            <li class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span class="text-sm text-surface-700 dark:text-surface-300">{con}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open Account CTA -->
+  <section class="container-wide py-8">
+    <div class="card bg-gradient-to-r from-primary-50 to-surface-50 dark:from-primary-950/20 dark:to-surface-800 border-primary-200 dark:border-primary-800 text-center">
+      <h3 class="text-xl font-bold text-surface-900 dark:text-white mb-2">Open a {broker.name} Account</h3>
+      <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">
+        {broker.accountOpening} account opening • {broker.tradingFee} per trade
+      </p>
+      <a href={broker.affiliateUrl} class="btn-primary px-8 py-3" rel="nofollow sponsored">
+        Open Account →
+      </a>
+      <p class="text-xs text-surface-400 dark:text-surface-500 mt-3">
+        Affiliate link. We may earn a commission at no extra cost to you.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

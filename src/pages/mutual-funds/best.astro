@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FundTable from '../../components/funds/FundTable.tsx';
+import fundsData from '../../data/mutual-funds.json';
+
+const categories = [...new Set(fundsData.map(f => f.category))];
+
+// Best = meets 2 of 3 criteria
+const top5ByCat = new Set();
+for (const cat of categories) {
+  fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach(f => top5ByCat.add(f.slug));
+}
+const fiveStarFunds = new Set(fundsData.filter(f => f.rating === 5).map(f => f.slug));
+const top10By1Y = new Set([...fundsData].sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map(f => f.slug));
+
+const bestFunds = fundsData.filter(f => {
+  let score = 0;
+  if (top5ByCat.has(f.slug)) score++;
+  if (fiveStarFunds.has(f.slug)) score++;
+  if (top10By1Y.has(f.slug)) score++;
+  return score >= 2;
+});
+---
+
+<BaseLayout title="Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOfins" description="Best mutual funds meeting multiple criteria: top returns + 5-star rating. Large cap, mid cap, small cap, ELSS, hybrid.">
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Best</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">🏆 Best Mutual Funds 2026</h1>
+    <p class="mt-1 text-sm text-surface-500">{bestFunds.length} funds meeting 2 of 3: Top 5 by 3Y in category • 5-star rated • Top 10 by 1Y overall</p>
+
+    <!-- Main Tabs -->
+    <div class="mt-4 flex gap-2">
+      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">Best Funds</span>
+      <a href="/mutual-funds/all" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">All Funds</a>
+      <a href="/mutual-funds/holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
+    </div>
+  </section>
+
+  <section class="container-wide py-4">
+    <FundTable client:load funds={bestFunds} categories={categories} />
+  </section>
+</BaseLayout>

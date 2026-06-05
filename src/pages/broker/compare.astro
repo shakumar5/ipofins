@@ -1,0 +1,165 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import brokersData from '../../data/brokers.json';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Compare Stock Brokers India 2026",
+  "description": "Side-by-side comparison of India's top stock brokers. Compare fees, platforms, features, pros and cons.",
+  "url": "https://ipofins.com/broker/compare"
+};
+---
+
+<BaseLayout title="Compare Stock Brokers - Side by Side Comparison" description="Compare India's top brokers side-by-side. Fees, features, platforms, pros and cons of Zerodha, Groww, Upstox, Angel One, ICICI Direct." jsonLd={jsonLd}>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/broker" class="hover:text-primary-600 transition-colors">Brokers</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Compare</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">Compare Stock Brokers</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">Side-by-side comparison of India's leading stock brokers to help you choose the right one.</p>
+  </section>
+
+  <!-- Comparison Grid -->
+  <section class="container-wide py-6 overflow-x-auto">
+    <div class="min-w-[800px]">
+      <!-- Header -->
+      <div class="grid grid-cols-6 gap-4 mb-4">
+        <div class="p-3">
+          <p class="text-sm font-semibold text-surface-500 dark:text-surface-400">Feature</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <div class="w-10 h-10 mx-auto bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center mb-2">
+              <span class="text-white font-bold">{broker.logo}</span>
+            </div>
+            <p class="text-sm font-semibold text-surface-900 dark:text-white">{broker.name}</p>
+            <p class="text-xs text-warning-500">★ {broker.rating}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Trading Fee -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Trading Fee</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <p class="text-sm font-semibold text-surface-900 dark:text-white">{broker.tradingFee}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Account Opening -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Account Opening</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <p class="text-sm font-semibold text-success-500">{broker.accountOpening}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- AMC -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">AMC</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <p class={`text-sm font-semibold ${broker.amc === 'Free' ? 'text-success-500' : 'text-surface-900 dark:text-white'}`}>{broker.amc}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Type -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Broker Type</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <span class="badge bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 capitalize">{broker.type}</span>
+          </div>
+        ))}
+      </div>
+
+      <!-- Platforms -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Platforms</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <p class="text-xs text-surface-600 dark:text-surface-300">{broker.platforms.join(', ')}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Top Pro -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Top Strength</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <p class="text-xs text-success-500 font-medium">{broker.pros[0]}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Top Con -->
+      <div class="grid grid-cols-6 gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
+        <div class="p-3 flex items-center">
+          <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Main Weakness</p>
+        </div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <p class="text-xs text-danger-500 font-medium">{broker.cons[0]}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- CTA Row -->
+      <div class="grid grid-cols-6 gap-4 py-4 border-t border-surface-200 dark:border-surface-700">
+        <div class="p-3"></div>
+        {brokersData.map(broker => (
+          <div class="p-3 text-center">
+            <a href={`/broker/${broker.slug}`} class="btn-primary text-xs px-3 py-2">View Details</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Recommendation -->
+  <section class="container-wide py-8">
+    <div class="card border-primary-100 dark:border-primary-900/50 bg-gradient-to-br from-primary-50/50 to-white dark:from-primary-950/20 dark:to-surface-800">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-surface-900 dark:text-white mb-1">AI Recommendation</h3>
+          <p class="text-sm text-surface-600 dark:text-surface-300">
+            <strong>For most retail investors:</strong> Zerodha offers the best balance of platform quality, pricing, and reliability. 
+            <strong>For beginners:</strong> Groww has the simplest interface with zero AMC. 
+            <strong>For research-oriented investors:</strong> Angel One provides free advisory with decent tools.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

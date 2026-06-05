@@ -1,0 +1,58 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  jsonLd?: object;
+  activeTab: string;
+}
+
+const { title, description, jsonLd, activeTab } = Astro.props;
+
+const tabs = [
+  { key: 'all', label: 'All', href: '/ipo' },
+  { key: 'mainboard', label: 'Mainboard', href: '/ipo/mainboard' },
+  { key: 'sme', label: 'SME', href: '/ipo/sme' },
+  { key: 'upcoming', label: 'Upcoming', href: '/ipo/upcoming' },
+  { key: 'gmp-today', label: 'GMP', href: '/ipo/gmp-today' },
+  { key: 'subscription', label: 'Subscription', href: '/ipo/subscription-status' },
+  { key: 'allotment', label: 'Allotment', href: '/ipo/allotment-status' },
+  { key: 'performance', label: 'Performance', href: '/ipo/performance/2026' },
+  { key: 'sector', label: 'Sector', href: '/ipo/sector/healthcare' },
+];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <!-- Breadcrumb -->
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">IPOs</li>
+    </ol>
+  </nav>
+
+  <!-- Persistent Tab Navigation -->
+  <div class="container-wide pt-6 pb-2 sticky top-16 z-40 bg-white/95 dark:bg-surface-900/95 backdrop-blur-sm">
+    <div class="overflow-x-auto -mx-4 px-4">
+      <div class="flex gap-1 min-w-max border-b border-surface-200 dark:border-surface-700 pb-0">
+        {tabs.map(tab => (
+          <a
+            href={tab.href}
+            class={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              activeTab === tab.key
+                ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400'
+                : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 hover:border-surface-300'
+            }`}
+          >
+            {tab.label}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <slot />
+</BaseLayout>

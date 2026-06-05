@@ -1,0 +1,212 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a SIP calculator and how does it work?", "acceptedAnswer": { "@type": "Answer", "text": "A SIP calculator estimates future value of monthly investments using compound interest formula. Enter monthly amount, expected return rate, and duration to see projected wealth." } },
+    { "@type": "Question", "name": "How is CAGR calculated?", "acceptedAnswer": { "@type": "Answer", "text": "CAGR = (Final Value / Initial Value)^(1/Years) - 1. It shows the smoothed annual growth rate eliminating year-to-year volatility." } },
+    { "@type": "Question", "name": "How is EMI calculated for loans?", "acceptedAnswer": { "@type": "Answer", "text": "EMI = [P × R × (1+R)^N] / [(1+R)^N - 1] where P=principal, R=monthly interest rate, N=total months. Our calculator shows principal vs interest breakdown." } },
+    { "@type": "Question", "name": "Are these financial calculators free to use?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, all calculators on IPOfins are 100% free. No signup required. They run entirely in your browser — no data is stored or shared." } }
+  ]
+};
+---
+
+<BaseLayout title="Finance Tools Guide - Calculator FAQs | IPOfins" description="Complete guide to financial calculators: SIP, CAGR, EMI, IPO Profit, Return Simulator, Risk Analyzer. 40+ FAQs answered.">
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/blogs" class="hover:text-primary-600 transition-colors">Blogs</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Tools Guide</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Finance Tools Guide — Complete FAQ</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300">Everything about SIP calculator, CAGR, EMI, IPO profit, return simulator & risk analyzer.</p>
+  </section>
+
+  <section class="container-narrow py-6 space-y-10">
+    <!-- SIP Calculator -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📈 SIP Calculator FAQ</h2>
+      <div class="space-y-3">
+        <details class="card-compact group" open>
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a SIP calculator and how does it work?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A SIP calculator estimates the future value of your monthly mutual fund investments using the compound interest formula: FV = P × ((1+r)^n - 1) / r × (1+r). You enter monthly investment, expected annual return, and time period. It shows total invested, estimated returns, and final corpus. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a>.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How accurate is a SIP calculator?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SIP calculators give accurate projections based on the return rate you enter. However, actual returns vary year-to-year. The calculator assumes a constant return rate, while real markets fluctuate. Use 12% for conservative equity estimate, 15% for aggressive. Actual results may differ by ±20%.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Does SIP calculator include inflation?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No, basic SIP calculators show nominal returns (not inflation-adjusted). To account for inflation (~6%), subtract it from expected return. E.g., if you expect 12% return, real return = 12% - 6% = 6%. Or use step-up SIP (increase SIP by 10% yearly) to beat inflation.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I change SIP amount during investment?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes! You can increase (step-up SIP), decrease, pause, or stop SIP anytime. Most advisors recommend increasing SIP by 10% annually to match income growth. Our calculator helps you plan with a fixed amount — adjust as your income grows.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the best monthly SIP amount to start with?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Start with 20-30% of monthly income. Minimum ₹500 for most funds. Recommended: ₹5,000-₹10,000 for meaningful wealth creation. For ₹1 Cr in 15 years at 12%: need ~₹20,000/month. Start small, increase yearly — consistency matters more than amount.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can SIP returns be guaranteed?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. SIP in mutual funds is market-linked. Returns are NOT guaranteed. However, SIP reduces risk through rupee cost averaging. Historical data: equity SIP for 10+ years has never given negative returns in Indian markets. The calculator shows estimates, not guarantees.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- CAGR Calculator -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📊 CAGR Calculator FAQ</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is CAGR in simple terms?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">CAGR (Compound Annual Growth Rate) tells you the steady annual rate at which your investment grew. If ₹1 lakh became ₹2.5 lakhs in 5 years, CAGR = 20.1%. It smooths out yearly ups and downs to give one consistent number. Think of it as "if my investment grew at a steady rate every year, what would that rate be?"</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How is CAGR calculated?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Formula: CAGR = (Final Value / Initial Value)^(1/Number of Years) - 1. Example: ₹1L grew to ₹3L in 7 years → CAGR = (3/1)^(1/7) - 1 = 17%. Use our <a href="/tools/cagr-calculator" class="text-primary-600 hover:underline">CAGR Calculator</a> for instant results.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a good CAGR for mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Depends on category: Large Cap 12-14%, Mid Cap 15-18%, Small Cap 18-25%, Debt 7-9%. If a fund's CAGR consistently beats its benchmark over 5 years, it's performing well. Nifty 50 long-term CAGR is ~12-13%.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can CAGR be negative?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes. If your investment value is lower than what you invested, CAGR will be negative. Example: ₹1L became ₹80K in 2 years → CAGR = (0.8)^(1/2) - 1 = -10.6%. This happens during bear markets for short holding periods.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between CAGR and absolute return?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Absolute return = total % gain regardless of time (e.g., "150% profit"). CAGR = annualized return (e.g., "20% per year for 5 years"). CAGR is better for comparing investments with different time periods. A 100% return in 3 years (CAGR 26%) is better than 100% in 7 years (CAGR 10.4%).</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- EMI Calculator -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🏦 EMI Calculator FAQ</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is an EMI calculator and how does it work?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">An EMI calculator computes your monthly loan payment based on loan amount, interest rate, and tenure. It uses: EMI = [P × R × (1+R)^N] / [(1+R)^N - 1]. It also shows total interest payable and principal vs interest breakdown. Use our <a href="/tools/emi-calculator" class="text-primary-600 hover:underline">EMI Calculator</a>.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Does EMI include interest and principal?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes! Each EMI has two components: principal (reduces loan balance) and interest (bank's charge). In early months, interest component is higher. Over time, principal component increases. This is called amortization. Our calculator shows the exact split.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How can I reduce my EMI amount?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Options: 1) Increase tenure (lower EMI but more total interest), 2) Make part-prepayment (reduces principal), 3) Balance transfer to lower interest rate bank, 4) Negotiate rate with existing bank. Best strategy: keep short tenure, prepay when possible.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which loan has lowest EMI in India?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">By interest rate (lowest to highest): Home loan (8.2-9%) → LAP (9-11%) → Car loan (8.5-12%) → Education loan (8-13%) → Personal loan (10-24%) → Credit card (24-42%). Home loans have lowest EMI due to lower rates + longer tenure (up to 30 years).</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What happens if I miss EMI payments?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Late fee charged (1-2% of EMI). CIBIL score drops (each miss reduces by 50-100 points). After 90 days: account becomes NPA. Bank sends legal notice. Can lead to property seizure for secured loans. Always maintain EMI buffer of 3 months in savings.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- IPO Profit Calculator -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">💰 IPO Profit Calculator FAQ</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How is IPO profit calculated?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPO Profit = (Listing Price - Issue Price) × Number of Shares. Example: 30 shares at ₹500, lists at ₹650 → Profit = (650-500) × 30 = ₹4,500. Use our <a href="/tools/ipo-profit-calculator" class="text-primary-600 hover:underline">IPO Profit Calculator</a> with GMP-based listing estimate.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can IPO returns be guaranteed?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. IPO listing price depends on market demand. Some IPOs list at 50%+ premium, others at 20% discount. Historical average: ~65% of IPOs give positive listing returns. GMP gives indication but not guarantee. The calculator shows estimated profit — actual may differ.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I lose money in IPO investment?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes. If listing price is below issue price, you face loss. Example: Issue at ₹500, lists at ₹420 → Loss = (500-420) × 30 = ₹2,400. This happens when market sentiment turns negative, company is overvalued, or sector faces headwinds. Always research before applying.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Return Simulator -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🎯 Return Simulator FAQ</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a return simulator used for?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A return simulator models how your lump-sum investment grows under different scenarios (conservative 8%, moderate 12%, aggressive 18%). It helps you compare outcomes and choose the right risk level for your goals. Use our <a href="/tools/return-simulator" class="text-primary-600 hover:underline">Return Simulator</a>.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can return simulation predict actual profits?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No — simulations show mathematical projections, not predictions. Actual returns depend on market conditions, fund selection, and timing. Use simulations to set expectations and plan goals, not as guaranteed outcomes.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I use return simulator for mutual funds and stocks?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes! Our simulator works for any investment. Use 12-15% for equity mutual funds, 8-10% for debt, 15-20% for aggressive stock portfolio. The comparison view helps you see the difference between playing it safe vs being aggressive.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Risk Analyzer -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">⚡ Risk Analyzer FAQ</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a risk analyzer in investments?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A risk analyzer evaluates the risk level of an investment on a scale (e.g., 1-10). It considers factors like volatility, sector risk, company fundamentals, market conditions, and historical drawdowns to give a risk score. Our AI-based analyzer scores IPOs and funds automatically.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is high risk vs low risk investment?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Low risk (score 1-3): FDs, liquid funds, large-cap — stable returns, minimal loss possibility. Medium risk (4-6): balanced funds, mid-cap, mainboard IPOs. High risk (7-10): small-cap, SME IPOs, sectoral funds — high potential returns but significant loss possibility.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How does AI-based risk scoring work?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">AI risk scoring analyzes multiple data points: historical volatility, PE ratio vs sector average, promoter quality, debt levels, revenue consistency, market sentiment, and subscription trends. These are weighted and combined into a single score (1-10). Higher score = higher risk.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Universal -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🔥 General Tool Questions</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are these financial calculators free to use?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes, 100% free. No signup, no login, no hidden charges. All calculators run in your browser. No data is stored on our servers. Use them unlimited times.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are the results accurate for investment planning?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Our calculators use standard financial formulas and give mathematically accurate results based on your inputs. However, actual investment returns vary due to market conditions. Use these as planning tools, not guarantees. For precise tax calculations, consult a CA.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I use these tools on mobile?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes! All tools are fully responsive and work on mobile, tablet, and desktop. The sliders and inputs are optimized for touch. No app download needed — works directly in your browser.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Do these calculators store my data?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. All calculations happen in your browser (client-side). Nothing is sent to any server. Your financial data stays on your device. We don't use cookies for calculators. Your privacy is fully protected.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Related -->
+  <section class="container-narrow py-8 border-t border-surface-200 dark:border-surface-700">
+    <div class="flex flex-wrap gap-3">
+      <a href="/tools" class="btn-secondary">🔧 All Tools</a>
+      <a href="/tools/sip-calculator" class="btn-secondary">📈 SIP Calculator</a>
+      <a href="/tools/cagr-calculator" class="btn-secondary">📊 CAGR Calculator</a>
+      <a href="/tools/emi-calculator" class="btn-secondary">🏦 EMI Calculator</a>
+      <a href="/blogs/ipo" class="btn-secondary">📈 IPO FAQs</a>
+      <a href="/blogs/mutual-funds" class="btn-secondary">💰 MF FAQs</a>
+    </div>
+  </section>
+</BaseLayout>

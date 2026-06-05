@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "About ipofins",
+  "description": "ipofins is a free, AI-powered finance intelligence platform helping Indian investors make smarter decisions.",
+  "url": "https://ipofins.com/about"
+};
+---
+
+<BaseLayout title="About ipofins - Free Finance Intelligence Platform" description="ipofins provides free IPO tracking, SIP calculators, broker comparisons, and AI-powered investment insights for Indian retail investors." jsonLd={jsonLd}>
+  <section class="container-narrow py-16">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+        About ipofins
+      </h1>
+      
+      <div class="mt-8 space-y-6 text-surface-600 dark:text-surface-300 leading-relaxed">
+        <p class="text-lg">
+          ipofins is a free, open-source finance intelligence platform built for Indian retail investors. We provide tools, data, and AI-powered insights to help you make smarter investment decisions.
+        </p>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Our Mission</h2>
+        <p>
+          Financial literacy and access to quality investment tools shouldn't cost money. We believe every Indian investor — whether investing ₹500 or ₹5 lakhs — deserves access to the same quality of research, analysis, and tools that institutional investors use.
+        </p>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">What We Offer</h2>
+        <ul class="list-disc list-inside space-y-2">
+          <li><strong>IPO Intelligence</strong> — Track every mainboard and SME IPO with real-time subscription data, GMP tracking, and AI-powered analysis</li>
+          <li><strong>Finance Calculators</strong> — Free SIP, CAGR, EMI, and IPO profit calculators with instant, accurate results</li>
+          <li><strong>Broker Comparisons</strong> — Unbiased side-by-side comparisons of India's top stock brokers</li>
+          <li><strong>Mutual Fund Insights</strong> — NAV data, returns comparison, and fund recommendations by category</li>
+          <li><strong>AI-Powered Analysis</strong> — Machine learning models that score IPOs on risk, value, and opportunity</li>
+        </ul>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">How We Make Money</h2>
+        <p>
+          We're transparent about our business model. ipofins earns revenue through:
+        </p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Contextual advertisements (Google AdSense)</li>
+          <li>Broker affiliate partnerships (when you open an account through our links)</li>
+          <li>Premium subscription for advanced AI features (coming soon)</li>
+        </ul>
+        <p>
+          These revenue sources never influence our analysis or recommendations. Our AI scoring system operates independently of any commercial relationship.
+        </p>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Data Sources & Accuracy</h2>
+        <p>
+          We source data from official channels including AMFI India, BSE, NSE, and SEBI filings. Our data refreshes automatically every 12 hours. While we strive for accuracy, all information is provided for educational purposes. Always verify with official sources before making investment decisions.
+        </p>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Disclaimer</h2>
+        <p class="text-sm text-surface-500 dark:text-surface-400">
+          ipofins is not a SEBI-registered investment advisor. The information provided on this platform is for educational and informational purposes only. Investment in securities market is subject to market risks. Past performance does not guarantee future results. Please read all related documents carefully before investing. Consult a qualified financial advisor for personalized advice.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

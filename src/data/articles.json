@@ -1,0 +1,194 @@
+[
+  {
+    "title": "How to Apply for an IPO in India - Complete Guide",
+    "slug": "how-to-apply-ipo",
+    "excerpt": "Step-by-step guide to applying for IPOs through UPI, ASBA, and online broker platforms.",
+    "category": "IPO Basics",
+    "readTime": "5 min",
+    "content": "<h2>How to Apply for IPO in India (2026)</h2><p>Applying for an IPO in India is simple and takes under 5 minutes using any broker app.</p><h3>Prerequisites</h3><ul><li><strong>Demat Account</strong> — Open with Zerodha, Groww, or Upstox (free)</li><li><strong>Bank Account</strong> — Linked to UPI with sufficient funds</li><li><strong>PAN Card</strong> — KYC must be complete</li></ul><h3>Step-by-Step Process</h3><ol><li>Open your broker app (Zerodha Kite, Groww, or Upstox)</li><li>Go to IPO section</li><li>Select the IPO you want to apply for</li><li>Choose number of lots — 1 lot recommended for best allotment probability</li><li>Enter bid price — Select Cut-off price (recommended)</li><li>Enter your UPI ID</li><li>Submit application</li><li>Approve UPI mandate within 24 hours</li></ol><h3>Important Points</h3><ul><li>Money is blocked (not debited) until allotment — this is ASBA</li><li>Maximum retail application: ₹2,00,000</li><li>Only one application per PAN per IPO</li><li>If mandate not approved in 24 hours, application rejected</li></ul><p><a href=\"/ipo\">View currently open IPOs →</a></p>"
+  },
+  {
+    "title": "Understanding Grey Market Premium (GMP)",
+    "slug": "grey-market-premium-guide",
+    "excerpt": "What is GMP, how it works, and should you base your IPO decisions on it?",
+    "category": "IPO Basics",
+    "readTime": "4 min",
+    "content": "<h2>What is IPO GMP (Grey Market Premium)?</h2><p>GMP is the unofficial premium at which IPO shares trade before listing. The grey market is unregulated and operates outside stock exchanges.</p><h3>How GMP Works</h3><p>If IPO price is ₹100-110 and GMP is ₹40, expected listing is ~₹150 (36% premium).</p><h3>Factors Affecting GMP</h3><ul><li>Demand-supply in grey market</li><li>Overall market sentiment</li><li>Subscription levels (QIB interest is key)</li><li>Company fundamentals and sector outlook</li></ul><h3>Is GMP Reliable?</h3><p>Directionally correct ~70% of the time but not always accurate. Can be manipulated and changes multiple times daily. Use as one signal alongside subscription data and fundamentals.</p><p><a href=\"/ipo/gmp-today\">Check latest GMP →</a></p>"
+  },
+  {
+    "title": "SIP vs Lump Sum - Which is Better?",
+    "slug": "sip-vs-lumpsum",
+    "excerpt": "Detailed comparison of systematic and one-time investment approaches with historical data.",
+    "category": "Mutual Funds",
+    "readTime": "6 min",
+    "content": "<h2>SIP vs Lump Sum — Which is Better?</h2><p>Both have advantages depending on market conditions and your situation.</p><h3>SIP Advantages</h3><ul><li>Rupee cost averaging reduces timing risk</li><li>Disciplined automatic investing</li><li>Works well in volatile markets</li><li>No need for large capital upfront</li></ul><h3>Lump Sum Advantages</h3><ul><li>Historically outperforms SIP 60-65% of the time over 10+ years</li><li>Better when markets are clearly undervalued (post-crash)</li><li>Full capital works from day one</li></ul><h3>Best Strategy</h3><p>Combine both: Regular SIP from salary + Lump sum during market corrections (20%+ falls). This gives consistency plus opportunity capture.</p><p><a href=\"/tools/sip-calculator\">Calculate SIP returns →</a></p>"
+  },
+  {
+    "title": "Options Trading for Beginners",
+    "slug": "options-trading-basics",
+    "excerpt": "Learn the fundamentals of options trading — calls, puts, strike price, expiry, and strategies.",
+    "category": "Trading",
+    "readTime": "8 min"
+  },
+  {
+    "title": "How to Choose the Right Broker",
+    "slug": "choosing-right-broker",
+    "excerpt": "Factors to consider when picking a stock broker — fees, platforms, support, and more.",
+    "category": "Brokers",
+    "readTime": "5 min"
+  },
+  {
+    "title": "NRI Investment Guide - Investing in India",
+    "slug": "nri-investment-guide",
+    "excerpt": "Complete guide for NRIs on how to invest in Indian stocks, mutual funds, and IPOs.",
+    "category": "NRI",
+    "readTime": "7 min"
+  },
+  {
+    "title": "How to Open a Demat Account Online in 2026",
+    "slug": "how-to-open-demat-account",
+    "excerpt": "Step-by-step process to open a Demat account for free with Zerodha, Groww, or Upstox in under 10 minutes.",
+    "category": "Getting Started",
+    "readTime": "5 min",
+    "content": "<h2>How to Open a Demat Account Online (2026)</h2><p>A Demat account is mandatory for stocks, direct mutual funds, and IPO applications. Free to open, takes 10 minutes.</p><h3>Best Brokers</h3><ul><li><strong>Zerodha</strong> — Best platform, ₹300/year AMC</li><li><strong>Groww</strong> — Simplest UI, free AMC</li><li><strong>Upstox</strong> — Free everything, good charting</li></ul><h3>Documents Needed</h3><ul><li>PAN Card</li><li>Aadhaar (linked to mobile)</li><li>Bank account details</li><li>Signature photo</li></ul><h3>Process</h3><ol><li>Download broker app</li><li>Enter mobile → verify OTP</li><li>Enter PAN</li><li>Complete Aadhaar eKYC</li><li>Upload signature</li><li>Link bank account</li><li>E-sign with Aadhaar OTP</li><li>Account active in 24-48 hours</li></ol><p><a href=\"/broker/compare\">Compare all brokers →</a></p>"
+  },
+  {
+    "title": "What is CAGR and How to Calculate It",
+    "slug": "what-is-cagr",
+    "excerpt": "Understanding Compound Annual Growth Rate with formula, examples, and how to use it to compare investments.",
+    "category": "Mutual Funds",
+    "readTime": "4 min",
+    "content": "<h2>What is CAGR? — Compound Annual Growth Rate</h2><p>CAGR shows the steady annual rate at which your investment grew, eliminating year-to-year volatility.</p><h3>Formula</h3><p>CAGR = (Final Value / Initial Value)^(1/Years) - 1</p><h3>Example</h3><p>₹1 lakh became ₹2.5 lakhs in 5 years: CAGR = (2.5)^(1/5) - 1 = 20.1% per year</p><h3>Good CAGR Benchmarks (India)</h3><ul><li>FD: 6-7%</li><li>PPF: 7-8%</li><li>Nifty 50: 12-14%</li><li>Good mutual fund: 15-20%</li><li>Top small-cap: 20-30%</li></ul><p><a href=\"/tools/cagr-calculator\">Calculate your CAGR →</a></p>"
+  },
+  {
+    "title": "Best Tax Saving Investments Under Section 80C",
+    "slug": "tax-saving-80c-investments",
+    "excerpt": "Complete list of 80C options: ELSS, PPF, NPS, life insurance, EPF, NSC — compared by returns and lock-in.",
+    "category": "Tax Planning",
+    "readTime": "7 min",
+    "content": "<h2>Best Tax Saving Options Under 80C</h2><p>Section 80C allows ₹1,50,000 deduction from taxable income. Best options:</p><h3>Top Picks</h3><ul><li><strong>ELSS</strong> — 12-18% returns, 3-year lock-in (shortest)</li><li><strong>PPF</strong> — 7.1% guaranteed, 15-year lock-in, tax-free returns</li><li><strong>NPS</strong> — 9-12% returns, extra ₹50K deduction under 80CCD(1B)</li><li><strong>EPF</strong> — 8.25%, auto-deducted from salary</li></ul><h3>Best Strategy</h3><p>ELSS SIP of ₹12,500/month covers full ₹1.5L with highest growth potential and shortest lock-in.</p><p><a href=\"/mutual-funds/best\">View best ELSS funds →</a></p>"
+  },
+  {
+    "title": "Index Funds vs Mutual Funds - Which Should You Choose?",
+    "slug": "index-funds-vs-mutual-funds",
+    "excerpt": "Active vs passive investing in India. When index funds make sense and when active funds outperform.",
+    "category": "Mutual Funds",
+    "readTime": "6 min",
+    "content": "<h2>Index Funds vs Active Mutual Funds</h2><p>In India, this debate has a different answer than the US.</p><h3>Key Difference</h3><ul><li>US: 90% active funds fail to beat index → index wins</li><li>India: 50-60% active funds beat Nifty 50 → active still has edge</li></ul><h3>Choose Index When</h3><ul><li>Want zero fund manager risk</li><li>Okay with market returns (12-13%)</li><li>Want lowest cost (0.1% expense ratio)</li></ul><h3>Choose Active When</h3><ul><li>Want to potentially beat market</li><li>Investing in mid/small cap (more alpha opportunity)</li><li>Willing to research fund managers</li></ul><h3>Best Approach</h3><p>50-60% Nifty 50 index (core) + 30-40% active mid/small cap (satellite).</p>"
+  },
+  {
+    "title": "How to Check IPO Allotment Status Online",
+    "slug": "check-ipo-allotment-status",
+    "excerpt": "Step-by-step guide to check allotment on KFin, Link Intime registrar websites using PAN or application number.",
+    "category": "IPO Basics",
+    "readTime": "3 min",
+    "content": "<h2>How to Check IPO Allotment Status</h2><p>Allotment is announced ~6 working days after subscription closes.</p><h3>Method 1: Registrar Website</h3><ul><li><strong>KFin:</strong> ipostatus.kfintech.com</li><li><strong>Link Intime:</strong> in.mpms.mufg.com/Initial_Offer/public-issues.html</li></ul><h3>Steps</h3><ol><li>Visit registrar website</li><li>Select IPO name</li><li>Enter PAN or Application Number</li><li>Submit — shows Allotted or Not Allotted</li></ol><h3>If Not Allotted</h3><p>Money unblocked automatically in 1-2 days. No action needed.</p><p><a href=\"/ipo/allotment-status\">Check with direct links →</a></p>"
+  },
+  {
+    "title": "What is NAV in Mutual Funds - Explained Simply",
+    "slug": "what-is-nav-mutual-fund",
+    "excerpt": "How NAV is calculated, why higher NAV doesn't mean expensive, and how NAV affects your returns.",
+    "category": "Mutual Funds",
+    "readTime": "4 min"
+  },
+  {
+    "title": "ELSS vs PPF vs FD - Best Tax Saving Option",
+    "slug": "elss-vs-ppf-vs-fd",
+    "excerpt": "Compare ELSS mutual funds with PPF and fixed deposits for tax saving. Returns, lock-in, risk, and liquidity compared.",
+    "category": "Tax Planning",
+    "readTime": "6 min"
+  },
+  {
+    "title": "How to Start Investing with ₹500 Per Month",
+    "slug": "start-investing-500-per-month",
+    "excerpt": "Beginner's guide to starting a SIP with just ₹500. Best funds, platforms, and how small amounts compound over time.",
+    "category": "Getting Started",
+    "readTime": "5 min",
+    "content": "<h2>How to Start Investing with ₹500/Month</h2><p>You do not need lakhs to start. ₹500/month SIP builds meaningful wealth over time.</p><h3>₹500/Month Growth</h3><ul><li>10 years at 12%: ₹1,16,170</li><li>15 years at 12%: ₹2,52,502</li><li>20 years at 12%: ₹4,99,574</li><li>25 years at 12%: ₹9,44,641</li></ul><h3>Best Funds for ₹500 SIP</h3><ul><li>Beginner: Nifty 50 Index Fund</li><li>Moderate: Parag Parikh Flexi Cap</li><li>Aggressive: Quant Small Cap (10+ year horizon)</li></ul><h3>How to Start</h3><ol><li>Download Groww app</li><li>Complete KYC (2 minutes)</li><li>Search fund name</li><li>Click Start SIP → Set ₹500 → Done</li></ol><p>Start today. Increase by ₹500 every year.</p><p><a href=\"/tools/sip-calculator\">Calculate your growth →</a></p>"
+  },
+  {
+    "title": "Direct vs Regular Mutual Fund - Which is Better?",
+    "slug": "direct-vs-regular-mutual-fund",
+    "excerpt": "Why direct plans give 1% higher returns, how to switch from regular to direct, and when regular makes sense.",
+    "category": "Mutual Funds",
+    "readTime": "5 min",
+    "content": "<h2>Direct vs Regular Mutual Fund</h2><p><strong>Direct plan is always better for returns.</strong></p><h3>Difference</h3><ul><li>Direct: No distributor commission. Lower expense ratio.</li><li>Regular: Distributor earns 0.5-1% annually from your investment.</li></ul><h3>Impact Over 20 Years</h3><p>₹10,000/month SIP: Direct (12%) = ₹98.9L vs Regular (11%) = ₹86.4L. Difference: ₹12.5 lakhs lost to commission!</p><h3>Where to Buy Direct</h3><ul><li>Groww, Zerodha Coin, Kuvera (free platforms)</li><li>AMC websites directly</li></ul><h3>How to Switch</h3><p>Stop regular SIP. Start new SIP in same fund's direct plan. Let old units grow (don't redeem — triggers tax).</p>"
+  },
+  {
+    "title": "What Happens When You Miss a SIP Payment",
+    "slug": "missed-sip-payment",
+    "excerpt": "No penalty, no charges — but what actually happens to your mandate and existing units when SIP is missed.",
+    "category": "Mutual Funds",
+    "readTime": "3 min"
+  },
+  {
+    "title": "How to Calculate EMI for Home Loan",
+    "slug": "calculate-emi-home-loan",
+    "excerpt": "EMI formula explained, factors that affect your EMI, and tips to reduce home loan interest outgo.",
+    "category": "Loans",
+    "readTime": "5 min"
+  },
+  {
+    "title": "Zerodha vs Groww vs Upstox - Detailed Comparison 2026",
+    "slug": "zerodha-vs-groww-vs-upstox",
+    "excerpt": "Compare India's top 3 brokers on fees, platforms, mutual funds, IPO access, and customer support.",
+    "category": "Brokers",
+    "readTime": "8 min"
+  },
+  {
+    "title": "What is Expense Ratio in Mutual Funds",
+    "slug": "expense-ratio-mutual-funds",
+    "excerpt": "How expense ratio eats into your returns, what's a good expense ratio, and why direct plans are cheaper.",
+    "category": "Mutual Funds",
+    "readTime": "4 min"
+  },
+  {
+    "title": "How Long Should You Stay Invested in Mutual Funds",
+    "slug": "how-long-stay-invested-mutual-funds",
+    "excerpt": "Minimum holding periods by fund type, why time in market beats timing the market, and when to exit.",
+    "category": "Mutual Funds",
+    "readTime": "5 min"
+  },
+  {
+    "title": "What is Step-Up SIP and How It Works",
+    "slug": "step-up-sip-guide",
+    "excerpt": "Increase your SIP by 10% yearly to build wealth faster. Calculator shows how step-up beats regular SIP.",
+    "category": "Mutual Funds",
+    "readTime": "4 min"
+  },
+  {
+    "title": "How Mutual Fund Taxation Works in India 2026",
+    "slug": "mutual-fund-taxation-india",
+    "excerpt": "Complete guide to STCG, LTCG, debt fund tax, ELSS, and how SIP taxation is calculated.",
+    "category": "Tax Planning",
+    "readTime": "7 min"
+  },
+  {
+    "title": "Best Mutual Funds for Beginners in India",
+    "slug": "best-mutual-funds-beginners",
+    "excerpt": "Low-risk, well-diversified funds perfect for first-time investors. How to build a simple 2-3 fund portfolio.",
+    "category": "Getting Started",
+    "readTime": "6 min"
+  },
+  {
+    "title": "What is XIRR and How to Calculate SIP Returns",
+    "slug": "xirr-sip-returns",
+    "excerpt": "Why CAGR doesn't work for SIP and how XIRR gives accurate annualized return for irregular cash flows.",
+    "category": "Mutual Funds",
+    "readTime": "5 min"
+  },
+  {
+    "title": "How to Build a ₹1 Crore Corpus with SIP",
+    "slug": "build-1-crore-sip",
+    "excerpt": "Exact monthly SIP amounts needed for ₹1 Cr at different return rates and time horizons (10, 15, 20 years).",
+    "category": "Financial Planning",
+    "readTime": "5 min"
+  },
+  {
+    "title": "What Happens to Mutual Funds During Market Crash",
+    "slug": "mutual-funds-market-crash",
+    "excerpt": "Should you stop SIP during crash? History of crashes and recoveries. Why crashes are buying opportunities.",
+    "category": "Mutual Funds",
+    "readTime": "6 min"
+  }
+]

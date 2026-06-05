@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page Not Found (404)">
+  <section class="container-narrow py-24 text-center">
+    <div class="max-w-md mx-auto">
+      <!-- 404 Visual -->
+      <div class="text-8xl font-extrabold text-surface-200 dark:text-surface-700 mb-4">404</div>
+
+      <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-3">
+        Page not found
+      </h1>
+      <p class="text-surface-500 dark:text-surface-400 mb-8">
+        The page you're looking for doesn't exist or has been moved. Let's get you back on track.
+      </p>
+
+      <div class="flex flex-wrap justify-center gap-3">
+        <a href="/" class="btn-primary px-6 py-3">
+          Go Home
+        </a>
+        <a href="/ipo" class="btn-secondary px-6 py-3">
+          Browse IPOs
+        </a>
+        <a href="/tools" class="btn-secondary px-6 py-3">
+          Finance Tools
+        </a>
+      </div>
+
+      <!-- Helpful Links -->
+      <div class="mt-12 pt-8 border-t border-surface-200 dark:border-surface-700">
+        <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">Popular pages:</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <a href="/ipo" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">IPO Listings</a>
+          <span class="text-surface-300 dark:text-surface-600">•</span>
+          <a href="/tools/sip-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">SIP Calculator</a>
+          <span class="text-surface-300 dark:text-surface-600">•</span>
+          <a href="/broker/compare" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Compare Brokers</a>
+          <span class="text-surface-300 dark:text-surface-600">•</span>
+          <a href="/mutual-funds" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Mutual Funds</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

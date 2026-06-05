@@ -1,0 +1,262 @@
+---
+import IPOLayout from '../../layouts/IPOLayout.astro';
+import AIInsightBox from '../../components/AIInsightBox.astro';
+import RiskBadge from '../../components/RiskBadge.astro';
+import iposData from '../../data/ipos.json';
+
+export function getStaticPaths() {
+  return iposData.map(ipo => ({
+    params: { slug: ipo.slug },
+    props: { ipo },
+  }));
+}
+
+const { ipo } = Astro.props;
+
+const statusConfig = {
+  live: { label: 'Live', class: 'badge-live' },
+  upcoming: { label: 'Upcoming', class: 'badge-upcoming' },
+  closed: { label: 'Closed', class: 'badge-closed' },
+  listed: { label: 'Listed', class: 'badge-listed' },
+};
+const statusInfo = statusConfig[ipo.status as keyof typeof statusConfig];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FinancialProduct",
+  "name": `${ipo.name} IPO`,
+  "description": ipo.description || ipo.aiSummary,
+  "url": `https://ipofins.com/ipo/${ipo.slug}`,
+};
+---
+
+<IPOLayout
+  activeTab={ipo.type === 'mainboard' ? 'mainboard' : 'sme'}
+  title={`${ipo.name} IPO 2026 - Price, GMP, Review & Analysis | IPOfins`}
+  description={`${ipo.name} IPO: Price ₹${ipo.priceRange}, lot size ${ipo.lotSize}, issue size ${ipo.issueSize}. ${ipo.description?.slice(0, 100)}`}
+  jsonLd={jsonLd}
+>
+  <!-- Header -->
+  <section class="container-wide pt-6 pb-4">
+    <a href="/ipo" class="text-sm text-primary-600 hover:underline mb-3 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back to IPOs
+    </a>
+
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-3">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
+          <span class="text-xs text-surface-500 uppercase">{ipo.type}</span>
+          <span class="text-xs text-surface-400">• {ipo.sector}</span>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-extrabold text-surface-900 dark:text-white">{ipo.name} IPO</h1>
+        <p class="mt-1 text-sm text-surface-500">{ipo.sector} • {ipo.issueSize} • {ipo.headquarters || ''}</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-center">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+            <span class="text-xl font-bold text-white">{ipo.aiScore}</span>
+          </div>
+          <p class="text-xs text-surface-500 mt-1">AI Score</p>
+        </div>
+        <RiskBadge score={ipo.riskScore} size="lg" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Metrics -->
+  <section class="container-wide py-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">Price Band</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{ipo.priceRange}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">Lot Size</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.lotSize} shares</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">Issue Size</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.issueSize}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">Open</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.openDate}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">Close</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.closeDate}</p>
+      </div>
+      <div class="card-compact text-center">
+        <p class="text-xs text-surface-500">GMP</p>
+        <p class={`text-base font-bold mt-1 ${(ipo.gmp ?? 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+          {(ipo.gmp ?? 0) >= 0 ? '+' : ''}₹{ipo.gmp}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Company -->
+  {ipo.description && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">About {ipo.name}</h2>
+      <div class="card">
+        <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{ipo.description}</p>
+      </div>
+    </section>
+  )}
+
+  <!-- Company Details Grid -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Company Details</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {ipo.founders && (
+        <div class="card-compact">
+          <p class="text-xs text-surface-500">Founders / Promoters</p>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white mt-1">{ipo.founders}</p>
+        </div>
+      )}
+      {ipo.headquarters && (
+        <div class="card-compact">
+          <p class="text-xs text-surface-500">Headquarters</p>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white mt-1">{ipo.headquarters}</p>
+        </div>
+      )}
+      {ipo.founded && (
+        <div class="card-compact">
+          <p class="text-xs text-surface-500">Founded</p>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white mt-1">{ipo.founded}</p>
+        </div>
+      )}
+      {ipo.registrar && (
+        <div class="card-compact">
+          <p class="text-xs text-surface-500">Registrar</p>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white mt-1">{ipo.registrar}</p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Purpose of IPO -->
+  {ipo.purpose && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Purpose of IPO (Objects of the Issue)</h2>
+      <div class="card">
+        <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{ipo.purpose}</p>
+      </div>
+    </section>
+  )}
+
+  <!-- DRHP Document -->
+  {ipo.drhpUrl && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Documents</h2>
+      <a href={ipo.drhpUrl} target="_blank" rel="noopener noreferrer" class="card-compact group inline-flex items-center gap-3 hover:shadow-md transition-shadow">
+        <div class="w-10 h-10 bg-danger-50 dark:bg-danger-500/10 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">DRHP / RHP Document (PDF)</p>
+          <p class="text-xs text-surface-500">View on SEBI website →</p>
+        </div>
+      </a>
+    </section>
+  )}
+
+  <!-- Subscription Status (for live IPOs) -->
+  {ipo.subscription && ipo.status === 'live' && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Subscription Status</h2>
+      <div class="card">
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">Retail (RII)</span><span class="text-sm font-bold text-primary-600">{(ipo.subscription * 0.7).toFixed(1)}x</span></div>
+            <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-primary-500 h-2.5 rounded-full" style={`width: ${Math.min(ipo.subscription * 0.7 * 10, 100)}%`}></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">NII (HNI)</span><span class="text-sm font-bold text-success-500">{(ipo.subscription * 1.2).toFixed(1)}x</span></div>
+            <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-success-500 h-2.5 rounded-full" style={`width: ${Math.min(ipo.subscription * 1.2 * 10, 100)}%`}></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">QIB</span><span class="text-sm font-bold text-warning-500">{(ipo.subscription * 2.5).toFixed(1)}x</span></div>
+            <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-warning-500 h-2.5 rounded-full" style={`width: ${Math.min(ipo.subscription * 2.5 * 5, 100)}%`}></div></div>
+          </div>
+          <div class="pt-3 border-t border-surface-200 dark:border-surface-700 flex justify-between">
+            <span class="font-semibold text-surface-900 dark:text-white">Total</span>
+            <span class="text-lg font-bold text-primary-600">{ipo.subscription}x</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- AI Analysis -->
+  <section class="container-wide py-4">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">AI Investment Analysis</h2>
+    <AIInsightBox
+      title={`${ipo.name} — AI Verdict`}
+      summary={ipo.aiSummary || 'Analysis being generated.'}
+      riskScore={ipo.riskScore}
+      verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral'}
+      highlights={ipo.highlights || []}
+    />
+  </section>
+
+  <!-- Apply / Trade CTA -->
+  <section class="container-wide py-4">
+    <div class="card bg-gradient-to-r from-primary-50 to-surface-50 dark:from-primary-950/20 dark:to-surface-800 border-primary-200 dark:border-primary-800">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        {ipo.status === 'listed' ? (
+          <div>
+            <h3 class="text-base font-bold text-surface-900 dark:text-white">Want to buy this stock?</h3>
+            <p class="text-xs text-surface-500 mt-0.5">Trade {ipo.name} on the secondary market</p>
+          </div>
+        ) : (
+          <div>
+            <h3 class="text-base font-bold text-surface-900 dark:text-white">Want to apply for this IPO?</h3>
+            <p class="text-xs text-surface-500 mt-0.5">Open a free Demat account and apply in minutes</p>
+          </div>
+        )}
+        <div class="flex gap-3">
+          {ipo.status === 'listed' ? (
+            <>
+              <a href="#" class="btn-primary text-sm">Trade on Zerodha</a>
+              <a href="#" class="btn-secondary text-sm">Trade on Groww</a>
+            </>
+          ) : (
+            <>
+              <a href="#" class="btn-primary text-sm">Apply via Zerodha</a>
+              <a href="#" class="btn-secondary text-sm">Apply via Groww</a>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-wide py-6">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">FAQ</h2>
+    <div class="space-y-3 max-w-3xl">
+      <details class="card-compact group" open>
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the price band of {ipo.name} IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">The price band is ₹{ipo.priceRange} per share with a lot size of {ipo.lotSize} shares. Minimum investment: ₹{parseInt(ipo.priceRange.split('-').pop() || '0') * ipo.lotSize}.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What does {ipo.name} do?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">{ipo.description || ipo.aiSummary}</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I apply for {ipo.name} IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">AI Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
+      </details>
+      {ipo.founders && (
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Who founded {ipo.name}?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">{ipo.name} was founded by {ipo.founders} in {ipo.founded}. Headquartered in {ipo.headquarters}.</p>
+        </details>
+      )}
+    </div>
+  </section>
+</IPOLayout>

@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ReturnSimulator from '../../components/calculators/ReturnSimulator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Investment Return Simulator",
+  "description": "Simulate and compare investment returns across conservative, moderate, and aggressive scenarios over different time horizons.",
+  "url": "https://ipofins.com/tools/return-simulator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Return Simulator", "item": "https://ipofins.com/tools/return-simulator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a lumpsum investment?", "acceptedAnswer": { "@type": "Answer", "text": "A lumpsum investment is when you invest a large amount at once, as opposed to SIP (monthly installments). Lumpsum works best when markets are low or when you receive a windfall (bonus, inheritance, etc.)." } },
+    { "@type": "Question", "name": "What returns can I expect from mutual funds?", "acceptedAnswer": { "@type": "Answer", "text": "Historical returns in India: Large-cap funds deliver 12-14% CAGR, mid-cap 15-18%, small-cap 18-22%, and debt funds 7-9% over 10+ year periods. Past performance doesn't guarantee future results." } },
+    { "@type": "Question", "name": "Is lumpsum better than SIP?", "acceptedAnswer": { "@type": "Answer", "text": "Lumpsum gives better returns in rising markets, while SIP wins in volatile/falling markets due to rupee cost averaging. For most investors, SIP is safer. Use lumpsum only when markets are clearly undervalued or you have a long horizon (10+ years)." } },
+    { "@type": "Question", "name": "How does compounding work in investments?", "acceptedAnswer": { "@type": "Answer", "text": "Compounding means your returns generate further returns. ₹1 lakh at 12% becomes ₹1.76L in 5 years, ₹3.1L in 10 years, and ₹9.6L in 20 years. The longer you stay invested, the more powerful compounding becomes." } }
+  ]
+};
+---
+
+<BaseLayout title="Investment Return Simulator - Compare Lumpsum Scenarios" description="Free investment return simulator. Compare how your lumpsum grows across conservative (8%), moderate (12%), and aggressive (18%) scenarios over 1-30 years." jsonLd={jsonLd}>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Return Simulator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">Investment Return Simulator</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">Compare how your lump-sum investment grows across different risk scenarios. Model conservative, moderate, and aggressive outcomes side by side.</p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <ReturnSimulator client:load />
+    </div>
+  </section>
+
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a lumpsum investment?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A lumpsum investment means investing a large amount at once (as opposed to SIP). It works best in rising markets or when you have a long horizon (10+ years) to ride out volatility.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What returns can I expect from mutual funds?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Historical Indian market returns: Large-cap 12-14%, Mid-cap 15-18%, Small-cap 18-22%, Debt funds 7-9% CAGR over 10+ years. Past performance doesn't guarantee future results.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is lumpsum better than SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Lumpsum outperforms in rising markets; SIP wins in volatile/falling markets via rupee cost averaging. For most people, SIP is safer. Use lumpsum when markets are undervalued or you have 10+ year horizon.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How does compounding work?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Compounding = returns on returns. ₹1L at 12% becomes ₹1.76L (5yr), ₹3.1L (10yr), ₹9.6L (20yr). The longer you stay invested, the more powerful compounding gets. Time in market > timing the market.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
+    <div class="flex flex-wrap gap-3">
+      <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
+      <a href="/tools/cagr-calculator" class="btn-secondary">CAGR Calculator</a>
+      <a href="/tools/emi-calculator" class="btn-secondary">EMI Calculator</a>
+      <a href="/mutual-funds" class="btn-secondary">Best Mutual Funds</a>
+    </div>
+  </section>
+</BaseLayout>

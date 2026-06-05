@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import toolsData from '../../data/tools.json';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Finance Tools & Calculators",
+  "description": "Free online finance calculators: SIP, CAGR, EMI, IPO profit, return simulator, and AI risk analyzer.",
+  "url": "https://ipofins.com/tools",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" }
+    ]
+  }
+};
+---
+
+<BaseLayout
+  title="Finance Tools & Calculators"
+  description="Free online finance calculators — SIP, CAGR, EMI, IPO Profit, Return Simulator, and AI-powered Risk Analyzer. Make smarter investment decisions."
+  jsonLd={jsonLd}
+>
+  <!-- Breadcrumb -->
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Tools</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Finance Tools & Calculators
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Free, fast, and accurate calculators to help you plan investments, estimate returns, and analyze risk.
+    </p>
+  </section>
+
+  <!-- Tools Grid -->
+  <section class="container-wide py-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {toolsData.map(tool => (
+        <ToolCard
+          title={tool.title}
+          description={tool.description}
+          href={`/tools/${tool.slug}`}
+          icon={tool.icon}
+          color={tool.color}
+        />
+      ))}
+    </div>
+  </section>
+
+  <!-- SEO Content -->
+  <section class="container-wide py-12">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">About Our Finance Calculators</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        IPOfins provides free financial calculators to help Indian investors make informed decisions.
+        Our tools cover everything from SIP planning and CAGR computation to EMI estimation and IPO profit analysis.
+        Each calculator is designed for speed, accuracy, and ease of use on any device.
+      </p>
+    </div>
+    <a href="/blogs/tools" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
+      Tools FAQ — 40+ questions answered →
+    </a>
+  </section>
+</BaseLayout>

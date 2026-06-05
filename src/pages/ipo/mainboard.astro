@@ -1,0 +1,40 @@
+---
+import IPOLayout from '../../layouts/IPOLayout.astro';
+import iposData from '../../data/ipos.json';
+
+const mainboardIPOs = iposData.filter(ipo => ipo.type === 'mainboard' && ipo.status === 'live');
+---
+
+<IPOLayout title="Mainboard IPOs India 2026 | IPOfins" description="All mainboard IPOs in India 2026. Track large-cap IPOs with price bands, GMP, subscription data, and AI analysis." activeTab="mainboard">
+  <section class="container-wide py-6">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">Mainboard IPOs — Live</h1>
+    <p class="text-sm text-surface-500 mb-6">{mainboardIPOs.length} mainboard IPOs currently open for subscription</p>
+
+    {mainboardIPOs.length > 0 ? (
+      <div class="space-y-2">
+        {mainboardIPOs.map(ipo => (
+          <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
+                  <span class={`badge text-[10px] ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'listed' ? 'badge-listed' : 'badge-closed'}`}>{ipo.status}</span>
+                </div>
+                <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.issueSize} • {ipo.openDate} – {ipo.closeDate}</p>
+              </div>
+              <div class="flex items-center gap-5 text-xs">
+                <div><span class="text-surface-400">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
+                <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                {ipo.gmp !== undefined && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                {ipo.aiScore && <div><span class="text-surface-400">AI </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p class="text-surface-500 py-8 text-center">No mainboard IPOs available currently.</p>
+    )}
+  </section>
+</IPOLayout>

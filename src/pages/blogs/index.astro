@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Blogs - IPO, Mutual Fund & Finance Tools Guide | IPOfins" description="Complete guide to IPO investing, mutual funds, and finance tools. FAQs, how-tos, and strategies for Indian investors.">
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Blogs</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Blogs & Guides</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300">Everything you need to know about IPOs, mutual funds, and financial tools — answered.</p>
+  </section>
+
+  <section class="container-wide py-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <a href="/blogs/ipo" class="card group block text-center hover:shadow-lg transition-shadow">
+        <div class="w-14 h-14 mx-auto bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mb-4">
+          <span class="text-2xl">📈</span>
+        </div>
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">IPO Guide</h2>
+        <p class="text-sm text-surface-500 mt-2">How to apply, GMP, allotment, risks, tax — 30+ FAQs answered</p>
+        <p class="text-xs text-primary-600 mt-3 font-medium">Read IPO FAQs →</p>
+      </a>
+      <a href="/blogs/mutual-funds" class="card group block text-center hover:shadow-lg transition-shadow">
+        <div class="w-14 h-14 mx-auto bg-success-50 dark:bg-success-500/10 rounded-xl flex items-center justify-center mb-4">
+          <span class="text-2xl">💰</span>
+        </div>
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">Mutual Fund Guide</h2>
+        <p class="text-sm text-surface-500 mt-2">SIP, returns, taxation, risk, best funds — 30+ FAQs answered</p>
+        <p class="text-xs text-primary-600 mt-3 font-medium">Read MF FAQs →</p>
+      </a>
+      <a href="/blogs/tools" class="card group block text-center hover:shadow-lg transition-shadow">
+        <div class="w-14 h-14 mx-auto bg-warning-50 dark:bg-warning-500/10 rounded-xl flex items-center justify-center mb-4">
+          <span class="text-2xl">🔧</span>
+        </div>
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">Tools Guide</h2>
+        <p class="text-sm text-surface-500 mt-2">SIP calculator, CAGR, EMI, IPO profit, risk — 40+ FAQs answered</p>
+        <p class="text-xs text-primary-600 mt-3 font-medium">Read Tools FAQs →</p>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

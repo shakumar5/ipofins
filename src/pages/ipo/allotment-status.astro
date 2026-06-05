@@ -1,0 +1,246 @@
+---
+import IPOLayout from '../../layouts/IPOLayout.astro';
+import iposData from '../../data/ipos.json';
+
+const recentlyClosed = iposData.filter(ipo => ipo.status === 'closed' || ipo.status === 'listed');
+const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "IPO Allotment Status - Check Your Allotment",
+  "description": "Check IPO allotment status for all recent IPOs. Direct links to registrar websites for allotment results.",
+  "url": "https://ipofins.com/ipo/allotment-status",
+  "dateModified": new Date().toISOString(),
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "IPOs", "item": "https://ipofins.com/ipo" },
+      { "@type": "ListItem", "position": 3, "name": "Allotment Status", "item": "https://ipofins.com/ipo/allotment-status" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How to check IPO allotment status?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can check IPO allotment status on the registrar's website (Link Intime, KFin Technologies, or BigShare) using your PAN number, application number, or Demat account number. Allotment is typically finalized 6 days after the IPO closes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When is IPO allotment announced?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IPO allotment is typically announced 6 working days after the IPO subscription closes. The timeline is: Day 1-3 (subscription), Day 4-5 (basis of allotment), Day 6 (allotment & refund), Day 7 (listing)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I don't get IPO allotment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "If you don't receive allotment, your application money is refunded to your bank account within 1-2 business days after allotment. The UPI mandate amount is released automatically."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the chances of getting IPO allotment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Allotment probability depends on subscription levels. In retail category with 10x subscription, approximately 1 in 10 applicants gets allotment (via lottery). Applying for 1 lot gives you the best probability as each PAN gets equal chance in lottery."
+      }
+    }
+  ]
+};
+
+const registrars = [
+  { name: "Link Intime India", url: "https://in.mpms.mufg.com/Initial_Offer/public-issues.html", description: "Check allotment for IPOs with Link Intime as registrar" },
+  { name: "KFin Technologies (KFintech)", url: "https://ipostatus.kfintech.com/", description: "Check allotment for IPOs with KFintech as registrar" },
+  { name: "BigShare Services", url: "https://ipo.bigshareonline.com/IPO_Status.html", description: "Check allotment for IPOs with BigShare as registrar" },
+];
+---
+
+<IPOLayout activeTab="allotment"
+  title={`IPO Allotment Status - Check Allotment Result (${today})`}
+  description={`Check IPO allotment status for all recent IPOs. Direct links to Link Intime, KFintech, BigShare registrar portals. Step-by-step guide to check your allotment.`}
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+
+
+  <!-- Header -->
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      IPO Allotment Status
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Check your IPO allotment result using registrar portals. Find direct links and step-by-step instructions below.
+    </p>
+  </section>
+
+  <!-- Registrar Links -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Check Allotment on Registrar Websites</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {registrars.map(reg => (
+        <a href={reg.url} target="_blank" rel="noopener noreferrer" class="card group block text-center">
+          <div class="w-12 h-12 mx-auto bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mb-3">
+            <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{reg.name}</h3>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">{reg.description}</p>
+          <p class="text-xs text-primary-600 dark:text-primary-400 mt-2 font-medium">Visit Portal →</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- How to Check -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How to Check IPO Allotment Status</h2>
+    <div class="card max-w-3xl">
+      <ol class="space-y-4">
+        <li class="flex gap-4">
+          <span class="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm flex-shrink-0">1</span>
+          <div>
+            <p class="font-medium text-surface-900 dark:text-white">Identify the Registrar</p>
+            <p class="text-sm text-surface-600 dark:text-surface-300 mt-0.5">Check the IPO's RHP document or our IPO detail page to find which registrar handles the IPO (Link Intime, KFintech, or BigShare).</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm flex-shrink-0">2</span>
+          <div>
+            <p class="font-medium text-surface-900 dark:text-white">Visit the Registrar Portal</p>
+            <p class="text-sm text-surface-600 dark:text-surface-300 mt-0.5">Click on the appropriate registrar link above to go to their allotment status page.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm flex-shrink-0">3</span>
+          <div>
+            <p class="font-medium text-surface-900 dark:text-white">Select the IPO</p>
+            <p class="text-sm text-surface-600 dark:text-surface-300 mt-0.5">Choose the IPO name from the dropdown list on the registrar's website.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm flex-shrink-0">4</span>
+          <div>
+            <p class="font-medium text-surface-900 dark:text-white">Enter Your Details</p>
+            <p class="text-sm text-surface-600 dark:text-surface-300 mt-0.5">Enter your PAN number, Application Number, or DP Client ID (Demat account number) to check your allotment status.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="w-8 h-8 bg-success-50 dark:bg-success-500/10 rounded-full flex items-center justify-center text-success-600 font-bold text-sm flex-shrink-0">✓</span>
+          <div>
+            <p class="font-medium text-surface-900 dark:text-white">View Result</p>
+            <p class="text-sm text-surface-600 dark:text-surface-300 mt-0.5">The system will show whether shares have been allotted to you and the number of shares received.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Recent IPO Allotment Timeline -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Recent IPOs — Allotment Timeline</h2>
+    {recentlyClosed.length > 0 ? (
+      <div class="space-y-3">
+        {recentlyClosed.map(ipo => (
+          <a href={`/ipo/${ipo.slug}`} class="card-compact group block">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
+                <p class="text-xs text-surface-500 mt-0.5">{ipo.type.toUpperCase()} • Closed: {ipo.closeDate}</p>
+              </div>
+              <span class={`badge ${ipo.status === 'listed' ? 'badge-listed' : 'badge-closed'}`}>
+                {ipo.status === 'listed' ? 'Listed' : 'Allotment Pending'}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="card-compact text-center py-6">
+        <p class="text-surface-500">No recently closed IPOs. Check <a href="/ipo" class="text-primary-600 hover:underline">live IPOs</a> for currently open subscriptions.</p>
+      </div>
+    )}
+  </section>
+
+  <!-- SEO Content -->
+  <section class="container-wide py-12">
+    <div class="max-w-3xl">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">IPO Allotment Process Explained</h2>
+      <div class="space-y-4 text-sm text-surface-600 dark:text-surface-300 leading-relaxed">
+        <p>
+          After an IPO's subscription period closes, the allotment process begins. Here's the typical timeline for mainboard IPOs in India:
+        </p>
+
+        <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 pt-2">IPO Timeline (T = Close Date)</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li><strong>T+1 to T+2:</strong> Registrar verifies applications, removes invalid/duplicate applications</li>
+          <li><strong>T+3:</strong> Basis of allotment finalized and published</li>
+          <li><strong>T+4:</strong> Allotment done. Shares credited to Demat. Refunds initiated.</li>
+          <li><strong>T+5:</strong> Refund amount released to bank. Shares visible in Demat.</li>
+          <li><strong>T+6:</strong> Listing on BSE/NSE</li>
+        </ul>
+
+        <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 pt-2">Allotment Probability Tips</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Apply for exactly 1 lot in retail category for maximum probability</li>
+          <li>Apply from multiple Demat accounts (family members) to increase chances</li>
+          <li>Avoid applying in multiple lots — probability stays the same per PAN</li>
+          <li>In oversubscribed IPOs, allotment is by lottery (1 lot per PAN in draw)</li>
+        </ul>
+
+        <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 pt-2">What If You Don't Get Allotment?</h3>
+        <p>
+          If shares are not allotted, your blocked amount (via UPI/ASBA) is released automatically within 1-2 business days. No action needed from your side. The UPI mandate simply expires.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-wide py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">FAQ</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to check IPO allotment status?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Visit the registrar's website (Link Intime, KFintech, or BigShare), select the IPO, and enter your PAN or application number.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">When is allotment announced?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Typically 6 working days after the IPO closes. For example, if IPO closes on Monday, allotment is usually by the following Monday.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What if I don't get allotment?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Your money is automatically refunded within 1-2 days. The UPI mandate blocked amount is released to your bank account.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What are my chances of getting allotment?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In retail, if subscription is 10x, approximately 1 in 10 applicants get shares (lottery). Applying for 1 lot gives best probability per application.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Related -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Pages</h2>
+    <div class="flex flex-wrap gap-3">
+      <a href="/ipo/gmp-today" class="btn-secondary">GMP Today</a>
+      <a href="/ipo/subscription-status" class="btn-secondary">Subscription Status</a>
+      <a href="/ipo" class="btn-secondary">All IPOs</a>
+      <a href="/ipo/performance/2026" class="btn-secondary">IPO Performance 2026</a>
+    </div>
+  </section>
+</IPOLayout>

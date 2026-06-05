@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import IPOCard from '../../../components/IPOCard.astro';
+import iposData from '../../../data/ipos.json';
+
+const sectors = [...new Set(iposData.map(ipo => ipo.sector).filter(Boolean))];
+
+export function getStaticPaths() {
+  const sectorSlugs = [...new Set(iposData.map(ipo => ipo.sector?.toLowerCase().replace(/\s+/g, '-')).filter(Boolean))];
+  return sectorSlugs.map(sector => ({
+    params: { sector },
+    props: { sector },
+  }));
+}
+
+const { sector } = Astro.props;
+const sectorName = sector.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+const sectorIPOs = iposData.filter(ipo => ipo.sector?.toLowerCase().replace(/\s+/g, '-') === sector);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": `${sectorName} IPOs India`,
+  "description": `All IPOs in the ${sectorName} sector. Track upcoming, live, and listed ${sectorName} IPOs with AI analysis.`,
+  "url": `https://ipofins.com/ipo/sector/${sector}`,
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "IPOs", "item": "https://ipofins.com/ipo" },
+      { "@type": "ListItem", "position": 3, "name": sectorName, "item": `https://ipofins.com/ipo/sector/${sector}` }
+    ]
+  }
+};
+---
+
+<BaseLayout title={`${sectorName} IPOs India 2026 - Sector Analysis`} description={`Complete list of ${sectorName} sector IPOs in India. AI-powered analysis, GMP tracking, and investment insights for ${sectorName} companies.`} jsonLd={jsonLd}>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/ipo" class="hover:text-primary-600 transition-colors">IPOs</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{sectorName}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      {sectorName} IPOs
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      All IPOs from the {sectorName} sector with AI-powered investment insights and performance tracking.
+    </p>
+  </section>
+
+  <section class="container-wide py-6">
+    {sectorIPOs.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sectorIPOs.map(ipo => <IPOCard {...ipo} />)}
+      </div>
+    ) : (
+      <div class="text-center py-12">
+        <p class="text-surface-500 dark:text-surface-400">No IPOs found in this sector currently. Check back soon!</p>
+      </div>
+    )}
+  </section>
+
+  <!-- Other Sectors -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Explore Other Sectors</h2>
+    <div class="flex flex-wrap gap-2">
+      {sectors.map(s => (
+        <a
+          href={`/ipo/sector/${s?.toLowerCase().replace(/\s+/g, '-')}`}
+          class={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+            s?.toLowerCase().replace(/\s+/g, '-') === sector
+              ? 'bg-primary-600 text-white'
+              : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:bg-surface-200'
+          }`}
+        >
+          {s}
+        </a>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,205 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a mutual fund and how does it work?", "acceptedAnswer": { "@type": "Answer", "text": "A mutual fund pools money from investors and invests in stocks/bonds. Managed by professional fund managers (AMC). Investors get units proportional to investment. Returns are shared based on units held." } },
+    { "@type": "Question", "name": "What is SIP in mutual funds?", "acceptedAnswer": { "@type": "Answer", "text": "SIP (Systematic Investment Plan) is investing a fixed amount monthly into a mutual fund. It averages cost over time (rupee cost averaging) and builds wealth through compounding." } },
+    { "@type": "Question", "name": "Are mutual funds taxable?", "acceptedAnswer": { "@type": "Answer", "text": "Equity funds: STCG (<1 year) 15%, LTCG (>1 year) 10% above ₹1L. Debt funds: taxed at slab rate. ELSS has 3-year lock-in with equity taxation." } },
+    { "@type": "Question", "name": "Which mutual fund is best in 2026?", "acceptedAnswer": { "@type": "Answer", "text": "Best depends on goals. Large cap for stability, mid/small cap for growth, ELSS for tax saving. Check our Best Mutual Funds page filtered by multiple quality criteria." } },
+    { "@type": "Question", "name": "Can I lose money in mutual funds?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, equity mutual funds can give negative returns in short term. However, over 7+ years, equity funds have historically given positive returns. Risk reduces with longer holding period." } }
+  ]
+};
+---
+
+<BaseLayout title="Mutual Fund Guide India 2026 - Complete FAQ | IPOfins" description="Complete mutual fund guide: SIP, NAV, returns, taxation, risk, best funds. 30+ FAQs answered for Indian investors.">
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/blogs" class="hover:text-primary-600 transition-colors">Blogs</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Mutual Fund Guide</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Mutual Fund Guide — Complete FAQ</h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300">Everything about mutual funds, SIP, returns, taxation, and strategy. 30+ questions answered.</p>
+  </section>
+
+  <section class="container-narrow py-6 space-y-10">
+    <!-- Basics -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📚 Mutual Fund Basics</h2>
+      <div class="space-y-3">
+        <details class="card-compact group" open>
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a mutual fund and how does it work?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A mutual fund is a professionally managed investment vehicle that pools money from many investors to buy stocks, bonds, or other securities. An AMC (Asset Management Company) manages the fund. You buy "units" at the current NAV. The fund manager decides which stocks to buy/sell. Returns (gains or losses) are distributed proportionally to all unit holders.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are mutual funds safe in India?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Mutual funds are regulated by SEBI and managed by professionals, making them safer than direct stock picking. However, they carry market risk — equity funds can lose value in short term. For safety: choose debt funds for low risk, large-cap for moderate risk. Stay invested 5+ years for equity funds. Your money is held by a custodian (not the AMC), so even if AMC shuts down, your investment is safe.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What are types of mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">By asset class: Equity (stocks), Debt (bonds), Hybrid (mix). By market cap: Large Cap, Mid Cap, Small Cap, Flexi Cap, Multi Cap. Special: ELSS (tax saving), Index Funds, Sectoral Funds. By structure: Open-ended (buy/sell anytime) vs Closed-ended (fixed tenure). For beginners: start with Flexi Cap or Large Cap.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is NAV in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">NAV (Net Asset Value) = (Total Assets - Liabilities) ÷ Total Units. It's the per-unit price of a mutual fund, calculated daily after market close. When you invest ₹10,000 at NAV ₹100, you get 100 units. NAV going up means your investment grew. A higher NAV doesn't mean expensive — it just means the fund has grown since inception.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is expense ratio in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Expense ratio is the annual fee charged by the AMC for managing the fund, expressed as % of AUM. Example: 1.5% expense ratio on ₹1 lakh = ₹1,500/year deducted from NAV. Direct plans have 0.5-1% lower expense ratio than Regular plans. SEBI caps: max 2.25% for equity, 2% for debt. Lower is better — even 0.5% difference compounds significantly over 20 years.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is exit load in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Exit load is a fee charged when you redeem (sell) units before a specified period. Typically 1% if redeemed within 1 year for equity funds. After 1 year: zero exit load. ELSS: no exit load but 3-year lock-in. Liquid funds: no exit load after 7 days. Always check exit load before investing.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- SIP -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">💰 SIP (Systematic Investment Plan)</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is SIP in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SIP allows you to invest a fixed amount (₹500 to any amount) at regular intervals (monthly/weekly) into a mutual fund. On each SIP date, units are bought at that day's NAV. Over time, you accumulate units at different prices — this is rupee cost averaging. SIP automates investing and removes the need to time the market.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is SIP better than lump sum?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SIP wins in volatile/falling markets (rupee cost averaging). Lump sum wins in consistently rising markets. Studies show: over 10+ years, lump sum slightly outperforms SIP ~60% of the time. But SIP is psychologically easier and eliminates timing risk. Best approach: invest lump sum when markets crash, SIP for regular income.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How much should I invest in SIP monthly?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Rule of thumb: 20-30% of monthly income. For ₹1 Cr in 15 years at 12% return: ~₹20,000/month. For ₹50 lakhs in 10 years: ~₹25,000/month. Start with whatever you can (even ₹500) and increase by 10% yearly (step-up SIP). The key is starting early — compounding needs time.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can SIP be stopped anytime?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes! SIP can be paused, modified, or stopped anytime without penalty (except ELSS during lock-in). Your existing units remain invested. You can restart SIP later. No charges for stopping. This flexibility makes SIP ideal for salaried investors.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What happens if SIP is missed?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">If insufficient balance on SIP date, that month's installment is simply skipped. No penalty, no charges. Your existing investment continues growing. If 3 consecutive SIPs are missed, some AMCs auto-cancel the SIP mandate — you'd need to register again. Set up auto-debit to avoid this.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to calculate SIP returns?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SIP returns use the XIRR method (not simple CAGR) because each installment has a different investment date. Formula: FV = P × ((1+r)^n - 1) / r × (1+r), where P = monthly amount, r = monthly return, n = months. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> for instant results.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Returns -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📊 Returns & Performance</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How much return do mutual funds give?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Historical averages (India, 10+ years): Large Cap: 12-14% CAGR. Mid Cap: 15-18%. Small Cap: 18-22%. Flexi Cap: 13-16%. Debt funds: 7-9%. Hybrid: 10-13%. These are averages — actual returns vary by fund and market cycle. No returns are guaranteed.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are mutual fund returns guaranteed?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. Mutual fund returns are market-linked and NOT guaranteed. Past performance doesn't guarantee future results. Even top-rated funds can underperform. However, diversification and long holding period (7+ years) significantly reduce risk of negative returns in equity funds.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is CAGR in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">CAGR (Compound Annual Growth Rate) shows the smoothed annual return of an investment. If your fund grew from ₹1 lakh to ₹2.5 lakhs in 5 years, CAGR = (2.5/1)^(1/5) - 1 = 20.1%. CAGR eliminates year-to-year volatility. Use our <a href="/tools/cagr-calculator" class="text-primary-600 hover:underline">CAGR Calculator</a>.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Risk -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">⚠️ Risk & Safety</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I lose money in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes, in short term. Equity funds can lose 20-40% in a market crash. However, historically, no investor who held equity mutual funds via SIP for 7+ years has lost money in Indian markets. The longer you hold, the lower the probability of loss. Debt funds rarely lose money but can in extreme scenarios (like credit defaults).</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What happens if AMC shuts down?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Your money is safe. Mutual fund assets are held by a custodian (separate from AMC). If AMC shuts down, SEBI ensures another AMC takes over the scheme, or units are redeemed at current NAV. Investor money is never at risk due to AMC closure — this is by SEBI regulation.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which mutual fund is safest?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Safest to riskiest: Liquid funds → Overnight funds → Short-term debt → Balanced/Hybrid → Large Cap → Flexi Cap → Mid Cap → Small Cap → Sectoral. For near-zero risk with better-than-FD returns: Liquid funds (6-7%). For moderate safety with growth: Large Cap + Hybrid combination.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Taxation -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🧾 Taxation</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are mutual funds taxable?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes, gains from mutual funds are taxable. Tax depends on fund type and holding period. Equity funds: 15% STCG (< 1 year), 10% LTCG (> 1 year, above ₹1L). Debt funds (post-2023): all gains taxed at your income slab rate regardless of holding period. SIP each installment's holding period is counted separately.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is LTCG in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">LTCG (Long-Term Capital Gains) for equity mutual funds: gains on units held > 1 year, taxed at 10% on amount exceeding ₹1 lakh. Example: If you have ₹2.5L LTCG in a year, tax = 10% × (2.5L - 1L) = ₹15,000. First ₹1 lakh LTCG per year is tax-free.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are SIP returns taxable?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes. Each SIP installment is treated as a separate purchase. When you redeem, FIFO (First In First Out) applies. So your oldest SIP installments become LTCG first (after 1 year). Recent installments may still be STCG. This is why SIP for 1+ year reduces tax burden gradually.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Strategy -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🏆 Selection & Strategy</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which mutual fund is best in 2026?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">"Best" depends on your goals and risk appetite. For stability: Mirae Asset Large Cap, ICICI Bluechip. For growth: Quant Small Cap, HDFC Mid-Cap. For tax saving: Quant ELSS, Mirae ELSS. For balanced: HDFC Balanced Advantage. Check our <a href="/mutual-funds/best" class="text-primary-600 hover:underline">Best Mutual Funds</a> page — filtered by multiple quality criteria.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Large cap vs mid cap vs small cap — which is better?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Large cap: stable, 12-14% returns, lower risk — for conservative investors. Mid cap: higher growth 15-18%, moderate risk — for 5+ year horizon. Small cap: highest potential 18-25% but also highest volatility — for 7+ years and high risk tolerance. Most advisors recommend: 50% large/flexi + 30% mid + 20% small for balanced growth.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Index fund vs mutual fund — which is better?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Index funds (Nifty 50, Sensex) have very low expense ratio (0.1-0.3%) and match market returns. Active mutual funds charge 1-2% but try to beat the market. In India, many active funds have outperformed index over 5+ years (unlike US). For beginners or passive investors: index funds. For potential alpha: active funds with proven track record.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How long should I stay invested in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Minimum recommended: Equity funds 5-7 years. Mid/Small cap: 7-10 years. ELSS: 3 years (lock-in). Debt funds: 1-3 years. The longer you stay, the more compounding works and the lower the risk. Historical data shows: probability of loss in equity after 7 years is near zero in Indian markets.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Advanced -->
+    <div>
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📈 Advanced</h2>
+      <div class="space-y-3">
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What happens during market crash in mutual funds?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">NAV drops significantly (20-40% in severe crashes). Your portfolio value decreases on paper. But if you continue SIP during crash, you buy more units at lower prices — these give highest returns when market recovers. Every major crash (2008, 2020) has recovered within 1-2 years. Key: don't panic-sell during crashes.</p>
+        </details>
+        <details class="card-compact group">
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I invest during market downturn?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes! Downturns are the best time to invest — you get more units at lower NAV. Warren Buffett's rule: "Be greedy when others are fearful." If you have lump sum during a 20%+ market fall, invest. Continue SIP regardless of market conditions. The SIPs you invest during crashes give the highest long-term returns.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Related -->
+  <section class="container-narrow py-8 border-t border-surface-200 dark:border-surface-700">
+    <div class="flex flex-wrap gap-3">
+      <a href="/mutual-funds" class="btn-secondary">💰 Mutual Funds</a>
+      <a href="/mutual-funds/best" class="btn-secondary">🏆 Best Funds</a>
+      <a href="/tools/sip-calculator" class="btn-secondary">📈 SIP Calculator</a>
+      <a href="/tools/cagr-calculator" class="btn-secondary">📊 CAGR Calculator</a>
+      <a href="/blogs/ipo" class="btn-secondary">📈 IPO FAQs</a>
+      <a href="/blogs/tools" class="btn-secondary">🔧 Tools FAQs</a>
+    </div>
+  </section>
+</BaseLayout>
