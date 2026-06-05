@@ -1,12 +1,5 @@
-# FinverseUI — Automated Data Refresh & Deploy
-# 
-# Runs every 6 hours. Fetches live data from public sources:
-# - IPO data from public listing sites
-# - Mutual Fund NAVs from AMFI India (official free API)
-# - Broker/Tools/Articles integrity check
-#
-# Then builds the static site and deploys to Vercel.
-# ZERO manual intervention. No API keys needed for data fetching.
+# IPOfins — Automated Data Refresh & Deploy
+# Runs every 12 hours. Fetches live data, builds, deploys to Vercel.
 
 name: Auto Refresh & Deploy
 
@@ -15,10 +8,8 @@ on:
     # Every 12 hours: 00:30, 12:30 UTC = 06:00, 18:00 IST
     - cron: '30 0,12 * * *'
   
-  # Manual trigger (for urgent updates)
   workflow_dispatch:
 
-  # Also on push to main (code changes)
   push:
     branches: [main]
 
@@ -35,7 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: 📦 Install dependencies
         run: npm install --legacy-peer-deps
@@ -47,19 +37,9 @@ jobs:
         run: npm run build
 
       - name: 🚀 Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-
-      - name: 📊 Build summary
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- 📅 Built at: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "- 📄 Pages: $(find dist -name '*.html' | wc -l)" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 Data files:" >> $GITHUB_STEP_SUMMARY
-          echo "  - IPOs: $(cat src/data/ipos.json | python3 -c 'import json,sys;print(len(json.load(sys.stdin)))') records" >> $GITHUB_STEP_SUMMARY
-          echo "  - Mutual Funds: $(cat src/data/mutual-funds.json | python3 -c 'import json,sys;print(len(json.load(sys.stdin)))') records" >> $GITHUB_STEP_SUMMARY
-          echo "  - Brokers: $(cat src/data/brokers.json | python3 -c 'import json,sys;print(len(json.load(sys.stdin)))') records" >> $GITHUB_STEP_SUMMARY
+          npm i -g vercel@latest
+          vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
