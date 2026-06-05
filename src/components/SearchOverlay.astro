@@ -1,0 +1,105 @@
+---
+import iposData from '../data/ipos.json';
+import fundsData from '../data/mutual-funds.json';
+import articlesData from '../data/articles.json';
+import toolsData from '../data/tools.json';
+
+// Build search index at build time
+const searchItems = [
+  ...iposData.map(i => ({ title: `${i.name} IPO`, url: `/ipo/${i.slug}`, type: 'IPO', meta: `${i.sector} • ${i.type}` })),
+  ...fundsData.map(f => ({ title: f.name, url: `/mutual-funds/fund/${f.slug}`, type: 'Fund', meta: `${f.category} • ${f.aum}` })),
+  ...articlesData.map(a => ({ title: a.title, url: `/learn/${a.slug}`, type: 'Learn', meta: a.category })),
+  ...toolsData.map(t => ({ title: t.title, url: `/tools/${t.slug}`, type: 'Tool', meta: t.description.slice(0, 50) })),
+  { title: 'IPO GMP Today', url: '/ipo/gmp-today', type: 'IPO', meta: 'Grey Market Premium' },
+  { title: 'Upcoming IPOs', url: '/ipo/upcoming', type: 'IPO', meta: 'DRHP & SEBI Approved' },
+  { title: 'IPO Allotment Status', url: '/ipo/allotment-status', type: 'IPO', meta: 'Check registrar' },
+  { title: 'Best Mutual Funds', url: '/mutual-funds/best', type: 'Fund', meta: 'Top rated funds' },
+  { title: 'Compare Brokers', url: '/broker/compare', type: 'Broker', meta: 'Side by side' },
+];
+---
+
+<!-- Search Overlay -->
+<div id="search-overlay" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm">
+  <div class="max-w-xl mx-auto mt-20 px-4">
+    <div class="bg-white dark:bg-surface-800 rounded-xl shadow-2xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+      <!-- Input -->
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-surface-200 dark:border-surface-700">
+        <svg class="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Search IPOs, funds, tools, articles..."
+          class="flex-1 bg-transparent text-surface-900 dark:text-white text-sm outline-none placeholder:text-surface-400"
+          autocomplete="off"
+        />
+        <button id="search-close" class="text-xs text-surface-400 border border-surface-300 dark:border-surface-600 px-2 py-0.5 rounded">ESC</button>
+      </div>
+      <!-- Results -->
+      <div id="search-results" class="max-h-80 overflow-y-auto p-2">
+        <p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Data + Logic -->
+<script is:inline define:vars={{ searchItems }}>
+  const items = searchItems;
+  const overlay = document.getElementById('search-overlay');
+  const input = document.getElementById('search-input');
+  const results = document.getElementById('search-results');
+  const closeBtn = document.getElementById('search-close');
+  const searchBtn = document.getElementById('search-trigger');
+
+  function openSearch() {
+    overlay.classList.remove('hidden');
+    input.value = '';
+    input.focus();
+    results.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+  }
+
+  function closeSearch() {
+    overlay.classList.add('hidden');
+  }
+
+  function doSearch(query) {
+    if (!query || query.length < 2) {
+      results.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+      return;
+    }
+    const q = query.toLowerCase();
+    const matches = items.filter(item =>
+      item.title.toLowerCase().includes(q) || item.meta.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
+    ).slice(0, 8);
+
+    if (matches.length === 0) {
+      results.innerHTML = '<p class="text-xs text-surface-500 text-center py-6">No results found</p>';
+      return;
+    }
+
+    results.innerHTML = matches.map(item => `
+      <a href="${item.url}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
+        <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-surface-100 dark:bg-surface-700 text-surface-500">${item.type}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-surface-900 dark:text-white truncate">${item.title}</p>
+          <p class="text-xs text-surface-400 truncate">${item.meta}</p>
+        </div>
+        <svg class="w-4 h-4 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
+    `).join('');
+  }
+
+  // Event listeners
+  if (searchBtn) searchBtn.addEventListener('click', openSearch);
+  if (closeBtn) closeBtn.addEventListener('click', closeSearch);
+  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSearch(); });
+  if (input) input.addEventListener('input', (e) => doSearch(e.target.value));
+
+  // Keyboard shortcut
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+    if (e.key === 'Escape') closeSearch();
+  });
+</script>
