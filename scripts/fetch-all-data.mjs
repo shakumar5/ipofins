@@ -133,19 +133,59 @@ async function fetchBSEIPOs() {
       return results;
     });
     
+    // Also try to get subscription data from BSE
+    // BSE subscription page: https://www.bseindia.com/markets/PublicIssues/IPOIssues_new.aspx
+    let subscriptionData = [];
+    try {
+      await page.goto('https://www.bseindia.com/markets/PublicIssues/IPOIssues_new.aspx', { waitUntil: 'networkidle2', timeout: 20000 });
+      await new Promise(r => setTimeout(r, 2000));
+      
+      subscriptionData = await page.evaluate(() => {
+        const rows = document.querySelectorAll('table tr');
+        const results = [];
+        rows.forEach(row => {
+          const cells = Array.from(row.querySelectorAll('td'));
+          // Look for subscription times in the table
+          if (cells.length >= 4) {
+            const name = cells[0]?.textContent?.trim() || '';
+            const text = row.textContent || '';
+            // Try to find subscription multiplier (e.g., "17.66x" or "0.35x")
+            const subMatch = text.match(/(\d+\.?\d*)\s*x/i);
+            if (name && name.length > 3 && subMatch) {
+              results.push({ name, subscription: parseFloat(subMatch[1]) });
+            }
+          }
+        });
+        return results;
+      });
+      
+      console.log(`    Found subscription for ${subscriptionData.length} IPOs from BSE`);
+    } catch (e) {
+      console.log(`    ⚠️ BSE subscription page failed: ${e.message.split('\n')[0]}`);
+    }
+    
     await page.close();
     
-    const formatted = ipos.map(ipo => ({
-      name: ipo.name,
-      slug: ipo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-      priceRange: ipo.price.replace(/\s/g, ''),
-      lotSize: ipo.lotSize,
-      openDate: ipo.openDate,
-      closeDate: ipo.closeDate,
-      status: 'live',
-      type: ipo.segment.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
-      sector: 'Others',
-    }));
+    const formatted = ipos.map(ipo => {
+      // Match subscription data by name
+      const subInfo = subscriptionData.find(s => 
+        ipo.name.toLowerCase().includes(s.name.toLowerCase().split(' ')[0]) ||
+        s.name.toLowerCase().includes(ipo.name.toLowerCase().split(' ')[0])
+      );
+      
+      return {
+        name: ipo.name,
+        slug: ipo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        priceRange: ipo.price.replace(/\s/g, ''),
+        lotSize: ipo.lotSize,
+        openDate: ipo.openDate,
+        closeDate: ipo.closeDate,
+        status: 'live',
+        type: ipo.segment.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
+        sector: 'Others',
+        subscription: subInfo?.subscription || undefined,
+      };
+    });
     
     console.log(`    Found ${formatted.length} live IPOs from BSE`);
     return formatted;
@@ -171,31 +211,40 @@ async function fetchNSESubscription() {
   
   try {
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    await page.goto('https://www.nseindia.com/market-data/all-upcoming-issues-ipo', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
     
-    // Wait for table data
-    await page.waitForSelector('table', { timeout: 15000 }).catch(() => {});
-    await new Promise(r => setTimeout(r, 3000)); // Extra wait for data to load
+    // NSE is very strict — try with longer timeout
+    await page.goto('https://www.nseindia.com/market-data/all-upcoming-issues-ipo', { 
+      waitUntil: 'domcontentloaded', 
+      timeout: 45000 
+    });
     
-    // Extract subscription data
+    // Wait for table or timeout gracefully
+    const tableLoaded = await page.waitForSelector('table tbody tr', { timeout: 20000 }).catch(() => null);
+    
+    if (!tableLoaded) {
+      console.log('    ⚠️ NSE table did not load (bot protection). Skipping.');
+      await page.close();
+      return [];
+    }
+    
+    await new Promise(r => setTimeout(r, 2000));
+    
     const data = await page.evaluate(() => {
       const rows = document.querySelectorAll('table tbody tr');
       const results = [];
-      
       rows.forEach(row => {
         const cells = Array.from(row.querySelectorAll('td'));
         if (cells.length >= 7) {
           const name = cells[0]?.textContent?.trim() || '';
           const subscriptionText = cells[cells.length - 1]?.textContent?.trim() || '';
           const subscription = parseFloat(subscriptionText) || 0;
-          
           if (name && subscription > 0) {
             results.push({ name, subscription });
           }
         }
       });
-      
       return results;
     });
     
@@ -203,7 +252,7 @@ async function fetchNSESubscription() {
     console.log(`    Found subscription data for ${data.length} IPOs`);
     return data;
   } catch (error) {
-    console.log(`    ⚠️ NSE Puppeteer failed: ${error.message}`);
+    console.log(`    ⚠️ NSE skipped (blocked/timeout): ${error.message.split('\n')[0]}`);
     return [];
   }
 }
