@@ -428,14 +428,6 @@ function mergeAMFIData(existing, amfiFunds) {
   
   return Array.from(existingMap.values());
 }
-          amfiName.includes('direct') && amfiName.includes('growth')) {
-        return { ...fund, nav: data.nav };
-      }
-    }
-    
-    return fund;
-  });
-}
 
 // ═══════════════════════════════════════════════════════════════
 // MERGE & UPDATE LOGIC
