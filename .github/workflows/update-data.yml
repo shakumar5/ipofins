@@ -38,7 +38,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: 🔄 Fetch live data from public sources
         run: npm run fetch-data
