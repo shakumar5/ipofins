@@ -409,6 +409,7 @@ function mergeAMFIData(existing, amfiFunds) {
     if (existingMap.has(amfiFund.slug)) {
       const curr = existingMap.get(amfiFund.slug);
       curr.nav = amfiFund.nav; // Update NAV
+      if (amfiFund.schemeCode) curr.schemeCode = amfiFund.schemeCode;
     } else {
       // Add new fund (without returns/rating — those need historical data)
       existingMap.set(amfiFund.slug, {
@@ -416,6 +417,7 @@ function mergeAMFIData(existing, amfiFunds) {
         slug: amfiFund.slug,
         category: amfiFund.category,
         nav: amfiFund.nav,
+        schemeCode: amfiFund.schemeCode,
         rating: null,
         returns1y: null,
         returns3y: null,
@@ -427,6 +429,107 @@ function mergeAMFIData(existing, amfiFunds) {
   }
   
   return Array.from(existingMap.values());
+}
+
+/**
+ * Fetch historical returns for all funds using mfapi.in
+ * API: https://api.mfapi.in/mf/{schemeCode}
+ * Returns full NAV history — we calculate 1Y, 3Y, 5Y returns
+ */
+async function fetchFundReturns() {
+  console.log('\n  📊 [mfapi.in] Calculating fund returns from historical NAV...');
+  
+  const funds = readExisting('mutual-funds.json');
+  const fundsWithCode = funds.filter(f => f.schemeCode);
+  
+  console.log(`    ${fundsWithCode.length} funds with scheme codes. Fetching historical NAV...`);
+  
+  let updated = 0;
+  let failed = 0;
+  const BATCH_SIZE = 10;
+  
+  for (let i = 0; i < fundsWithCode.length; i += BATCH_SIZE) {
+    const batch = fundsWithCode.slice(i, i + BATCH_SIZE);
+    
+    const results = await Promise.allSettled(
+      batch.map(fund => fetchSingleFundReturn(fund))
+    );
+    
+    for (let j = 0; j < results.length; j++) {
+      if (results[j].status === 'fulfilled' && results[j].value) {
+        const { slug, returns1y, returns3y, returns5y } = results[j].value;
+        const fund = funds.find(f => f.slug === slug);
+        if (fund) {
+          if (returns1y !== null) fund.returns1y = returns1y;
+          if (returns3y !== null) fund.returns3y = returns3y;
+          if (returns5y !== null) fund.returns5y = returns5y;
+          updated++;
+        }
+      } else {
+        failed++;
+      }
+    }
+    
+    // Small delay between batches to be respectful
+    if (i + BATCH_SIZE < fundsWithCode.length) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+    
+    // Progress log every 50 funds
+    if ((i + BATCH_SIZE) % 50 === 0 || i + BATCH_SIZE >= fundsWithCode.length) {
+      console.log(`    Progress: ${Math.min(i + BATCH_SIZE, fundsWithCode.length)}/${fundsWithCode.length} (${updated} updated, ${failed} failed)`);
+    }
+  }
+  
+  writeData('mutual-funds.json', funds);
+  console.log(`    ✅ Returns calculated for ${updated} funds (${failed} failed)`);
+}
+
+async function fetchSingleFundReturn(fund) {
+  try {
+    const response = await fetch(`https://api.mfapi.in/mf/${fund.schemeCode}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    if (!data.data || data.data.length < 30) return null;
+    
+    const navHistory = data.data; // Array of {date, nav} sorted newest first
+    const currentNAV = parseFloat(navHistory[0].nav);
+    
+    // Find NAV from approximately 1 year ago, 3 years ago, 5 years ago
+    const nav1y = findNAVAtDate(navHistory, 365);
+    const nav3y = findNAVAtDate(navHistory, 365 * 3);
+    const nav5y = findNAVAtDate(navHistory, 365 * 5);
+    
+    const returns1y = nav1y ? parseFloat(((currentNAV - nav1y) / nav1y * 100).toFixed(1)) : null;
+    const returns3y = nav3y ? parseFloat((((currentNAV / nav3y) ** (1/3) - 1) * 100).toFixed(1)) : null;
+    const returns5y = nav5y ? parseFloat((((currentNAV / nav5y) ** (1/5) - 1) * 100).toFixed(1)) : null;
+    
+    return { slug: fund.slug, returns1y, returns3y, returns5y };
+  } catch {
+    return null;
+  }
+}
+
+function findNAVAtDate(navHistory, daysAgo) {
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() - daysAgo);
+  
+  // Find the NAV entry closest to the target date
+  for (const entry of navHistory) {
+    const parts = entry.date.split('-');
+    if (parts.length !== 3) continue;
+    const entryDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    
+    if (entryDate <= targetDate) {
+      return parseFloat(entry.nav);
+    }
+  }
+  
+  return null; // Not enough history
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -570,7 +673,10 @@ async function main() {
   // 4. Fetch mutual fund NAVs from AMFI
   await fetchAMFINAVs();
   
-  // 5. Ensure static data is intact
+  // 5. Calculate returns from historical NAV (mfapi.in)
+  await fetchFundReturns();
+  
+  // 6. Ensure static data is intact
   ensureStaticData();
   
   console.log('\n───────────────────────────────────────────────────────────');

@@ -3,7 +3,14 @@ import IPOLayout from '../../layouts/IPOLayout.astro';
 import iposData from '../../data/ipos.json';
 import upcomingData from '../../data/upcoming-ipos.json';
 
-const allIPOs = iposData.filter(i => i.status === 'live' || i.status === 'listed');
+const allIPOs = iposData
+  .filter(i => i.status === 'live' || i.status === 'listed')
+  .sort((a, b) => {
+    // Live first, then listed
+    if (a.status === 'live' && b.status !== 'live') return -1;
+    if (a.status !== 'live' && b.status === 'live') return 1;
+    return 0;
+  });
 const liveCount = iposData.filter(i => i.status === 'live').length;
 const listedCount = iposData.filter(i => i.status === 'listed').length;
 
