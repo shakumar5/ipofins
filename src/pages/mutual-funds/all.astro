@@ -32,4 +32,27 @@ const categories = [...new Set(fundsData.map(f => f.category))];
   <section class="container-wide py-4">
     <FundTable client:load funds={fundsData} categories={categories} />
   </section>
+
+  <!-- FAQ Section -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How do I compare mutual funds by returns?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Use the table above to sort funds by 1-year, 3-year, or 5-year returns. Click on any column header to sort. You can also filter by category (Large Cap, Mid Cap, Small Cap, etc.) using the category tabs. Always compare funds within the same category for a fair comparison.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What do 1Y, 3Y, and 5Y returns mean?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">1Y is the absolute return over the past 1 year. 3Y and 5Y are CAGR (Compound Annual Growth Rate) over 3 and 5 years respectively. CAGR gives a smoothed annual return that accounts for compounding, making it a better measure for comparing long-term performance.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What categories of mutual funds are available?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We track: Large Cap (stable, lower risk), Mid Cap (growth potential, moderate risk), Small Cap (high growth, high risk), Flexi Cap (flexible allocation), ELSS (tax-saving with 3-year lock-in), and Hybrid (mix of equity and debt for balanced returns).</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Where does the mutual fund data come from?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">All NAV and return data is sourced from AMFI (Association of Mutual Funds in India), the official industry body. Returns are calculated from historical NAV data. We show only Direct-Growth plans to help investors get the best possible returns.</p>
+      </details>
+    </div>
+  </section>
 </BaseLayout>

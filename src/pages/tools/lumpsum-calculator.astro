@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LumpsumCalculator from '../../components/calculators/LumpsumCalculator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Lumpsum Calculator",
+  "description": "Calculate returns on one-time lumpsum investments in mutual funds or stocks. See how your investment grows with compound interest.",
+  "url": "https://ipofins.com/tools/lumpsum-calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Lumpsum Calculator", "item": "https://ipofins.com/tools/lumpsum-calculator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a lumpsum investment?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A lumpsum investment is a one-time investment of a large amount into a mutual fund, stock, or other financial instrument, as opposed to SIP (Systematic Investment Plan) where you invest small amounts regularly. Lumpsum works well when markets are undervalued." }
+    },
+    {
+      "@type": "Question",
+      "name": "How is lumpsum return calculated?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Lumpsum returns are calculated using the compound interest formula: A = P(1 + r)^t, where P is the invested amount, r is the annual rate of return, and t is the number of years. The profit is A - P." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is lumpsum better than SIP?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Lumpsum gives higher returns if invested when markets are low. However, SIP reduces timing risk through rupee cost averaging. For most retail investors, a combination of both works best — lumpsum during market corrections and regular SIP for disciplined investing." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good expected return for lumpsum in mutual funds?",
+      "acceptedAnswer": { "@type": "Answer", "text": "For equity mutual funds in India, historical lumpsum returns average 12-15% CAGR over 10+ years. Large-cap funds deliver 10-12%, mid-cap 14-16%, and small-cap 15-20% over long periods, though past performance doesn't guarantee future returns." }
+    }
+  ]
+};
+---
+
+<BaseLayout
+  title="Lumpsum Calculator 2026 - One-Time Investment Return Calculator"
+  description="Free lumpsum investment calculator. Estimate how one-time mutual fund investments grow with compound interest. Compare with SIP returns."
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Lumpsum Calculator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Lumpsum Calculator
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Calculate how your one-time investment grows over time. Enter the amount, expected annual return, and time period to see your projected wealth.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <LumpsumCalculator client:load />
+    </div>
+  </section>
+
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a lumpsum investment?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A lumpsum investment is a one-time investment of a large amount into a mutual fund, stock, or other financial instrument, as opposed to SIP where you invest small amounts regularly. Lumpsum works well when markets are undervalued.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is lumpsum return calculated?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Lumpsum returns use compound interest: A = P(1 + r)^t, where P is the invested amount, r is the annual rate of return, and t is the number of years. Your profit is the final value minus the principal.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is lumpsum better than SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Lumpsum gives higher returns if invested when markets are low. SIP reduces timing risk through rupee cost averaging. A combination of both works best for most investors — lumpsum during market corrections and regular SIP for discipline.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a good expected return for lumpsum in mutual funds?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For equity mutual funds in India, historical lumpsum returns average 12-15% CAGR over 10+ years. Large-cap funds deliver 10-12%, mid-cap 14-16%, and small-cap 15-20% over long periods, though past performance doesn't guarantee future returns.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How to Use This Lumpsum Calculator</h2>
+      <p class="text-surface-600 dark:text-surface-300">Enter the amount you want to invest, the expected annual return rate, and the investment duration. The calculator shows you the projected final value and total profit earned through compounding.</p>
+      <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">When to Choose Lumpsum Over SIP</h3>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li>When markets have corrected significantly (10-20% fall)</li>
+        <li>When you receive a bonus, inheritance, or one-time income</li>
+        <li>For long-term goals with 7+ year horizon</li>
+        <li>When you have a large corpus sitting idle in savings account</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

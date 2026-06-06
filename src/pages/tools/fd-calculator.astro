@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FDCalculator from '../../components/calculators/FDCalculator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "FD Calculator",
+  "description": "Calculate Fixed Deposit maturity amount and interest earned with quarterly or annual compounding.",
+  "url": "https://ipofins.com/tools/fd-calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "FD Calculator", "item": "https://ipofins.com/tools/fd-calculator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is FD interest calculated?",
+      "acceptedAnswer": { "@type": "Answer", "text": "FD interest is calculated using compound interest formula: A = P(1 + r/n)^(nt), where P is principal, r is annual rate, n is compounding frequency (quarterly=4, annually=1), and t is time in years." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the best compounding frequency for FD?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Quarterly compounding gives higher returns than annual compounding for the same interest rate. Most banks in India offer quarterly compounding on fixed deposits by default." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is FD interest taxable in India?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, FD interest is fully taxable as per your income tax slab. Banks deduct TDS at 10% if annual interest exceeds ₹40,000 (₹50,000 for senior citizens). You can claim refund while filing ITR if your total income is below taxable limit." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the current FD interest rate in India 2026?",
+      "acceptedAnswer": { "@type": "Answer", "text": "As of 2026, major banks offer FD rates between 6.5% to 8% for general citizens and 7% to 8.5% for senior citizens. Small finance banks and NBFCs may offer slightly higher rates." }
+    }
+  ]
+};
+---
+
+<BaseLayout
+  title="FD Calculator 2026 - Fixed Deposit Interest & Maturity Calculator"
+  description="Free FD calculator to estimate fixed deposit maturity amount and interest earned. Compare quarterly vs annual compounding. Updated for 2026 rates."
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">FD Calculator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      FD Calculator
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Calculate your Fixed Deposit maturity amount and interest earned. Adjust principal, rate, tenure, and compounding frequency.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <FDCalculator client:load />
+    </div>
+  </section>
+
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is FD interest calculated?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">FD interest is calculated using the compound interest formula: A = P(1 + r/n)^(nt), where P is your principal amount, r is the annual interest rate, n is the compounding frequency (quarterly = 4, annually = 1), and t is the tenure in years.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the best compounding frequency for FD?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Quarterly compounding gives higher returns than annual compounding for the same interest rate. Most banks in India offer quarterly compounding on fixed deposits by default.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is FD interest taxable in India?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, FD interest is fully taxable as per your income tax slab. Banks deduct TDS at 10% if annual interest exceeds ₹40,000 (₹50,000 for senior citizens). You can claim a refund while filing your ITR if your total income is below the taxable limit.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the current FD interest rate in India 2026?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">As of 2026, major banks offer FD rates between 6.5% to 8% for general citizens and 7% to 8.5% for senior citizens. Small finance banks and NBFCs may offer slightly higher rates.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How to Use This FD Calculator</h2>
+      <p class="text-surface-600 dark:text-surface-300">Enter your principal amount, the annual interest rate offered by your bank, the tenure in years, and select the compounding frequency. The calculator will show you the total maturity amount and interest earned.</p>
+      <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">Benefits of Fixed Deposits</h3>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li>Guaranteed returns with zero market risk</li>
+        <li>Flexible tenure from 7 days to 10 years</li>
+        <li>Senior citizens get 0.25% to 0.50% extra interest</li>
+        <li>Tax-saving FD under Section 80C (5-year lock-in)</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

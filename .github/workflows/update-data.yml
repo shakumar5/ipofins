@@ -1,5 +1,7 @@
-# IPOfins — Automated Data Refresh & Deploy
-# Runs every 12 hours. Fetches live data, builds, deploys to Vercel.
+# IPOfins — Automated Build & Deploy
+# Runs every 12 hours OR on push to main.
+# IPO data is fetched locally (Zerodha needs browser cookies).
+# GitHub Actions only fetches Mutual Fund data (AMFI — no auth needed).
 
 name: Auto Refresh & Deploy
 
@@ -30,11 +32,21 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: 🔄 Fetch live data from public sources
-        run: npm run fetch-data
+      - name: 🔄 Fetch mutual fund data (AMFI only)
+        run: node scripts/fetch-all-data.mjs --mf-only
+        env:
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+
+      - name: 💾 Commit data changes (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/mutual-funds.json
+          git diff --cached --quiet || git commit -m "chore: auto-update MF data [$(date +%Y-%m-%d)]"
+          git push || true
 
       - name: 🏗️ Build static site
-        run: npm run build
+        run: npx astro build
 
       - name: 🚀 Deploy to Vercel
         run: |

@@ -912,33 +912,45 @@ function ensureStaticData() {
 // ═══════════════════════════════════════════════════════════════
 
 async function main() {
+  const args = process.argv.slice(2);
+  const mfOnly = args.includes('--mf-only');
+  
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
   console.log('  IPOfins — Automated Data Refresh');
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`  📅 ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
-  console.log('  Sources: BSE + NSE + SEBI (IPO) | AMFI (Mutual Funds)');
   
-  // 1. Fetch from all IPO sources
-  const bseIPOs = await fetchBSEIPOs();
-  const nseData = await fetchNSESubscription();
-  const sebiFilings = await fetchSEBIDRHP();
-  
-  // 2. Merge IPO data — ONLY if scraper returns more than existing
-  const existingIPOs = readExisting('ipos.json');
-  const liveExisting = existingIPOs.filter(i => i.status === 'live').length;
-  
-  if (bseIPOs.length > liveExisting) {
-    const mergedIPOs = mergeIPOData(existingIPOs, bseIPOs, nseData, sebiFilings);
-    writeData('ipos.json', mergedIPOs);
+  if (mfOnly) {
+    console.log('  Mode: MF-ONLY (GitHub Actions — skipping IPO fetch)');
+    console.log('  Sources: AMFI (NAVs) + mfapi.in (Returns)');
   } else {
-    console.log(`\n  ℹ️ Scraper returned ${bseIPOs.length} live IPOs, existing has ${liveExisting}. Keeping existing ipos.json.`);
+    console.log('  Mode: FULL (Local — IPO + Mutual Funds)');
+    console.log('  Sources: Zerodha (IPO) | AMFI + mfapi.in (MF)');
   }
   
-  // 3. Merge upcoming IPO data
-  const existingUpcoming = readExisting('upcoming-ipos.json');
-  const mergedUpcoming = mergeUpcomingData(existingUpcoming, sebiFilings);
-  writeData('upcoming-ipos.json', mergedUpcoming);
+  if (!mfOnly) {
+    // 1. Fetch from all IPO sources
+    const bseIPOs = await fetchBSEIPOs();
+    const nseData = await fetchNSESubscription();
+    const sebiFilings = await fetchSEBIDRHP();
+    
+    // 2. Merge IPO data — ONLY if scraper returns more than existing
+    const existingIPOs = readExisting('ipos.json');
+    const liveExisting = existingIPOs.filter(i => i.status === 'live').length;
+    
+    if (bseIPOs.length > liveExisting) {
+      const mergedIPOs = mergeIPOData(existingIPOs, bseIPOs, nseData, sebiFilings);
+      writeData('ipos.json', mergedIPOs);
+    } else {
+      console.log(`\n  ℹ️ Scraper returned ${bseIPOs.length} live IPOs, existing has ${liveExisting}. Keeping existing ipos.json.`);
+    }
+    
+    // 3. Merge upcoming IPO data
+    const existingUpcoming = readExisting('upcoming-ipos.json');
+    const mergedUpcoming = mergeUpcomingData(existingUpcoming, sebiFilings);
+    writeData('upcoming-ipos.json', mergedUpcoming);
+  }
   
   // 4. Fetch mutual fund NAVs from AMFI
   await fetchAMFINAVs();
@@ -946,8 +958,10 @@ async function main() {
   // 5. Calculate returns from historical NAV (mfapi.in)
   await fetchFundReturns();
   
-  // 6. Fetch fund holdings via AMFI portfolio disclosure (Puppeteer)
-  await fetchFundHoldings();
+  if (!mfOnly) {
+    // 6. Fetch fund holdings via AMFI portfolio disclosure (Puppeteer)
+    await fetchFundHoldings();
+  }
   
   // 7. Ensure static data is intact
   ensureStaticData();

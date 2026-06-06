@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PPFCalculator from '../../components/calculators/PPFCalculator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "PPF Calculator",
+  "description": "Calculate Public Provident Fund maturity value with current interest rate. Plan your 15-year PPF investment.",
+  "url": "https://ipofins.com/tools/ppf-calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "PPF Calculator", "item": "https://ipofins.com/tools/ppf-calculator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the current PPF interest rate in 2026?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The PPF interest rate is reviewed quarterly by the government. As of 2026, the rate is around 7.1% per annum, compounded annually. Check the latest RBI notification for the current quarter's rate." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the maximum PPF investment limit per year?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The maximum annual deposit in PPF is ₹1,50,000. The minimum required deposit is ₹500 per year to keep the account active. You can deposit in a lump sum or in up to 12 installments per year." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can PPF be extended beyond 15 years?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, PPF can be extended in blocks of 5 years after the initial 15-year maturity. You can extend with or without contributions. The interest continues at the prevailing rate." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is PPF interest tax-free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, PPF falls under the EEE (Exempt-Exempt-Exempt) tax category. The investment qualifies for Section 80C deduction, the interest earned is tax-free, and the maturity amount is also tax-free." }
+    }
+  ]
+};
+---
+
+<BaseLayout
+  title="PPF Calculator 2026 - Public Provident Fund Maturity Calculator"
+  description="Free PPF calculator to estimate maturity value and interest earned on Public Provident Fund. Plan your 15-year tax-free investment with current rates."
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">PPF Calculator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      PPF Calculator
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Calculate how your Public Provident Fund investment grows over time. PPF offers guaranteed, tax-free returns with government backing.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <PPFCalculator client:load />
+    </div>
+  </section>
+
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the current PPF interest rate in 2026?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">The PPF interest rate is reviewed quarterly by the government. As of 2026, the rate is around 7.1% per annum, compounded annually. Check the latest RBI notification for the current quarter's rate.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the maximum PPF investment limit per year?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">The maximum annual deposit in PPF is ₹1,50,000. The minimum required deposit is ₹500 per year to keep the account active. You can deposit in a lump sum or in up to 12 installments per year.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can PPF be extended beyond 15 years?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, PPF can be extended in blocks of 5 years after the initial 15-year maturity. You can extend with or without contributions. The interest continues at the prevailing rate.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is PPF interest tax-free?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, PPF falls under the EEE (Exempt-Exempt-Exempt) tax category. The investment qualifies for Section 80C deduction, the interest earned is tax-free, and the maturity amount is also tax-free.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How to Use This PPF Calculator</h2>
+      <p class="text-surface-600 dark:text-surface-300">Enter your monthly investment amount, the current PPF interest rate, and the number of years you plan to invest. The calculator shows your total corpus at maturity including the accumulated interest.</p>
+      <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">Benefits of PPF</h3>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li>Government-backed, zero-risk investment</li>
+        <li>Triple tax benefit (EEE) under Section 80C</li>
+        <li>Loan facility available after 3rd year</li>
+        <li>Partial withdrawal allowed after 7th year</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

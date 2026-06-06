@@ -8,6 +8,14 @@
     "category": "investment"
   },
   {
+    "title": "Lumpsum Calculator",
+    "slug": "lumpsum-calculator",
+    "description": "Calculate returns on one-time lumpsum investments in mutual funds or stocks over different time periods.",
+    "icon": "💵",
+    "color": "success",
+    "category": "investment"
+  },
+  {
     "title": "CAGR Calculator",
     "slug": "cagr-calculator",
     "description": "Find the Compound Annual Growth Rate of your investments. Compare performance across different time periods.",
@@ -24,6 +32,30 @@
     "category": "loan"
   },
   {
+    "title": "FD Calculator",
+    "slug": "fd-calculator",
+    "description": "Calculate Fixed Deposit maturity amount and interest earned. Compare quarterly vs annual compounding returns.",
+    "icon": "🏧",
+    "color": "primary",
+    "category": "savings"
+  },
+  {
+    "title": "PPF Calculator",
+    "slug": "ppf-calculator",
+    "description": "Calculate Public Provident Fund maturity value. Plan your 15-year PPF investment with current interest rates.",
+    "icon": "🏛️",
+    "color": "success",
+    "category": "savings"
+  },
+  {
+    "title": "NPS Calculator",
+    "slug": "nps-calculator",
+    "description": "Estimate your National Pension System corpus at retirement. Plan monthly contributions for your pension goal.",
+    "icon": "👴",
+    "color": "warning",
+    "category": "retirement"
+  },
+  {
     "title": "IPO Profit Calculator",
     "slug": "ipo-profit-calculator",
     "description": "Estimate your potential profit or loss from an IPO based on listing price, lot size, and application amount.",
@@ -38,13 +70,5 @@
     "icon": "🎯",
     "color": "primary",
     "category": "investment"
-  },
-  {
-    "title": "Risk Analyzer",
-    "slug": "return-simulator",
-    "description": "Analyze the risk profile of any investment using AI-powered scoring. Get a comprehensive risk breakdown.",
-    "icon": "⚡",
-    "color": "danger",
-    "category": "analysis"
   }
 ]
