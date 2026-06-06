@@ -14,8 +14,8 @@ interface Props {
 
 const {
   title,
-  description = 'ipofins - AI-powered IPO & finance intelligence platform. Track IPOs, mutual funds, compare brokers, and get AI-driven investment insights.',
-  ogImage = '/og-default.png',
+  description = 'IPOfins - Free IPO tracker, mutual fund comparison, SIP & EMI calculators. Track live IPOs, GMP, subscription status for Indian investors.',
+  ogImage = '/favicon.svg',
   canonicalUrl,
   jsonLd,
 } = Astro.props;
@@ -102,6 +102,18 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
       <slot />
     </main>
     <Footer />
+
+    <!-- Site-wide Bottom Navigation -->
+    <div class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
+      <div class="flex flex-wrap gap-3 justify-center">
+        <a href="/ipo" class="btn-secondary text-xs">📊 IPOs</a>
+        <a href="/mutual-funds" class="btn-secondary text-xs">💰 Mutual Funds</a>
+        <a href="/broker" class="btn-secondary text-xs">🏦 Brokers</a>
+        <a href="/tools" class="btn-secondary text-xs">🔧 Tools</a>
+        <a href="/blogs" class="btn-secondary text-xs">📝 Blogs</a>
+        <a href="/learn" class="btn-secondary text-xs">📚 Learn</a>
+      </div>
+    </div>
 
     <!-- Search Overlay -->
     <SearchOverlay />

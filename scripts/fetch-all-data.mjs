@@ -924,10 +924,16 @@ async function main() {
   const nseData = await fetchNSESubscription();
   const sebiFilings = await fetchSEBIDRHP();
   
-  // 2. Merge IPO data
+  // 2. Merge IPO data — ONLY if scraper returns more than existing
   const existingIPOs = readExisting('ipos.json');
-  const mergedIPOs = mergeIPOData(existingIPOs, bseIPOs, nseData, sebiFilings);
-  writeData('ipos.json', mergedIPOs);
+  const liveExisting = existingIPOs.filter(i => i.status === 'live').length;
+  
+  if (bseIPOs.length > liveExisting) {
+    const mergedIPOs = mergeIPOData(existingIPOs, bseIPOs, nseData, sebiFilings);
+    writeData('ipos.json', mergedIPOs);
+  } else {
+    console.log(`\n  ℹ️ Scraper returned ${bseIPOs.length} live IPOs, existing has ${liveExisting}. Keeping existing ipos.json.`);
+  }
   
   // 3. Merge upcoming IPO data
   const existingUpcoming = readExisting('upcoming-ipos.json');
