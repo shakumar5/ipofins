@@ -600,29 +600,29 @@ function findNAVAtDate(navHistory, daysAgo) {
 // ═══════════════════════════════════════════════════════════════
 
 function mergeIPOData(existing, bseIPOs, nseData, sebiFilings) {
-  const existingMap = new Map(existing.map(ipo => [ipo.slug, ipo]));
+  // If scraper provided live IPOs, REPLACE all live entries (don't merge old fake data)
+  let result = [];
   
-  // Update/add BSE live IPOs
-  for (const bseIPO of bseIPOs) {
-    if (existingMap.has(bseIPO.slug)) {
-      const curr = existingMap.get(bseIPO.slug);
-      curr.status = 'live';
-      curr.priceRange = bseIPO.priceRange || curr.priceRange;
-      curr.openDate = bseIPO.openDate || curr.openDate;
-      curr.closeDate = bseIPO.closeDate || curr.closeDate;
-      curr.lotSize = bseIPO.lotSize || curr.lotSize;
-      curr.type = bseIPO.type || curr.type;
-    } else {
-      existingMap.set(bseIPO.slug, {
+  if (bseIPOs.length > 0) {
+    // Keep only listed/closed from existing, replace live with fresh data
+    result = existing.filter(ipo => ipo.status !== 'live');
+    
+    // Add fresh live IPOs from scraper
+    for (const bseIPO of bseIPOs) {
+      // Skip garbage entries
+      if (!bseIPO.name || bseIPO.name.length < 3) continue;
+      if (bseIPO.name.toLowerCase() === 'total') continue;
+      
+      result.push({
         ...bseIPO,
-        issueSize: '',
+        issueSize: bseIPO.issueSize || '',
         aiSummary: '',
         highlights: [],
         riskScore: 5,
         verdict: 'neutral',
         aiScore: undefined,
         gmp: undefined,
-        subscription: undefined,
+        subscription: bseIPO.subscription || undefined,
         founders: '',
         headquarters: '',
         founded: '',
@@ -632,33 +632,24 @@ function mergeIPOData(existing, bseIPOs, nseData, sebiFilings) {
         registrar: '',
       });
     }
+  } else {
+    // Scraper returned nothing — keep existing data as-is
+    result = existing;
   }
   
-  // Update subscription data from NSE
-  if (Array.isArray(nseData)) {
+  // Update subscription data from NSE (if available)
+  if (Array.isArray(nseData) && nseData.length > 0) {
     for (const nseIPO of nseData) {
-      const name = nseIPO.companyName || nseIPO.symbol || '';
+      const name = nseIPO.name || nseIPO.companyName || '';
       const slug = slugify(name);
-      if (existingMap.has(slug) && nseIPO.subscriptionTimes) {
-        existingMap.get(slug).subscription = parseFloat(nseIPO.subscriptionTimes) || undefined;
+      const found = result.find(i => i.slug === slug);
+      if (found && nseIPO.subscription) {
+        found.subscription = parseFloat(nseIPO.subscription) || undefined;
       }
     }
   }
   
-  // Update status of IPOs based on dates
-  const now = new Date();
-  for (const [slug, ipo] of existingMap) {
-    if (!ipo.openDate || !ipo.closeDate) continue;
-    const open = new Date(ipo.openDate);
-    const close = new Date(ipo.closeDate);
-    const listing = ipo.listingDate ? new Date(ipo.listingDate) : null;
-    
-    if (listing && now >= listing) ipo.status = 'listed';
-    else if (now >= open && now <= close) ipo.status = 'live';
-    else if (now > close && !listing) ipo.status = 'closed';
-  }
-  
-  return Array.from(existingMap.values());
+  return result;
 }
 
 function mergeUpcomingData(existing, sebiFilings) {
@@ -708,7 +699,7 @@ function parseScreenerUpcoming(html) {
     
     if (cells.length >= 3 && cells[0] && cells[0].length > 2) {
       const name = cells[0].replace(/NSE|BSE|SME|-SME/g, '').trim();
-      if (!name || name.includes('Company') || name.length < 3) continue;
+      if (!name || name.length < 4 || name.includes('Company') || name.toLowerCase() === 'total' || name.includes('Showing')) continue;
       
       const subMatch = cells.find(c => c.includes('times'));
       const subscription = subMatch ? parseFloat(subMatch) : undefined;
@@ -726,6 +717,7 @@ function parseScreenerUpcoming(html) {
         type: issueSize > 500 ? 'mainboard' : 'sme',
         sector: 'Others',
         subscription,
+        issueSize: issueSize > 0 ? `₹${issueSize} Cr` : '',
       });
     }
   }
