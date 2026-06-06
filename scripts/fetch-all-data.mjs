@@ -697,30 +697,49 @@ function parseScreenerUpcoming(html) {
       cells.push(cellMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim());
     }
     
-    if (cells.length >= 3 && cells[0] && cells[0].length > 2) {
-      const name = cells[0].replace(/NSE|BSE|SME|-SME/g, '').trim();
-      if (!name || name.length < 4 || name.includes('Company') || name.toLowerCase() === 'total' || name.includes('Showing')) continue;
-      
-      const subMatch = cells.find(c => c.includes('times'));
-      const subscription = subMatch ? parseFloat(subMatch) : undefined;
-      const sizeCell = cells.find(c => /^\d[\d,]*$/.test(c.trim()));
-      const issueSize = sizeCell ? parseInt(sizeCell.replace(/,/g, '')) : 0;
-      
-      ipos.push({
-        name,
-        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        priceRange: '0',
-        lotSize: 0,
-        openDate: '',
-        closeDate: '',
-        status: 'live',
-        type: issueSize > 500 ? 'mainboard' : 'sme',
-        sector: 'Others',
-        subscription,
-        issueSize: issueSize > 0 ? `₹${issueSize} Cr` : '',
-      });
-    }
+    // Strict validation: must have at least 5 cells, first cell is company name
+    if (cells.length < 5) continue;
+    
+    let name = cells[0].replace(/NSE|BSE|SME|-SME/g, '').trim();
+    
+    // Skip junk rows
+    if (!name || name.length < 4) continue;
+    if (/^(total|showing|company|name|upcoming|recent|ipo|market|home|dashboard|screen|login)/i.test(name)) continue;
+    if (/^[^a-zA-Z]/.test(name)) continue; // Must start with a letter
+    if (name.includes('←') || name.includes('→') || name.includes('Next') || name.includes('Go Back')) continue;
+    
+    // Must have a numeric cell (issue size in Cr) to be a real IPO row
+    const hasNumeric = cells.some(c => /^\d[\d,.]*$/.test(c.trim()) && parseInt(c.replace(/,/g,'')) > 0);
+    if (!hasNumeric) continue;
+    
+    // Extract subscription (e.g., "6.2 times" or "1.6 times")
+    const subMatch = cells.find(c => /[\d.]+\s*times/i.test(c));
+    const subscription = subMatch ? parseFloat(subMatch) : undefined;
+    
+    // Extract issue size (Cr) - typically 3rd or 4th cell with just a number
+    const sizeCell = cells.find((c, i) => i > 0 && /^\d[\d,]*$/.test(c.trim()));
+    const issueSize = sizeCell ? parseInt(sizeCell.replace(/,/g, '')) : 0;
+    
+    // Determine type based on exchange mention or size
+    const rawText = cells[0];
+    const isSME = rawText.includes('SME') || rawText.includes('-SME') || (issueSize > 0 && issueSize < 500);
+    
+    ipos.push({
+      name,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      priceRange: '0',
+      lotSize: 0,
+      openDate: '',
+      closeDate: '',
+      status: 'live',
+      type: isSME ? 'sme' : 'mainboard',
+      sector: 'Others',
+      subscription,
+      issueSize: issueSize > 0 ? `₹${issueSize} Cr` : '',
+    });
   }
+  
+  console.log(`    Parsed ${ipos.length} IPOs (filtered from HTML)`);
   return ipos;
 }
 
