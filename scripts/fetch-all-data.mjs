@@ -497,9 +497,10 @@ function parseAMFIFunds(text) {
     return true;
   });
   
-  // Keep only top 200 by NAV (most established/popular funds)
-  const top200 = unique.sort((a, b) => b.nav - a.nav).slice(0, 200);
-  console.log(`    Filtered to top ${top200.length} funds by NAV`);
+  // Keep only top 200 — prefer funds with higher NAV (more established)
+  // But only keep funds that have NAV > 10 (filter out debt/liquid with very low NAV noise)
+  const top200 = unique.filter(f => f.nav > 10).slice(0, 200);
+  console.log(`    Filtered to ${top200.length} equity funds`);
   
   return top200;
 }
@@ -584,8 +585,10 @@ async function fetchFundReturns() {
     }
   }
   
-  writeData('mutual-funds.json', funds);
-  console.log(`    ✅ Returns calculated for ${updated} funds (${failed} failed)`);
+  // Only keep funds that have at least 1Y returns (remove incomplete data)
+  const completeData = funds.filter(f => f.returns1y !== null || f.schemeCode);
+  writeData('mutual-funds.json', completeData);
+  console.log(`    ✅ Returns calculated for ${updated} funds (${failed} failed). Saved ${completeData.length} funds with data.`);
 }
 
 async function fetchSingleFundReturn(fund) {
@@ -645,53 +648,36 @@ function findNAVAtDate(navHistory, daysAgo) {
 // ═══════════════════════════════════════════════════════════════
 
 function mergeIPOData(existing, bseIPOs, nseData, sebiFilings) {
-  // If scraper provided live IPOs, REPLACE all live entries (don't merge old fake data)
-  let result = [];
-  
-  if (bseIPOs.length > 0) {
-    // Keep only listed/closed from existing, replace live with fresh data
-    result = existing.filter(ipo => ipo.status !== 'live');
-    
-    // Add fresh live IPOs from scraper
-    for (const bseIPO of bseIPOs) {
-      // Skip garbage entries
-      if (!bseIPO.name || bseIPO.name.length < 3) continue;
-      if (bseIPO.name.toLowerCase() === 'total') continue;
-      
-      result.push({
-        ...bseIPO,
-        issueSize: bseIPO.issueSize || '',
-        aiSummary: '',
-        highlights: [],
-        riskScore: 5,
-        verdict: 'neutral',
-        aiScore: undefined,
-        gmp: undefined,
-        subscription: bseIPO.subscription || undefined,
-        founders: '',
-        headquarters: '',
-        founded: '',
-        description: '',
-        purpose: '',
-        drhpUrl: 'https://www.sebi.gov.in/filings/public-issues.html',
-        registrar: '',
-      });
-    }
-  } else {
-    // Scraper returned nothing — keep existing data as-is
-    result = existing;
+  // Only replace if scraper provides MORE data than existing
+  if (bseIPOs.length <= existing.filter(i => i.status === 'live').length) {
+    console.log(`    Scraper returned ${bseIPOs.length} IPOs, existing has ${existing.filter(i => i.status === 'live').length} live. Keeping existing.`);
+    return existing;
   }
   
-  // Update subscription data from NSE (if available)
-  if (Array.isArray(nseData) && nseData.length > 0) {
-    for (const nseIPO of nseData) {
-      const name = nseIPO.name || nseIPO.companyName || '';
-      const slug = slugify(name);
-      const found = result.find(i => i.slug === slug);
-      if (found && nseIPO.subscription) {
-        found.subscription = parseFloat(nseIPO.subscription) || undefined;
-      }
-    }
+  // Scraper has more data — replace live entries
+  let result = existing.filter(ipo => ipo.status !== 'live');
+  
+  for (const bseIPO of bseIPOs) {
+    if (!bseIPO.name || bseIPO.name.length < 3) continue;
+    
+    result.push({
+      ...bseIPO,
+      issueSize: bseIPO.issueSize || '',
+      aiSummary: '',
+      highlights: [],
+      riskScore: 5,
+      verdict: 'neutral',
+      aiScore: null,
+      gmp: bseIPO.gmp || null,
+      subscription: bseIPO.subscription || null,
+      founders: '',
+      headquarters: '',
+      founded: '',
+      description: '',
+      purpose: '',
+      drhpUrl: bseIPO.drhpUrl || 'https://www.sebi.gov.in/filings/public-issues.html',
+      registrar: bseIPO.registrar || '',
+    });
   }
   
   return result;
