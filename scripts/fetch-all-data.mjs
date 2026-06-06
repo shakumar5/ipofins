@@ -88,152 +88,188 @@ async function closeBrowser() {
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchBSEIPOs() {
-  console.log('\n  📊 [Screener.in + BSE] Fetching live IPO data...');
+  console.log('\n  📊 [Zerodha] Fetching IPO data...');
   
-  // Primary: Try Screener.in (simple HTML, reliable)
   try {
-    const response = await fetchWithHeaders('https://www.screener.in/ipo/');
-    if (response.ok) {
-      const html = await response.text();
-      const ipos = parseScreenerUpcoming(html);
-      if (ipos.length > 0) {
-        console.log(`    ✅ Found ${ipos.length} live IPOs from Screener.in`);
-        
-        // Also fetch recent listings for performance
-        try {
-          const recentResp = await fetchWithHeaders('https://www.screener.in/ipo/recent/');
-          if (recentResp.ok) {
-            const recentHtml = await recentResp.text();
-            const recent = parseScreenerRecent(recentHtml);
-            if (recent.length > 0) {
-              const perfData = { '2024': { mainboard: [], sme: [] }, '2025': { mainboard: [], sme: [] }, '2026': { mainboard: [], sme: [] } };
-              recent.forEach(r => {
-                const bucket = r.issueSize > 500 ? 'mainboard' : 'sme';
-                perfData['2026'][bucket].push({ name: r.name, listingDate: r.listingDate, issuePrice: r.issuePrice, listingPrice: r.currentPrice, currentPrice: r.currentPrice, sector: 'Others' });
-              });
-              writeData('ipo-performance.json', perfData);
-              console.log(`    ✅ Updated performance data: ${recent.length} recent listings`);
-            }
-          }
-        } catch (e) { /* ignore recent fetch failure */ }
-        
-        return ipos;
-      }
+    const response = await fetchWithHeaders('https://zerodha.com/ipo/');
+    if (!response.ok) throw new Error(`Zerodha returned ${response.status}`);
+    
+    const html = await response.text();
+    const { live, upcoming, closed } = parseZerodhaIPOs(html);
+    
+    console.log(`    ✅ Live: ${live.length} | Upcoming: ${upcoming.length} | Closed: ${closed.length}`);
+    
+    // Update upcoming-ipos.json with Zerodha's upcoming data
+    if (upcoming.length > 0) {
+      writeData('upcoming-ipos.json', upcoming);
     }
-  } catch (e) {
-    console.log(`    ⚠️ Screener.in failed: ${e.message}`);
-  }
-  
-  // Fallback: BSE Puppeteer
-  console.log('    Trying BSE Puppeteer fallback...');
-  const browser = await getBrowser();
-  if (!browser) {
-    console.log('    ⚠️ No browser available, skipping BSE');
-    return [];
-  }
-  
-  try {
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    await page.goto('https://www.bseindia.com/publicissue.html', { waitUntil: 'networkidle2', timeout: 30000 });
     
-    // Wait for the IPO table to load
-    await page.waitForSelector('table', { timeout: 15000 }).catch(() => {});
-    
-    // Extract IPO data from the rendered page
-    const ipos = await page.evaluate(() => {
-      const rows = document.querySelectorAll('table tr');
-      const results = [];
-      
-      rows.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        if (cells.length >= 7) {
-          const status = cells[7]?.textContent?.trim();
-          const type = cells[6]?.textContent?.trim();
-          
-          if (status === 'Live' && (type === 'IPO' || type === 'FPO')) {
-            const name = cells[0]?.textContent?.trim() || '';
-            const segment = cells[1]?.textContent?.trim() || '';
-            const openDate = cells[2]?.textContent?.trim() || '';
-            const closeDate = cells[3]?.textContent?.trim() || '';
-            const price = cells[4]?.textContent?.trim() || '';
-            const lotSize = cells[5]?.textContent?.trim() || '0';
-            
-            if (name && name.length > 2) {
-              results.push({ name, segment, openDate, closeDate, price, lotSize: parseInt(lotSize) || 0 });
-            }
-          }
+    // Update performance data from closed/listed
+    if (closed.length > 0) {
+      const perfData = readExisting('ipo-performance.json');
+      perfData['2026'] = { mainboard: [], sme: [] };
+      closed.forEach(ipo => {
+        const entry = { name: ipo.name, listingDate: ipo.listingDate || '', issuePrice: ipo.priceMax || 0, listingPrice: ipo.listingPrice || 0, currentPrice: ipo.listingPrice || 0, sector: 'Others' };
+        if (ipo.type === 'mainboard') {
+          perfData['2026'].mainboard.push(entry);
+        } else {
+          perfData['2026'].sme.push(entry);
         }
       });
-      
-      return results;
-    });
-    
-    // Also try to get subscription data from BSE
-    // BSE subscription page: https://www.bseindia.com/markets/PublicIssues/IPOIssues_new.aspx
-    let subscriptionData = [];
-    try {
-      await page.goto('https://www.bseindia.com/markets/PublicIssues/IPOIssues_new.aspx', { waitUntil: 'networkidle2', timeout: 20000 });
-      await new Promise(r => setTimeout(r, 2000));
-      
-      subscriptionData = await page.evaluate(() => {
-        const rows = document.querySelectorAll('table tr');
-        const results = [];
-        rows.forEach(row => {
-          const cells = Array.from(row.querySelectorAll('td'));
-          // Look for subscription times in the table
-          if (cells.length >= 4) {
-            const name = cells[0]?.textContent?.trim() || '';
-            const text = row.textContent || '';
-            // Try to find subscription multiplier (e.g., "17.66x" or "0.35x")
-            const subMatch = text.match(/(\d+\.?\d*)\s*x/i);
-            if (name && name.length > 3 && subMatch) {
-              results.push({ name, subscription: parseFloat(subMatch[1]) });
-            }
-          }
-        });
-        return results;
-      });
-      
-      console.log(`    Found subscription for ${subscriptionData.length} IPOs from BSE`);
-    } catch (e) {
-      console.log(`    ⚠️ BSE subscription page failed: ${e.message.split('\n')[0]}`);
+      writeData('ipo-performance.json', perfData);
     }
     
-    await page.close();
-    
-    const formatted = ipos.map(ipo => {
-      // Match subscription data by name
-      const subInfo = subscriptionData.find(s => 
-        ipo.name.toLowerCase().includes(s.name.toLowerCase().split(' ')[0]) ||
-        s.name.toLowerCase().includes(ipo.name.toLowerCase().split(' ')[0])
-      );
-      
-      return {
-        name: ipo.name,
-        slug: ipo.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        priceRange: ipo.price.replace(/\s/g, ''),
-        lotSize: ipo.lotSize,
-        openDate: ipo.openDate,
-        closeDate: ipo.closeDate,
-        status: 'live',
-        type: ipo.segment.toLowerCase().includes('sme') ? 'sme' : 'mainboard',
-        sector: 'Others',
-        subscription: subInfo?.subscription || undefined,
-      };
-    });
-    
-    console.log(`    Found ${formatted.length} live IPOs from BSE`);
-    return formatted;
+    // Return live IPOs for ipos.json
+    return live;
   } catch (error) {
-    console.log(`    ⚠️ BSE Puppeteer failed: ${error.message}`);
+    console.log(`    ⚠️ Zerodha fetch failed: ${error.message}`);
     return [];
   }
 }
 
+function parseZerodhaIPOs(html) {
+  const live = [];
+  const upcoming = [];
+  const closed = [];
+  
+  // Zerodha page has sections: ## Live, ## Upcoming, ## Closed
+  // Each IPO entry has: name, type (SME/MAINBOARD), dates, price
+  
+  let currentSection = '';
+  const lines = html.split('\n');
+  
+  // Use regex to find IPO entries in the HTML
+  // Pattern: company name followed by SME/MAINBOARD, then details
+  const ipoPattern = /(?:SME|MAINBOARD)\s+([\w\s\.\-\(\)]+?)(\d{2}(?:st|nd|rd|th)\s*[–\-]\s*\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4}[^₹]*?₹\s*([\d,]+)\s*(?:[–\-]\s*₹\s*([\d,]+))?)/g;
+  
+  // Simpler approach: split by sections and parse each
+  const liveSectionMatch = html.match(/## Live([\s\S]*?)(?=## Upcoming|## Closed|$)/);
+  const upcomingSectionMatch = html.match(/## Upcoming([\s\S]*?)(?=## Closed|## How|$)/);
+  const closedSectionMatch = html.match(/## Closed([\s\S]*?)(?=## How|$)/);
+  
+  if (liveSectionMatch) {
+    const liveEntries = extractZerodhaEntries(liveSectionMatch[1]);
+    liveEntries.forEach(e => { e.status = 'live'; live.push(e); });
+  }
+  
+  if (upcomingSectionMatch) {
+    const upEntries = extractZerodhaUpcoming(upcomingSectionMatch[1]);
+    upEntries.forEach(e => upcoming.push(e));
+  }
+  
+  if (closedSectionMatch) {
+    const closedEntries = extractZerodhaEntries(closedSectionMatch[1]);
+    closedEntries.forEach(e => { e.status = 'listed'; closed.push(e); });
+  }
+  
+  return { live, upcoming, closed };
+}
+
+function extractZerodhaEntries(sectionHtml) {
+  const entries = [];
+  
+  // Pattern: [TYPE] Company Name[dates] • ₹price
+  // Example: "SME Vahh Chemicals04th – 08th Jun 2026 • ₹60"
+  // Example: "MAINBOARD Hexagon Nutrition05th – 09th Jun 2026 • ₹42 – ₹45"
+  const entryPattern = /(SME|MAINBOARD)\s+([A-Za-z][\w\s\.\-\(\)&]+?)(\d{2}(?:st|nd|rd|th))/g;
+  
+  let match;
+  while ((match = entryPattern.exec(sectionHtml)) !== null) {
+    const type = match[1].toLowerCase() === 'sme' ? 'sme' : 'mainboard';
+    const name = match[2].trim();
+    
+    if (!name || name.length < 3) continue;
+    
+    // Find price after this match
+    const afterMatch = sectionHtml.substring(match.index);
+    const priceMatch = afterMatch.match(/₹\s*([\d,]+)(?:\s*[–\-]\s*₹\s*([\d,]+))?/);
+    const priceMin = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : 0;
+    const priceMax = priceMatch && priceMatch[2] ? parseInt(priceMatch[2].replace(/,/g, '')) : priceMin;
+    
+    // Find dates
+    const dateMatch = afterMatch.match(/(\d{2}(?:st|nd|rd|th)\s*[–\-]\s*\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4}|\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4}\s*[–\-]\s*\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4})/);
+    const dateStr = dateMatch ? dateMatch[1] : '';
+    
+    // Find listing gain for closed IPOs
+    const gainMatch = afterMatch.match(/with\s+(-?\d+)%\s+gain/);
+    const listingGain = gainMatch ? parseInt(gainMatch[1]) : null;
+    
+    // Find listing date
+    const listingMatch = afterMatch.match(/(?:Listed?|Listing)\s+on\s+(\d{2}\s+\w+\s+\d{4}|\d+\s+\w+\s+\d{4})/);
+    const listingDate = listingMatch ? listingMatch[1] : '';
+    
+    const priceRange = priceMax > priceMin ? `${priceMin}-${priceMax}` : `${priceMin}`;
+    const listingPrice = listingGain !== null && priceMax > 0 ? Math.round(priceMax * (1 + listingGain / 100)) : null;
+    
+    entries.push({
+      name,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      type,
+      priceRange,
+      priceMax,
+      lotSize: 0,
+      openDate: dateStr,
+      closeDate: '',
+      listingDate,
+      listingPrice,
+      sector: 'Others',
+      issueSize: '',
+      subscription: null,
+      gmp: null,
+      registrar: '',
+      founders: '',
+      headquarters: '',
+      founded: '',
+      description: '',
+      purpose: '',
+      drhpUrl: 'https://www.sebi.gov.in/filings/public-issues.html',
+      aiScore: null,
+      aiSummary: '',
+      highlights: [],
+      riskScore: 5,
+      verdict: 'neutral',
+    });
+  }
+  
+  return entries;
+}
+
+function extractZerodhaUpcoming(sectionHtml) {
+  const entries = [];
+  
+  // Upcoming format: "MAINBOARD Company NameTo be announced"
+  const entryPattern = /(SME|MAINBOARD)\s+([A-Za-z][\w\s\.\-\(\)&]+?)To be announced/g;
+  
+  let match;
+  while ((match = entryPattern.exec(sectionHtml)) !== null) {
+    const type = match[1].toLowerCase() === 'sme' ? 'sme' : 'mainboard';
+    const name = match[2].trim();
+    
+    if (!name || name.length < 3) continue;
+    
+    entries.push({
+      name,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      sector: 'Others',
+      type,
+      issueSize: '',
+      drhpDate: '',
+      status: 'drhp-filed',
+      registrar: '',
+      founders: '',
+      headquarters: '',
+      founded: '',
+      description: '',
+      purpose: '',
+      drhpUrl: 'https://www.sebi.gov.in/filings/public-issues.html',
+    });
+  }
+  
+  return entries;
+}
+
 // ═══════════════════════════════════════════════════════════════
-// 2. IPO SUBSCRIPTION — NSE India (via Puppeteer)
-// Source: https://www.nseindia.com/market-data/all-upcoming-issues-ipo
+// 2. IPO SUBSCRIPTION — NSE (skipped - blocks servers)
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchNSESubscription() {
@@ -461,7 +497,11 @@ function parseAMFIFunds(text) {
     return true;
   });
   
-  return unique;
+  // Keep only top 200 by NAV (most established/popular funds)
+  const top200 = unique.sort((a, b) => b.nav - a.nav).slice(0, 200);
+  console.log(`    Filtered to top ${top200.length} funds by NAV`);
+  
+  return top200;
 }
 
 function mergeAMFIData(existing, amfiFunds) {
@@ -578,14 +618,19 @@ async function fetchSingleFundReturn(fund) {
 }
 
 function findNAVAtDate(navHistory, daysAgo) {
-  const targetDate = new Date();
-  targetDate.setDate(targetDate.getDate() - daysAgo);
+  const now = new Date();
+  const targetDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
   
-  // Find the NAV entry closest to the target date
+  // Find the NAV entry closest to the target date (data is sorted newest first)
   for (const entry of navHistory) {
     const parts = entry.date.split('-');
     if (parts.length !== 3) continue;
-    const entryDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    
+    // Parse DD-MM-YYYY format
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
+    const year = parseInt(parts[2]);
+    const entryDate = new Date(year, month, day);
     
     if (entryDate <= targetDate) {
       return parseFloat(entry.nav);
