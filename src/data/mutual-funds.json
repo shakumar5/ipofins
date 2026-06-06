@@ -7,7 +7,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 72.45,
-    "rating": 5,
+    "rating": null,
     "aum": "₹62,400 Cr",
     "riskLevel": "moderate",
     "schemeCode": "122639"
@@ -20,7 +20,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 245.3,
-    "rating": 5,
+    "rating": null,
     "aum": "₹18,200 Cr",
     "riskLevel": "very-high",
     "schemeCode": "120828"
@@ -33,7 +33,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 156.78,
-    "rating": 5,
+    "rating": null,
     "aum": "₹55,800 Cr",
     "riskLevel": "high",
     "schemeCode": "130504"
@@ -46,7 +46,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 89.34,
-    "rating": 4,
+    "rating": null,
     "aum": "₹48,500 Cr",
     "riskLevel": "moderate",
     "schemeCode": "120586"
@@ -59,7 +59,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 234.56,
-    "rating": 4,
+    "rating": null,
     "aum": "₹72,100 Cr",
     "riskLevel": "moderate",
     "schemeCode": "119707"
@@ -72,7 +72,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 78.92,
-    "rating": 4,
+    "rating": null,
     "aum": "₹35,600 Cr",
     "riskLevel": "moderate",
     "schemeCode": "120503"
@@ -85,7 +85,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 168.45,
-    "rating": 5,
+    "rating": null,
     "aum": "₹45,200 Cr",
     "riskLevel": "very-high",
     "schemeCode": "118778"
@@ -98,7 +98,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 112.34,
-    "rating": 5,
+    "rating": null,
     "aum": "₹38,900 Cr",
     "riskLevel": "high",
     "schemeCode": "120175"
@@ -111,7 +111,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 98.67,
-    "rating": 5,
+    "rating": null,
     "aum": "₹42,100 Cr",
     "riskLevel": "moderate",
     "schemeCode": "118834"
@@ -124,7 +124,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 142.89,
-    "rating": 4,
+    "rating": null,
     "aum": "₹26,800 Cr",
     "riskLevel": "very-high",
     "schemeCode": "125497"
@@ -137,7 +137,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 88.45,
-    "rating": 4,
+    "rating": null,
     "aum": "₹28,500 Cr",
     "riskLevel": "high",
     "schemeCode": "120505"
@@ -150,7 +150,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 445.67,
-    "rating": 4,
+    "rating": null,
     "aum": "₹52,300 Cr",
     "riskLevel": "moderate",
     "schemeCode": "122900"
@@ -159,13 +159,14 @@
     "name": "Canara Robeco Bluechip Equity Fund",
     "slug": "canara-robeco-bluechip",
     "category": "Large Cap",
-    "returns1y": 13.8,
-    "returns3y": 15.9,
-    "returns5y": 15.2,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 56.78,
-    "rating": 4,
+    "rating": null,
     "aum": "₹12,400 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "118989"
   },
   {
     "name": "Motilal Oswal Midcap Fund",
@@ -175,7 +176,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 78.92,
-    "rating": 5,
+    "rating": null,
     "aum": "₹15,600 Cr",
     "riskLevel": "high",
     "schemeCode": "147648"
@@ -184,25 +185,27 @@
     "name": "Tata Small Cap Fund",
     "slug": "tata-small-cap",
     "category": "Small Cap",
-    "returns1y": 22.8,
-    "returns3y": 29.4,
-    "returns5y": 26.8,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 32.56,
-    "rating": 4,
+    "rating": null,
     "aum": "₹8,200 Cr",
-    "riskLevel": "very-high"
+    "riskLevel": "very-high",
+    "schemeCode": "148747"
   },
   {
     "name": "DSP Flexi Cap Fund",
     "slug": "dsp-flexi-cap",
     "category": "Flexi Cap",
-    "returns1y": 16.2,
-    "returns3y": 19.8,
-    "returns5y": 17.5,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 67.89,
-    "rating": 4,
+    "rating": null,
     "aum": "₹15,800 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "119775"
   },
   {
     "name": "Quant Mid Cap Fund",
@@ -212,7 +215,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 212.45,
-    "rating": 5,
+    "rating": null,
     "aum": "₹8,900 Cr",
     "riskLevel": "high",
     "schemeCode": "120824"
@@ -221,25 +224,27 @@
     "name": "HDFC Large Cap Fund",
     "slug": "hdfc-large-cap",
     "category": "Large Cap",
-    "returns1y": 13.5,
-    "returns3y": 15.2,
-    "returns5y": 14.8,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 912.34,
-    "rating": 4,
+    "rating": null,
     "aum": "₹32,100 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "130502"
   },
   {
     "name": "SBI Large & Midcap Fund",
     "slug": "sbi-large-midcap",
     "category": "Flexi Cap",
-    "returns1y": 18.9,
-    "returns3y": 22.8,
-    "returns5y": 20.1,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 534.12,
-    "rating": 4,
+    "rating": null,
     "aum": "₹22,400 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "120601"
   },
   {
     "name": "Mirae Asset ELSS Tax Saver Fund",
@@ -249,7 +254,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 42.56,
-    "rating": 5,
+    "rating": null,
     "aum": "₹18,900 Cr",
     "riskLevel": "moderate",
     "schemeCode": "138827"
@@ -262,7 +267,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 312.78,
-    "rating": 5,
+    "rating": null,
     "aum": "₹9,200 Cr",
     "riskLevel": "high",
     "schemeCode": "120823"
@@ -271,13 +276,14 @@
     "name": "ICICI Prudential Balanced Advantage Fund",
     "slug": "icici-balanced-advantage",
     "category": "Hybrid",
-    "returns1y": 11.2,
-    "returns3y": 12.8,
-    "returns5y": 12.1,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 62.34,
-    "rating": 4,
+    "rating": null,
     "aum": "₹58,900 Cr",
-    "riskLevel": "low"
+    "riskLevel": "low",
+    "schemeCode": "120176"
   },
   {
     "name": "HDFC Balanced Advantage Fund",
@@ -287,7 +293,7 @@
     "returns3y": null,
     "returns5y": null,
     "nav": 412.56,
-    "rating": 5,
+    "rating": null,
     "aum": "₹78,200 Cr",
     "riskLevel": "moderate",
     "schemeCode": "119177"
@@ -296,84 +302,91 @@
     "name": "Bandhan Small Cap Fund",
     "slug": "bandhan-small-cap",
     "category": "Small Cap",
-    "returns1y": 21.5,
-    "returns3y": 28.2,
-    "returns5y": 25.5,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 28.9,
-    "rating": 4,
+    "rating": null,
     "aum": "₹6,500 Cr",
-    "riskLevel": "very-high"
+    "riskLevel": "very-high",
+    "schemeCode": "145036"
   },
   {
     "name": "UTI Flexi Cap Fund",
     "slug": "uti-flexi-cap",
     "category": "Flexi Cap",
-    "returns1y": 15.4,
-    "returns3y": 18.2,
-    "returns5y": 16.8,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 312.45,
-    "rating": 4,
+    "rating": null,
     "aum": "₹28,900 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "120552"
   },
   {
     "name": "Kotak Small Cap Fund",
     "slug": "kotak-small-cap",
     "category": "Small Cap",
-    "returns1y": 23.8,
-    "returns3y": 31.5,
-    "returns5y": 28.9,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 218.67,
-    "rating": 5,
+    "rating": null,
     "aum": "₹14,500 Cr",
-    "riskLevel": "very-high"
+    "riskLevel": "very-high",
+    "schemeCode": "125494"
   },
   {
     "name": "Axis Small Cap Fund",
     "slug": "axis-small-cap",
     "category": "Small Cap",
-    "returns1y": 20.2,
-    "returns3y": 27.5,
-    "returns5y": 24.8,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 85.23,
-    "rating": 4,
+    "rating": null,
     "aum": "₹19,800 Cr",
-    "riskLevel": "very-high"
+    "riskLevel": "very-high",
+    "schemeCode": "125354"
   },
   {
     "name": "ICICI Prudential Midcap Fund",
     "slug": "icici-pru-midcap",
     "category": "Mid Cap",
-    "returns1y": 18.5,
-    "returns3y": 22.8,
-    "returns5y": 20.4,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 245.89,
-    "rating": 4,
+    "rating": null,
     "aum": "₹18,200 Cr",
-    "riskLevel": "high"
+    "riskLevel": "high",
+    "schemeCode": "130500"
   },
   {
     "name": "SBI Focused Equity Fund",
     "slug": "sbi-focused-equity",
     "category": "Large Cap",
-    "returns1y": 14.8,
-    "returns3y": 16.8,
-    "returns5y": 15.5,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 312.45,
-    "rating": 4,
+    "rating": null,
     "aum": "₹35,600 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "119759"
   },
   {
     "name": "Canara Robeco ELSS Tax Saver",
     "slug": "canara-robeco-elss",
     "category": "ELSS",
-    "returns1y": 15.2,
-    "returns3y": 17.8,
-    "returns5y": 16.5,
+    "returns1y": null,
+    "returns3y": null,
+    "returns5y": null,
     "nav": 142.34,
-    "rating": 4,
+    "rating": null,
     "aum": "₹8,400 Cr",
-    "riskLevel": "moderate"
+    "riskLevel": "moderate",
+    "schemeCode": "118990"
   }
 ]

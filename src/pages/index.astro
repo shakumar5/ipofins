@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import IPOCard from '../components/IPOCard.astro';
-import AIInsightBox from '../components/AIInsightBox.astro';
 import ToolCard from '../components/ToolCard.astro';
 import iposData from '../data/ipos.json';
 import toolsData from '../data/tools.json';
@@ -69,20 +68,20 @@ const jsonLd = {
       <!-- Stats -->
       <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
         <div class="card-compact text-center">
-          <p class="text-2xl font-bold text-surface-900 dark:text-white">156</p>
-          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">IPOs Tracked (2026)</p>
+          <p class="text-2xl font-bold text-surface-900 dark:text-white">{iposData.length}</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">IPOs Tracked</p>
         </div>
         <div class="card-compact text-center">
-          <p class="text-2xl font-bold text-success-500">68%</p>
-          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Gave Positive Returns</p>
+          <p class="text-2xl font-bold text-success-500">{liveIPOs.length}</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Live Now</p>
         </div>
         <div class="card-compact text-center">
-          <p class="text-2xl font-bold text-surface-900 dark:text-white">25+</p>
-          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Brokers Compared</p>
+          <p class="text-2xl font-bold text-surface-900 dark:text-white">{toolsData.length}</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Free Tools</p>
         </div>
         <div class="card-compact text-center">
-          <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">AI</p>
-          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Powered Insights</p>
+          <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">12hr</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Auto Refresh</p>
         </div>
       </div>
     </div>
@@ -128,39 +127,7 @@ const jsonLd = {
     )}
   </section>
 
-  <!-- AI Insight Section -->
-  <section class="container-wide py-12 lg:py-16">
-    <div class="flex items-end justify-between mb-8">
-      <div>
-        <h2 class="section-title">AI Market Insights</h2>
-        <p class="section-subtitle">AI-powered analysis updated daily</p>
-      </div>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <AIInsightBox
-        title="IPO Market Outlook"
-        summary="The current IPO market shows strong momentum with 8 out of 10 recent listings giving positive returns. Green energy and healthcare sectors are seeing particularly high demand. Subscription trends suggest retail enthusiasm remains elevated."
-        riskScore={4}
-        verdict="apply"
-        highlights={[
-          "Green Energy IPOs oversubscribed by avg 12x",
-          "SME segment showing mixed signals - be selective",
-          "Mainboard quality has improved vs last quarter"
-        ]}
-      />
-      <AIInsightBox
-        title="Top Pick: CMR Green Technologies"
-        summary="Strong order book of ₹2,400 Cr provides 2-year revenue visibility. Government push for green energy creates favorable policy environment. Subscription at 8.5x confirms institutional interest."
-        riskScore={3}
-        verdict="apply"
-        highlights={[
-          "Peer group trades at 25x PE vs CMR at 18x",
-          "Institutional investors heavily subscribed",
-          "Clear growth runway with government contracts"
-        ]}
-      />
-    </div>
-  </section>
+  <!-- AI Insight Section - Removed until real data available -->
 
   <!-- Tools Section -->
   <section class="container-wide py-12 lg:py-16">

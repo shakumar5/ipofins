@@ -88,8 +88,44 @@ async function closeBrowser() {
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchBSEIPOs() {
-  console.log('\n  📊 [BSE] Fetching live IPO data (Puppeteer)...');
+  console.log('\n  📊 [Screener.in + BSE] Fetching live IPO data...');
   
+  // Primary: Try Screener.in (simple HTML, reliable)
+  try {
+    const response = await fetchWithHeaders('https://www.screener.in/ipo/');
+    if (response.ok) {
+      const html = await response.text();
+      const ipos = parseScreenerUpcoming(html);
+      if (ipos.length > 0) {
+        console.log(`    ✅ Found ${ipos.length} live IPOs from Screener.in`);
+        
+        // Also fetch recent listings for performance
+        try {
+          const recentResp = await fetchWithHeaders('https://www.screener.in/ipo/recent/');
+          if (recentResp.ok) {
+            const recentHtml = await recentResp.text();
+            const recent = parseScreenerRecent(recentHtml);
+            if (recent.length > 0) {
+              const perfData = { '2024': { mainboard: [], sme: [] }, '2025': { mainboard: [], sme: [] }, '2026': { mainboard: [], sme: [] } };
+              recent.forEach(r => {
+                const bucket = r.issueSize > 500 ? 'mainboard' : 'sme';
+                perfData['2026'][bucket].push({ name: r.name, listingDate: r.listingDate, issuePrice: r.issuePrice, listingPrice: r.currentPrice, currentPrice: r.currentPrice, sector: 'Others' });
+              });
+              writeData('ipo-performance.json', perfData);
+              console.log(`    ✅ Updated performance data: ${recent.length} recent listings`);
+            }
+          }
+        } catch (e) { /* ignore recent fetch failure */ }
+        
+        return ipos;
+      }
+    }
+  } catch (e) {
+    console.log(`    ⚠️ Screener.in failed: ${e.message}`);
+  }
+  
+  // Fallback: BSE Puppeteer
+  console.log('    Trying BSE Puppeteer fallback...');
   const browser = await getBrowser();
   if (!browser) {
     console.log('    ⚠️ No browser available, skipping BSE');
@@ -650,6 +686,81 @@ function mergeUpcomingData(existing, sebiFilings) {
   }
   
   return Array.from(existingMap.values());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREENER.IN PARSERS
+// ═══════════════════════════════════════════════════════════════
+
+function parseScreenerUpcoming(html) {
+  const ipos = [];
+  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+  
+  let match;
+  while ((match = rowPattern.exec(html)) !== null) {
+    const row = match[1];
+    const cells = [];
+    let cellMatch;
+    while ((cellMatch = cellPattern.exec(row)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim());
+    }
+    
+    if (cells.length >= 3 && cells[0] && cells[0].length > 2) {
+      const name = cells[0].replace(/NSE|BSE|SME|-SME/g, '').trim();
+      if (!name || name.includes('Company') || name.length < 3) continue;
+      
+      const subMatch = cells.find(c => c.includes('times'));
+      const subscription = subMatch ? parseFloat(subMatch) : undefined;
+      const sizeCell = cells.find(c => /^\d[\d,]*$/.test(c.trim()));
+      const issueSize = sizeCell ? parseInt(sizeCell.replace(/,/g, '')) : 0;
+      
+      ipos.push({
+        name,
+        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        priceRange: '0',
+        lotSize: 0,
+        openDate: '',
+        closeDate: '',
+        status: 'live',
+        type: issueSize > 500 ? 'mainboard' : 'sme',
+        sector: 'Others',
+        subscription,
+      });
+    }
+  }
+  return ipos;
+}
+
+function parseScreenerRecent(html) {
+  const ipos = [];
+  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+  
+  let match;
+  while ((match = rowPattern.exec(html)) !== null) {
+    const row = match[1];
+    const cells = [];
+    let cellMatch;
+    while ((cellMatch = cellPattern.exec(row)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim());
+    }
+    
+    if (cells.length >= 4 && cells[0] && cells[0].length > 2) {
+      const name = cells[0].replace(/REIT|NSE|BSE|SME/g, '').trim();
+      if (!name || name.includes('Company') || name.length < 3) continue;
+      
+      const listingDate = cells[1] || '';
+      const issueSize = parseInt((cells[2] || '0').replace(/,/g, '')) || 0;
+      const issuePrice = parseFloat((cells[3] || '0').replace(/[₹,\s]/g, '')) || 0;
+      const currentPrice = parseFloat((cells[4] || '0').replace(/[₹,\s]/g, '')) || 0;
+      
+      if (issuePrice > 0 && currentPrice > 0) {
+        ipos.push({ name, listingDate, issueSize, issuePrice, currentPrice });
+      }
+    }
+  }
+  return ipos.slice(0, 30);
 }
 
 // ═══════════════════════════════════════════════════════════════
