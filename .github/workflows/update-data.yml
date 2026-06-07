@@ -8,7 +8,8 @@ name: Build & Deploy
 on:
   schedule:
     # Every 12 hours: 00:30, 12:30 UTC = 06:00, 18:00 IST
-    - cron: '30 0,12 * * *'
+    #- cron: '30 0,12 * * *'
+    - cron: '30 0 * * *'
   
   workflow_dispatch:
 
