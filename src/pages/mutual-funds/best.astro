@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import FundTable from '../../components/funds/FundTable.tsx';
 import fundsData from '../../data/mutual-funds.json';
 
-const categories = [...new Set(fundsData.map(f => f.category))];
+const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
 
 // Best = meets 2 of 3 criteria
 const top5ByCat = new Set();

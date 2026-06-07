@@ -40,24 +40,29 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  --animate-fade-in: fadeIn 0.5s ease-in-out;
+  --animate-fade-in: fadeIn 0.4s ease-out;
   --animate-slide-up: slideUp 0.3s ease-out;
   --animate-pulse-subtle: pulseSubtle 2s ease-in-out infinite;
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideUp {
-  0% { transform: translateY(10px); opacity: 0; }
+  0% { transform: translateY(12px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes pulseSubtle {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Base styles */
@@ -89,21 +94,52 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--color-primary-200);
+  color: var(--color-primary-900);
+}
+
+.dark ::selection {
+  background-color: var(--color-primary-800);
+  color: white;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-surface-300);
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: var(--color-surface-600);
 }
 
 /* Component classes */
 .card {
   background-color: white;
   border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   padding: 1.5rem;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  box-shadow: 0 10px 40px -10px rgb(0 0 0 / 0.08), 0 4px 6px -2px rgb(0 0 0 / 0.04);
   border-color: var(--color-primary-200);
+  transform: translateY(-2px);
 }
 
 .dark .card {
@@ -112,15 +148,21 @@ body {
 }
 
 .dark .card:hover {
-  border-color: var(--color-primary-800);
+  border-color: var(--color-primary-700);
+  box-shadow: 0 10px 40px -10px rgb(0 0 0 / 0.3);
 }
 
 .card-compact {
   background-color: white;
   border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border-radius: 0.625rem;
   padding: 1rem;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-compact:hover {
+  border-color: var(--color-primary-200);
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.06);
 }
 
 .dark .card-compact {
@@ -128,18 +170,24 @@ body {
   border-color: var(--color-surface-700);
 }
 
+.dark .card-compact:hover {
+  border-color: var(--color-primary-800);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.625rem;
+  padding: 0.2rem 0.7rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .badge-live {
   background-color: var(--color-success-50);
   color: var(--color-success-600);
+  animation: pulseSubtle 2s ease-in-out infinite;
 }
 
 .badge-upcoming {
@@ -161,36 +209,46 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
-  background-color: var(--color-primary-600);
+  padding: 0.625rem 1.25rem;
+  background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
   color: white;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.875rem;
   border-radius: 0.5rem;
-  transition: background-color 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  box-shadow: 0 2px 8px -2px rgba(26, 109, 245, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-700);
+  background: linear-gradient(135deg, var(--color-primary-700), var(--color-primary-800));
+  box-shadow: 0 4px 12px -2px rgba(26, 109, 245, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1.25rem;
   background-color: #f1f5f9;
   color: #334155;
   font-weight: 500;
   font-size: 0.875rem;
   border-radius: 0.5rem;
-  transition: background-color 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  border: 1px solid transparent;
 }
 
 .btn-secondary:hover {
   background-color: #e2e8f0;
+  border-color: var(--color-surface-300);
+  transform: translateY(-1px);
 }
 
 .dark .btn-secondary {
@@ -200,12 +258,13 @@ body {
 
 .dark .btn-secondary:hover {
   background-color: var(--color-surface-600);
+  border-color: var(--color-surface-500);
 }
 
 .section-title {
   font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--color-surface-900);
 }
 
@@ -216,6 +275,7 @@ body {
 .section-subtitle {
   color: #64748b;
   margin-top: 0.25rem;
+  font-size: 0.875rem;
 }
 
 .dark .section-subtitle {
@@ -250,4 +310,57 @@ body {
     padding-left: 2rem;
     padding-right: 2rem;
   }
+}
+
+/* Utility: focus ring for accessibility */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Details/FAQ animation */
+details summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::after {
+  content: '+';
+  float: right;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--color-surface-400);
+  transition: transform 0.2s;
+}
+
+details[open] summary::after {
+  content: '−';
+  color: var(--color-primary-600);
+}
+
+details[open] > *:not(summary) {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Smooth page transitions (for view transitions API) */
+@view-transition {
+  navigation: auto;
+}
+
+/* Interactive table rows */
+.interactive-row {
+  transition: background-color 0.15s ease;
+}
+
+.interactive-row:hover {
+  background-color: var(--color-primary-50);
+}
+
+.dark .interactive-row:hover {
+  background-color: var(--color-surface-700);
 }

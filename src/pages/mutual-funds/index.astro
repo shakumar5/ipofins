@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import fundsData from '../../data/mutual-funds.json';
 
-const categories = [...new Set(fundsData.map(f => f.category))];
+const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
 const totalFunds = fundsData.length;
 
 const jsonLd = {
@@ -59,7 +59,7 @@ const faqJsonLd = {
           <a href={`/mutual-funds/all`} class="card-compact text-center group hover:shadow-md transition-shadow">
             <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{cat}</p>
             <p class="text-xs text-surface-500 mt-0.5">{count} funds</p>
-            {topFund && <p class="text-xs font-bold text-success-500 mt-1">Best 1Y: +{topFund.returns1y}%</p>}
+            {topFund && <p class={`text-xs font-bold mt-1 ${(topFund.returns1y || 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>Best 1Y: {(topFund.returns1y || 0) >= 0 ? '+' : ''}{topFund.returns1y}%</p>}
           </a>
         );
       })}
@@ -78,7 +78,7 @@ const faqJsonLd = {
               <p class="text-xs text-surface-500">{fund.category} • {fund.aum}</p>
             </div>
             <div class="text-right">
-              <p class="text-sm font-bold text-success-500">+{fund.returns3y}%</p>
+              <p class={`text-sm font-bold ${(fund.returns3y || 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{(fund.returns3y || 0) >= 0 ? '+' : ''}{fund.returns3y}%</p>
               <p class="text-[10px] text-surface-400">3Y return</p>
             </div>
           </div>
