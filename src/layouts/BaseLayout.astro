@@ -104,14 +104,16 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     <Footer />
 
     <!-- Site-wide Bottom Navigation -->
-    <div class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
+    <div class="container-wide py-8 border-t border-surface-200 dark:border-surface-700">
+      <p class="text-center text-xs text-surface-400 dark:text-surface-500 mb-4">Quick Navigation</p>
       <div class="flex flex-wrap gap-3 justify-center">
-        <a href="/ipo" class="btn-secondary text-xs">📊 IPOs</a>
-        <a href="/mutual-funds" class="btn-secondary text-xs">💰 Mutual Funds</a>
-        <a href="/broker" class="btn-secondary text-xs">🏦 Brokers</a>
-        <a href="/tools" class="btn-secondary text-xs">🔧 Tools</a>
-        <a href="/blogs" class="btn-secondary text-xs">📝 Blogs</a>
-        <a href="/learn" class="btn-secondary text-xs">📚 Learn</a>
+        <a href="/" class="btn-secondary text-sm">🏠 Home</a>
+        <a href="/ipo" class="btn-secondary text-sm">📊 IPOs</a>
+        <a href="/mutual-funds" class="btn-secondary text-sm">💰 Mutual Funds</a>
+        <a href="/broker" class="btn-secondary text-sm">🏦 Brokers</a>
+        <a href="/tools" class="btn-secondary text-sm">🔧 Tools</a>
+        <a href="/blogs" class="btn-secondary text-sm">📝 Blogs</a>
+        <a href="/learn" class="btn-secondary text-sm">📚 Learn</a>
       </div>
     </div>
 

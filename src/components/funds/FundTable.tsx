@@ -11,11 +11,13 @@ interface Fund {
   rating?: number | null;
   aum?: string;
   riskLevel: string;
+  hasHoldings?: boolean;
 }
 
 interface Props {
   funds: Fund[];
   categories: string[];
+  holdingSlugs?: string[];
 }
 
 // Fixed category display order
@@ -44,10 +46,12 @@ function returnColor(val: number | null | undefined): string {
   return val >= 0 ? 'text-green-600' : 'text-red-500';
 }
 
-export default function FundTable({ funds, categories }: Props) {
+export default function FundTable({ funds, categories, holdingSlugs = [] }: Props) {
   const [catFilter, setCatFilter] = useState('All');
-  const [sortBy, setSortBy] = useState<'returns3y' | 'returns1y' | 'returns5y'>('returns3y');
+  const [sortBy, setSortBy] = useState<'returns3y' | 'returns1y' | 'returns5y' | 'holdings'>('returns3y');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
+
+  const holdingSet = useMemo(() => new Set(holdingSlugs), [holdingSlugs]);
 
   // Sort categories in defined order
   const orderedCategories = useMemo(() => {
@@ -57,12 +61,17 @@ export default function FundTable({ funds, categories }: Props) {
   const filtered = useMemo(() => {
     let data = catFilter === 'All' ? funds : funds.filter(f => f.category === catFilter);
     data = [...data].sort((a, b) => {
+      if (sortBy === 'holdings') {
+        const aH = holdingSet.has(a.slug) ? 1 : 0;
+        const bH = holdingSet.has(b.slug) ? 1 : 0;
+        return sortDir === 'desc' ? bH - aH : aH - bH;
+      }
       const aVal = (a[sortBy] as number) || 0;
       const bVal = (b[sortBy] as number) || 0;
       return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
     });
     return data;
-  }, [funds, catFilter, sortBy, sortDir]);
+  }, [funds, catFilter, sortBy, sortDir, holdingSet]);
 
   const handleSort = (col: typeof sortBy) => {
     if (sortBy === col) {
@@ -96,36 +105,38 @@ export default function FundTable({ funds, categories }: Props) {
         ))}
       </div>
 
-      <p className="text-xs text-gray-500 mb-3">{filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : '5Y'} returns ({sortDir === 'desc' ? 'high to low' : 'low to high'})</p>
+      <p className="text-xs text-gray-500 mb-3">{filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : sortBy === 'returns5y' ? '5Y' : 'Holdings'} ({sortDir === 'desc' ? 'high to low' : 'low to high'})</p>
 
       {/* Table Header */}
-      <div className="hidden md:grid grid-cols-12 gap-3 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 mb-2">
+      <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 mb-2">
         <div className="col-span-1 text-center">#</div>
         <div className="col-span-3">Fund</div>
-        <div className="col-span-1 text-center">NAV</div>
-        <div className="col-span-2 text-center">
-          <button onClick={() => handleSort('returns1y')} className="hover:text-blue-600 cursor-pointer">1Y Return<SortIcon col="returns1y" /></button>
+        <div className="col-span-1 text-center">
+          <button onClick={() => handleSort('returns1y')} className="hover:text-blue-600 cursor-pointer">1Y<SortIcon col="returns1y" /></button>
         </div>
-        <div className="col-span-2 text-center">
-          <button onClick={() => handleSort('returns3y')} className="hover:text-blue-600 cursor-pointer">3Y Return<SortIcon col="returns3y" /></button>
+        <div className="col-span-1 text-center">
+          <button onClick={() => handleSort('returns3y')} className="hover:text-blue-600 cursor-pointer">3Y<SortIcon col="returns3y" /></button>
         </div>
         <div className="col-span-1 text-center">
           <button onClick={() => handleSort('returns5y')} className="hover:text-blue-600 cursor-pointer">5Y<SortIcon col="returns5y" /></button>
         </div>
         <div className="col-span-1 text-center">Rating</div>
         <div className="col-span-1 text-center">Risk</div>
+        <div className="col-span-1 text-center">
+          <button onClick={() => handleSort('holdings')} className="hover:text-blue-600 cursor-pointer">Hold.<SortIcon col="holdings" /></button>
+        </div>
       </div>
 
       {/* Mobile Sort */}
-      <div className="md:hidden flex gap-2 mb-3">
+      <div className="md:hidden flex flex-wrap gap-2 mb-3">
         <span className="text-xs text-gray-500">Sort:</span>
-        {(['returns1y', 'returns3y', 'returns5y'] as const).map(col => (
+        {(['returns1y', 'returns3y', 'returns5y', 'holdings'] as const).map(col => (
           <button
             key={col}
             onClick={() => handleSort(col)}
             className={`text-xs px-2 py-1 rounded ${sortBy === col ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-blue-600'}`}
           >
-            {col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : '5Y'}
+            {col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : 'Holdings'}
             {sortBy === col && (sortDir === 'desc' ? ' ↓' : ' ↑')}
           </button>
         ))}
@@ -133,26 +144,27 @@ export default function FundTable({ funds, categories }: Props) {
 
       {/* Rows */}
       <div className="space-y-1.5">
-        {filtered.map((fund, i) => (
+        {filtered.map((fund, i) => {
+          const hasHold = holdingSet.has(fund.slug);
+          return (
           <a
             key={fund.slug}
             href={`/mutual-funds/fund/${fund.slug}`}
             className="block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all"
           >
             {/* Desktop */}
-            <div className="hidden md:grid grid-cols-12 gap-3 items-center">
+            <div className="hidden md:grid grid-cols-12 gap-2 items-center">
               <div className="col-span-1 text-center text-xs text-gray-400">{i + 1}</div>
               <div className="col-span-3">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{fund.name}</h3>
                 <p className="text-xs text-gray-500">{fund.category} • {fund.aum}</p>
               </div>
-              <div className="col-span-1 text-center text-sm font-medium text-gray-700 dark:text-gray-300">₹{fund.nav.toFixed(0)}</div>
-              <div className="col-span-2 text-center">
+              <div className="col-span-1 text-center">
                 <span className={`text-sm font-bold ${returnColor(fund.returns1y)}`}>
                   {formatReturn(fund.returns1y)}
                 </span>
               </div>
-              <div className="col-span-2 text-center">
+              <div className="col-span-1 text-center">
                 <span className={`text-sm font-bold ${returnColor(fund.returns3y)}`}>
                   {formatReturn(fund.returns3y)}
                 </span>
@@ -177,17 +189,27 @@ export default function FundTable({ funds, categories }: Props) {
                   'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                 }`}>{fund.riskLevel.replace('-', ' ')}</span>
               </div>
+              <div className="col-span-1 text-center">
+                {hasHold ? (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">Y</span>
+                ) : (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">N</span>
+                )}
+              </div>
             </div>
             {/* Mobile */}
             <div className="md:hidden">
               <div className="flex justify-between items-start mb-1">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{i+1}. {fund.name}</h3>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
-                  fund.riskLevel === 'low' ? 'bg-green-50 text-green-600' :
-                  fund.riskLevel === 'moderate' ? 'bg-yellow-50 text-yellow-600' :
-                  fund.riskLevel === 'high' ? 'bg-orange-50 text-orange-600' :
-                  'bg-red-50 text-red-600'
-                }`}>{fund.riskLevel.replace('-',' ')}</span>
+                <div className="flex items-center gap-1.5">
+                  {hasHold && <span className="text-[9px] font-semibold px-1 py-0.5 rounded bg-green-50 text-green-600">Holdings</span>}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
+                    fund.riskLevel === 'low' ? 'bg-green-50 text-green-600' :
+                    fund.riskLevel === 'moderate' ? 'bg-yellow-50 text-yellow-600' :
+                    fund.riskLevel === 'high' ? 'bg-orange-50 text-orange-600' :
+                    'bg-red-50 text-red-600'
+                  }`}>{fund.riskLevel.replace('-',' ')}</span>
+                </div>
               </div>
               <p className="text-xs text-gray-500 mb-2">{fund.category} • {fund.aum}</p>
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -206,7 +228,8 @@ export default function FundTable({ funds, categories }: Props) {
               </div>
             </div>
           </a>
-        ))}
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (

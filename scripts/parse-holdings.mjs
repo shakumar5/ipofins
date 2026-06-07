@@ -128,27 +128,50 @@ function detectFundName(sheetData, sheetName, filename) {
   for (let i = 0; i < Math.min(5, sheetData.length); i++) {
     const row = sheetData[i];
     if (!row) continue;
-    for (const cell of row) {
+    for (let ci = 0; ci < row.length; ci++) {
+      const cell = row[ci];
       if (!cell || typeof cell !== 'string') continue;
       const val = cell.trim();
-      // Fund name pattern: contains "Fund" and is reasonably long
-      if (val.length > 15 && val.length < 150 && 
-          (val.includes('Fund') || val.includes('FUND')) &&
+      // Fund name pattern: reasonably long, contains fund-related keywords
+      if (val.length > 10 && val.length < 150 && 
+          (val.includes('Fund') || val.includes('FUND') || val.includes('ETF') || val.includes('FOF') || val.includes('Scheme')) &&
           !val.includes('Portfolio') && !val.includes('Monthly') &&
-          !val.includes('Generated') && !val.includes('Statement')) {
+          !val.includes('Generated') && !val.includes('Statement') &&
+          !val.includes('Name of') && !val.includes('ISIN')) {
         // Clean up
         return val.replace(/\s*\(An open ended.*?\)/gi, '').replace(/\s*-\s*An Open.*$/gi, '').replace(/\r\n/g, ' ').trim();
       }
     }
   }
   
-  // Fallback: use sheet name if meaningful
-  if (sheetName && sheetName.length > 3 && !sheetName.match(/^(Sheet|IDF|RBLF)/)) {
+  // Second pass: look for any string > 15 chars in first few rows that looks like a name
+  for (let i = 0; i < Math.min(4, sheetData.length); i++) {
+    const row = sheetData[i];
+    if (!row) continue;
+    for (const cell of row) {
+      if (!cell || typeof cell !== 'string') continue;
+      const val = cell.trim();
+      if (val.length > 15 && val.length < 100 && 
+          !val.includes('Portfolio') && !val.includes('Monthly') &&
+          !val.includes('Generated') && !val.includes('Statement') &&
+          !val.includes('Name of') && !val.includes('ISIN') &&
+          !val.includes('Crisil') && !val.match(/^\d/) &&
+          /^[A-Z]/.test(val)) {
+        return val.replace(/\r\n/g, ' ').trim();
+      }
+    }
+  }
+  
+  // Fallback: use sheet name if meaningful (not just a code)
+  if (sheetName && sheetName.length > 5 && !sheetName.match(/^(Sheet|IDF|RBLF|AO\d|BF)/i)) {
     return sheetName;
   }
   
   // Fallback: extract from filename
-  return filename.replace(/\.xlsx?$/i, '').replace(/[-_]/g, ' ').replace(/\d{2,}/g, '').trim();
+  let fn = filename.replace(/\.xlsx?$/i, '').replace(/[-_]/g, ' ').replace(/\d{2,}/g, '').trim();
+  // Clean common prefixes
+  fn = fn.replace(/Monthly Portfolio (April|March|May|June|Jul|Aug|Sep|Oct|Nov|Dec|Jan|Feb) /i, '');
+  return fn || sheetName;
 }
 
 // ═══════════════════════════════════════════════════════════════

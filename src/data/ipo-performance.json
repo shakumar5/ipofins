@@ -8,7 +8,21 @@
     "sme": []
   },
   "2026": {
-    "mainboard": [],
-    "sme": []
+    "mainboard": [
+      { "name": "CMR Green Technologies", "listingDate": "Jun 10, 2026", "issuePrice": 192, "listingPrice": 192, "currentPrice": 192, "sector": "Green Energy" }
+    ],
+    "sme": [
+      { "name": "Vegorama Punjabi Angithi", "listingDate": "May 27, 2026", "issuePrice": 77, "listingPrice": 126, "currentPrice": 126, "sector": "Food & Beverages" },
+      { "name": "Q-Line Biotech", "listingDate": "May 29, 2026", "issuePrice": 343, "listingPrice": 473, "currentPrice": 473, "sector": "Biotech" },
+      { "name": "Autofurnish", "listingDate": "May 29, 2026", "issuePrice": 41, "listingPrice": 45, "currentPrice": 45, "sector": "Auto Accessories" },
+      { "name": "Bio Medica Laboratories", "listingDate": "May 29, 2026", "issuePrice": 139, "listingPrice": 115, "currentPrice": 115, "sector": "Healthcare" },
+      { "name": "M R Maniveni Foods", "listingDate": "Jun 01, 2026", "issuePrice": 52, "listingPrice": 41, "currentPrice": 41, "sector": "Food" },
+      { "name": "Harikanta Overseas", "listingDate": "Jun 02, 2026", "issuePrice": 91, "listingPrice": 91, "currentPrice": 91, "sector": "Trading" },
+      { "name": "Yaashvi Jewellers", "listingDate": "Jun 02, 2026", "issuePrice": 83, "listingPrice": 83, "currentPrice": 83, "sector": "Jewellery" },
+      { "name": "Rajnandini Fashion India", "listingDate": "Jun 03, 2026", "issuePrice": 63, "listingPrice": 63, "currentPrice": 63, "sector": "Fashion" },
+      { "name": "Aureate Tradde", "listingDate": "Jun 05, 2026", "issuePrice": 70, "listingPrice": 70, "currentPrice": 70, "sector": "Trading" },
+      { "name": "SMR Jewels", "listingDate": "Jun 08, 2026", "issuePrice": 128, "listingPrice": 128, "currentPrice": 128, "sector": "Jewellery" },
+      { "name": "Merritronix", "listingDate": "Jun 08, 2026", "issuePrice": 149, "listingPrice": 149, "currentPrice": 149, "sector": "Electronics" }
+    ]
   }
 }

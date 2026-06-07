@@ -27,10 +27,13 @@ interface Props {
 
 export default function HoldingsCompare({ data }: Props) {
   const [selectedAMC, setSelectedAMC] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [month1, setMonth1] = useState(data.months[0] || '');
-  const [month2, setMonth2] = useState(data.months[1] || '');
+  const [month2, setMonth2] = useState(data.months[1] || data.months[0] || '');
 
   const amcList = useMemo(() => Object.keys(data.amcs).sort(), [data.amcs]);
+
+  const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
 
   // Funds for selected AMC
   const fundsForAMC = useMemo(() => {
@@ -42,8 +45,23 @@ export default function HoldingsCompare({ data }: Props) {
   const comparison = useMemo(() => {
     if (!selectedAMC || !month1 || !month2 || month1 === month2) return null;
 
+    // Categorize fund by name
+    function getFundCategory(name: string): string {
+      const n = name.toLowerCase();
+      if (n.includes('large cap') || n.includes('largecap') || n.includes('large & mid') || n.includes('large and mid')) {
+        if (n.includes('& mid') || n.includes('and mid')) return 'Large & Mid Cap';
+        return 'Large Cap';
+      }
+      if (n.includes('mid cap') || n.includes('midcap')) return 'Mid Cap';
+      if (n.includes('multi cap') || n.includes('multicap')) return 'Multi Cap';
+      if (n.includes('flexi') || n.includes('flexicap')) return 'Flexi Cap';
+      if (n.includes('small cap') || n.includes('smallcap')) return 'Small Cap';
+      return 'Others';
+    }
+
     const results: {
       fundName: string;
+      category: string;
       additions: { name: string; sector: string; pct: number }[];
       removals: { name: string; sector: string; pct: number }[];
       increased: { name: string; sector: string; oldPct: number; newPct: number }[];
@@ -52,6 +70,9 @@ export default function HoldingsCompare({ data }: Props) {
 
     for (const [slug, fund] of Object.entries(data.holdings)) {
       if (fund.amc !== selectedAMC) continue;
+
+      const fundCat = getFundCategory(fund.name);
+      if (selectedCategory !== 'All' && fundCat !== selectedCategory) continue;
 
       const oldHoldings = (fund[month1] as Holding[] | undefined) || [];
       const newHoldings = (fund[month2] as Holding[] | undefined) || [];
@@ -91,6 +112,7 @@ export default function HoldingsCompare({ data }: Props) {
       if (additions.length > 0 || removals.length > 0 || increased.length > 0 || decreased.length > 0) {
         results.push({
           fundName: fund.name,
+          category: fundCat,
           additions: additions.sort((a, b) => b.pct - a.pct),
           removals: removals.sort((a, b) => b.pct - a.pct),
           increased: increased.sort((a, b) => (b.newPct - b.oldPct) - (a.newPct - a.oldPct)),
@@ -100,14 +122,14 @@ export default function HoldingsCompare({ data }: Props) {
     }
 
     return results.sort((a, b) => (b.additions.length + b.removals.length) - (a.additions.length + a.removals.length));
-  }, [selectedAMC, month1, month2, data.holdings]);
+  }, [selectedAMC, selectedCategory, month1, month2, data.holdings]);
 
   return (
     <div>
       {/* Filters */}
       <div className="p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl mb-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Compare Holdings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* AMC */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Select AMC</label>
@@ -119,6 +141,20 @@ export default function HoldingsCompare({ data }: Props) {
               <option value="">-- Select AMC --</option>
               {amcList.map(amc => (
                 <option key={amc} value={amc}>{amc} ({data.amcs[amc]?.length || 0} funds)</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Fund Category */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Fund Type</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            >
+              {FUND_CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
           </div>
