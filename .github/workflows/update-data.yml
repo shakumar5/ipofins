@@ -1,9 +1,9 @@
-# IPOfins — Automated Build & Deploy
-# Runs every 12 hours OR on push to main.
-# IPO data is fetched locally (Zerodha needs browser cookies).
-# GitHub Actions only fetches Mutual Fund data (AMFI — no auth needed).
+# IPOfins — Build & Deploy
+# Runs on push to main OR every 12 hours.
+# Data is managed manually (AMFI Excel + Zerodha local fetch).
+# This workflow only builds and deploys.
 
-name: Auto Refresh & Deploy
+name: Build & Deploy
 
 on:
   schedule:
@@ -16,9 +16,9 @@ on:
     branches: [main]
 
 jobs:
-  refresh-and-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout code
@@ -30,20 +30,7 @@ jobs:
           node-version: '20'
 
       - name: 📦 Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: 🔄 Fetch mutual fund data (AMFI only)
-        run: node scripts/fetch-all-data.mjs --mf-only
-        env:
-          NODE_TLS_REJECT_UNAUTHORIZED: '0'
-
-      - name: 💾 Commit data changes (if any)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/mutual-funds.json
-          git diff --cached --quiet || git commit -m "chore: auto-update MF data [$(date +%Y-%m-%d)]"
-          git push || true
+        run: npm install --legacy-peer-deps --omit=optional
 
       - name: 🏗️ Build static site
         run: npx astro build
