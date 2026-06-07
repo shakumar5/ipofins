@@ -213,8 +213,17 @@ export default function HoldingsCompare({ data }: Props) {
       {/* Results */}
       {comparison && comparison.length === 0 && (
         <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-          <p className="text-sm font-medium">No holdings data available for this AMC in the selected months</p>
-          <p className="text-xs mt-1 text-gray-400">Data will be added soon. Holdings are updated monthly.</p>
+          <div className="w-12 h-12 mx-auto bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+          <p className="text-sm font-medium">No portfolio changes detected</p>
+          <p className="text-xs mt-1 text-gray-400">
+            {selectedCategory !== 'All' 
+              ? `No changes found for "${selectedCategory}" funds in this AMC between ${month1} → ${month2}. Try selecting "All" fund types.`
+              : `This AMC's funds had no significant additions or removals between ${month1} → ${month2}. This is common for index funds that track a fixed benchmark.`
+            }
+          </p>
+          <p className="text-xs mt-3 text-gray-400">If data is missing for one month, changes cannot be calculated. Holdings data is updated monthly.</p>
         </div>
       )}
 

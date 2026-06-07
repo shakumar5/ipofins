@@ -102,7 +102,7 @@ const holdings = fundHoldings?.[latestMonth] || [];
 
   <!-- Holdings Section -->
   <section class="container-wide py-4">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Top Holdings</h2>
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 section-accent">Top Holdings</h2>
     {holdings.length > 0 ? (
       <div>
         <p class="text-xs text-surface-500 mb-4">Top stocks held by this fund as of {latestMonth} (Source: AMC monthly disclosure)</p>
@@ -144,7 +144,7 @@ const holdings = fundHoldings?.[latestMonth] || [];
 
   <!-- SIP Calculation -->
   <section class="container-wide py-4">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">SIP in {fund.name}</h2>
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 section-accent">SIP in {fund.name}</h2>
     <div class="card">
       <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">If you had invested ₹10,000/month via SIP:</p>
       <div class="grid grid-cols-3 gap-4 text-center">
@@ -186,7 +186,7 @@ const holdings = fundHoldings?.[latestMonth] || [];
 
   <!-- More Funds from Same Category -->
   <section class="container-wide py-6">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">More {fund.category} Funds</h2>
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">More {fund.category} Funds</h2>
     <div class="space-y-2">
       {fundsData.filter(f => f.category === fund.category && f.slug !== fund.slug).slice(0, 5).map(f => (
         <a href={`/mutual-funds/fund/${f.slug}`} class="card-compact group block hover:shadow-md transition-shadow">

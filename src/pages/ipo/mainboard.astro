@@ -37,4 +37,23 @@ const mainboardIPOs = iposData.filter(ipo => ipo.type === 'mainboard' && ipo.sta
       <p class="text-surface-500 py-8 text-center">No mainboard IPOs available currently.</p>
     )}
   </section>
+
+  <!-- FAQ Section -->
+  <section class="container-wide py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Mainboard IPO FAQs</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a Mainboard IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A Mainboard IPO is an Initial Public Offering by a large company listed on BSE or NSE's main board. These companies typically have issue sizes above ₹50 Cr, minimum 3 years of operating history, and meet SEBI's stringent disclosure requirements. They are considered less risky than SME IPOs due to larger scale and regulatory oversight.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the minimum investment for a Mainboard IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Retail investors can apply for 1 lot in a Mainboard IPO. The minimum application amount is kept around ₹14,000–₹15,000 (lot size × upper price band). For example, if lot size is 333 shares at ₹45, minimum investment is ₹14,985. You can apply for up to ₹2 lakh as a retail investor.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to apply for a Mainboard IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Apply through your broker's app (Zerodha, Groww, Upstox) via UPI-based ASBA. Steps: Open the IPO section → Select the IPO → Choose lots → Enter UPI ID → Submit. Then approve the mandate on your UPI app (BHIM, GPay, PhonePe). Money is blocked (not debited) until allotment.</p>
+      </details>
+    </div>
+  </section>
 </IPOLayout>

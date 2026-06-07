@@ -327,11 +327,14 @@ function processFile(filepath, filename) {
       if (fnLower.includes('liquid') || fnLower.includes('overnight') || 
           fnLower.includes('money market') || fnLower.includes('gilt') ||
           fnLower.includes('bond') || fnLower.includes('debt') ||
-          fnLower.includes('gold etf') || fnLower.includes('silver etf') ||
+          fnLower.includes('gold etf') || fnLower.includes('gold fund') ||
+          fnLower.includes('silver etf') || fnLower.includes('silver fund') ||
           fnLower.includes('fixed maturity') || fnLower.includes('savings fund') ||
           fnLower.includes('ultra short') || fnLower.includes('corporate bond') ||
           fnLower.includes('credit risk') || fnLower.includes('banking & psu debt') ||
-          fnLower.includes('constant maturity') || fnLower.includes('float')) continue;
+          fnLower.includes('banking and psu debt') ||
+          fnLower.includes('constant maturity') || fnLower.includes('float') ||
+          fnLower.includes('1d rate')) continue;
       
       results.push({
         fundName,

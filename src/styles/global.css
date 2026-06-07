@@ -319,6 +319,125 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   border-radius: 0.25rem;
 }
 
+/* Tabular numbers for data alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section accent border */
+.section-accent {
+  border-left: 3px solid var(--color-primary-500);
+  padding-left: 0.75rem;
+}
+
+/* Category color-coded pills */
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+
+.cat-pill-largecap { background-color: #dbeafe; color: #1e40af; }
+.cat-pill-midcap { background-color: #fef3c7; color: #92400e; }
+.cat-pill-smallcap { background-color: #fce7f3; color: #9d174d; }
+.cat-pill-flexicap { background-color: #d1fae5; color: #065f46; }
+.cat-pill-elss { background-color: #ede9fe; color: #5b21b6; }
+.cat-pill-hybrid { background-color: #ffedd5; color: #9a3412; }
+.cat-pill-sectoral { background-color: #e0e7ff; color: #3730a3; }
+.cat-pill-value { background-color: #f0fdf4; color: #166534; }
+.cat-pill-focused { background-color: #fdf4ff; color: #86198f; }
+.cat-pill-multicap { background-color: #ecfdf5; color: #047857; }
+.cat-pill-contra { background-color: #fff7ed; color: #c2410c; }
+.cat-pill-dividend { background-color: #f0f9ff; color: #0369a1; }
+
+.dark .cat-pill-largecap { background-color: #1e3a5f; color: #93c5fd; }
+.dark .cat-pill-midcap { background-color: #451a03; color: #fcd34d; }
+.dark .cat-pill-smallcap { background-color: #4c0519; color: #f9a8d4; }
+.dark .cat-pill-flexicap { background-color: #064e3b; color: #6ee7b7; }
+.dark .cat-pill-elss { background-color: #2e1065; color: #c4b5fd; }
+.dark .cat-pill-hybrid { background-color: #431407; color: #fdba74; }
+.dark .cat-pill-sectoral { background-color: #1e1b4b; color: #a5b4fc; }
+.dark .cat-pill-value { background-color: #052e16; color: #86efac; }
+.dark .cat-pill-focused { background-color: #4a044e; color: #e879f9; }
+.dark .cat-pill-multicap { background-color: #022c22; color: #6ee7b7; }
+.dark .cat-pill-contra { background-color: #431407; color: #fb923c; }
+.dark .cat-pill-dividend { background-color: #082f49; color: #7dd3fc; }
+
+/* Zebra striping for table rows */
+.zebra-row:nth-child(even) {
+  background-color: var(--color-surface-50);
+}
+
+.dark .zebra-row:nth-child(even) {
+  background-color: rgba(30, 41, 59, 0.5);
+}
+
+/* Interactive list item with left accent on hover */
+.list-accent-hover {
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s, background-color 0.15s;
+}
+
+.list-accent-hover:hover {
+  border-left-color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+.dark .list-accent-hover:hover {
+  background-color: rgba(26, 109, 245, 0.05);
+}
+
+/* Micro-interaction: tab/button bounce */
+.tab-bounce:active {
+  transform: scale(0.95);
+}
+
+.tab-bounce {
+  transition: transform 0.1s ease, background-color 0.15s, color 0.15s;
+}
+
+/* Data freshness label */
+.data-freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.65rem;
+  color: var(--color-surface-400);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: var(--color-surface-50);
+  border: 1px solid var(--color-surface-200);
+}
+
+.dark .data-freshness {
+  background-color: var(--color-surface-800);
+  border-color: var(--color-surface-700);
+  color: var(--color-surface-500);
+}
+
+/* Gradient text for hero headings */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-400));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Relaxed body text */
+.prose-relaxed {
+  line-height: 1.7;
+  color: var(--color-surface-500);
+}
+
+.dark .prose-relaxed {
+  color: var(--color-surface-400);
+}
+
 /* Details/FAQ animation */
 details summary {
   cursor: pointer;
