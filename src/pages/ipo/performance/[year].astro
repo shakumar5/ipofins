@@ -28,11 +28,50 @@ const jsonLd = {
   "description": `IPO listing performance ${year}. Mainboard and SME IPO returns tracker.`,
   "url": `https://ipofins.com/ipo/performance/${year}`,
 };
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How to read IPO performance data?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IPO performance data shows the listing day return — the percentage difference between the IPO issue price and the listing price on BSE/NSE. A positive value means the stock listed above issue price (listing gain), while a negative value means it listed below (listing loss)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is listing gain?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Listing gain is the profit earned when an IPO lists on the stock exchange at a price higher than its issue price. For example, if the issue price is ₹100 and it lists at ₹140, the listing gain is 40%. Investors who got allotment can sell on listing day to book this profit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good listing gain?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A listing gain of 20-50% is considered good for mainboard IPOs. SME IPOs often show higher listing gains (50-100%+) due to smaller issue sizes and higher demand. However, very high listing gains may not sustain, and the stock price can fall after initial euphoria."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do some IPOs list below issue price?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IPOs list below issue price due to factors like overvaluation at issue, weak market sentiment, poor financial fundamentals, sectoral headwinds, or low subscription numbers. Companies with high debt, declining revenue, or aggressive pricing tend to disappoint on listing day."
+      }
+    }
+  ]
+};
 ---
 
 <IPOLayout
   activeTab="performance"
-  title={`IPO Performance ${year} - Listing Returns (Mainboard & SME) | IPOfins`}
+  title={`IPO Performance ${year} - Listing Returns | IPOfins`}
   description={`IPO performance ${year}: ${mainboardData.length} mainboard + ${smeData.length} SME IPOs. Track listing gains, sort by returns, view company details.`}
   jsonLd={jsonLd}
 >
@@ -59,4 +98,39 @@ const jsonLd = {
   <section class="container-wide py-4">
     <PerformanceTable client:load mainboardData={mainboardData} smeData={smeData} existingSlugs={existingSlugs} />
   </section>
+
+  <!-- SEO Content Section -->
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Understanding IPO Listing Performance</h2>
+    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
+      <p>IPO listing performance measures how a newly listed stock performs on its first day of trading on the BSE and NSE. When a company goes public through an Initial Public Offering, investors who receive allotment can sell their shares on listing day — the return they earn (or lose) compared to the issue price is called the listing gain or listing loss.</p>
+      <p>The data on this page tracks all mainboard and SME IPOs that listed in {year}. Mainboard IPOs are from companies with higher market capitalisation and stricter SEBI listing requirements, while SME IPOs are from smaller companies listed on the BSE SME or NSE Emerge platform. SME IPOs typically show more volatile listing performance due to lower liquidity and smaller issue sizes.</p>
+      <p>Several factors influence listing day performance: overall market sentiment (bull vs bear market), subscription levels (higher oversubscription often correlates with better listing), Grey Market Premium (GMP) trends before listing, the company's financial health, and sector tailwinds. While past IPO performance data helps identify patterns, it should not be the sole basis for investment decisions. Always review the company's fundamentals, DRHP (Draft Red Herring Prospectus), and consult a SEBI-registered advisor before investing.</p>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to read IPO performance data?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">IPO performance data shows the listing day return — the percentage difference between the IPO issue price and the listing price on BSE/NSE. A positive value means the stock listed above issue price (listing gain), while a negative value means it listed below (listing loss). You can sort by returns to find the best and worst performers.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is listing gain?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Listing gain is the profit earned when an IPO lists on the stock exchange at a price higher than its issue price. For example, if the issue price is ₹100 and the stock lists at ₹140, the listing gain is 40%. Investors who received allotment can sell on listing day to book this profit instantly.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a good listing gain?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A listing gain of 20-50% is considered good for mainboard IPOs. SME IPOs often show higher listing gains (50-100%+) due to smaller issue sizes and higher retail demand. However, extremely high listing gains may not sustain, and prices can correct in subsequent trading sessions.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why do some IPOs list below issue price?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">IPOs may list below issue price due to overvaluation at issue, weak market conditions, poor company fundamentals, low subscription numbers, or negative sectoral sentiment. Companies with high debt levels, declining revenue, or aggressive pricing relative to peers tend to underperform on listing day.</p>
+      </details>
+    </div>
+  </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
 </IPOLayout>

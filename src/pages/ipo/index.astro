@@ -26,7 +26,10 @@ const faqJsonLd = {
     { "@type": "Question", "name": "How to apply for IPO in India?", "acceptedAnswer": { "@type": "Answer", "text": "Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot." } },
     { "@type": "Question", "name": "What is IPO GMP?", "acceptedAnswer": { "@type": "Answer", "text": "GMP (Grey Market Premium) is the unofficial premium at which IPO shares trade before listing. If GMP is ₹50 on a ₹100 IPO, expected listing price is ₹150. GMP is not regulated and can change rapidly." } },
     { "@type": "Question", "name": "What is the minimum amount to invest in IPO?", "acceptedAnswer": { "@type": "Answer", "text": "Minimum is 1 lot × upper price band. For example, if lot size is 30 shares at ₹500, minimum investment = ₹15,000. The maximum for retail investors is ₹2,00,000." } },
-    { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN number or application number. Allotment is typically announced 6 days after the IPO closes." } }
+    { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN number or application number. Allotment is typically announced 6 days after the IPO closes." } },
+    { "@type": "Question", "name": "How to buy pre-IPO shares?", "acceptedAnswer": { "@type": "Answer", "text": "Pre-IPO shares can be bought through unlisted share dealers or platforms like Tata Capital Unlisted, Stockify, or UnlistedZone. These are private transactions outside stock exchanges. Risks include low liquidity, no SEBI regulation, price manipulation, and lock-in periods post-listing. Always verify the seller's credibility and understand that pre-IPO investing carries significantly higher risk than applying through the normal IPO process." } },
+    { "@type": "Question", "name": "What is SME IPO?", "acceptedAnswer": { "@type": "Answer", "text": "SME IPO (Small and Medium Enterprise IPO) is an initial public offering by smaller companies listed on BSE SME or NSE Emerge platforms. SME IPOs have lower issue sizes (typically ₹5-50 Cr), smaller lot sizes, and relaxed SEBI listing requirements compared to mainboard IPOs. They often show higher listing gains but carry more risk due to lower liquidity, limited institutional coverage, and smaller company size." } },
+    { "@type": "Question", "name": "How to check NSDL IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Visit the NSDL allotment status page at https://www.kfintech.com/ipostatus or the specific registrar's portal. Select the IPO name, enter your PAN number or application number, and click submit. NSDL depository participants can also check via their demat account statement once allotment is credited. Allotment typically reflects within 6 working days after the IPO closes." } }
   ]
 };
 ---
@@ -40,7 +43,7 @@ const faqJsonLd = {
 
     <!-- Live IPOs -->
     {liveIPOs.length > 0 && (
-      <div class="mb-8">
+      <div class="mb-4">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
           <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
           Live — Open for Subscription
@@ -52,8 +55,8 @@ const faqJsonLd = {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
-                    <span class="badge text-[10px] badge-live">live</span>
-                    <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="badge text-xs badge-live">live</span>
+                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
                   </div>
                   <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
                 </div>
@@ -67,13 +70,13 @@ const faqJsonLd = {
             </a>
           ))}
         </div>
+        <AdUnit slot="1234567890" format="horizontal" />
       </div>
     )}
 
     <!-- Closed IPOs (awaiting listing) -->
     {closedIPOs.length > 0 && (
-      <div class="mb-8">
-        <AdUnit slot="1234567890" format="horizontal" />
+      <div class="mb-4">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
           <span class="w-2 h-2 bg-surface-400 rounded-full"></span>
           Closed — Awaiting Listing
@@ -85,8 +88,8 @@ const faqJsonLd = {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
-                    <span class="badge text-[10px] badge-closed">closed</span>
-                    <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="badge text-xs badge-closed">closed</span>
+                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
                   </div>
                   <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
                 </div>
@@ -100,13 +103,13 @@ const faqJsonLd = {
             </a>
           ))}
         </div>
+        <AdUnit slot="2345678901" format="horizontal" />
       </div>
     )}
 
     <!-- Listed IPOs -->
     {listedIPOs.length > 0 && (
-      <div class="mb-8">
-        <AdUnit slot="2345678901" format="horizontal" />
+      <div class="mb-4">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
           <span class="w-2 h-2 bg-warning-500 rounded-full"></span>
           Listed — Recently Listed
@@ -118,8 +121,8 @@ const faqJsonLd = {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
-                    <span class="badge text-[10px] badge-listed">listed</span>
-                    <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="badge text-xs badge-listed">listed</span>
+                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
                   </div>
                   <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listed: {ipo.listingDate}</p>
                 </div>
@@ -179,6 +182,18 @@ const faqJsonLd = {
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is DRHP and RHP in IPO?</summary>
         <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">DRHP (Draft Red Herring Prospectus) is filed with SEBI for approval — contains all details except final price. RHP (Red Herring Prospectus) is the final document with confirmed price band, filed after SEBI approval, just before IPO opens.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to buy pre-IPO shares?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Pre-IPO shares can be bought through unlisted share dealers or platforms like Tata Capital Unlisted, Stockify, or UnlistedZone. These are private transactions outside stock exchanges. Risks include low liquidity, no SEBI regulation, price manipulation, and lock-in periods post-listing. Always verify the seller's credibility and understand that pre-IPO investing carries significantly higher risk than applying through the normal IPO process.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is SME IPO?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SME IPO (Small and Medium Enterprise IPO) is an initial public offering by smaller companies listed on BSE SME or NSE Emerge platforms. SME IPOs have lower issue sizes (typically ₹5-50 Cr), smaller lot sizes, and relaxed SEBI listing requirements compared to mainboard IPOs. They often show higher listing gains but carry more risk due to lower liquidity, limited institutional coverage, and smaller company size.</p>
+      </details>
+      <details class="card-compact group">
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to check NSDL IPO allotment status?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Visit the NSDL allotment status page at the registrar's portal (KFintech or Link Intime). Select the IPO name, enter your PAN number or application number, and click submit. NSDL depository participants can also check via their demat account statement once allotment is credited. Allotment typically reflects within 6 working days after the IPO subscription period closes.</p>
       </details>
     </div>
     <a href="/blogs/ipo" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">

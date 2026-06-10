@@ -6,9 +6,56 @@ import holdingsData from '../../data/fund-holdings.json';
 
 const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
 const holdingSlugs = Object.keys((holdingsData as any).holdings || {});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "All Mutual Funds India 2026",
+  "description": "Complete list of mutual funds in India with returns comparison.",
+  "url": "https://ipofins.com/mutual-funds/all"
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I compare mutual funds by returns?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use the table to sort funds by 1-year, 3-year, or 5-year returns. Click on any column header to sort. Filter by category (Large Cap, Mid Cap, Small Cap, etc.) for fair comparison within the same category."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What do 1Y, 3Y, and 5Y returns mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "1Y is the absolute return over the past 1 year. 3Y and 5Y are CAGR (Compound Annual Growth Rate) over 3 and 5 years respectively. CAGR accounts for compounding and is a better measure for long-term performance comparison."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What categories of mutual funds are available?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Categories include: Large Cap (stable, lower risk), Mid Cap (growth potential, moderate risk), Small Cap (high growth, high risk), Flexi Cap (flexible allocation), ELSS (tax-saving with 3-year lock-in), and Hybrid (mix of equity and debt)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where does the mutual fund data come from?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "All NAV and return data is sourced from AMFI (Association of Mutual Funds in India). Returns are calculated from historical NAV data. We show only Direct-Growth plans for optimal investor returns."
+      }
+    }
+  ]
+};
 ---
 
-<BaseLayout title="All Mutual Funds India 2026 - Compare Returns | IPOfins" description="Complete list of mutual funds in India. Filter by category, sort by 1Y/3Y/5Y returns. Large cap, mid cap, small cap, ELSS, hybrid.">
+<BaseLayout title="All Mutual Funds India 2026 - Compare Returns | IPOfins" description="Complete list of mutual funds in India. Filter by category, sort by 1Y/3Y/5Y returns. Large cap, mid cap, small cap, ELSS, hybrid." jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
@@ -36,6 +83,16 @@ const holdingSlugs = Object.keys((holdingsData as any).holdings || {});
     <FundTable client:load funds={fundsData} categories={categories} holdingSlugs={holdingSlugs} />
   </section>
 
+  <!-- How to Use Section -->
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How to Use This Page</h2>
+    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
+      <p>This page lists all mutual funds tracked on IPOfins with their latest NAV data sourced directly from AMFI India. You can use the interactive table above to filter funds by category, sort by different return periods, and search for specific fund names. This makes it easy to compare performance across funds within the same category.</p>
+      <p>Start by selecting a category tab (Large Cap, Mid Cap, Small Cap, etc.) to narrow down funds relevant to your investment goal. Then sort by 3-year or 5-year CAGR to identify consistent performers. Click on any fund name to view detailed information including top holdings, SIP projections, and risk metrics. Funds with holdings data available are marked — this lets you see exactly what stocks the fund owns.</p>
+      <p>For new investors, we recommend comparing at least 3-5 funds within your chosen category before making a decision. Look beyond just returns — consider AUM (larger AUMs indicate investor confidence), expense ratio, and fund manager tenure. A fund with slightly lower returns but consistent performance across market cycles is often a better choice than one with spectacular recent returns driven by a single sector bet. All data shown is for Direct-Growth plans which offer the lowest expense ratio.</p>
+    </div>
+  </section>
+
   <!-- FAQ Section -->
   <section class="container-wide py-12">
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
@@ -58,4 +115,6 @@ const holdingSlugs = Object.keys((holdingsData as any).holdings || {});
       </details>
     </div>
   </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
 </BaseLayout>

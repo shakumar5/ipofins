@@ -22,9 +22,56 @@ const bestFunds = fundsData.filter(f => {
   if (top10By1Y.has(f.slug)) score++;
   return score >= 2;
 });
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Best Mutual Funds India 2026",
+  "description": "Top rated mutual funds meeting multiple criteria: top returns + 5-star rating.",
+  "url": "https://ipofins.com/mutual-funds/best"
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How are Best Funds selected on IPOfins?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We select best funds using a multi-criteria approach: a fund must meet at least 2 of 3 criteria — top 5 by 3-year return in its category, 5-star rating, or top 10 by 1-year return overall. This ensures consistent performance across timeframes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I only invest in best rated mutual funds?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Best-performing funds are a good starting point, but also consider your risk tolerance, investment horizon, and existing portfolio allocation. Diversify across categories for a balanced portfolio."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How often is the best funds list updated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Fund data (NAVs and returns) is updated daily from AMFI. The best list automatically recalculates based on latest 1-year, 3-year, and 5-year return data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between Direct and Regular plans?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Direct plans have lower expense ratios (no distributor commission) and give 0.5-1.5% higher returns annually. All funds listed on IPOfins are Direct-Growth plans. You can invest through Zerodha Coin, Groww, or AMC websites."
+      }
+    }
+  ]
+};
 ---
 
-<BaseLayout title="Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOfins" description="Best mutual funds meeting multiple criteria: top returns + 5-star rating. Large cap, mid cap, small cap, ELSS, hybrid.">
+<BaseLayout title="Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOfins" description="Best mutual funds meeting multiple criteria: top returns + 5-star rating. Large cap, mid cap, small cap, ELSS, hybrid." jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
@@ -51,6 +98,16 @@ const bestFunds = fundsData.filter(f => {
     <FundTable client:load funds={bestFunds} categories={categories} holdingSlugs={holdingSlugs} />
   </section>
 
+  <!-- How We Select Section -->
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How We Select Best Funds</h2>
+    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
+      <p>Our "Best Mutual Funds" list uses a transparent, data-driven methodology rather than subjective opinions. A fund qualifies as "best" only when it meets at least 2 out of 3 rigorous criteria: ranking in the top 5 by 3-year CAGR within its SEBI-defined category, holding a 5-star rating based on risk-adjusted historical performance, or ranking in the top 10 by 1-year absolute return across all categories.</p>
+      <p>This multi-criteria approach ensures that selected funds have demonstrated consistent performance across both short-term (1-year) and medium-term (3-year) horizons, while also maintaining a strong risk-adjusted return profile. A fund that performs well on just one metric might be benefiting from a short-term sector rally — our methodology filters these out by requiring excellence on multiple dimensions simultaneously.</p>
+      <p>The list recalculates automatically every day as AMFI releases updated NAV data. This means funds can enter or exit the "best" list based on their rolling performance. We only consider Direct-Growth plans since they offer the lowest expense ratios and highest returns to investors. All data is sourced from AMFI India — the official body governing mutual funds in India. Remember: past performance does not guarantee future returns, and you should always consider your own risk profile and investment horizon before investing.</p>
+    </div>
+  </section>
+
   <!-- FAQ Section -->
   <section class="container-wide py-12">
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
@@ -73,4 +130,6 @@ const bestFunds = fundsData.filter(f => {
       </details>
     </div>
   </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
 </BaseLayout>

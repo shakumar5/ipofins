@@ -20,6 +20,45 @@ const jsonLd = {
   "url": `https://ipofins.com/mutual-funds/fund/${fund.slug}`,
 };
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": `Is ${fund.name} good for SIP?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `${fund.name} is a ${fund.category} fund with ${fund.riskLevel} risk. For SIP investors, consistency of returns matters more than absolute returns. Check the fund's rolling returns and standard deviation before starting a SIP. ${fund.category} funds are generally suitable for SIP with a 5+ year horizon.`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": `What is the risk level of ${fund.name}?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `${fund.name} is categorized as ${fund.riskLevel} risk. This is determined by SEBI's riskometer methodology based on factors like market cap allocation, sector concentration, and portfolio volatility. ${fund.riskLevel === 'high' || fund.riskLevel === 'very-high' ? 'Higher risk funds may deliver better long-term returns but with more short-term volatility.' : 'Lower risk funds offer relatively stable returns with less portfolio fluctuation.'}`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": `How to invest in ${fund.name}?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `You can invest in ${fund.name} (Direct-Growth plan) through platforms like Groww, Zerodha Coin, Kuvera, or directly from the AMC website. Minimum SIP starts at ₹500/month on most platforms. You'll need KYC completion (PAN + Aadhaar) to start investing.`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the tax implications of this mutual fund?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For equity mutual funds in India: Short-term capital gains (held < 1 year) are taxed at 20%. Long-term capital gains (held > 1 year) above ₹1.25 lakh are taxed at 12.5%. ELSS funds have a mandatory 3-year lock-in period. Dividend income is taxed at your income tax slab rate."
+      }
+    }
+  ]
+};
+
 // Get holdings for this fund (latest month first)
 const fundHoldings = (holdingsData as any).holdings?.[fund.slug] || null;
 const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
@@ -27,7 +66,7 @@ const holdings = fundHoldings?.[latestMonth] || [];
 ---
 
 <BaseLayout
-  title={`${fund.name} - NAV, Returns & Holdings | IPOfins`}
+  title={`${fund.name} - NAV, Returns & Holdings`}
   description={`${fund.name}: NAV ₹${fund.nav}, 1Y +${fund.returns1y}%, 3Y +${fund.returns3y}%, 5Y +${fund.returns5y}%. ${fund.category} fund, ${fund.riskLevel} risk.`}
   jsonLd={jsonLd}
 >
@@ -204,6 +243,41 @@ const holdings = fundHoldings?.[latestMonth] || [];
       ))}
     </div>
   </section>
+
+  <!-- About Category Section -->
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">About {fund.category} Funds</h2>
+    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
+      <p>{fund.category} mutual funds are a category defined by SEBI (Securities and Exchange Board of India) under their mutual fund categorization framework. These funds invest primarily in equities that match the {fund.category.toLowerCase()} profile, with specific allocation mandates that fund managers must follow. The category determines the fund's risk-return characteristics and its suitability for different investor profiles.</p>
+      <p>When evaluating a {fund.category} fund like {fund.name}, key metrics to consider include: 3-year and 5-year CAGR (rolling returns are more reliable than point-to-point), expense ratio (Direct plans have lower costs), portfolio turnover, standard deviation (volatility measure), Sharpe ratio (risk-adjusted returns), and alpha generation over benchmark. A fund that consistently beats its benchmark index over multiple market cycles is a strong candidate.</p>
+      <p>For long-term wealth creation, {fund.category} funds work best with a systematic investment plan (SIP) over 5+ years. SIP helps average out market volatility through rupee cost averaging. Lump sum investments are better timed during market corrections. Always ensure your mutual fund portfolio is diversified across 3-4 categories rather than concentrating in a single fund type. Consult a SEBI-registered investment advisor for personalized advice based on your financial goals and risk appetite.</p>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is {fund.name} good for SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">{fund.name} is a {fund.category} fund with {fund.riskLevel} risk. For SIP investors, consistency of returns matters more than absolute returns. Check the fund's rolling returns and standard deviation before committing to a SIP. {fund.category} funds are generally suitable for SIP with a minimum 5-year investment horizon for optimal results.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the risk level of this fund?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">{fund.name} is categorized as {fund.riskLevel} risk as per SEBI's riskometer methodology. This assessment considers market cap allocation, sector concentration, and historical portfolio volatility. {fund.riskLevel === 'high' || fund.riskLevel === 'very-high' ? 'Higher risk funds may deliver better long-term returns but expect 20-40% drawdowns during market corrections.' : 'This risk level indicates relatively stable returns with moderate portfolio fluctuation.'}</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to invest in this fund?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">You can invest in {fund.name} (Direct-Growth plan) through platforms like Groww, Zerodha Coin, Kuvera, or directly from the AMC website. Minimum SIP amount starts at ₹500/month on most platforms. Complete KYC (PAN + Aadhaar verification) is mandatory before your first investment.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What are the tax implications?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For equity mutual funds in India: Short-term capital gains (units held less than 1 year) are taxed at 20%. Long-term capital gains (held more than 1 year) above ₹1.25 lakh in a financial year are taxed at 12.5%. ELSS funds have a mandatory 3-year lock-in period. Dividend income from mutual funds is added to your income and taxed at your applicable slab rate.</p>
+      </details>
+    </div>
+  </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
 
   <!-- Bottom Navigation -->
   <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">

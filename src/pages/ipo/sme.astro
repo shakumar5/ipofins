@@ -20,7 +20,7 @@ const smeIPOs = iposData.filter(ipo => ipo.type === 'sme' && ipo.status === 'liv
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
-                  <span class={`badge text-[10px] ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'listed' ? 'badge-listed' : 'badge-closed'}`}>{ipo.status}</span>
+                  <span class={`badge text-xs ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'listed' ? 'badge-listed' : 'badge-closed'}`}>{ipo.status}</span>
                 </div>
                 <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.issueSize} • {ipo.openDate} – {ipo.closeDate}</p>
               </div>

@@ -167,7 +167,7 @@ body {
 
 .dark .card-compact {
   background-color: var(--color-surface-800);
-  border-color: var(--color-surface-700);
+  border-color: var(--color-surface-600);
 }
 
 .dark .card-compact:hover {
@@ -179,7 +179,7 @@ body {
   align-items: center;
   padding: 0.2rem 0.7rem;
   border-radius: 9999px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -336,7 +336,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   align-items: center;
   padding: 0.15rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: capitalize;
@@ -406,7 +406,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--color-surface-400);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;

@@ -127,16 +127,16 @@ export default function HoldingsCompare({ data }: Props) {
   return (
     <div>
       {/* Filters */}
-      <div className="p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl mb-6">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Compare Holdings</h2>
+      <div className="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">
+        <h2 className="text-lg font-bold text-surface-900 dark:text-white mb-4">Compare Holdings</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* AMC */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Select AMC</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Select AMC</label>
             <select
               value={selectedAMC}
               onChange={(e) => setSelectedAMC(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             >
               <option value="">-- Select AMC --</option>
               {amcList.map(amc => (
@@ -147,11 +147,11 @@ export default function HoldingsCompare({ data }: Props) {
 
           {/* Fund Category */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Fund Type</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Fund Type</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             >
               {FUND_CATEGORIES.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -161,13 +161,13 @@ export default function HoldingsCompare({ data }: Props) {
 
           {/* Month 1 (older) */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">From (older month)</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">From (older month)</label>
             <select
               value={month1}
               onChange={(e) => setMonth1(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             >
-              {data.months.map(m => (
+              {data.months.slice(0, -1).map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
@@ -175,11 +175,11 @@ export default function HoldingsCompare({ data }: Props) {
 
           {/* Month 2 (newer) */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">To (newer month)</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">To (newer month)</label>
             <select
               value={month2}
               onChange={(e) => setMonth2(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             >
               {data.months.map(m => (
                 <option key={m} value={m}>{m}</option>
@@ -189,7 +189,7 @@ export default function HoldingsCompare({ data }: Props) {
         </div>
 
         {selectedAMC && (
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
             Showing changes for <strong>{fundsForAMC.length}</strong> equity funds from {selectedAMC} between {month1} → {month2}
           </p>
         )}
@@ -197,49 +197,49 @@ export default function HoldingsCompare({ data }: Props) {
 
       {/* No AMC selected */}
       {!selectedAMC && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-surface-500 dark:text-surface-400">
           <p className="text-sm">Select an AMC above to view holdings changes</p>
-          <p className="text-xs mt-1 text-gray-400">Data sourced from AMC monthly portfolio disclosures</p>
+          <p className="text-xs mt-1 text-surface-400 dark:text-surface-500">Data sourced from AMC monthly portfolio disclosures</p>
         </div>
       )}
 
       {/* Same month selected */}
       {selectedAMC && month1 === month2 && (
-        <div className="text-center py-8 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+        <div className="text-center py-8 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
           <p className="text-sm font-medium">Please select two different months to compare</p>
         </div>
       )}
 
       {/* Results */}
       {comparison && comparison.length === 0 && (
-        <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-          <div className="w-12 h-12 mx-auto bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
-            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div className="text-center py-12 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 rounded-xl">
+          <div className="w-12 h-12 mx-auto bg-surface-100 dark:bg-surface-700 rounded-full flex items-center justify-center mb-3">
+            <svg className="w-6 h-6 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
           <p className="text-sm font-medium">No portfolio changes detected</p>
-          <p className="text-xs mt-1 text-gray-400">
+          <p className="text-xs mt-1 text-surface-400 dark:text-surface-500">
             {selectedCategory !== 'All' 
               ? `No changes found for "${selectedCategory}" funds in this AMC between ${month1} → ${month2}. Try selecting "All" fund types.`
               : `This AMC's funds had no significant additions or removals between ${month1} → ${month2}. This is common for index funds that track a fixed benchmark.`
             }
           </p>
-          <p className="text-xs mt-3 text-gray-400">If data is missing for one month, changes cannot be calculated. Holdings data is updated monthly.</p>
+          <p className="text-xs mt-3 text-surface-400 dark:text-surface-500">If data is missing for one month, changes cannot be calculated. Holdings data is updated monthly.</p>
         </div>
       )}
 
       {comparison && comparison.length > 0 && (
         <div className="space-y-6">
           {comparison.map((fund, idx) => (
-            <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div key={idx} className="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">
               {/* Fund header */}
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{fund.fundName}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
+              <div className="px-4 py-3 bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-600">
+                <h3 className="font-semibold text-surface-900 dark:text-white text-sm">{fund.fundName}</h3>
+                <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
                   {fund.additions.length} additions • {fund.removals.length} removals • {fund.increased.length} increased • {fund.decreased.length} decreased
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-surface-200 dark:divide-surface-600">
                 {/* Additions */}
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -247,16 +247,16 @@ export default function HoldingsCompare({ data }: Props) {
                     <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase">New Additions</span>
                   </div>
                   {fund.additions.length === 0 ? (
-                    <p className="text-xs text-gray-400 italic">No new stocks added</p>
+                    <p className="text-xs text-surface-400 dark:text-surface-500 italic">No new stocks added</p>
                   ) : (
                     <div className="space-y-1.5">
                       {fund.additions.map((h, i) => (
                         <div key={i} className="flex justify-between items-center text-xs">
                           <div>
-                            <span className="font-medium text-gray-900 dark:text-white">{h.name}</span>
-                            {h.sector && <span className="ml-1 text-gray-400">• {h.sector}</span>}
+                            <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                            {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                           </div>
-                          <span className="text-green-600 font-semibold">+{h.pct}%</span>
+                          <span className="text-green-600 dark:text-green-400 font-semibold">+{h.pct}%</span>
                         </div>
                       ))}
                     </div>
@@ -270,16 +270,16 @@ export default function HoldingsCompare({ data }: Props) {
                     <span className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase">Removed</span>
                   </div>
                   {fund.removals.length === 0 ? (
-                    <p className="text-xs text-gray-400 italic">No stocks removed</p>
+                    <p className="text-xs text-surface-400 dark:text-surface-500 italic">No stocks removed</p>
                   ) : (
                     <div className="space-y-1.5">
                       {fund.removals.map((h, i) => (
                         <div key={i} className="flex justify-between items-center text-xs">
                           <div>
-                            <span className="font-medium text-gray-900 dark:text-white">{h.name}</span>
-                            {h.sector && <span className="ml-1 text-gray-400">• {h.sector}</span>}
+                            <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                            {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                           </div>
-                          <span className="text-red-500 font-semibold">-{h.pct}%</span>
+                          <span className="text-red-500 dark:text-red-400 font-semibold">-{h.pct}%</span>
                         </div>
                       ))}
                     </div>

@@ -35,9 +35,48 @@ const jsonLd = {
     ]
   }
 };
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": `How to invest in ${sectorName} IPOs?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `To invest in ${sectorName} IPOs, you need a demat account with any SEBI-registered broker. When an IPO opens, apply through your broker's app or UPI-based ASBA process. Check the company's DRHP, financials, and sector outlook before investing.`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": `Are ${sectorName} IPOs risky?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `Like all equity investments, ${sectorName} IPOs carry market risk. Sector-specific risks include regulatory changes, competition, and cyclical demand patterns. Evaluate each company's fundamentals individually rather than assuming all sector IPOs will perform similarly.`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What to check before investing in a sector-specific IPO?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Key checks include: company revenue growth and profitability, debt levels, promoter background, competitive positioning within the sector, IPO valuation vs listed peers, use of IPO proceeds, and overall sector growth outlook. Also review the GMP trend and subscription data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": `How many IPOs have come from the ${sectorName} sector in 2026?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `This page lists all ${sectorName} sector IPOs tracked on IPOfins, including upcoming, live, and listed ones. The count updates automatically as new IPOs are announced. Check this page regularly for the latest sector-specific IPO activity.`
+      }
+    }
+  ]
+};
 ---
 
-<BaseLayout title={`${sectorName} IPOs India 2026 - Sector Analysis`} description={`Complete list of ${sectorName} sector IPOs in India. AI-powered analysis, GMP tracking, and investment insights for ${sectorName} companies.`} jsonLd={jsonLd}>
+<BaseLayout title={`${sectorName} IPOs India - Sector Analysis | IPOfins`} description={`Complete list of ${sectorName} sector IPOs in India. AI-powered analysis, GMP tracking, and investment insights for ${sectorName} companies.`} jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
@@ -87,4 +126,39 @@ const jsonLd = {
       ))}
     </div>
   </section>
+
+  <!-- SEO Content Section -->
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Investing in {sectorName} Sector IPOs</h2>
+    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
+      <p>Sector-focused IPO analysis helps investors understand industry-specific trends and identify opportunities within a particular segment of the Indian economy. The {sectorName} sector has seen growing interest from retail and institutional investors, driven by India's economic growth and increasing market participation.</p>
+      <p>When evaluating IPOs from a specific sector, it's essential to understand the industry's growth drivers, regulatory environment, and competitive landscape. Compare the IPO company's financials with already-listed peers in the same sector — look at revenue growth rates, profit margins, return on equity (ROE), and debt-to-equity ratios. A company priced at a premium to listed peers needs strong justification through superior growth or market position.</p>
+      <p>Sector concentration is a common risk in IPO investing. Avoid over-allocating to a single sector regardless of how promising it appears. SEBI regulations require companies to disclose sector-specific risks in the DRHP — review these carefully. Also consider the timing: sectors go through cycles, and IPOs tend to cluster during sector bull runs when valuations may be stretched. Use this page to track all {sectorName} IPOs, monitor their listing performance, and make informed decisions based on comprehensive data rather than market hype.</p>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to invest in {sectorName} IPOs?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">To invest in {sectorName} IPOs, you need a demat account with any SEBI-registered broker (Zerodha, Groww, Angel One, etc.). When an IPO opens, apply through your broker's app using the UPI-based ASBA process. Check the company's DRHP, financials, and sector outlook before investing. Allotment is lottery-based for retail investors.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Are {sectorName} IPOs risky?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Like all equity investments, {sectorName} IPOs carry market risk. Sector-specific risks include regulatory changes, competition intensity, technological disruption, and cyclical demand patterns. Evaluate each company individually — not all companies in a sector perform the same way. Diversification across sectors is recommended.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What to check before investing in a sector-specific IPO?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Key checks include: company revenue growth and profitability, debt levels, promoter background and track record, competitive positioning within the sector, IPO valuation vs listed peers (P/E, P/B ratios), use of IPO proceeds (growth vs debt repayment), and overall sector growth outlook. Also monitor the GMP trend and subscription data during the IPO period.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How many IPOs have come from the {sectorName} sector in 2026?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">This page lists all {sectorName} sector IPOs tracked on IPOfins, including upcoming, live, and already-listed ones. The count updates automatically as new IPOs are announced by SEBI. Check this page regularly for the latest sector-specific IPO activity and performance data.</p>
+      </details>
+    </div>
+  </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
 </BaseLayout>

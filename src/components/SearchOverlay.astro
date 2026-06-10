@@ -81,7 +81,7 @@ const searchItems = [
 
     results.innerHTML = matches.map(item => `
       <a href="${item.url}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
-        <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-surface-100 dark:bg-surface-700 text-surface-500">${item.type}</span>
+        <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-surface-100 dark:bg-surface-700 text-surface-500">${item.type}</span>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium text-surface-900 dark:text-white truncate">${item.title}</p>
           <p class="text-xs text-surface-400 truncate">${item.meta}</p>
