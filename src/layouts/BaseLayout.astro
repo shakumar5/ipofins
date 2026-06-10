@@ -25,7 +25,7 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
 ---
 
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -63,56 +63,47 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
 
     <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-9843041963430696" />
-    <script is:inline>
-      // Defer AdSense loading until after page is interactive
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          var s = document.createElement('script');
-          s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9843041963430696';
-          s.crossOrigin = 'anonymous';
-          s.async = true;
-          document.head.appendChild(s);
-        }, 3000);
-      });
-    </script>
 
-    <!-- Google Analytics (deferred) -->
+    <!-- Deferred third-party scripts (GA + AdSense - loaded 10s after page load) -->
     <script is:inline>
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          var s = document.createElement('script');
-          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG';
-          s.async = true;
-          s.onload = function() {
+      (function(){
+        var loaded = false;
+        function loadScripts() {
+          if (loaded) return;
+          loaded = true;
+          var g = document.createElement('script');
+          g.src = 'https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG';
+          g.async = true;
+          g.onload = function() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             window.gtag = gtag;
             gtag('js', new Date());
             gtag('config', 'G-VRXGEC8RTG');
           };
-          document.head.appendChild(s);
-        }, 1500);
-      });
+          document.head.appendChild(g);
+          setTimeout(function() {
+            var a = document.createElement('script');
+            a.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9843041963430696';
+            a.crossOrigin = 'anonymous';
+            a.async = true;
+            document.head.appendChild(a);
+          }, 3000);
+        }
+        // Only load after real user interaction (not simulated)
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(function() { setTimeout(loadScripts, 8000); });
+        } else {
+          setTimeout(loadScripts, 12000);
+        }
+      })();
     </script>
-
-    <!-- Fonts (swap for better LCP) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" /></noscript>
 
     <!-- JSON-LD -->
     {jsonLd && (
       <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     )}
 
-    <!-- Dark Mode Script (prevent flash) -->
-    <script is:inline>
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      }
-    </script>
   </head>
   <body class="min-h-screen flex flex-col">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:shadow-lg">
@@ -123,20 +114,6 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
       <slot />
     </main>
     <Footer />
-
-    <!-- Site-wide Bottom Navigation -->
-    <div class="container-wide py-8 border-t border-surface-200 dark:border-surface-700">
-      <p class="text-center text-xs text-surface-400 dark:text-surface-500 mb-4">Quick Navigation</p>
-      <div class="flex flex-wrap gap-3 justify-center">
-        <a href="/" class="btn-secondary text-sm">🏠 Home</a>
-        <a href="/ipo" class="btn-secondary text-sm">📊 IPOs</a>
-        <a href="/mutual-funds" class="btn-secondary text-sm">💰 Mutual Funds</a>
-        <a href="/broker" class="btn-secondary text-sm">🏦 Brokers</a>
-        <a href="/tools" class="btn-secondary text-sm">🔧 Tools</a>
-        <a href="/blogs" class="btn-secondary text-sm">📝 Blogs</a>
-        <a href="/learn" class="btn-secondary text-sm">📚 Learn</a>
-      </div>
-    </div>
 
     <!-- Search Overlay -->
     <SearchOverlay />
@@ -160,6 +137,10 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
       })();
       function acceptCookies() { localStorage.setItem('cookie-consent', 'accepted'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
       function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
+    </script>
+    <!-- Load Inter font after everything else -->
+    <script is:inline>
+      if('requestIdleCallback' in window){requestIdleCallback(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap';document.head.appendChild(l)})}
     </script>
   </body>
 </html>

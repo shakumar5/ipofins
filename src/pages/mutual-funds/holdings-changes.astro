@@ -3,6 +3,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import HoldingsCompare from '../../components/funds/HoldingsCompare.tsx';
 import holdingsData from '../../data/fund-holdings.json';
 
+const amcCount = Object.keys(holdingsData.amcs).length;
+const fundCount = Object.keys(holdingsData.holdings).length;
+const monthsList = holdingsData.months;
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
@@ -43,7 +47,7 @@ const faqJsonLd = {
   <section class="container-wide pt-8 pb-4">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Mutual Fund Holdings Changes</h1>
     <p class="mt-1 text-sm text-surface-500">Compare portfolio holdings between months. See what stocks top fund managers are buying and selling.</p>
-    <span class="data-freshness mt-2">🟢 Last updated: Jun 2026 • {Object.keys(holdingsData.amcs).length} AMCs • {Object.keys(holdingsData.holdings).length} funds tracked</span>
+    <span class="data-freshness mt-2">🟢 Last updated: Jun 2026 • {amcCount} AMCs • {fundCount} funds tracked</span>
 
     <!-- Main Tabs -->
     <div class="mt-4 flex gap-2">
@@ -63,7 +67,7 @@ const faqJsonLd = {
       <h2 class="text-lg font-bold text-surface-900 dark:text-white">About Holdings Changes</h2>
       <p>Mutual funds are required by SEBI to disclose their complete portfolio holdings every month. By comparing consecutive months, we identify which stocks were newly added, removed, or had their weight changed significantly.</p>
       <p>This helps investors understand: What are the best fund managers buying? Which sectors are they bullish on? What stocks are they exiting?</p>
-      <p class="text-xs text-surface-400 mt-4">📋 Data source: AMC monthly portfolio disclosure filings. Updated every 15 days.<br/>📊 Available months: {holdingsData.months.join(', ')}<br/>🏦 AMCs covered: {Object.keys(holdingsData.amcs).length}<br/>📈 Funds tracked: {Object.keys(holdingsData.holdings).length}</p>
+      <p class="text-xs text-surface-400 mt-4">📋 Data source: AMC monthly portfolio disclosure filings. Updated every 15 days.<br/>📊 Available months: {monthsList.join(', ')}<br/>🏦 AMCs covered: {amcCount}<br/>📈 Funds tracked: {fundCount}</p>
     </div>
   </section>
 
@@ -118,7 +122,7 @@ const faqJsonLd = {
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which AMCs and fund types are covered?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We currently track {Object.keys(holdingsData.amcs).length} AMCs including HDFC, ICICI Prudential, Axis, DSP, Aditya Birla Sun Life, Motilal Oswal, Edelweiss, and more. Only equity-oriented funds are shown (we exclude debt, liquid, gold, and silver funds). You can filter by fund type: Large Cap, Mid Cap, Small Cap, Flexi Cap, Multi Cap, and Others.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We currently track {amcCount} AMCs including HDFC, ICICI Prudential, Axis, DSP, Aditya Birla Sun Life, Motilal Oswal, Edelweiss, and more. Only equity-oriented funds are shown (we exclude debt, liquid, gold, and silver funds). You can filter by fund type: Large Cap, Mid Cap, Small Cap, Flexi Cap, Multi Cap, and Others.</p>
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Where does the holdings data come from?</summary>
