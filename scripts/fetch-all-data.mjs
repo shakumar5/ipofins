@@ -890,8 +890,11 @@ function sanitizeIPORecords(records, nseSubscriptionData = []) {
   const nseNames = new Set(nseSubscriptionData.map(d => d.name?.toLowerCase().trim()).filter(Boolean));
 
   return records.map(record => {
-    // 1. GMP: always null (no reliable GMP scraper)
-    record.gmp = null;
+    // 1. GMP: preserve manually set values (updated via scripts/update-gmp.mjs)
+    // Only null out GMP for newly created records (where gmp was never set)
+    if (record.gmp === undefined) {
+      record.gmp = null;
+    }
 
     // 2. AI placeholders: always null (no AI scoring in pipeline)
     record.aiScore = null;
