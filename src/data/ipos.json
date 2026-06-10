@@ -22,7 +22,7 @@
     "purpose": "Working capital (₹5.31 Cr, 15.37%); Repayment of borrowings (₹11 Cr, 31.85%); New manufacturing facility at Khurda, Odisha (₹9.6 Cr, 27.79%); General corporate purposes (₹8.63 Cr, 24.99%)",
     "drhpUrl": "https://zerodha.com/ipo/449814/utkal-speciality-industries-india",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Diversified portfolio of paper-based products for food service and packaging",
       "Broad customer base reducing dependence on any single segment",
@@ -38,7 +38,8 @@
       "Capital expenditure depends on external bank financing yet to be drawn"
     ],
     "riskScore": 7,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Hexagon Nutrition",
@@ -52,8 +53,8 @@
     "listingDate": "Jun 12, 2026",
     "sector": "Healthcare & Nutrition",
     "issueSize": "₹139 Cr",
-    "subscription": 1.65,
-    "gmp": 10,
+    "subscription": null,
+    "gmp": null,
     "registrar": "Link Intime",
     "founders": "Amit Sanghvi, Prakash Sanghvi",
     "headquarters": "Mumbai, Maharashtra",
@@ -62,7 +63,7 @@
     "purpose": "Offer for sale — proceeds go to existing investors (₹138.87 Cr)",
     "drhpUrl": "https://hexagonnutrition.com/rhp-document",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Integrated nutrition company from R&D to marketing",
       "Supplier to global public health programmes",
@@ -71,7 +72,8 @@
     ],
     "risks": [],
     "riskScore": 5,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "GenXAI Analytics",
@@ -85,7 +87,7 @@
     "listingDate": "Jun 12, 2026",
     "sector": "Technology & AI",
     "issueSize": "₹20 Cr (approx)",
-    "subscription": 0.6,
+    "subscription": null,
     "gmp": null,
     "registrar": "",
     "founders": "",
@@ -95,7 +97,7 @@
     "purpose": "Technology development, business expansion, working capital",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "AI & data analytics solutions",
       "Enterprise clients",
@@ -103,7 +105,8 @@
     ],
     "risks": [],
     "riskScore": 7,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Vahh Chemicals",
@@ -117,8 +120,8 @@
     "listingDate": "Jun 11, 2026",
     "sector": "Chemicals",
     "issueSize": "₹13.45 Cr",
-    "subscription": 6.48,
-    "gmp": 15,
+    "subscription": null,
+    "gmp": null,
     "registrar": "Bigshare Services",
     "founders": "Promoter-led family business",
     "headquarters": "Surat, Gujarat",
@@ -127,7 +130,7 @@
     "purpose": "Working capital (₹5.84 Cr), new manufacturing facility in Surat (₹1.93 Cr), loan repayment (₹1.84 Cr), general corporate purposes (₹2.02 Cr)",
     "drhpUrl": "https://vahhchemicals.com/wp-content/uploads/2026/05/27-05-2026-Vahh-Prospectus.pdf",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Customised textile chemical solutions provider",
       "114 SKUs across cotton, polyester, silk & blends",
@@ -136,7 +139,8 @@
     ],
     "risks": [],
     "riskScore": 6,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "UHM Vacation",
@@ -160,7 +164,7 @@
     "purpose": "Business expansion and working capital",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "SME hospitality company",
       "Vacation ownership model",
@@ -168,7 +172,8 @@
     ],
     "risks": [],
     "riskScore": 7,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "CMR Green Technologies",
@@ -182,7 +187,7 @@
     "listingDate": "Jun 10, 2026",
     "sector": "Green Energy",
     "issueSize": "₹850 Cr",
-    "subscription": 17.66,
+    "subscription": null,
     "gmp": null,
     "registrar": "KFin Technologies",
     "founders": "",
@@ -192,7 +197,7 @@
     "purpose": "Green energy infrastructure expansion",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Green energy sector",
       "Strong subscription: 17.66x",
@@ -200,7 +205,8 @@
     ],
     "risks": [],
     "riskScore": 5,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "SMR Jewels",
@@ -224,14 +230,15 @@
     "purpose": "Business expansion and working capital",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Jewellery manufacturing and retail",
       "SME listing"
     ],
     "risks": [],
     "riskScore": 6,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Merritronix",
@@ -255,14 +262,15 @@
     "purpose": "Manufacturing expansion and working capital",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Electronics manufacturing",
       "SME listing"
     ],
     "risks": [],
     "riskScore": 6,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "M R Maniveni Foods",
@@ -287,14 +295,15 @@
     "purpose": "Business expansion",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Food processing SME",
       "Listed with -21% gain"
     ],
     "risks": [],
     "riskScore": 7,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Q-Line Biotech",
@@ -319,14 +328,15 @@
     "purpose": "R&D and business expansion",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Biotech SME",
       "Listed with +38% gain"
     ],
     "risks": [],
     "riskScore": 5,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Autofurnish",
@@ -351,14 +361,15 @@
     "purpose": "Business expansion",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Auto accessories SME",
       "Listed with +10% gain"
     ],
     "risks": [],
     "riskScore": 6,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Vegorama Punjabi Angithi",
@@ -383,14 +394,15 @@
     "purpose": "Expansion of restaurant outlets",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Restaurant chain SME",
       "Listed with +63% gain — best performer"
     ],
     "risks": [],
     "riskScore": 5,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   },
   {
     "name": "Bio Medica Laboratories",
@@ -415,13 +427,14 @@
     "purpose": "Lab expansion and equipment",
     "drhpUrl": "https://www.sebi.gov.in/filings/public-issues.html",
     "aiScore": null,
-    "aiSummary": "",
+    "aiSummary": null,
     "highlights": [
       "Healthcare diagnostics SME",
       "Listed with -17% gain"
     ],
     "risks": [],
     "riskScore": 7,
-    "verdict": "neutral"
+    "verdict": null,
+    "lastUpdated": "2026-06-10T06:59:04.555Z"
   }
 ]
