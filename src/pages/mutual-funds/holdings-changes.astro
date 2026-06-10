@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import HoldingsCompare from '../../components/funds/HoldingsCompare.tsx';
+import HoldingsCompareLoader from '../../components/funds/HoldingsCompareLoader.tsx';
 import holdingsData from '../../data/fund-holdings.json';
 
 const amcCount = Object.keys(holdingsData.amcs).length;
@@ -58,7 +58,7 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <HoldingsCompare client:load data={holdingsData} />
+    <HoldingsCompareLoader client:load />
   </section>
 
   <!-- Info -->
