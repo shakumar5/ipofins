@@ -1,0 +1,66 @@
+---
+/**
+ * AdUnit Component — Google AdSense Ad Placement
+ * 
+ * Usage:
+ *   <AdUnit slot="1234567890" format="auto" />
+ *   <AdUnit slot="1234567890" format="horizontal" />
+ *   <AdUnit slot="1234567890" format="rectangle" />
+ * 
+ * Props:
+ *   - slot: Your AdSense ad slot ID (required)
+ *   - format: "auto" | "horizontal" | "rectangle" | "vertical" (default: "auto")
+ *   - responsive: boolean (default: true)
+ *   - className: additional CSS classes
+ */
+
+interface Props {
+  slot: string;
+  format?: 'auto' | 'horizontal' | 'rectangle' | 'vertical';
+  responsive?: boolean;
+  className?: string;
+}
+
+const {
+  slot,
+  format = 'auto',
+  responsive = true,
+  className = '',
+} = Astro.props;
+
+const CLIENT_ID = 'ca-pub-9843041963430696';
+
+// Map format to style
+const styleMap: Record<string, string> = {
+  auto: 'display:block',
+  horizontal: 'display:block; height:90px',
+  rectangle: 'display:inline-block; width:336px; height:280px',
+  vertical: 'display:block; height:600px',
+};
+
+const adStyle = styleMap[format] || styleMap.auto;
+---
+
+<div class={`ad-container my-6 ${className}`}>
+  <ins class="adsbygoogle"
+    style={adStyle}
+    data-ad-client={CLIENT_ID}
+    data-ad-slot={slot}
+    data-ad-format={format === 'auto' ? 'auto' : undefined}
+    data-full-width-responsive={responsive ? 'true' : undefined}
+  ></ins>
+  <script is:inline>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</div>
+
+<style>
+  .ad-container {
+    min-height: 50px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .ad-container:empty {
+    display: none;
+  }
+</style>

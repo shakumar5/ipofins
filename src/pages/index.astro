@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import AdUnit from '../components/AdUnit.astro';
 import IPOCard from '../components/IPOCard.astro';
 import ToolCard from '../components/ToolCard.astro';
 import iposRaw from '../data/ipos.json';
@@ -74,18 +75,18 @@ const jsonLd = {
 
       <!-- Stats -->
       <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-        <div class="card-compact text-center">
+        <a href="/ipo" class="card-compact text-center hover:shadow-md transition-shadow">
           <p class="text-2xl font-bold text-surface-900 dark:text-white">{iposData.length}</p>
           <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">IPOs Tracked</p>
-        </div>
-        <div class="card-compact text-center">
+        </a>
+        <a href="/ipo" class="card-compact text-center hover:shadow-md transition-shadow">
           <p class="text-2xl font-bold text-success-500">{liveIPOs.length}</p>
           <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Live Now</p>
-        </div>
-        <div class="card-compact text-center">
+        </a>
+        <a href="/tools" class="card-compact text-center hover:shadow-md transition-shadow">
           <p class="text-2xl font-bold text-surface-900 dark:text-white">{toolsData.length}</p>
           <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Free Tools</p>
-        </div>
+        </a>
         <div class="card-compact text-center">
           <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">12hr</p>
           <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Auto Refresh</p>
@@ -207,6 +208,11 @@ const jsonLd = {
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- Ad Unit -->
+  <section class="container-wide">
+    <AdUnit slot="3456789012" format="auto" />
   </section>
 
   <!-- Broker Section -->

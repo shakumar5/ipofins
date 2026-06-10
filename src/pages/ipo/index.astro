@@ -1,20 +1,15 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import AdUnit from '../../components/AdUnit.astro';
 import iposRaw from '../../data/ipos.json';
 import upcomingData from '../../data/upcoming-ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const allIPOs = iposData
-  .filter(i => i.status === 'live' || i.status === 'listed')
-  .sort((a, b) => {
-    // Live first, then listed
-    if (a.status === 'live' && b.status !== 'live') return -1;
-    if (a.status !== 'live' && b.status === 'live') return 1;
-    return 0;
-  });
-const liveCount = iposData.filter(i => i.status === 'live').length;
-const listedCount = iposData.filter(i => i.status === 'listed').length;
+const liveIPOs = iposData.filter(i => i.status === 'live');
+const closedIPOs = iposData.filter(i => i.status === 'closed');
+const listedIPOs = iposData.filter(i => i.status === 'listed');
+const totalCount = liveIPOs.length + closedIPOs.length + listedIPOs.length;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -41,31 +36,104 @@ const faqJsonLd = {
 
   <section class="container-wide py-6">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">All IPOs — 2026</h1>
-    <p class="text-sm text-surface-500 mb-6">{allIPOs.length} IPOs • {liveCount} live • {listedCount} listed</p>
+    <p class="text-sm text-surface-500 mb-6">{totalCount} IPOs • {liveIPOs.length} live • {closedIPOs.length} closed • {listedIPOs.length} listed</p>
 
-    <div class="space-y-2">
-      {allIPOs.map(ipo => (
-        <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
-                <span class={`badge text-[10px] ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'listed' ? 'badge-listed' : 'badge-upcoming'}`}>{ipo.status}</span>
-                <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+    <!-- Live IPOs -->
+    {liveIPOs.length > 0 && (
+      <div class="mb-8">
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
+          <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
+          Live — Open for Subscription
+        </h2>
+        <div class="space-y-2">
+          {liveIPOs.map(ipo => (
+            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-success-500">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
+                    <span class="badge text-[10px] badge-live">live</span>
+                    <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+                  </div>
+                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
+                </div>
+                <div class="flex items-center gap-5 text-xs">
+                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                </div>
               </div>
-              <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
-            </div>
-            <div class="flex items-center gap-5 text-xs">
-              <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-              <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-              {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
-              {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
-              {ipo.aiScore && <div><span class="text-surface-400">AI </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
-            </div>
-          </div>
-        </a>
-      ))}
-    </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Closed IPOs (awaiting listing) -->
+    {closedIPOs.length > 0 && (
+      <div class="mb-8">
+        <AdUnit slot="1234567890" format="horizontal" />
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
+          <span class="w-2 h-2 bg-surface-400 rounded-full"></span>
+          Closed — Awaiting Listing
+        </h2>
+        <div class="space-y-2">
+          {closedIPOs.map(ipo => (
+            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-surface-300">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
+                    <span class="badge text-[10px] badge-closed">closed</span>
+                    <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+                  </div>
+                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
+                </div>
+                <div class="flex items-center gap-5 text-xs">
+                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Listed IPOs -->
+    {listedIPOs.length > 0 && (
+      <div class="mb-8">
+        <AdUnit slot="2345678901" format="horizontal" />
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
+          <span class="w-2 h-2 bg-warning-500 rounded-full"></span>
+          Listed — Recently Listed
+        </h2>
+        <div class="space-y-2">
+          {listedIPOs.map(ipo => (
+            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-warning-300">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
+                    <span class="badge text-[10px] badge-listed">listed</span>
+                    <span class="text-[10px] text-surface-400 uppercase">{ipo.type}</span>
+                  </div>
+                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listed: {ipo.listingDate}</p>
+                </div>
+                <div class="flex items-center gap-5 text-xs">
+                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
   </section>
 
   <!-- FAQ Section -->

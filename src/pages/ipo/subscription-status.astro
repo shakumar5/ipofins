@@ -4,7 +4,7 @@ import iposRaw from '../../data/ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const liveIPOs = iposData.filter(ipo => ipo.status === 'live' && ipo.subscription);
+const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
 const jsonLd = {
@@ -94,7 +94,11 @@ const faqJsonLd = {
                 </div>
                 <div class="text-right">
                   <p class="text-xs text-surface-500">Total Subscription</p>
-                  <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400">{ipo.subscription}x</p>
+                  {ipo.subscription ? (
+                    <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400">{ipo.subscription}x</p>
+                  ) : (
+                    <p class="text-lg font-semibold text-surface-400 dark:text-surface-500">Awaiting data</p>
+                  )}
                 </div>
               </div>
               
