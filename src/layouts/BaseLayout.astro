@@ -15,7 +15,7 @@ interface Props {
 const {
   title,
   description = 'IPOfins - Free IPO tracker, mutual fund comparison, SIP & EMI calculators. Track live IPOs, GMP, subscription status for Indian investors.',
-  ogImage = '/favicon.svg',
+  ogImage = '/og-default.svg',
   canonicalUrl,
   jsonLd,
 } = Astro.props;
@@ -78,10 +78,8 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
 
     <!-- JSON-LD -->
     {jsonLd && (
@@ -97,8 +95,11 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     </script>
   </head>
   <body class="min-h-screen flex flex-col">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:shadow-lg">
+      Skip to main content
+    </a>
     <Header />
-    <main class="flex-1">
+    <main id="main-content" class="flex-1">
       <slot />
     </main>
     <Footer />
@@ -120,18 +121,25 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     <!-- Search Overlay -->
     <SearchOverlay />
 
-    <!-- AI Chatbot (Phase 3) -->
-    <div id="ai-chatbot-root"></div>
-    <script>
-      import AIChatbot from '../components/ai/AIChatbot.tsx';
-      import { createElement } from 'react';
-      import { createRoot } from 'react-dom/client';
-
-      const container = document.getElementById('ai-chatbot-root');
-      if (container) {
-        const root = createRoot(container);
-        root.render(createElement(AIChatbot));
-      }
+    <!-- Cookie Consent (for AdSense compliance) -->
+    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl transform translate-y-full transition-transform duration-300" style="display:none">
+      <div class="container-wide flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-surface-300">We use cookies for analytics and ads. By continuing, you agree to our <a href="/privacy" class="text-primary-400 hover:underline">Privacy Policy</a>.</p>
+        <div class="flex gap-2">
+          <button onclick="acceptCookies()" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 transition-colors">Accept</button>
+          <button onclick="dismissCookies()" class="px-4 py-2 bg-surface-700 text-surface-300 text-sm font-medium rounded-lg hover:bg-surface-600 transition-colors">Dismiss</button>
+        </div>
+      </div>
+    </div>
+    <script is:inline>
+      (function() {
+        if (!localStorage.getItem('cookie-consent')) {
+          var el = document.getElementById('cookie-consent');
+          if (el) { el.style.display = 'block'; setTimeout(function() { el.style.transform = 'translateY(0)'; }, 100); }
+        }
+      })();
+      function acceptCookies() { localStorage.setItem('cookie-consent', 'accepted'); document.getElementById('cookie-consent').style.transform = 'translateY(100%)'; }
+      function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); document.getElementById('cookie-consent').style.transform = 'translateY(100%)'; }
     </script>
   </body>
 </html>

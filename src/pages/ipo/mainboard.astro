@@ -1,7 +1,9 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposData from '../../data/ipos.json';
+import iposRaw from '../../data/ipos.json';
+import { withCorrectStatuses } from '../../utils/ipo-status';
 
+const iposData = withCorrectStatuses(iposRaw);
 const mainboardIPOs = iposData.filter(ipo => ipo.type === 'mainboard' && ipo.status === 'live');
 ---
 
@@ -25,7 +27,7 @@ const mainboardIPOs = iposData.filter(ipo => ipo.type === 'mainboard' && ipo.sta
               <div class="flex items-center gap-5 text-xs">
                 <div><span class="text-surface-400">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
                 <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                {ipo.gmp !== undefined && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                 {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
                 {ipo.aiScore && <div><span class="text-surface-400">AI </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
               </div>

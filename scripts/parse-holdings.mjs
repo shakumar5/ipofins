@@ -52,7 +52,7 @@ function detectMonth(filename, sheetData) {
   // Check filename first
   if (fn.includes('april') || fn.includes('apr-2026') || fn.includes('30-04') || fn.includes('30-apr') || fn.includes('apr_2026') || fn.includes('april-2026') || fn.includes('_30_04')) return 'April 2026';
   if (fn.includes('march') || fn.includes('mar-2026') || fn.includes('31-03') || fn.includes('31-mar') || fn.includes('31march') || fn.includes('mar_2026') || fn.includes('march-2026') || fn.includes('_31_03') || fn.includes('mar2026')) return 'March 2026';
-  if (fn.includes('may') || fn.includes('may-2026') || fn.includes('31-05') || fn.includes('may_2026')) return 'May 2026';
+  if (fn.includes('may') || fn.includes('may-2026') || fn.includes('31-05') || fn.includes('may_2026') || fn.includes('_31_05') || fn.includes('may2026') || fn.includes('may 2026')) return 'May 2026';
   if (fn.includes('june') || fn.includes('jun-2026') || fn.includes('30-06') || fn.includes('jun_2026')) return 'June 2026';
   
   // Support folder structure: Holdings/2026/May/
@@ -71,8 +71,14 @@ function detectMonth(filename, sheetData) {
       if (rowStr.includes('apr') && rowStr.includes('2026')) return 'April 2026';
       if (rowStr.includes('march') && rowStr.includes('2026')) return 'March 2026';
       if (rowStr.includes('mar') && rowStr.includes('2026') && !rowStr.includes('market')) return 'March 2026';
+      if (rowStr.includes('may') && rowStr.includes('2026') && !rowStr.includes('market')) return 'May 2026';
       if (rowStr.includes('30-04-2026') || rowStr.includes('30/04/2026')) return 'April 2026';
       if (rowStr.includes('31-03-2026') || rowStr.includes('31/03/2026')) return 'March 2026';
+      if (rowStr.includes('31-05-2026') || rowStr.includes('31/05/2026')) return 'May 2026';
+      // Handle Excel date serial numbers (e.g., 46173 = May 31, 2026)
+      if (rowStr.includes('46173') || rowStr.includes('46174')) return 'May 2026';
+      if (rowStr.includes('46143') || rowStr.includes('46142')) return 'April 2026';
+      if (rowStr.includes('46112') || rowStr.includes('46113')) return 'March 2026';
     }
   }
   return null;
@@ -89,25 +95,26 @@ function detectAMC(filename, sheetData) {
   if (combined.includes('hdfc')) return 'HDFC';
   if (combined.includes('icici prudential') || combined.includes('icici pru')) return 'ICICI Prudential';
   if (combined.includes('sbi mutual') || combined.includes('sbi ') || (fn.startsWith('sbi') && !fn.includes('aditya'))) return 'SBI';
-  if (combined.includes('aditya birla') || combined.includes('absl')) return 'Aditya Birla Sun Life';
+  if (fn.includes('all-schemes-monthly-portfolio')) return 'SBI';
+  if (combined.includes('aditya birla') || combined.includes('absl') || fn.includes('abslmf')) return 'Aditya Birla Sun Life';
   if (combined.includes('bandhan')) return 'Bandhan';
   if (combined.includes('bajaj finserv') || fn.includes('bajaj')) return 'Bajaj Finserv';
   if (combined.includes('canara robeco') || fn.includes('canara')) return 'Canara Robeco';
   if (combined.includes('dsp')) return 'DSP';
   if (combined.includes('axis mutual') || combined.includes('axis ')) return 'Axis';
   if (combined.includes('kotak')) return 'Kotak';
-  if (combined.includes('nippon india')) return 'Nippon India';
-  if (combined.includes('motilal oswal')) return 'Motilal Oswal';
+  if (combined.includes('nippon india') || fn.includes('nimf')) return 'Nippon India';
+  if (combined.includes('motilal oswal') || fn.includes('motilal')) return 'Motilal Oswal';
   if (combined.includes('invesco')) return 'Invesco';
-  if (combined.includes('edelweiss') || fn.includes('edel_')) return 'Edelweiss';
+  if (combined.includes('edelweiss') || fn.includes('edel_') || fn.includes('edel_portfolio')) return 'Edelweiss';
   if (combined.includes('helios')) return 'Helios';
-  if (combined.includes('lic mf') || fn.includes('lic ')) return 'LIC';
+  if (combined.includes('lic mf') || fn.includes('lic ') || fn.startsWith('lic ')) return 'LIC';
   if (combined.includes('angel one') || fn.includes('angel-one')) return 'Angel One';
   if (combined.includes('360 one') || fn.includes('in_mf')) return '360 ONE';
   if (combined.includes('choice')) return 'Choice';
   if (combined.includes('jio') || fn.includes('jioblack')) return 'Jio';
   if (combined.includes('baroda') || combined.includes('bob') || fn.includes('bobbnp')) return 'Baroda BNP Paribas';
-  if (combined.includes('mirae')) return 'Mirae Asset';
+  if (combined.includes('mirae') || fn.includes('maebf') || fn.includes('mafcf') || fn.includes('mamcf')) return 'Mirae Asset';
   if (combined.includes('iti mutual') || combined.includes('iti ')) return 'ITI';
   if (combined.includes('mahindra manulife') || combined.includes('mahindra')) return 'Mahindra Manulife';
   if (combined.includes('quant mutual') || combined.includes('quant ')) return 'Quant';
@@ -115,7 +122,19 @@ function detectAMC(filename, sheetData) {
   if (fn.includes('monthly-portfolio') && fn.includes('isin')) return 'Mirae Asset';
   if (combined.includes('groww') || fn.startsWith('ib0') || fn.startsWith('ib1') || fn.startsWith('ib2') || fn.startsWith('ib3') || fn.startsWith('ib4')) return 'Groww';
   if (fn.includes('cmflexi')) return 'Groww';
-  if (combined.includes('apex')) return 'White Oak';
+  if (combined.includes('apex') || fn.includes('woc ') || fn.startsWith('woc ')) return 'White Oak Capital';
+  if (combined.includes('ppfas') || combined.includes('parag parikh')) return 'PPFAS';
+  if (combined.includes('uti') || fn.includes('uti_mf') || fn.includes('fw_uti')) return 'UTI';
+  if (combined.includes('taurus')) return 'Taurus';
+  if (combined.includes('jm ') || fn.includes('jm ') || fn.includes('jm-')) return 'JM Financial';
+  if (combined.includes('hsbc')) return 'HSBC';
+  if (combined.includes('shriram')) return 'Shriram';
+  if (combined.includes('trust') || fn.includes('trustmf')) return 'Trust MF';
+  if (combined.includes('unifi')) return 'Unifi';
+  if (combined.includes('abakkus')) return 'Abakkus';
+  if (fn.includes('leeqtf') || fn.includes('portfolio-disclosures-monthly')) return 'Kotak';
+  if (fn.includes('monthlyportfolio_') || fn.includes('monthly_portfolio_') && !fn.includes('choice') && !fn.includes('iti')) return 'Kotak';
+  if (fn.includes('portf') && fn.includes('holding') && fn.includes('may')) return 'Kotak';
   
   return 'Unknown';
 }
@@ -124,7 +143,25 @@ function detectAMC(filename, sheetData) {
 // DETECT FUND NAME FROM SHEET DATA
 // ═══════════════════════════════════════════════════════════════
 function detectFundName(sheetData, sheetName, filename) {
-  // Check first 5 rows for fund name
+  // Priority 1: Look for explicit "SCHEME NAME:" label (SBI, Kotak, etc. use this)
+  for (let i = 0; i < Math.min(6, sheetData.length); i++) {
+    const row = sheetData[i];
+    if (!row) continue;
+    for (let ci = 0; ci < row.length; ci++) {
+      const cell = row[ci];
+      if (!cell || typeof cell !== 'string') continue;
+      const val = cell.trim().toLowerCase();
+      if (val.includes('scheme name') || val === 'scheme name :' || val === 'scheme name:') {
+        // The fund name is typically in the next cell or same row
+        const nextCell = row[ci + 1];
+        if (nextCell && typeof nextCell === 'string' && nextCell.trim().length > 5) {
+          return nextCell.trim().replace(/\s*\(An open ended.*?\)/gi, '').replace(/\s*-\s*An Open.*$/gi, '').replace(/\r\n/g, ' ').trim();
+        }
+      }
+    }
+  }
+
+  // Priority 2: Check first 5 rows for fund name (but skip generic AMC names)
   for (let i = 0; i < Math.min(5, sheetData.length); i++) {
     const row = sheetData[i];
     if (!row) continue;
@@ -138,6 +175,9 @@ function detectFundName(sheetData, sheetName, filename) {
           !val.includes('Portfolio') && !val.includes('Monthly') &&
           !val.includes('Generated') && !val.includes('Statement') &&
           !val.includes('Name of') && !val.includes('ISIN')) {
+        // Skip generic AMC names (e.g., "SBI Mutual Fund", "HDFC Mutual Fund")
+        if (/^[A-Z\s]+ Mutual Fund$/i.test(val)) continue;
+        if (val.endsWith('Mutual Fund') && val.split(' ').length <= 4) continue;
         // Clean up
         return val.replace(/\s*\(An open ended.*?\)/gi, '').replace(/\s*-\s*An Open.*$/gi, '').replace(/\r\n/g, ' ').trim();
       }
@@ -299,11 +339,18 @@ function processFile(filepath, filename) {
   let pathAMC = null;
   if (pathLower.includes('monthly-portfolio-disclosure-')) pathAMC = 'ICICI Prudential';
   if (pathLower.includes('monthly portfolio-mar-2026') || pathLower.includes('monthly disclosure-april')) pathAMC = 'Aditya Birla Sun Life';
+  if (pathLower.includes('all-schemes-monthly-portfolio')) pathAMC = 'SBI';
+  if (pathLower.includes('portfolio-disclosures-monthly')) pathAMC = 'Kotak';
+  if (pathLower.includes('fw_uti') || pathLower.includes('uti_mf')) pathAMC = 'UTI';
+  if (pathLower.includes('31052026_abslmf') || pathLower.includes('abslmf')) pathAMC = 'Aditya Birla Sun Life';
   
   try {
     const wb = XLSX.readFile(filepath);
     
     for (const sheetName of wb.SheetNames) {
+      // Skip index/summary sheets
+      if (sheetName.toLowerCase() === 'index' || sheetName.toLowerCase() === 'summary') continue;
+      
       const ws = wb.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
       
@@ -409,7 +456,7 @@ console.log(`  Total fund-month entries: ${allResults.length}`);
 // ═══════════════════════════════════════════════════════════════
 const output = {
   lastUpdated: new Date().toISOString().split('T')[0],
-  months: ['March 2026', 'April 2026'],
+  months: ['March 2026', 'April 2026', 'May 2026'],
   amcs: {},
   holdings: {},
 };

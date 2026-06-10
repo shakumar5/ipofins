@@ -7,7 +7,7 @@ interface Props {
   openDate: string;
   closeDate: string;
   listingDate?: string;
-  status: 'live' | 'upcoming' | 'closed' | 'listed';
+  status: 'live' | 'upcoming' | 'closed' | 'listed' | 'drhp-filed';
   type: 'mainboard' | 'sme';
   subscription?: number;
   gmp?: number;
@@ -81,7 +81,7 @@ const statusInfo = statusConfig[status];
   </div>
 
   <!-- Subscription Bar (for live IPOs) -->
-  {subscription !== undefined && status === 'live' && (
+  {subscription !== undefined && subscription !== null && status === 'live' && (
     <div class="mb-4">
       <div class="flex items-center justify-between mb-1">
         <span class="text-xs text-surface-500 dark:text-surface-400">Subscription</span>
@@ -98,7 +98,7 @@ const statusInfo = statusConfig[status];
 
   <!-- Bottom Row -->
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
-    {gmp !== undefined && (
+    {gmp !== undefined && gmp !== null && (
       <div class="flex items-center gap-1">
         <span class="text-xs text-surface-500 dark:text-surface-400">GMP:</span>
         <span class={`text-xs font-semibold ${gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
@@ -106,7 +106,7 @@ const statusInfo = statusConfig[status];
         </span>
       </div>
     )}
-    {aiScore !== undefined && (
+    {aiScore !== undefined && aiScore !== null && (
       <div class="flex items-center gap-1">
         <span class="text-xs text-surface-500 dark:text-surface-400">AI Score:</span>
         <span class={`text-xs font-bold ${aiScore >= 7 ? 'text-success-500' : aiScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>

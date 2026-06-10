@@ -1,12 +1,15 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import IPOCard from '../../../components/IPOCard.astro';
-import iposData from '../../../data/ipos.json';
+import iposRaw from '../../../data/ipos.json';
+import { withCorrectStatuses } from '../../../utils/ipo-status';
 
+const iposData = withCorrectStatuses(iposRaw as any[]);
 const sectors = [...new Set(iposData.map(ipo => ipo.sector).filter(Boolean))];
 
 export function getStaticPaths() {
-  const sectorSlugs = [...new Set(iposData.map(ipo => ipo.sector?.toLowerCase().replace(/\s+/g, '-')).filter(Boolean))];
+  const allIPOs = withCorrectStatuses(iposRaw as any[]);
+  const sectorSlugs = [...new Set(allIPOs.map(ipo => ipo.sector?.toLowerCase().replace(/\s+/g, '-')).filter(Boolean))];
   return sectorSlugs.map(sector => ({
     params: { sector },
     props: { sector },

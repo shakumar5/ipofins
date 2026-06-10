@@ -8,8 +8,7 @@ name: Build & Deploy
 on:
   schedule:
     # Every 12 hours: 00:30, 12:30 UTC = 06:00, 18:00 IST
-    #- cron: '30 0,12 * * *'
-    - cron: '30 0 * * *'
+    - cron: '30 0,12 * * *'
   
   workflow_dispatch:
 
@@ -32,6 +31,11 @@ jobs:
 
       - name: 📦 Install dependencies
         run: npm ci
+
+      - name: 📡 Fetch latest data (MF only - IPO data pushed from local)
+        run: node scripts/fetch-all-data.mjs --mf-only
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
 
       - name: 🏗️ Build static site
         run: npx astro build

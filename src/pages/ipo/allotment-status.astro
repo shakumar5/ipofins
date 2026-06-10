@@ -1,7 +1,9 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposData from '../../data/ipos.json';
+import iposRaw from '../../data/ipos.json';
+import { withCorrectStatuses } from '../../utils/ipo-status';
 
+const iposData = withCorrectStatuses(iposRaw);
 const recentlyClosed = iposData.filter(ipo => ipo.status === 'closed' || ipo.status === 'listed');
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 

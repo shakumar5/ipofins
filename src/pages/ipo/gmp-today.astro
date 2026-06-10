@@ -1,7 +1,9 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposData from '../../data/ipos.json';
+import iposRaw from '../../data/ipos.json';
+import { withCorrectStatuses } from '../../utils/ipo-status';
 
+const iposData = withCorrectStatuses(iposRaw);
 const iposWithGMP = iposData.filter(ipo => ipo.gmp !== undefined && (ipo.status === 'live' || ipo.status === 'upcoming'));
 const listedWithGMP = iposData.filter(ipo => ipo.gmp !== undefined && ipo.status === 'listed');
 

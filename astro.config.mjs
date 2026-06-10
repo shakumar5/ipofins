@@ -7,19 +7,13 @@ export default defineConfig({
   site: 'https://ipofins.com',
   integrations: [
     react(),
-    sitemap(),
+    sitemap({
+      changefreq: 'daily',
+      lastmod: new Date(),
+    }),
   ],
   output: 'static',
   vite: {
     plugins: [tailwindcss()],
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            react: ['react', 'react-dom'],
-          },
-        },
-      },
-    },
   },
 });

@@ -1,12 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import AuthorByline from '../../components/AuthorByline.astro';
 import articlesData from '../../data/articles.json';
 
 export function getStaticPaths() {
-  return articlesData.map(article => ({
-    params: { slug: article.slug },
-    props: { article },
-  }));
+  return articlesData
+    .filter(article => article.content && article.content.trim().length > 0)
+    .map(article => ({
+      params: { slug: article.slug },
+      props: { article },
+    }));
 }
 
 const { article } = Astro.props;
@@ -54,31 +57,19 @@ const jsonLd = {
           {article.title}
         </h1>
         <p class="mt-3 text-lg text-surface-600 dark:text-surface-300">{article.excerpt}</p>
+        <AuthorByline date={article.date || 'June 2026'} />
       </div>
 
       <!-- Content -->
       <div class="prose dark:prose-invert max-w-none text-surface-700 dark:text-surface-300 leading-relaxed space-y-4">
-        {article.content ? (
-          <div set:html={article.content} />
-        ) : (
-          <>
-            <p>{article.excerpt}</p>
-            <p>Detailed content for this article is being prepared. In the meantime, explore our free tools and resources:</p>
-            <ul>
-              <li><a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> — Calculate your investment growth</li>
-              <li><a href="/ipo" class="text-primary-600 hover:underline">IPO Listings</a> — Track all live and upcoming IPOs</li>
-              <li><a href="/ipo/gmp-today" class="text-primary-600 hover:underline">GMP Today</a> — Check latest grey market premiums</li>
-              <li><a href="/broker/compare" class="text-primary-600 hover:underline">Compare Brokers</a> — Find the right broker for you</li>
-            </ul>
-          </>
-        )}
+        <div set:html={article.content} />
       </div>
 
       <!-- Related Articles -->
       <div class="mt-12 pt-8 border-t border-surface-200 dark:border-surface-700">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">More from Learn</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {articlesData.filter(a => a.slug !== article.slug).slice(0, 4).map(a => (
+          {articlesData.filter(a => a.slug !== article.slug && a.content && a.content.trim().length > 0).slice(0, 4).map(a => (
             <a href={`/learn/${a.slug}`} class="card-compact group block">
               <span class="text-xs text-primary-600 dark:text-primary-400">{a.category}</span>
               <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">{a.title}</h3>

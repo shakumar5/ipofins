@@ -156,18 +156,6 @@
     "rating": null
   },
   {
-    "name": "Kotak Dividend Yield Fund",
-    "slug": "kotak-dividend-yield-fund",
-    "category": "Dividend Yield",
-    "nav": 9.39,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹226 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
     "name": "Motilal Oswal ELSS Tax Saver Fund",
     "slug": "motilal-oswal-elss-tax-saver-fund",
     "category": "ELSS",
@@ -984,18 +972,6 @@
     "rating": null
   },
   {
-    "name": "Abakkus Flexi Cap Fund",
-    "slug": "abakkus-flexi-cap-fund",
-    "category": "Flexi Cap",
-    "nav": 10.41,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹4,654 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
     "name": "Bajaj Finserv Flexi Cap Fund",
     "slug": "bajaj-finserv-flexi-cap-fund",
     "category": "Flexi Cap",
@@ -1004,18 +980,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹7,237 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
-    "name": "Capitalmind Flexi Cap Fund",
-    "slug": "capitalmind-flexi-cap-fund",
-    "category": "Flexi Cap",
-    "nav": 9.97,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹434 Cr",
     "riskLevel": "moderate",
     "rating": null
   },
@@ -1032,18 +996,6 @@
     "rating": null
   },
   {
-    "name": "JioBlackRock Flexi Cap Fund",
-    "slug": "jioblackrock-flexi-cap-fund",
-    "category": "Flexi Cap",
-    "nav": 9.61,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹3,103 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
     "name": "NJ Flexi Cap Fund",
     "slug": "nj-flexi-cap-fund",
     "category": "Flexi Cap",
@@ -1056,18 +1008,6 @@
     "rating": null
   },
   {
-    "name": "Old Bridge Flexi Cap Fund",
-    "slug": "old-bridge-flexi-cap-fund",
-    "category": "Flexi Cap",
-    "nav": 10.65,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹183 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
     "name": "TRUSTMF Flexi Cap Fund",
     "slug": "trustmf-flexi-cap-fund",
     "category": "Flexi Cap",
@@ -1076,30 +1016,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹1,042 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
-    "name": "The Wealth Company Flexi Cap Fund",
-    "slug": "the-wealth-company-flexi-cap-fund",
-    "category": "Flexi Cap",
-    "nav": 9.85,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹232 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
-    "name": "Unifi Flexi Cap Fund",
-    "slug": "unifi-flexi-cap-fund",
-    "category": "Flexi Cap",
-    "nav": 10.16,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹194 Cr",
     "riskLevel": "moderate",
     "rating": null
   },
@@ -1788,18 +1704,6 @@
     "rating": null
   },
   {
-    "name": "JM Large & Mid Cap Fund",
-    "slug": "jm-large-mid-cap-fund",
-    "category": "Large & Mid Cap",
-    "nav": 10.09,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹414 Cr",
-    "riskLevel": "high",
-    "rating": null
-  },
-  {
     "name": "PGIM India Large and Midcap Fund",
     "slug": "pgim-india-large-and-midcap-fund",
     "category": "Large & Mid Cap",
@@ -1808,18 +1712,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹777 Cr",
-    "riskLevel": "high",
-    "rating": null
-  },
-  {
-    "name": "Samco Large & Mid Cap Fund",
-    "slug": "samco-large-mid-cap-fund",
-    "category": "Large & Mid Cap",
-    "nav": 9.28,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹117 Cr",
     "riskLevel": "high",
     "rating": null
   },
@@ -2208,18 +2100,6 @@
     "rating": null
   },
   {
-    "name": "Parag Parikh Large Cap Fund",
-    "slug": "parag-parikh-large-cap-fund",
-    "category": "Large Cap",
-    "nav": 9.31,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹744 Cr",
-    "riskLevel": "moderate",
-    "rating": null
-  },
-  {
     "name": "Samco Large Cap Fund",
     "slug": "samco-large-cap-fund",
     "category": "Large Cap",
@@ -2580,18 +2460,6 @@
     "rating": 1
   },
   {
-    "name": "Bank of India Mid Cap Fund",
-    "slug": "bank-of-india-mid-cap-fund",
-    "category": "Mid Cap",
-    "nav": 10.08,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹712 Cr",
-    "riskLevel": "high",
-    "rating": null
-  },
-  {
     "name": "Helios Mid Cap Fund",
     "slug": "helios-mid-cap-fund",
     "category": "Mid Cap",
@@ -2600,18 +2468,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹1,494 Cr",
-    "riskLevel": "high",
-    "rating": null
-  },
-  {
-    "name": "TRUSTMF Mid Cap Fund",
-    "slug": "trustmf-mid-cap-fund",
-    "category": "Mid Cap",
-    "nav": 11.21,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹251 Cr",
     "riskLevel": "high",
     "rating": null
   },
@@ -2960,18 +2816,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹243 Cr",
-    "riskLevel": "high",
-    "rating": null
-  },
-  {
-    "name": "TRUSTMF Multi Cap Fund",
-    "slug": "trustmf-multi-cap-fund",
-    "category": "Multi Cap",
-    "nav": 11,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹536 Cr",
     "riskLevel": "high",
     "rating": null
   },
@@ -3852,18 +3696,6 @@
     "rating": 3
   },
   {
-    "name": "Axis Business Cycles Fund",
-    "slug": "axis-business-cycles-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 16.74,
-    "returns1y": null,
-    "returns3y": 14.9,
-    "returns5y": null,
-    "aum": "₹2,035 Cr",
-    "riskLevel": "very-high",
-    "rating": 3
-  },
-  {
     "name": "Taurus Ethical Fund",
     "slug": "taurus-ethical-fund",
     "category": "Sectoral/Thematic",
@@ -4500,30 +4332,6 @@
     "rating": null
   },
   {
-    "name": "Axis Services Opportunities Fund",
-    "slug": "axis-services-opportunities-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.27,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹1,547 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Bajaj Finserv Banking and Financial Services Fund",
-    "slug": "bajaj-finserv-banking-and-financial-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.44,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹422 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Bajaj Finserv Consumption Fund",
     "slug": "bajaj-finserv-consumption-fund",
     "category": "Sectoral/Thematic",
@@ -4584,30 +4392,6 @@
     "rating": null
   },
   {
-    "name": "Bandhan Multi-Factor Fund",
-    "slug": "bandhan-multi-factor-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.95,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹683 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Bank of India Banking & Financial Services Fund",
-    "slug": "bank-of-india-banking-financial-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.43,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹269 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Bank of India Business Cycle Fund",
     "slug": "bank-of-india-business-cycle-fund",
     "category": "Sectoral/Thematic",
@@ -4632,30 +4416,6 @@
     "rating": null
   },
   {
-    "name": "Baroda BNP Paribas Business Conglomerates Fund",
-    "slug": "baroda-bnp-paribas-business-conglomerates-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.72,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹658 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Baroda BNP Paribas ESG Best-in-Class Strategy Fund",
-    "slug": "baroda-bnp-paribas-esg-best-in-class-strategy-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.17,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹631 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Baroda BNP Paribas Energy Opportunities Fund",
     "slug": "baroda-bnp-paribas-energy-opportunities-fund",
     "category": "Sectoral/Thematic",
@@ -4664,18 +4424,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹691 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Baroda BNP Paribas Health and Wellness Fund",
-    "slug": "baroda-bnp-paribas-health-and-wellness-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.04,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹544 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -4700,18 +4448,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹868 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Canara Robeco Banking and Financial Services Fund",
-    "slug": "canara-robeco-banking-and-financial-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.2,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹568 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -4788,18 +4524,6 @@
     "rating": null
   },
   {
-    "name": "Franklin India Multi-Factor Fund",
-    "slug": "franklin-india-multi-factor-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.37,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹555 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "HDFC Consumption Fund",
     "slug": "hdfc-consumption-fund",
     "category": "Sectoral/Thematic",
@@ -4808,18 +4532,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹970 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "HDFC Innovation Fund",
-    "slug": "hdfc-innovation-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.56,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹2,669 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -4920,30 +4632,6 @@
     "rating": null
   },
   {
-    "name": "ICICI Prudential Active Momentum Fund",
-    "slug": "icici-prudential-active-momentum-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.72,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹1,987 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "ICICI Prudential Conglomerate Fund",
-    "slug": "icici-prudential-conglomerate-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.92,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹810 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "ICICI Prudential Energy Opportunities Fund",
     "slug": "icici-prudential-energy-opportunities-fund",
     "category": "Sectoral/Thematic",
@@ -5004,18 +4692,6 @@
     "rating": null
   },
   {
-    "name": "ITI Business Cycle Fund",
-    "slug": "iti-business-cycle-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.31,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹108 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Invesco India Business Cycle Fund",
     "slug": "invesco-india-business-cycle-fund",
     "category": "Sectoral/Thematic",
@@ -5024,18 +4700,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹1,077 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Invesco India Consumption Fund",
-    "slug": "invesco-india-consumption-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.76,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹540 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5060,30 +4724,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹308 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "JioBlackRock Sector Rotation Fund",
-    "slug": "jioblackrock-sector-rotation-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.63,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹151 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Kotak Active Momentum Fund",
-    "slug": "kotak-active-momentum-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.45,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹1,457 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5148,30 +4788,6 @@
     "rating": null
   },
   {
-    "name": "Kotak Rural Opportunities Fund",
-    "slug": "kotak-rural-opportunities-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.39,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹778 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Kotak Services Fund",
-    "slug": "kotak-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.86,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹721 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Kotak Special Opportunities Fund",
     "slug": "kotak-special-opportunities-fund",
     "category": "Sectoral/Thematic",
@@ -5208,18 +4824,6 @@
     "rating": null
   },
   {
-    "name": "LIC MF Consumption Fund",
-    "slug": "lic-mf-consumption-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.32,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹464 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "LIC MF Manufacturing Fund",
     "slug": "lic-mf-manufacturing-fund",
     "category": "Sectoral/Thematic",
@@ -5228,18 +4832,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹755 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Mahindra Manulife Banking & Financial Services Fund",
-    "slug": "mahindra-manulife-banking-financial-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.21,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹421 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5256,18 +4848,6 @@
     "rating": null
   },
   {
-    "name": "Mahindra Manulife Innovation Opportunities Fund",
-    "slug": "mahindra-manulife-innovation-opportunities-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.48,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹194 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Mahindra Manulife Manufacturing Fund",
     "slug": "mahindra-manulife-manufacturing-fund",
     "category": "Sectoral/Thematic",
@@ -5276,18 +4856,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹666 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Mirae Asset Infrastructure Fund",
-    "slug": "mirae-asset-infrastructure-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.81,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹419 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5316,18 +4884,6 @@
     "rating": null
   },
   {
-    "name": "Motilal Oswal Consumption Fund",
-    "slug": "motilal-oswal-consumption-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.59,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹1,045 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Motilal Oswal Digital India Fund",
     "slug": "motilal-oswal-digital-india-fund",
     "category": "Sectoral/Thematic",
@@ -5336,18 +4892,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹793 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Motilal Oswal Financial Services Fund",
-    "slug": "motilal-oswal-financial-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.66,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹174 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5400,18 +4944,6 @@
     "rating": null
   },
   {
-    "name": "Motilal Oswal Services Fund",
-    "slug": "motilal-oswal-services-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.65,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹113 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Nippon India Active Momentum Fund",
     "slug": "nippon-india-active-momentum-fund",
     "category": "Sectoral/Thematic",
@@ -5432,18 +4964,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹2,810 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Nippon India MNC Fund",
-    "slug": "nippon-india-mnc-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.53,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹422 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5592,18 +5112,6 @@
     "rating": null
   },
   {
-    "name": "SBI Quality Fund",
-    "slug": "sbi-quality-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 10.12,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹2,370 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "SBI Quant Fund",
     "slug": "sbi-quant-fund",
     "category": "Sectoral/Thematic",
@@ -5660,18 +5168,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹1,581 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Sundaram Multi-Factor Fund",
-    "slug": "sundaram-multi-factor-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.93,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹938 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -5736,18 +5232,6 @@
     "rating": null
   },
   {
-    "name": "Union Consumption Fund",
-    "slug": "union-consumption-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.11,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹314 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Union Innovation & Opportunities Fund",
     "slug": "union-innovation-opportunities-fund",
     "category": "Sectoral/Thematic",
@@ -5768,18 +5252,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹584 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "WhiteOak Capital Consumption Opportunities Fund",
-    "slug": "whiteoak-capital-consumption-opportunities-fund",
-    "category": "Sectoral/Thematic",
-    "nav": 9.6,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹107 Cr",
     "riskLevel": "very-high",
     "rating": null
   },
@@ -6132,30 +5604,6 @@
     "rating": 1
   },
   {
-    "name": "Abakkus Small Cap Fund",
-    "slug": "abakkus-small-cap-fund",
-    "category": "Small Cap",
-    "nav": 11.36,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹1,138 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Bajaj Finserv Small Cap Fund",
-    "slug": "bajaj-finserv-small-cap-fund",
-    "category": "Small Cap",
-    "nav": 10.28,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹2,014 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
     "name": "Baroda BNP Paribas Small Cap Fund",
     "slug": "baroda-bnp-paribas-small-cap-fund",
     "category": "Small Cap",
@@ -6164,30 +5612,6 @@
     "returns3y": null,
     "returns5y": null,
     "aum": "₹1,212 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Groww Small Cap Fund",
-    "slug": "groww-small-cap-fund",
-    "category": "Small Cap",
-    "nav": 11.1,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹352 Cr",
-    "riskLevel": "very-high",
-    "rating": null
-  },
-  {
-    "name": "Helios Small Cap Fund",
-    "slug": "helios-small-cap-fund",
-    "category": "Small Cap",
-    "nav": 10.37,
-    "returns1y": null,
-    "returns3y": null,
-    "returns5y": null,
-    "aum": "₹1,061 Cr",
     "riskLevel": "very-high",
     "rating": null
   },

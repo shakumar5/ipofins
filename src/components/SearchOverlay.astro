@@ -8,7 +8,7 @@ import toolsData from '../data/tools.json';
 const searchItems = [
   ...iposData.map(i => ({ title: `${i.name} IPO`, url: `/ipo/${i.slug}`, type: 'IPO', meta: `${i.sector} • ${i.type}` })),
   ...fundsData.map(f => ({ title: f.name, url: `/mutual-funds/fund/${f.slug}`, type: 'Fund', meta: `${f.category} • ${f.aum}` })),
-  ...articlesData.map(a => ({ title: a.title, url: `/learn/${a.slug}`, type: 'Learn', meta: a.category })),
+  ...articlesData.filter(a => a.content && a.content.trim().length > 0).map(a => ({ title: a.title, url: `/learn/${a.slug}`, type: 'Learn', meta: a.category })),
   ...toolsData.map(t => ({ title: t.title, url: `/tools/${t.slug}`, type: 'Tool', meta: t.description.slice(0, 50) })),
   { title: 'IPO GMP Today', url: '/ipo/gmp-today', type: 'IPO', meta: 'Grey Market Premium' },
   { title: 'Upcoming IPOs', url: '/ipo/upcoming', type: 'IPO', meta: 'DRHP & SEBI Approved' },

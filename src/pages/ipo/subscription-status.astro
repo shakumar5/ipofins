@@ -1,7 +1,9 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposData from '../../data/ipos.json';
+import iposRaw from '../../data/ipos.json';
+import { withCorrectStatuses } from '../../utils/ipo-status';
 
+const iposData = withCorrectStatuses(iposRaw);
 const liveIPOs = iposData.filter(ipo => ipo.status === 'live' && ipo.subscription);
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
@@ -82,10 +84,6 @@ const faqJsonLd = {
     {liveIPOs.length > 0 ? (
       <div class="space-y-6">
         {liveIPOs.map(ipo => {
-          const retail = (ipo.subscription * 0.7).toFixed(2);
-          const hni = (ipo.subscription * 1.2).toFixed(2);
-          const qib = (ipo.subscription * 2.5).toFixed(2);
-          
           return (
             <div class="card">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -101,35 +99,39 @@ const faqJsonLd = {
               </div>
               
               <!-- Category Bars -->
-              <div class="space-y-4">
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Retail Individual (RII)</span>
-                    <span class="text-sm font-bold text-primary-600">{retail}x</span>
+              {(ipo as any).subscriptionData ? (
+                <div class="space-y-4">
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Retail Individual (RII)</span>
+                      <span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionData.rii?.toFixed(2) || '—'}x</span>
+                    </div>
+                    <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
+                      <div class="bg-primary-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionData.rii || 0) * 10, 100)}%`}></div>
+                    </div>
                   </div>
-                  <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                    <div class="bg-primary-500 h-3 rounded-full transition-all" style={`width: ${Math.min(parseFloat(retail) * 10, 100)}%`}></div>
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Non-Institutional (NII/HNI)</span>
+                      <span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionData.nii?.toFixed(2) || '—'}x</span>
+                    </div>
+                    <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
+                      <div class="bg-success-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionData.nii || 0) * 8, 100)}%`}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Qualified Institutional (QIB)</span>
+                      <span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionData.qib?.toFixed(2) || '—'}x</span>
+                    </div>
+                    <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
+                      <div class="bg-warning-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionData.qib || 0) * 5, 100)}%`}></div>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Non-Institutional (NII/HNI)</span>
-                    <span class="text-sm font-bold text-success-500">{hni}x</span>
-                  </div>
-                  <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                    <div class="bg-success-500 h-3 rounded-full transition-all" style={`width: ${Math.min(parseFloat(hni) * 8, 100)}%`}></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Qualified Institutional (QIB)</span>
-                    <span class="text-sm font-bold text-warning-500">{qib}x</span>
-                  </div>
-                  <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                    <div class="bg-warning-500 h-3 rounded-full transition-all" style={`width: ${Math.min(parseFloat(qib) * 5, 100)}%`}></div>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <p class="text-sm text-surface-500 text-center py-2">Category-wise subscription data not available</p>
+              )}
             </div>
           );
         })}

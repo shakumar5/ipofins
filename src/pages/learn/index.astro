@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import articlesData from '../../data/articles.json';
 
-const articles = articlesData;
+const articles = articlesData.filter(article => article.content && article.content.trim().length > 0);
 
 const jsonLd = {
   "@context": "https://schema.org",

@@ -2,10 +2,12 @@
 import IPOLayout from '../../layouts/IPOLayout.astro';
 import AIInsightBox from '../../components/AIInsightBox.astro';
 import RiskBadge from '../../components/RiskBadge.astro';
-import iposData from '../../data/ipos.json';
+import iposRaw from '../../data/ipos.json';
+import { withCorrectStatuses } from '../../utils/ipo-status';
 
 export function getStaticPaths() {
-  return iposData.map(ipo => ({
+  const allIPOs = withCorrectStatuses(iposRaw as any[]);
+  return allIPOs.map(ipo => ({
     params: { slug: ipo.slug },
     props: { ipo },
   }));
@@ -54,12 +56,14 @@ const jsonLd = {
         <p class="mt-1 text-sm text-surface-500">{ipo.sector} • {ipo.issueSize} • {ipo.headquarters || ''}</p>
       </div>
       <div class="flex items-center gap-4">
-        <div class="text-center">
-          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-            <span class="text-xl font-bold text-white">{ipo.aiScore}</span>
+        {ipo.aiScore && (
+          <div class="text-center">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+              <span class="text-xl font-bold text-white">{ipo.aiScore}</span>
+            </div>
+            <p class="text-xs text-surface-500 mt-1">AI Score</p>
           </div>
-          <p class="text-xs text-surface-500 mt-1">AI Score</p>
-        </div>
+        )}
         <RiskBadge score={ipo.riskScore} size="lg" />
       </div>
     </div>
@@ -90,9 +94,13 @@ const jsonLd = {
       </div>
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">GMP</p>
-        <p class={`text-base font-bold mt-1 ${(ipo.gmp ?? 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-          {(ipo.gmp ?? 0) >= 0 ? '+' : ''}₹{ipo.gmp}
-        </p>
+        {ipo.gmp !== null && ipo.gmp !== undefined ? (
+          <p class={`text-base font-bold mt-1 ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+            {ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}
+          </p>
+        ) : (
+          <p class="text-base font-bold mt-1 text-surface-400">—</p>
+        )}
       </div>
     </div>
   </section>
@@ -165,23 +173,27 @@ const jsonLd = {
   )}
 
   <!-- Subscription Status (for live IPOs) -->
-  {ipo.subscription && ipo.status === 'live' && (
+  {ipo.subscription && ipo.status === 'live' ? (
     <section class="container-wide py-4">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Subscription Status</h2>
       <div class="card">
         <div class="space-y-3">
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">Retail (RII)</span><span class="text-sm font-bold text-primary-600">{(ipo.subscription * 0.7).toFixed(1)}x</span></div>
-            <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-primary-500 h-2.5 rounded-full" style={`width: ${Math.min(ipo.subscription * 0.7 * 10, 100)}%`}></div></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">NII (HNI)</span><span class="text-sm font-bold text-success-500">{(ipo.subscription * 1.2).toFixed(1)}x</span></div>
-            <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-success-500 h-2.5 rounded-full" style={`width: ${Math.min(ipo.subscription * 1.2 * 10, 100)}%`}></div></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">QIB</span><span class="text-sm font-bold text-warning-500">{(ipo.subscription * 2.5).toFixed(1)}x</span></div>
-            <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-warning-500 h-2.5 rounded-full" style={`width: ${Math.min(ipo.subscription * 2.5 * 5, 100)}%`}></div></div>
-          </div>
+          {(ipo as any).subscriptionData ? (
+            <>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">Retail (RII)</span><span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionData.rii?.toFixed(1) || '—'}x</span></div>
+                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-primary-500 h-2.5 rounded-full" style={`width: ${Math.min(((ipo as any).subscriptionData.rii || 0) * 10, 100)}%`}></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">NII (HNI)</span><span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionData.nii?.toFixed(1) || '—'}x</span></div>
+                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-success-500 h-2.5 rounded-full" style={`width: ${Math.min(((ipo as any).subscriptionData.nii || 0) * 10, 100)}%`}></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">QIB</span><span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionData.qib?.toFixed(1) || '—'}x</span></div>
+                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-warning-500 h-2.5 rounded-full" style={`width: ${Math.min(((ipo as any).subscriptionData.qib || 0) * 5, 100)}%`}></div></div>
+              </div>
+            </>
+          ) : null}
           <div class="pt-3 border-t border-surface-200 dark:border-surface-700 flex justify-between">
             <span class="font-semibold text-surface-900 dark:text-white">Total</span>
             <span class="text-lg font-bold text-primary-600">{ipo.subscription}x</span>
@@ -189,19 +201,28 @@ const jsonLd = {
         </div>
       </div>
     </section>
-  )}
+  ) : ipo.status === 'live' ? (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Subscription Status</h2>
+      <div class="card">
+        <p class="text-sm text-surface-500 text-center py-4">Subscription data not available</p>
+      </div>
+    </section>
+  ) : null}
 
   <!-- AI Analysis -->
-  <section class="container-wide py-4">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">AI Investment Analysis</h2>
-    <AIInsightBox
-      title={`${ipo.name} — AI Verdict`}
-      summary={ipo.aiSummary || 'Analysis being generated.'}
-      riskScore={ipo.riskScore}
-      verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral'}
-      highlights={ipo.highlights || []}
-    />
-  </section>
+  {ipo.aiScore && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">AI Investment Analysis</h2>
+      <AIInsightBox
+        title={`${ipo.name} — AI Verdict`}
+        summary={ipo.aiSummary || 'Analysis being generated.'}
+        riskScore={ipo.riskScore}
+        verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral'}
+        highlights={ipo.highlights || []}
+      />
+    </section>
+  )}
 
   <!-- Apply / Trade CTA -->
   <section class="container-wide py-4">
@@ -249,7 +270,11 @@ const jsonLd = {
       </details>
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I apply for {ipo.name} IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">AI Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
+        {ipo.aiScore && ipo.aiSummary ? (
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">AI Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
+        ) : (
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Review the IPO's fundamentals, financials, and market conditions carefully. Always do your own research before investing.</p>
+        )}
       </details>
       {ipo.founders && (
         <details class="card-compact group">

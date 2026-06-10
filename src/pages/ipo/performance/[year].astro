@@ -2,7 +2,10 @@
 import IPOLayout from '../../../layouts/IPOLayout.astro';
 import PerformanceTable from '../../../components/performance/PerformanceTable.tsx';
 import performanceAllData from '../../../data/ipo-performance.json';
-import iposData from '../../../data/ipos.json';
+import iposRaw from '../../../data/ipos.json';
+import { withCorrectStatuses } from '../../../utils/ipo-status';
+
+const iposData = withCorrectStatuses(iposRaw as any[]);
 
 export function getStaticPaths() {
   return ['2024', '2025', '2026'].map(year => ({

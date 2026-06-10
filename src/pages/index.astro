@@ -2,12 +2,19 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import IPOCard from '../components/IPOCard.astro';
 import ToolCard from '../components/ToolCard.astro';
-import iposData from '../data/ipos.json';
+import iposRaw from '../data/ipos.json';
 import toolsData from '../data/tools.json';
+import fundHoldingsData from '../data/fund-holdings.json';
+import { withCorrectStatuses } from '../utils/ipo-status';
 
+const iposData = withCorrectStatuses(iposRaw as any[]);
 const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
 const mainboardIPOs = liveIPOs.filter(ipo => ipo.type === 'mainboard');
 const smeIPOs = liveIPOs.filter(ipo => ipo.type === 'sme');
+
+// Compute dynamic stats for Holdings Changes section
+const amcCount = Object.keys(fundHoldingsData.amcs).length;
+const fundsCovered = Object.values(fundHoldingsData.amcs).reduce((sum: number, funds: any) => sum + (funds as any[]).length, 0);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -29,7 +36,7 @@ const jsonLd = {
       "url": "https://ipofins.com",
       "logo": "https://ipofins.com/favicon.svg",
       "description": "Free online finance tools, IPO tracking, and AI-powered investment insights for Indian investors.",
-      "sameAs": []
+      "sameAs": ["https://x.com/ipofins", "https://youtube.com/@ipofins"]
     }
   ]
 };
@@ -189,11 +196,11 @@ const jsonLd = {
               <p class="text-xs text-surface-400 mt-1">Removed Stocks</p>
             </div>
             <div class="bg-surface-700/50 rounded-xl p-4 backdrop-blur">
-              <p class="text-2xl font-bold text-primary-400">23</p>
+              <p class="text-2xl font-bold text-primary-400">{amcCount}</p>
               <p class="text-xs text-surface-400 mt-1">AMCs Tracked</p>
             </div>
             <div class="bg-surface-700/50 rounded-xl p-4 backdrop-blur">
-              <p class="text-2xl font-bold text-warning-400">670+</p>
+              <p class="text-2xl font-bold text-warning-400">{fundsCovered}+</p>
               <p class="text-xs text-surface-400 mt-1">Funds Covered</p>
             </div>
           </div>

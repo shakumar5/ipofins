@@ -1,0 +1,20 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#338dff"/>
+      <stop offset="100%" style="stop-color:#1a6df5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="60" y="540" width="120" height="4" rx="2" fill="url(#accent)"/>
+  <rect x="60" y="80" width="64" height="64" rx="16" fill="url(#accent)"/>
+  <text x="140" y="125" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="800" fill="white">ipofins</text>
+  <text x="60" y="280" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="800" fill="white">Free IPO Tracker &amp;</text>
+  <text x="60" y="350" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="800" fill="white">Finance Intelligence</text>
+  <text x="60" y="420" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#94a3b8">Track IPOs • Compare Funds • Calculate Returns • Indian Markets</text>
+  <text x="60" y="580" font-family="Inter, system-ui, sans-serif" font-size="18" fill="#64748b">ipofins.com</text>
+</svg>

@@ -18,6 +18,11 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { validateBatch } from './lib/validate.mjs';
+import { IPO_SCHEMA, MF_SCHEMA, UPCOMING_IPO_SCHEMA } from './lib/schemas.mjs';
+import { checkCountThreshold, protectFields, preserveTimestamps } from './lib/diff-detector.mjs';
+import { checkStaleness } from './lib/staleness-monitor.mjs';
+import { sendAlert } from './lib/webhook-notifier.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'src', 'data');
@@ -83,135 +88,153 @@ async function closeBrowser() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 1. IPO DATA — BSE India (via Puppeteer)
-// Source: https://www.bseindia.com/publicissue.html
+// 1. IPO DATA — Zerodha (Listing + Detail Pages)
+// Source: https://zerodha.com/ipo/
+// Fetches listing page for all IPOs, then each detail page for
+// rich data (description, lot size, purpose, strengths, risks)
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchBSEIPOs() {
-  console.log('\n  📊 [Zerodha] Fetching IPO data...');
+  console.log('\n  📊 [Zerodha] Fetching IPO listing page...');
   
   try {
     const response = await fetchWithHeaders('https://zerodha.com/ipo/');
     if (!response.ok) throw new Error(`Zerodha returned ${response.status}`);
     
     const html = await response.text();
-    const { live, upcoming, closed } = parseZerodhaIPOs(html);
     
-    console.log(`    ✅ Live: ${live.length} | Upcoming: ${upcoming.length} | Closed: ${closed.length}`);
-    
-    // Update upcoming-ipos.json with Zerodha's upcoming data
-    if (upcoming.length > 0) {
-      writeData('upcoming-ipos.json', upcoming);
+    // Check if we got the real page or a Cloudflare challenge
+    if (html.length < 5000 || html.includes('challenge-platform')) {
+      console.log('    ⚠️ Cloudflare challenge detected. Cannot fetch from this IP.');
+      return [];
     }
     
-    // Update performance data from closed/listed
+    const { live, upcoming, closed } = parseZerodhaListing(html);
+    console.log(`    ✅ Live: ${live.length} | Upcoming: ${upcoming.length} | Closed: ${closed.length}`);
+    
+    // Update upcoming-ipos.json
+    if (upcoming.length > 0) {
+      // Validate before writing
+      const { valid: validUp, rejected: rejectedUp } = validateBatch(upcoming, UPCOMING_IPO_SCHEMA);
+      if (rejectedUp.length > 0) {
+        console.log(`    ⚠️ Rejected ${rejectedUp.length} upcoming IPO records:`);
+        rejectedUp.forEach(r => console.log(`      - ${r.record.name || 'unknown'}: ${r.reasons.join(', ')}`));
+      }
+      writeData('upcoming-ipos.json', validUp);
+    }
+    
+    // Fetch detail pages for live IPOs to get rich data
+    if (live.length > 0) {
+      console.log(`    📄 Fetching detail pages for ${live.length} live IPO(s)...`);
+      for (const ipo of live) {
+        if (ipo.detailUrl) {
+          await fetchIPODetail(ipo);
+          // Small delay between requests to be respectful
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+    
+    // Fetch detail pages for closed IPOs too (for performance data)
     if (closed.length > 0) {
+      console.log(`    📄 Fetching detail pages for ${closed.length} closed IPO(s)...`);
+      for (const ipo of closed) {
+        if (ipo.detailUrl) {
+          await fetchIPODetail(ipo);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+      
+      // Update performance data
       const perfData = readExisting('ipo-performance.json');
-      perfData['2026'] = { mainboard: [], sme: [] };
+      if (!perfData['2026']) perfData['2026'] = { mainboard: [], sme: [] };
       closed.forEach(ipo => {
-        const entry = { name: ipo.name, listingDate: ipo.listingDate || '', issuePrice: ipo.priceMax || 0, listingPrice: ipo.listingPrice || 0, currentPrice: ipo.listingPrice || 0, sector: 'Others' };
-        if (ipo.type === 'mainboard') {
-          perfData['2026'].mainboard.push(entry);
-        } else {
-          perfData['2026'].sme.push(entry);
+        const entry = {
+          name: ipo.name,
+          listingDate: ipo.listingDate || '',
+          issuePrice: ipo.priceMax || 0,
+          listingPrice: ipo.listingPrice || 0,
+          currentPrice: ipo.listingPrice || 0,
+          sector: ipo.sector || 'Others',
+        };
+        const list = ipo.type === 'mainboard' ? perfData['2026'].mainboard : perfData['2026'].sme;
+        if (!list.find(e => e.name === ipo.name)) {
+          list.push(entry);
         }
       });
       writeData('ipo-performance.json', perfData);
     }
     
-    // Return live IPOs for ipos.json
-    return live;
+    // Return all IPOs (live + closed) for ipos.json
+    return [...live, ...closed];
   } catch (error) {
     console.log(`    ⚠️ Zerodha fetch failed: ${error.message}`);
+    await sendAlert({
+      title: 'IPO Fetch Failed',
+      message: `Source: Zerodha/BSE | Error: ${error.message} | Time: ${new Date().toISOString()}`,
+      severity: 'error',
+      source: 'fetchBSEIPOs',
+    });
     return [];
   }
 }
 
-function parseZerodhaIPOs(html) {
+/**
+ * Parse Zerodha listing page HTML.
+ * The page has three tab sections: live-ipo, upcoming-ipo, closed-ipo
+ * Each contains a table with IPO data.
+ */
+function parseZerodhaListing(html) {
   const live = [];
   const upcoming = [];
   const closed = [];
   
-  // Zerodha page has sections: ## Live, ## Upcoming, ## Closed
-  // Each IPO entry has: name, type (SME/MAINBOARD), dates, price
+  // Extract sections by div IDs
+  const liveSection = extractSection(html, 'live-ipo', 'upcoming-ipo');
+  const upcomingSection = extractSection(html, 'upcoming-ipo', 'closed-ipo');
+  const closedSection = extractSection(html, 'closed-ipo', '</main>');
   
-  let currentSection = '';
-  const lines = html.split('\n');
+  // Parse live IPOs
+  const liveLinks = [...liveSection.matchAll(/href="\/ipo\/(\d+)\/([^"]+)"/g)];
+  const liveNames = [...liveSection.matchAll(/ipo-name[^>]*>([^<]+)/g)];
+  const liveTypes = [...liveSection.matchAll(/ipo-type[^>]*>([^<]+)/g)];
+  const liveDates = [...liveSection.matchAll(/<td class="date">\s*(?:<span[^>]*>[^<]*<\/span>\s*)?([^<]+)/g)];
+  const livePrices = [...liveSection.matchAll(/₹(\d[\d,]*)\s*(?:&ndash;|–|-)\s*₹(\d[\d,]*)|₹(\d[\d,]*)/g)];
   
-  // Use regex to find IPO entries in the HTML
-  // Pattern: company name followed by SME/MAINBOARD, then details
-  const ipoPattern = /(?:SME|MAINBOARD)\s+([\w\s\.\-\(\)]+?)(\d{2}(?:st|nd|rd|th)\s*[–\-]\s*\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4}[^₹]*?₹\s*([\d,]+)\s*(?:[–\-]\s*₹\s*([\d,]+))?)/g;
-  
-  // Simpler approach: split by sections and parse each
-  const liveSectionMatch = html.match(/## Live([\s\S]*?)(?=## Upcoming|## Closed|$)/);
-  const upcomingSectionMatch = html.match(/## Upcoming([\s\S]*?)(?=## Closed|## How|$)/);
-  const closedSectionMatch = html.match(/## Closed([\s\S]*?)(?=## How|$)/);
-  
-  if (liveSectionMatch) {
-    const liveEntries = extractZerodhaEntries(liveSectionMatch[1]);
-    liveEntries.forEach(e => { e.status = 'live'; live.push(e); });
-  }
-  
-  if (upcomingSectionMatch) {
-    const upEntries = extractZerodhaUpcoming(upcomingSectionMatch[1]);
-    upEntries.forEach(e => upcoming.push(e));
-  }
-  
-  if (closedSectionMatch) {
-    const closedEntries = extractZerodhaEntries(closedSectionMatch[1]);
-    closedEntries.forEach(e => { e.status = 'listed'; closed.push(e); });
-  }
-  
-  return { live, upcoming, closed };
-}
-
-function extractZerodhaEntries(sectionHtml) {
-  const entries = [];
-  
-  // Pattern: [TYPE] Company Name[dates] • ₹price
-  // Example: "SME Vahh Chemicals04th – 08th Jun 2026 • ₹60"
-  // Example: "MAINBOARD Hexagon Nutrition05th – 09th Jun 2026 • ₹42 – ₹45"
-  const entryPattern = /(SME|MAINBOARD)\s+([A-Za-z][\w\s\.\-\(\)&]+?)(\d{2}(?:st|nd|rd|th))/g;
-  
-  let match;
-  while ((match = entryPattern.exec(sectionHtml)) !== null) {
-    const type = match[1].toLowerCase() === 'sme' ? 'sme' : 'mainboard';
-    const name = match[2].trim();
+  for (let i = 0; i < liveLinks.length; i++) {
+    // Each IPO appears multiple times (desktop + mobile) — deduplicate by link
+    const ipoId = liveLinks[i][1];
+    const ipoSlug = liveLinks[i][2];
+    if (live.find(l => l.slug === ipoSlug)) continue;
     
-    if (!name || name.length < 3) continue;
+    const name = liveNames[i] ? liveNames[i][1].trim() : ipoSlug.replace(/-/g, ' ');
+    const type = liveTypes[i] ? liveTypes[i][1].trim().toLowerCase() : 'sme';
     
-    // Find price after this match
-    const afterMatch = sectionHtml.substring(match.index);
-    const priceMatch = afterMatch.match(/₹\s*([\d,]+)(?:\s*[–\-]\s*₹\s*([\d,]+))?/);
-    const priceMin = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : 0;
-    const priceMax = priceMatch && priceMatch[2] ? parseInt(priceMatch[2].replace(/,/g, '')) : priceMin;
+    // Find price for this IPO
+    const priceMatch = livePrices.length > 0 ? livePrices[Math.min(i, livePrices.length - 1)] : null;
+    let priceMin = 0, priceMax = 0;
+    if (priceMatch) {
+      if (priceMatch[1] && priceMatch[2]) {
+        priceMin = parseInt(priceMatch[1].replace(/,/g, ''));
+        priceMax = parseInt(priceMatch[2].replace(/,/g, ''));
+      } else if (priceMatch[3]) {
+        priceMin = priceMax = parseInt(priceMatch[3].replace(/,/g, ''));
+      }
+    }
     
-    // Find dates
-    const dateMatch = afterMatch.match(/(\d{2}(?:st|nd|rd|th)\s*[–\-]\s*\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4}|\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4}\s*[–\-]\s*\d{2}(?:st|nd|rd|th)\s+\w+\s+\d{4})/);
-    const dateStr = dateMatch ? dateMatch[1] : '';
-    
-    // Find listing gain for closed IPOs
-    const gainMatch = afterMatch.match(/with\s+(-?\d+)%\s+gain/);
-    const listingGain = gainMatch ? parseInt(gainMatch[1]) : null;
-    
-    // Find listing date
-    const listingMatch = afterMatch.match(/(?:Listed?|Listing)\s+on\s+(\d{2}\s+\w+\s+\d{4}|\d+\s+\w+\s+\d{4})/);
-    const listingDate = listingMatch ? listingMatch[1] : '';
-    
-    const priceRange = priceMax > priceMin ? `${priceMin}-${priceMax}` : `${priceMin}`;
-    const listingPrice = listingGain !== null && priceMax > 0 ? Math.round(priceMax * (1 + listingGain / 100)) : null;
-    
-    entries.push({
+    live.push({
       name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-      type,
-      priceRange,
+      slug: slugify(name),
+      type: type === 'mainboard' ? 'mainboard' : 'sme',
+      status: 'live',
+      priceRange: priceMax > priceMin ? `${priceMin}-${priceMax}` : `${priceMin}`,
       priceMax,
+      detailUrl: `https://zerodha.com/ipo/${ipoId}/${ipoSlug}`,
+      // These will be filled from detail page
       lotSize: 0,
-      openDate: dateStr,
+      openDate: '',
       closeDate: '',
-      listingDate,
-      listingPrice,
+      listingDate: '',
       sector: 'Others',
       issueSize: '',
       subscription: null,
@@ -222,50 +245,245 @@ function extractZerodhaEntries(sectionHtml) {
       founded: '',
       description: '',
       purpose: '',
-      drhpUrl: 'https://www.sebi.gov.in/filings/public-issues.html',
+      highlights: [],
+      risks: [],
+      drhpUrl: '',
       aiScore: null,
       aiSummary: '',
-      highlights: [],
       riskScore: 5,
       verdict: 'neutral',
     });
   }
   
-  return entries;
-}
-
-function extractZerodhaUpcoming(sectionHtml) {
-  const entries = [];
+  // Parse upcoming IPOs
+  const upLinks = [...upcomingSection.matchAll(/href="\/ipo\/(\d+)\/([^"]+)"/g)];
+  const upNames = [...upcomingSection.matchAll(/ipo-name[^>]*>([^<]+)/g)];
+  const upTypes = [...upcomingSection.matchAll(/ipo-type[^>]*>([^<]+)/g)];
+  const seenUpcoming = new Set();
   
-  // Upcoming format: "MAINBOARD Company NameTo be announced"
-  const entryPattern = /(SME|MAINBOARD)\s+([A-Za-z][\w\s\.\-\(\)&]+?)To be announced/g;
-  
-  let match;
-  while ((match = entryPattern.exec(sectionHtml)) !== null) {
-    const type = match[1].toLowerCase() === 'sme' ? 'sme' : 'mainboard';
-    const name = match[2].trim();
+  for (let i = 0; i < upNames.length; i++) {
+    const name = upNames[i][1].trim();
+    if (seenUpcoming.has(name)) continue;
+    seenUpcoming.add(name);
     
-    if (!name || name.length < 3) continue;
+    const type = upTypes[i] ? upTypes[i][1].trim().toLowerCase() : 'sme';
+    const link = upLinks[i] ? upLinks[i] : null;
     
-    entries.push({
+    upcoming.push({
       name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      slug: slugify(name),
+      type: type === 'mainboard' ? 'mainboard' : 'sme',
+      status: 'upcoming',
       sector: 'Others',
-      type,
       issueSize: '',
       drhpDate: '',
-      status: 'drhp-filed',
+      detailUrl: link ? `https://zerodha.com/ipo/${link[1]}/${link[2]}` : '',
+      drhpUrl: 'https://www.sebi.gov.in/filings/public-issues.html',
+    });
+  }
+  
+  // Parse closed IPOs
+  const closedLinks = [...closedSection.matchAll(/href="\/ipo\/(\d+)\/([^"]+)"/g)];
+  const closedNames = [...closedSection.matchAll(/ipo-name[^>]*>([^<]+)/g)];
+  const closedTypes = [...closedSection.matchAll(/ipo-type[^>]*>([^<]+)/g)];
+  const seenClosed = new Set();
+  
+  for (let i = 0; i < closedNames.length; i++) {
+    const name = closedNames[i][1].trim();
+    if (seenClosed.has(name)) continue;
+    seenClosed.add(name);
+    
+    const type = closedTypes[i] ? closedTypes[i][1].trim().toLowerCase() : 'sme';
+    const link = closedLinks[i] ? closedLinks[i] : null;
+    
+    closed.push({
+      name,
+      slug: slugify(name),
+      type: type === 'mainboard' ? 'mainboard' : 'sme',
+      status: 'listed',
+      priceRange: '',
+      priceMax: 0,
+      detailUrl: link ? `https://zerodha.com/ipo/${link[1]}/${link[2]}` : '',
+      lotSize: 0,
+      openDate: '',
+      closeDate: '',
+      listingDate: '',
+      sector: 'Others',
+      issueSize: '',
+      subscription: null,
+      gmp: null,
       registrar: '',
       founders: '',
       headquarters: '',
       founded: '',
       description: '',
       purpose: '',
-      drhpUrl: 'https://www.sebi.gov.in/filings/public-issues.html',
+      highlights: [],
+      risks: [],
+      drhpUrl: '',
+      aiScore: null,
+      aiSummary: '',
+      riskScore: 5,
+      verdict: 'neutral',
     });
   }
   
-  return entries;
+  return { live, upcoming, closed };
+}
+
+/**
+ * Extract a section of HTML between two marker IDs
+ */
+function extractSection(html, startId, endId) {
+  const startIdx = html.indexOf(`id="${startId}"`);
+  if (startIdx === -1) return '';
+  const endIdx = endId ? html.indexOf(`id="${endId}"`, startIdx) : html.length;
+  if (endIdx === -1) return html.substring(startIdx);
+  return html.substring(startIdx, endIdx);
+}
+
+/**
+ * Fetch a Zerodha IPO detail page and extract rich data.
+ * Fills in: description, lot size, issue size, purpose, strengths, risks, dates, registrar
+ */
+async function fetchIPODetail(ipo) {
+  try {
+    const response = await fetchWithHeaders(ipo.detailUrl);
+    if (!response.ok) {
+      console.log(`      ⚠️ ${ipo.name}: HTTP ${response.status}`);
+      return;
+    }
+    
+    const html = await response.text();
+    if (html.length < 3000) return; // Cloudflare or empty
+    
+    // Extract the main content, strip scripts/styles
+    const clean = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    
+    // --- IPO Dates ---
+    const dateMatch = clean.match(/IPO date[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
+    if (dateMatch) {
+      const dateStr = dateMatch[1].replace(/<[^>]+>/g, '').trim();
+      // Parse "10th – 12th Jun 2026" format
+      const datesFound = [...dateStr.matchAll(/(\d{1,2})(?:st|nd|rd|th)?\s*(?:–|-)\s*(\d{1,2})(?:st|nd|rd|th)?\s+(\w+)\s+(\d{4})/g)];
+      if (datesFound.length > 0) {
+        const m = datesFound[0];
+        ipo.openDate = `${m[3]} ${m[1].padStart(2, '0')}, ${m[4]}`;
+        ipo.closeDate = `${m[3]} ${m[2].padStart(2, '0')}, ${m[4]}`;
+      } else {
+        ipo.openDate = dateStr;
+      }
+    }
+    
+    // --- Listing Date ---
+    const listingMatch = clean.match(/Listing date[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
+    if (listingMatch) {
+      ipo.listingDate = listingMatch[1].replace(/<[^>]+>/g, '').trim();
+    }
+    
+    // --- Price Range ---
+    const priceMatch = clean.match(/Price range[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
+    if (priceMatch) {
+      const priceStr = priceMatch[1].replace(/<[^>]+>/g, '').trim();
+      const prices = [...priceStr.matchAll(/₹?(\d[\d,]*)/g)];
+      if (prices.length >= 2) {
+        ipo.priceRange = `${prices[0][1].replace(/,/g, '')}-${prices[1][1].replace(/,/g, '')}`;
+        ipo.priceMax = parseInt(prices[1][1].replace(/,/g, ''));
+      } else if (prices.length === 1) {
+        ipo.priceRange = prices[0][1].replace(/,/g, '');
+        ipo.priceMax = parseInt(prices[0][1].replace(/,/g, ''));
+      }
+    }
+    
+    // --- Lot Size ---
+    const lotMatch = clean.match(/Lot size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
+    if (lotMatch) {
+      const lotStr = lotMatch[1].replace(/<[^>]+>/g, '').trim();
+      const lotNum = lotStr.match(/(\d[\d,]*)/);
+      if (lotNum) ipo.lotSize = parseInt(lotNum[1].replace(/,/g, ''));
+    }
+    
+    // --- Issue Size ---
+    const issueSizeMatch = clean.match(/Issue size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
+    if (issueSizeMatch) {
+      const sizeStr = issueSizeMatch[1].replace(/<[^>]+>/g, '').trim();
+      ipo.issueSize = sizeStr.includes('cr') ? `₹${sizeStr}` : sizeStr;
+    }
+    
+    // --- About / Description ---
+    const aboutMatch = clean.match(/About\s+[\w\s]+<\/h2>\s*([\s\S]*?)(?=<h2|<div class="row ipo-meta|$)/i);
+    if (aboutMatch) {
+      const desc = aboutMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (desc.length > 30) ipo.description = desc;
+    }
+    
+    // --- Purpose / Objects of Issue ---
+    const purposeRows = [...clean.matchAll(/Utilisation[\s\S]*?<table[\s\S]*?<\/table>/gi)];
+    if (purposeRows.length > 0) {
+      const tableHtml = purposeRows[0][0];
+      const rows = [...tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+      const purposes = [];
+      for (const row of rows) {
+        const cells = [...row[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)];
+        if (cells.length >= 2) {
+          const purpose = cells[0][1].replace(/<[^>]+>/g, '').trim();
+          const amount = cells[1][1].replace(/<[^>]+>/g, '').trim();
+          if (purpose && !purpose.toLowerCase().includes('purpose') && purpose.length > 5) {
+            purposes.push(`${purpose} (${amount})`);
+          }
+        }
+      }
+      if (purposes.length > 0) ipo.purpose = purposes.join('; ');
+    }
+    
+    // --- Strengths (highlights) ---
+    const strengthsMatch = clean.match(/Strengths[\s\S]*?(<ul[\s\S]*?<\/ul>|<ol[\s\S]*?<\/ol>)/i);
+    if (!strengthsMatch) {
+      // Try paragraph-based strengths
+      const strSection = clean.match(/Strengths<\/h[23]>([\s\S]*?)(?=<h[23]|Risks|$)/i);
+      if (strSection) {
+        const items = strSection[1].replace(/<[^>]+>/g, '\n').split('\n').map(s => s.trim()).filter(s => s.length > 20);
+        ipo.highlights = items.slice(0, 5);
+      }
+    } else {
+      const items = [...strengthsMatch[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
+      ipo.highlights = items.map(m => m[1].replace(/<[^>]+>/g, '').trim()).filter(s => s.length > 10).slice(0, 5);
+    }
+    
+    // --- Risks ---
+    const risksMatch = clean.match(/Risks[\s\S]*?(<ul[\s\S]*?<\/ul>|<ol[\s\S]*?<\/ol>)/i);
+    if (!risksMatch) {
+      const riskSection = clean.match(/Risks<\/h[23]>([\s\S]*?)(?=<h[23]|<div class="signup|$)/i);
+      if (riskSection) {
+        const items = riskSection[1].replace(/<[^>]+>/g, '\n').split('\n').map(s => s.trim()).filter(s => s.length > 20);
+        ipo.risks = items.slice(0, 5);
+      }
+    } else {
+      const items = [...risksMatch[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
+      ipo.risks = items.map(m => m[1].replace(/<[^>]+>/g, '').trim()).filter(s => s.length > 10).slice(0, 5);
+    }
+    
+    // --- Prospectus URL ---
+    const prospectusMatch = clean.match(/href="([^"]*)"[^>]*>[\s\S]*?(?:prospectus|DRHP|RHP)/i);
+    if (prospectusMatch) {
+      ipo.drhpUrl = prospectusMatch[1].startsWith('http') ? prospectusMatch[1] : `https://zerodha.com${prospectusMatch[1]}`;
+    }
+    
+    // --- Risk score based on number of risks ---
+    if (ipo.risks && ipo.risks.length > 0) {
+      ipo.riskScore = Math.min(10, 4 + ipo.risks.length);
+    }
+    
+    // Clean up detailUrl (not needed in output)
+    delete ipo.detailUrl;
+    
+    console.log(`      ✅ ${ipo.name}: desc=${ipo.description ? 'yes' : 'no'} lot=${ipo.lotSize} highlights=${ipo.highlights.length} risks=${(ipo.risks || []).length}`);
+  } catch (error) {
+    console.log(`      ⚠️ ${ipo.name}: detail fetch failed (${error.message})`);
+    delete ipo.detailUrl;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -401,11 +619,23 @@ async function fetchAMFINAVs() {
     // Merge with existing data (preserve our curated fields like rating, riskLevel)
     const existing = readExisting('mutual-funds.json');
     const merged = mergeAMFIData(existing, allFunds);
-    writeData('mutual-funds.json', merged);
+    // Validate before writing
+    const { valid: validMFs, rejected: rejectedMFs } = validateBatch(merged, MF_SCHEMA);
+    if (rejectedMFs.length > 0) {
+      console.log(`    ⚠️ Rejected ${rejectedMFs.length} mutual fund records:`);
+      rejectedMFs.forEach(r => console.log(`      - ${r.record.name || 'unknown'}: ${r.reasons.join(', ')}`));
+    }
+    writeData('mutual-funds.json', validMFs);
     
   } catch (error) {
     console.log(`    ⚠️ AMFI NAV fetch failed: ${error.message}`);
     console.log('    Keeping existing mutual-funds.json');
+    await sendAlert({
+      title: 'Mutual Fund Fetch Failed',
+      message: `Source: AMFI India | Error: ${error.message} | Time: ${new Date().toISOString()}`,
+      severity: 'error',
+      source: 'fetchAMFINAVs',
+    });
   }
 }
 
@@ -641,6 +871,44 @@ function findNAVAtDate(navHistory, daysAgo) {
   }
   
   return null; // Not enough history
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SANITIZE IPO RECORDS — Remove fabricated data before writing
+// Nullifies GMP, AI placeholders, and subscription when no real
+// NSE data was fetched. Adds lastUpdated timestamp to each record.
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Sanitize IPO records before writing to ipos.json.
+ * @param {Array} records - Array of IPO record objects
+ * @param {Array} nseSubscriptionData - Real NSE subscription data (from fetchNSESubscription)
+ * @returns {Array} Sanitized records with timestamps
+ */
+function sanitizeIPORecords(records, nseSubscriptionData = []) {
+  const now = new Date().toISOString();
+  const nseNames = new Set(nseSubscriptionData.map(d => d.name?.toLowerCase().trim()).filter(Boolean));
+
+  return records.map(record => {
+    // 1. GMP: always null (no reliable GMP scraper)
+    record.gmp = null;
+
+    // 2. AI placeholders: always null (no AI scoring in pipeline)
+    record.aiScore = null;
+    record.aiSummary = null;
+    record.verdict = null;
+
+    // 3. Subscription: null unless real NSE data populated it
+    const hasRealNSEData = nseNames.has(record.name?.toLowerCase().trim());
+    if (!hasRealNSEData) {
+      record.subscription = null;
+    }
+
+    // 4. Add lastUpdated ISO 8601 timestamp
+    record.lastUpdated = now;
+
+    return record;
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -890,6 +1158,96 @@ async function fetchFundHoldings() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// DATE-BASED STATUS TRANSITIONS
+// Automatically moves IPOs: live → closed → listed based on dates
+// ═══════════════════════════════════════════════════════════════
+
+function updateIPOStatuses() {
+  console.log('\n  📅 Updating IPO statuses based on dates...');
+  
+  const ipos = readExisting('ipos.json');
+  if (!ipos || ipos.length === 0) return;
+  
+  const now = new Date();
+  // Set to start of today IST for consistent comparison
+  const todayIST = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  todayIST.setHours(0, 0, 0, 0);
+  
+  let changes = 0;
+  
+  for (const ipo of ipos) {
+    const oldStatus = ipo.status;
+    
+    // Skip if already in a terminal state we don't want to change
+    if (oldStatus === 'upcoming' || oldStatus === 'drhp-filed') continue;
+    
+    const closeDate = parseIPODate(ipo.closeDate);
+    const listingDate = parseIPODate(ipo.listingDate);
+    const openDate = parseIPODate(ipo.openDate);
+    
+    if (listingDate && todayIST >= listingDate) {
+      ipo.status = 'listed';
+    } else if (closeDate && todayIST > closeDate) {
+      ipo.status = 'closed';
+    } else if (openDate && closeDate && todayIST >= openDate && todayIST <= closeDate) {
+      ipo.status = 'live';
+    }
+    
+    if (ipo.status !== oldStatus) {
+      console.log(`    ${ipo.name}: ${oldStatus} → ${ipo.status}`);
+      changes++;
+    }
+  }
+  
+  if (changes > 0) {
+    writeData('ipos.json', ipos);
+    console.log(`    ✅ Updated ${changes} IPO status(es)`);
+  } else {
+    console.log('    No status changes needed');
+  }
+}
+
+/**
+ * Parse IPO date strings like "Jun 09, 2026", "Jun 08, 2026", 
+ * "10th Jun 2026", "2026-06-10", etc.
+ */
+function parseIPODate(dateStr) {
+  if (!dateStr || dateStr.trim() === '') return null;
+  
+  // Try standard Date parse first (handles "Jun 09, 2026" format)
+  let d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  
+  // Handle "10th Jun 2026", "04th – 08th Jun 2026" (take last date)
+  const ordinalPattern = /(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4})/g;
+  const matches = [...dateStr.matchAll(ordinalPattern)];
+  if (matches.length > 0) {
+    const last = matches[matches.length - 1];
+    d = new Date(`${last[1]} ${last[2]} ${last[3]}`);
+    if (!isNaN(d.getTime())) {
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+  }
+  
+  // Handle "DD-MM-YYYY" or "DD/MM/YYYY"
+  const dmyPattern = /(\d{2})[-\/](\d{2})[-\/](\d{4})/;
+  const dmyMatch = dateStr.match(dmyPattern);
+  if (dmyMatch) {
+    d = new Date(parseInt(dmyMatch[3]), parseInt(dmyMatch[2]) - 1, parseInt(dmyMatch[1]));
+    if (!isNaN(d.getTime())) {
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+  }
+  
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // STATIC DATA (Brokers, Tools, Articles — rarely change)
 // ═══════════════════════════════════════════════════════════════
 
@@ -904,6 +1262,44 @@ function ensureStaticData() {
     } else {
       console.log(`    ⚠️ ${file} is empty — using defaults`);
     }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STALENESS CHECKS — Run after all writes complete
+// ═══════════════════════════════════════════════════════════════
+
+async function runStalenessChecks() {
+  console.log('\n  🕐 Running staleness checks...');
+
+  const ipos = readExisting('ipos.json');
+  const mfData = readExisting('mutual-funds.json');
+
+  const ipoReport = checkStaleness(ipos, { maxAgeHours: 24, dataType: 'IPO' });
+  const mfReport = checkStaleness(mfData, { maxAgeHours: 48, dataType: 'MF' });
+
+  if (ipoReport.staleCount > 0) {
+    console.log(`    ⚠️ ${ipoReport.staleCount} stale IPO record(s) detected (>24h)`);
+    await sendAlert({
+      title: 'Stale Data Detected',
+      message: `${ipoReport.staleCount} IPO record(s) have not been updated in over 24 hours.`,
+      severity: 'warning',
+      source: 'Staleness Monitor (IPO)',
+    });
+  } else {
+    console.log('    ✅ IPO data is fresh (within 24h)');
+  }
+
+  if (mfReport.staleCount > 0) {
+    console.log(`    ⚠️ ${mfReport.staleCount} stale MF record(s) detected (>48h)`);
+    await sendAlert({
+      title: 'Stale Data Detected',
+      message: `${mfReport.staleCount} MF record(s) have not been updated in over 48 hours.`,
+      severity: 'warning',
+      source: 'Staleness Monitor (MF)',
+    });
+  } else {
+    console.log('    ✅ MF data is fresh (within 48h)');
   }
 }
 
@@ -941,15 +1337,76 @@ async function main() {
     
     if (bseIPOs.length > liveExisting) {
       const mergedIPOs = mergeIPOData(existingIPOs, bseIPOs, nseData, sebiFilings);
-      writeData('ipos.json', mergedIPOs);
+      const sanitizedIPOs = sanitizeIPORecords(mergedIPOs, nseData);
+      // Validate before writing
+      const { valid: validIPOs, rejected: rejectedIPOs } = validateBatch(sanitizedIPOs, IPO_SCHEMA);
+      if (rejectedIPOs.length > 0) {
+        console.log(`    ⚠️ Rejected ${rejectedIPOs.length} IPO records:`);
+        rejectedIPOs.forEach(r => console.log(`      - ${r.record.name || 'unknown'}: ${r.reasons.join(', ')}`));
+      }
+
+      // Diff detection: count threshold check against existing data
+      const diffResult = checkCountThreshold(existingIPOs, validIPOs);
+      if (!diffResult.allowed) {
+        console.log(`    ⚠️ [Diff] Write rejected: ${diffResult.reason}`);
+        await sendAlert({
+          title: 'IPO Data Write Rejected',
+          message: diffResult.reason,
+          severity: 'warning',
+          source: 'Diff Detector (ipos.json)',
+        });
+        console.log('    ℹ️ Retaining existing ipos.json unchanged.');
+      } else {
+        // Apply field protection to prevent degradation of populated fields
+        const protectedIPOs = protectFields(existingIPOs, validIPOs);
+        // Apply timestamp preservation for unchanged records
+        const finalIPOs = preserveTimestamps(existingIPOs, protectedIPOs);
+        writeData('ipos.json', finalIPOs);
+      }
     } else {
       console.log(`\n  ℹ️ Scraper returned ${bseIPOs.length} live IPOs, existing has ${liveExisting}. Keeping existing ipos.json.`);
+      // Still sanitize existing data to ensure AI/GMP fields are null and timestamps are present
+      const sanitizedExisting = sanitizeIPORecords(existingIPOs, nseData);
+      // Validate before writing
+      const { valid: validExistingIPOs, rejected: rejectedExistingIPOs } = validateBatch(sanitizedExisting, IPO_SCHEMA);
+      if (rejectedExistingIPOs.length > 0) {
+        console.log(`    ⚠️ Rejected ${rejectedExistingIPOs.length} IPO records:`);
+        rejectedExistingIPOs.forEach(r => console.log(`      - ${r.record.name || 'unknown'}: ${r.reasons.join(', ')}`));
+      }
+
+      // Diff detection: count threshold check against existing data
+      const diffResultExisting = checkCountThreshold(existingIPOs, validExistingIPOs);
+      if (!diffResultExisting.allowed) {
+        console.log(`    ⚠️ [Diff] Write rejected: ${diffResultExisting.reason}`);
+        await sendAlert({
+          title: 'IPO Data Write Rejected',
+          message: diffResultExisting.reason,
+          severity: 'warning',
+          source: 'Diff Detector (ipos.json)',
+        });
+        console.log('    ℹ️ Retaining existing ipos.json unchanged.');
+      } else {
+        // Apply field protection to prevent degradation of populated fields
+        const protectedExistingIPOs = protectFields(existingIPOs, validExistingIPOs);
+        // Apply timestamp preservation for unchanged records
+        const finalExistingIPOs = preserveTimestamps(existingIPOs, protectedExistingIPOs);
+        writeData('ipos.json', finalExistingIPOs);
+      }
     }
     
     // 3. Merge upcoming IPO data
     const existingUpcoming = readExisting('upcoming-ipos.json');
     const mergedUpcoming = mergeUpcomingData(existingUpcoming, sebiFilings);
-    writeData('upcoming-ipos.json', mergedUpcoming);
+    // Validate before writing
+    const { valid: validUpcoming, rejected: rejectedUpcoming } = validateBatch(mergedUpcoming, UPCOMING_IPO_SCHEMA);
+    if (rejectedUpcoming.length > 0) {
+      console.log(`    ⚠️ Rejected ${rejectedUpcoming.length} upcoming IPO records:`);
+      rejectedUpcoming.forEach(r => console.log(`      - ${r.record.name || 'unknown'}: ${r.reasons.join(', ')}`));
+    }
+    writeData('upcoming-ipos.json', validUpcoming);
+    
+    // 4. Update IPO statuses based on dates (live → closed → listed)
+    updateIPOStatuses();
   }
   
   // 4. Fetch mutual fund NAVs from AMFI
@@ -969,6 +1426,9 @@ async function main() {
   // Close browser if opened
   await closeBrowser();
   
+  // 8. Run staleness checks on written data
+  await runStalenessChecks();
+
   console.log('\n───────────────────────────────────────────────────────────');
   console.log('  ✅ Data refresh complete. Ready for build.');
   console.log('═══════════════════════════════════════════════════════════');
