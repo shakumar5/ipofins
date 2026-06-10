@@ -72,24 +72,34 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
           s.crossOrigin = 'anonymous';
           s.async = true;
           document.head.appendChild(s);
-        }, 2000);
+        }, 3000);
       });
     </script>
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG" is:inline></script>
+    <!-- Google Analytics (deferred) -->
     <script is:inline>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-VRXGEC8RTG');
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var s = document.createElement('script');
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG';
+          s.async = true;
+          s.onload = function() {
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', 'G-VRXGEC8RTG');
+          };
+          document.head.appendChild(s);
+        }, 1500);
+      });
     </script>
 
-    <!-- Fonts -->
+    <!-- Fonts (swap for better LCP) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" /></noscript>
 
     <!-- JSON-LD -->
     {jsonLd && (
@@ -132,7 +142,7 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     <SearchOverlay />
 
     <!-- Cookie Consent (for AdSense compliance) -->
-    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl transform translate-y-full transition-transform duration-300" style="display:none">
+    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl transition-transform duration-300 translate-y-full" aria-hidden="true">
       <div class="container-wide flex flex-col sm:flex-row items-center justify-between gap-4">
         <p class="text-sm text-surface-300">We use cookies for analytics and ads. By continuing, you agree to our <a href="/privacy" class="text-primary-400 hover:underline">Privacy Policy</a>.</p>
         <div class="flex gap-2">
@@ -145,11 +155,11 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
       (function() {
         if (!localStorage.getItem('cookie-consent')) {
           var el = document.getElementById('cookie-consent');
-          if (el) { el.style.display = 'block'; setTimeout(function() { el.style.transform = 'translateY(0)'; }, 100); }
+          if (el) { el.removeAttribute('aria-hidden'); setTimeout(function() { el.classList.remove('translate-y-full'); }, 1000); }
         }
       })();
-      function acceptCookies() { localStorage.setItem('cookie-consent', 'accepted'); document.getElementById('cookie-consent').style.transform = 'translateY(100%)'; }
-      function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); document.getElementById('cookie-consent').style.transform = 'translateY(100%)'; }
+      function acceptCookies() { localStorage.setItem('cookie-consent', 'accepted'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
+      function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
     </script>
   </body>
 </html>

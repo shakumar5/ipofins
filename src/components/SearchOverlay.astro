@@ -1,23 +1,3 @@
----
-import iposData from '../data/ipos.json';
-import fundsData from '../data/mutual-funds.json';
-import articlesData from '../data/articles.json';
-import toolsData from '../data/tools.json';
-
-// Build search index at build time
-const searchItems = [
-  ...iposData.map(i => ({ title: `${i.name} IPO`, url: `/ipo/${i.slug}`, type: 'IPO', meta: `${i.sector} • ${i.type}` })),
-  ...fundsData.map(f => ({ title: f.name, url: `/mutual-funds/fund/${f.slug}`, type: 'Fund', meta: `${f.category} • ${f.aum}` })),
-  ...articlesData.filter(a => a.content && a.content.trim().length > 0).map(a => ({ title: a.title, url: `/learn/${a.slug}`, type: 'Learn', meta: a.category })),
-  ...toolsData.map(t => ({ title: t.title, url: `/tools/${t.slug}`, type: 'Tool', meta: t.description.slice(0, 50) })),
-  { title: 'IPO GMP Today', url: '/ipo/gmp-today', type: 'IPO', meta: 'Grey Market Premium' },
-  { title: 'Upcoming IPOs', url: '/ipo/upcoming', type: 'IPO', meta: 'DRHP & SEBI Approved' },
-  { title: 'IPO Allotment Status', url: '/ipo/allotment-status', type: 'IPO', meta: 'Check registrar' },
-  { title: 'Best Mutual Funds', url: '/mutual-funds/best', type: 'Fund', meta: 'Top rated funds' },
-  { title: 'Compare Brokers', url: '/broker/compare', type: 'Broker', meta: 'Side by side' },
-];
----
-
 <!-- Search Overlay -->
 <div id="search-overlay" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm">
   <div class="max-w-xl mx-auto mt-20 px-4">
@@ -44,62 +24,84 @@ const searchItems = [
   </div>
 </div>
 
-<!-- Search Data + Logic -->
-<script is:inline define:vars={{ searchItems }}>
-  const items = searchItems;
-  const overlay = document.getElementById('search-overlay');
-  const input = document.getElementById('search-input');
-  const results = document.getElementById('search-results');
-  const closeBtn = document.getElementById('search-close');
-  const searchBtn = document.getElementById('search-trigger');
+<!-- Search Logic (loads data on-demand) -->
+<script is:inline>
+(function() {
+  var _items = null;
+  var _loading = false;
+  var _so, _sin, _sr;
+
+  function init() {
+    _so = document.getElementById('search-overlay');
+    _sin = document.getElementById('search-input');
+    _sr = document.getElementById('search-results');
+    var _sc = document.getElementById('search-close');
+    var _sb = document.getElementById('search-trigger');
+    if (_sb) _sb.addEventListener('click', openSearch);
+    if (_sc) _sc.addEventListener('click', closeSearch);
+    if (_so) _so.addEventListener('click', function(e) { if (e.target === _so) closeSearch(); });
+    if (_sin) _sin.addEventListener('input', function(e) { doSearch(e.target.value); });
+  }
+
+  function loadData() {
+    if (_items || _loading) return;
+    _loading = true;
+    fetch('/data/search-index.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) { _items = data; _loading = false; })
+      .catch(function() { _loading = false; });
+  }
 
   function openSearch() {
-    overlay.classList.remove('hidden');
-    input.value = '';
-    input.focus();
-    results.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+    _so.classList.remove('hidden');
+    _sin.value = '';
+    _sin.focus();
+    _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+    loadData();
   }
 
   function closeSearch() {
-    overlay.classList.add('hidden');
+    _so.classList.add('hidden');
   }
 
   function doSearch(query) {
-    if (!query || query.length < 2) {
-      results.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+    if (!_items) {
+      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Loading search data...</p>';
+      loadData();
       return;
     }
-    const q = query.toLowerCase();
-    const matches = items.filter(item =>
-      item.title.toLowerCase().includes(q) || item.meta.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
-    ).slice(0, 8);
+    if (!query || query.length < 2) {
+      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+      return;
+    }
+    var q = query.toLowerCase();
+    var matches = _items.filter(function(item) {
+      return item.t.toLowerCase().indexOf(q) !== -1 || item.m.toLowerCase().indexOf(q) !== -1 || item.y.toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 8);
 
     if (matches.length === 0) {
-      results.innerHTML = '<p class="text-xs text-surface-500 text-center py-6">No results found</p>';
+      _sr.innerHTML = '<p class="text-xs text-surface-500 text-center py-6">No results found</p>';
       return;
     }
 
-    results.innerHTML = matches.map(item => `
-      <a href="${item.url}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
-        <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-surface-100 dark:bg-surface-700 text-surface-500">${item.type}</span>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-surface-900 dark:text-white truncate">${item.title}</p>
-          <p class="text-xs text-surface-400 truncate">${item.meta}</p>
-        </div>
-        <svg class="w-4 h-4 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-      </a>
-    `).join('');
+    _sr.innerHTML = matches.map(function(item) {
+      return '<a href="' + item.u + '" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">' +
+        '<span class="px-1.5 py-0.5 text-xs font-medium rounded bg-surface-100 dark:bg-surface-700 text-surface-500">' + item.y + '</span>' +
+        '<div class="flex-1 min-w-0"><p class="text-sm font-medium text-surface-900 dark:text-white truncate">' + item.t + '</p>' +
+        '<p class="text-xs text-surface-400 truncate">' + item.m + '</p></div>' +
+        '<svg class="w-4 h-4 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>';
+    }).join('');
   }
 
-  // Event listeners
-  if (searchBtn) searchBtn.addEventListener('click', openSearch);
-  if (closeBtn) closeBtn.addEventListener('click', closeSearch);
-  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSearch(); });
-  if (input) input.addEventListener('input', (e) => doSearch(e.target.value));
-
-  // Keyboard shortcut
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
     if (e.key === 'Escape') closeSearch();
   });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
