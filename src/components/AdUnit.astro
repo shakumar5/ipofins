@@ -41,7 +41,7 @@ const styleMap: Record<string, string> = {
 const adStyle = styleMap[format] || styleMap.auto;
 ---
 
-<div class={`ad-container my-6 ${className}`}>
+<div class={`ad-container ${className}`}>
   <ins class="adsbygoogle"
     style={adStyle}
     data-ad-client={CLIENT_ID}
@@ -56,11 +56,16 @@ const adStyle = styleMap[format] || styleMap.auto;
 
 <style>
   .ad-container {
-    min-height: 50px;
+    min-height: 0;
     text-align: center;
     overflow: hidden;
   }
-  .ad-container:empty {
+  .ad-container:not(:has(ins[data-ad-status="filled"])) {
     display: none;
+  }
+  .ad-container:has(ins[data-ad-status="filled"]) {
+    display: block;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
   }
 </style>
