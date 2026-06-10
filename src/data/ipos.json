@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ﻿[
     {
         "description":  "Utkal Speciality Industries India Limited is engaged in the manufacturing of paper-based products and packaging materials. The company offers a range of products used in food service and packaging applications, including paper plates, paper cups, paper glasses, paper dosa plates, paper bowls, tissue paper, pizza and sweets boxes, and wrap paper for sandwiches and burgers. Its products are available in different sizes, designs, thicknesses, and quality variants to meet the requirements of various customer segments.",
@@ -413,7 +412,6 @@
         "riskScore":  7,
         "verdict":  "neutral"
     }
-=======
 [
   {
     "name": "Hexagon Nutrition",
@@ -744,5 +742,4 @@
     "riskScore": 7,
     "verdict": "neutral"
   }
->>>>>>> dd7efd97a52243581285845e69f3525e2b3c1acd
 ]
