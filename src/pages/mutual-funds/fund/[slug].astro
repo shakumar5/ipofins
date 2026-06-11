@@ -62,7 +62,17 @@ const faqJsonLd = {
 // Get holdings for this fund (latest month first)
 const fundHoldings = (holdingsData as any).holdings?.[fund.slug] || null;
 const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
-const holdings = fundHoldings?.[latestMonth] || [];
+const rawHoldings = fundHoldings?.[latestMonth] || [];
+
+// Filter out debt/money-market instruments (credit ratings in sector field)
+const holdings = rawHoldings.filter((h: any) => {
+  if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return false;
+  if (/^\d+\.?\d*%\s/.test(h.name)) return false;
+  if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return false;
+  if (/\(ZCB\)/i.test(h.name)) return false;
+  if (/securitisation trust/i.test(h.name)) return false;
+  return true;
+});
 ---
 
 <BaseLayout

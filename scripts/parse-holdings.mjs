@@ -292,6 +292,14 @@ function parseHoldingsFromSheet(data) {
     // Get sector
     let sector = colSector >= 0 ? String(row[colSector] || '').trim() : '';
     
+    // Skip debt/money market instruments — detected by credit rating in sector column
+    // or by instrument name patterns (e.g., "7.35% Bharti Telecom Limited (15/10/2027)")
+    if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)\s/i.test(sector)) continue;
+    if (/^\d+\.?\d*%\s/.test(stockName)) continue; // Names starting with coupon rate like "7.35% ..."
+    if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(stockName)) continue; // Names with maturity dates like "(15/10/2027)"
+    if (/\(ZCB\)/i.test(stockName)) continue; // Zero coupon bonds
+    if (/securitisation trust/i.test(stockName)) continue; // Securitized instruments
+    
     // Get value (Rs in Lakhs)
     let value = colValue >= 0 ? parseFloat(String(row[colValue] || '0').replace(/,/g, '')) || 0 : 0;
     

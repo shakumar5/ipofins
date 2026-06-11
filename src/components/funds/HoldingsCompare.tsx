@@ -35,6 +35,21 @@ export default function HoldingsCompare({ data }: Props) {
 
   const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
 
+  // Helper: check if a holding is a debt/money-market instrument (not equity)
+  function isDebtHolding(h: Holding): boolean {
+    // Sector contains credit rating (CRISIL AAA, ICRA AA+, FITCH A1+, CARE AAA, etc.)
+    if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return true;
+    // Name starts with coupon rate like "7.35% ..."
+    if (/^\d+\.?\d*%\s/.test(h.name)) return true;
+    // Name has maturity date like "(15/10/2027)"
+    if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return true;
+    // Zero coupon bonds
+    if (/\(ZCB\)/i.test(h.name)) return true;
+    // Securitised instruments
+    if (/securitisation trust/i.test(h.name)) return true;
+    return false;
+  }
+
   // Funds for selected AMC
   const fundsForAMC = useMemo(() => {
     if (!selectedAMC) return [];
@@ -74,8 +89,8 @@ export default function HoldingsCompare({ data }: Props) {
       const fundCat = getFundCategory(fund.name);
       if (selectedCategory !== 'All' && fundCat !== selectedCategory) continue;
 
-      const oldHoldings = (fund[month1] as Holding[] | undefined) || [];
-      const newHoldings = (fund[month2] as Holding[] | undefined) || [];
+      const oldHoldings = ((fund[month1] as Holding[] | undefined) || []).filter(h => !isDebtHolding(h));
+      const newHoldings = ((fund[month2] as Holding[] | undefined) || []).filter(h => !isDebtHolding(h));
 
       if (oldHoldings.length === 0 || newHoldings.length === 0) continue;
 
@@ -249,11 +264,11 @@ export default function HoldingsCompare({ data }: Props) {
                   {fund.additions.length === 0 ? (
                     <p className="text-xs text-surface-400 dark:text-surface-500 italic">No new stocks added</p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {fund.additions.map((h, i) => (
-                        <div key={i} className="flex justify-between items-center text-xs">
-                          <div>
-                            <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                        <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                          <div className="min-w-0">
+                            <span className="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
                             {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                           </div>
                           <span className="text-green-600 dark:text-green-400 font-semibold whitespace-nowrap">
@@ -274,11 +289,11 @@ export default function HoldingsCompare({ data }: Props) {
                   {fund.removals.length === 0 ? (
                     <p className="text-xs text-surface-400 dark:text-surface-500 italic">No stocks removed</p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {fund.removals.map((h, i) => (
-                        <div key={i} className="flex justify-between items-center text-xs">
-                          <div>
-                            <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                        <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                          <div className="min-w-0">
+                            <span className="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
                             {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                           </div>
                           <span className="text-red-500 dark:text-red-400 font-semibold whitespace-nowrap">
@@ -303,11 +318,11 @@ export default function HoldingsCompare({ data }: Props) {
                     {fund.increased.length === 0 ? (
                       <p className="text-xs text-surface-400 dark:text-surface-500 italic">No holdings increased</p>
                     ) : (
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         {fund.increased.map((h, i) => (
-                          <div key={i} className="flex justify-between items-center text-xs">
-                            <div>
-                              <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                          <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                            <div className="min-w-0">
+                              <span className="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
                               {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                             </div>
                             <span className="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">
@@ -328,11 +343,11 @@ export default function HoldingsCompare({ data }: Props) {
                     {fund.decreased.length === 0 ? (
                       <p className="text-xs text-surface-400 dark:text-surface-500 italic">No holdings decreased</p>
                     ) : (
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         {fund.decreased.map((h, i) => (
-                          <div key={i} className="flex justify-between items-center text-xs">
-                            <div>
-                              <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                          <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                            <div className="min-w-0">
+                              <span className="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
                               {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                             </div>
                             <span className="text-orange-600 dark:text-orange-400 font-semibold whitespace-nowrap">
