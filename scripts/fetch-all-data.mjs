@@ -834,6 +834,7 @@ async function fetchFundReturns() {
   
   let updated = 0;
   let failed = 0;
+  const failedFunds = [];
   const BATCH_SIZE = 10;
   
   for (let i = 0; i < fundsWithCode.length; i += BATCH_SIZE) {
@@ -855,6 +856,7 @@ async function fetchFundReturns() {
         }
       } else {
         failed++;
+        failedFunds.push(batch[j]?.name || batch[j]?.schemeCode || 'unknown');
       }
     }
     
@@ -878,18 +880,34 @@ async function fetchFundReturns() {
   }
   writeData('mutual-funds.json', completeData);
   console.log(`    ✅ Returns calculated for ${updated} funds (${failed} failed). Saved ${completeData.length} funds with data.`);
+  
+  if (failedFunds.length > 0) {
+    console.log(`    ⚠️ Failed funds (likely invalid scheme codes or too new):`);
+    failedFunds.forEach(name => console.log(`      - ${name}`));
+  }
 }
 
-async function fetchSingleFundReturn(fund) {
+async function fetchSingleFundReturn(fund, retryCount = 0) {
   try {
     const response = await fetch(`https://api.mfapi.in/mf/${fund.schemeCode}`, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
     });
     
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // Retry once on 5xx (server-side) errors
+      if (response.status >= 500 && retryCount < 1) {
+        await new Promise(r => setTimeout(r, 1000));
+        return fetchSingleFundReturn(fund, retryCount + 1);
+      }
+      console.log(`      ⚠️ [mfapi] ${fund.name} (code: ${fund.schemeCode}): HTTP ${response.status}`);
+      return null;
+    }
     
     const data = await response.json();
-    if (!data.data || data.data.length < 30) return null;
+    if (!data.data || data.data.length < 30) {
+      console.log(`      ⚠️ [mfapi] ${fund.name} (code: ${fund.schemeCode}): insufficient history (${data.data ? data.data.length : 0} entries)`);
+      return null;
+    }
     
     const navHistory = data.data; // Array of {date, nav} sorted newest first
     const currentNAV = parseFloat(navHistory[0].nav);
@@ -904,7 +922,13 @@ async function fetchSingleFundReturn(fund) {
     const returns5y = nav5y ? parseFloat((((currentNAV / nav5y) ** (1/5) - 1) * 100).toFixed(1)) : null;
     
     return { slug: fund.slug, returns1y, returns3y, returns5y };
-  } catch {
+  } catch (error) {
+    // Retry once on network errors (timeout, ECONNRESET, etc.)
+    if (retryCount < 1) {
+      await new Promise(r => setTimeout(r, 1000));
+      return fetchSingleFundReturn(fund, retryCount + 1);
+    }
+    console.log(`      ⚠️ [mfapi] ${fund.name} (code: ${fund.schemeCode}): ${error.message}`);
     return null;
   }
 }
