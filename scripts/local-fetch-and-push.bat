@@ -20,13 +20,28 @@ echo   %date% %time%
 echo ===================================================
 echo.
 
-REM 1. Fetch IPO + Mutual Fund data (Zerodha, AMFI, mfapi, SEBI)
-echo [1/3] Fetching IPO + Mutual Fund data...
-call node scripts/fetch-all-data.mjs
+REM 1. Pull latest changes first to avoid conflicts
+echo [1/4] Pulling latest from remote...
+git pull --rebase --quiet
+if %errorlevel% neq 0 (
+    echo   WARNING: git pull failed. Continuing with local state...
+)
 
-REM 2. Parse holdings if new Excel files exist in Holdings folder
+REM 2. Fetch IPO + Mutual Fund data (Zerodha, AMFI, mfapi, SEBI)
 echo.
-echo [2/3] Checking for new holdings data...
+echo [2/4] Fetching IPO + Mutual Fund data...
+call node scripts/fetch-all-data.mjs
+if %errorlevel% neq 0 (
+    echo.
+    echo   ERROR: Data fetch script failed. Aborting.
+    echo.
+    pause
+    exit /b 1
+)
+
+REM 3. Parse holdings if new Excel files exist in Holdings folder
+echo.
+echo [3/4] Checking for new holdings data...
 if exist "C:\Users\shaik\Downloads\Holdings\*.xlsx" (
     call node scripts/parse-holdings.mjs
 ) else if exist "C:\Users\shaik\Downloads\Holdings\*.xls" (
@@ -35,20 +50,21 @@ if exist "C:\Users\shaik\Downloads\Holdings\*.xlsx" (
     echo   No new holdings files found. Skipping.
 )
 
-REM 3. Check if any data files changed
+REM 4. Check if any data files changed (working tree OR staged)
 echo.
-echo [3/3] Checking for changes...
-git diff --quiet src/data/
+echo [4/4] Checking for changes...
+git add src/data/
+git diff --cached --quiet src/data/
 if %errorlevel% == 0 (
     echo.
     echo   No data changes detected. Nothing to push.
     echo.
+    git reset --quiet src/data/
     pause
     exit /b 0
 )
 
-REM Stage only data files, commit, and push
-git add src/data/
+REM Commit and push
 git commit -m "chore: auto-update data [%date%]"
 git push
 

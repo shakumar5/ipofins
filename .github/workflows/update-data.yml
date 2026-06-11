@@ -1,7 +1,7 @@
 # IPOfins — Build & Deploy
 # Runs on push to main OR every 12 hours.
 # Data is managed manually (AMFI Excel + Zerodha local fetch).
-# This workflow only builds and deploys.
+# This workflow fetches fresh MF data, commits changes, builds and deploys.
 
 name: Build & Deploy
 
@@ -40,6 +40,18 @@ jobs:
         run: node scripts/fetch-all-data.mjs --mf-only
         env:
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+
+      - name: 💾 Commit updated MF data (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/mutual-funds.json
+          if git diff --cached --quiet; then
+            echo "No MF data changes to commit"
+          else
+            git commit -m "chore: auto-update MF NAV data [$(date -u +%Y-%m-%d)]"
+            git push
+          fi
 
       - name: 🏗️ Build static site
         run: npx astro build

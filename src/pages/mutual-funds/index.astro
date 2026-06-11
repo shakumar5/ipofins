@@ -103,7 +103,7 @@ const faqJsonLd = {
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{i+1}. {fund.name}</h3>
-              <p class="text-xs text-surface-500">{fund.category} • {fund.aum}</p>
+              <p class="text-xs text-surface-500">{fund.category} • {fund.aum} • NAV ₹{fund.nav?.toFixed(2) || '--'}</p>
             </div>
             <div class="text-right">
               <p class={`text-sm font-bold ${(fund.returns3y || 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{(fund.returns3y || 0) >= 0 ? '+' : ''}{fund.returns3y}%</p>

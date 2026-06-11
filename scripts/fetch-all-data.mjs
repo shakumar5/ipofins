@@ -201,11 +201,14 @@ function parseZerodhaListing(html) {
   const liveDates = [...liveSection.matchAll(/<td class="date">\s*(?:<span[^>]*>[^<]*<\/span>\s*)?([^<]+)/g)];
   const livePrices = [...liveSection.matchAll(/₹(\d[\d,]*)\s*(?:&ndash;|–|-)\s*₹(\d[\d,]*)|₹(\d[\d,]*)/g)];
   
+  // Deduplicate live IPOs by slug to avoid desktop/mobile duplicates
+  const seenLive = new Set();
+  
   for (let i = 0; i < liveLinks.length; i++) {
-    // Each IPO appears multiple times (desktop + mobile) — deduplicate by link
     const ipoId = liveLinks[i][1];
     const ipoSlug = liveLinks[i][2];
-    if (live.find(l => l.slug === ipoSlug)) continue;
+    if (seenLive.has(ipoSlug)) continue;
+    seenLive.add(ipoSlug);
     
     const name = liveNames[i] ? liveNames[i][1].trim() : ipoSlug.replace(/-/g, ' ');
     const type = liveTypes[i] ? liveTypes[i][1].trim().toLowerCase() : 'sme';
@@ -224,7 +227,7 @@ function parseZerodhaListing(html) {
     
     live.push({
       name,
-      slug: slugify(name),
+      slug: ipoSlug, // Use URL slug for consistency (avoids name vs URL slug mismatch)
       type: type === 'mainboard' ? 'mainboard' : 'sme',
       status: 'live',
       priceRange: priceMax > priceMin ? `${priceMin}-${priceMax}` : `${priceMin}`,
@@ -677,14 +680,31 @@ function parseAMFIFunds(text) {
                      currentCategory.toLowerCase().includes('elss') ||
                      currentCategory.toLowerCase().includes('hybrid') ||
                      currentCategory.toLowerCase().includes('flexi') ||
+                     currentCategory.toLowerCase().includes('sectoral') ||
+                     currentCategory.toLowerCase().includes('thematic') ||
+                     currentCategory.toLowerCase().includes('multi cap') ||
+                     currentCategory.toLowerCase().includes('focused') ||
+                     currentCategory.toLowerCase().includes('value') ||
+                     currentCategory.toLowerCase().includes('contra') ||
+                     currentCategory.toLowerCase().includes('dividend yield') ||
+                     currentCategory.toLowerCase().includes('large & mid') ||
                      schemeName.toLowerCase().includes('flexi cap') ||
                      schemeName.toLowerCase().includes('small cap') ||
                      schemeName.toLowerCase().includes('mid cap') ||
                      schemeName.toLowerCase().includes('large cap') ||
+                     schemeName.toLowerCase().includes('large & mid') ||
+                     schemeName.toLowerCase().includes('multi cap') ||
+                     schemeName.toLowerCase().includes('multicap') ||
                      schemeName.toLowerCase().includes('bluechip') ||
                      schemeName.toLowerCase().includes('elss') ||
                      schemeName.toLowerCase().includes('hybrid') ||
-                     schemeName.toLowerCase().includes('balanced');
+                     schemeName.toLowerCase().includes('balanced') ||
+                     schemeName.toLowerCase().includes('focused') ||
+                     schemeName.toLowerCase().includes('value') ||
+                     schemeName.toLowerCase().includes('contra') ||
+                     schemeName.toLowerCase().includes('dividend yield') ||
+                     schemeName.toLowerCase().includes('sectoral') ||
+                     schemeName.toLowerCase().includes('thematic');
     
     if (!isEquity) continue;
     
@@ -693,11 +713,23 @@ function parseAMFIFunds(text) {
     const nameLower = schemeName.toLowerCase();
     if (nameLower.includes('small cap') || nameLower.includes('smallcap')) category = 'Small Cap';
     else if (nameLower.includes('mid cap') || nameLower.includes('midcap')) category = 'Mid Cap';
+    else if (nameLower.includes('large & mid') || nameLower.includes('large and mid')) category = 'Large & Mid Cap';
     else if (nameLower.includes('large cap') || nameLower.includes('largecap') || nameLower.includes('bluechip')) category = 'Large Cap';
-    else if (nameLower.includes('flexi cap') || nameLower.includes('flexicap') || nameLower.includes('multi cap') || nameLower.includes('multicap')) category = 'Flexi Cap';
+    else if (nameLower.includes('flexi cap') || nameLower.includes('flexicap')) category = 'Flexi Cap';
+    else if (nameLower.includes('multi cap') || nameLower.includes('multicap')) category = 'Multi Cap';
     else if (nameLower.includes('elss') || nameLower.includes('tax') || nameLower.includes('long term equity')) category = 'ELSS';
     else if (nameLower.includes('hybrid') || nameLower.includes('balanced') || nameLower.includes('equity & debt') || nameLower.includes('aggressive')) category = 'Hybrid';
-    else if (nameLower.includes('focused') || nameLower.includes('value') || nameLower.includes('contra') || nameLower.includes('dividend yield')) category = 'Flexi Cap';
+    else if (nameLower.includes('focused')) category = 'Focused';
+    else if (nameLower.includes('contra')) category = 'Contra';
+    else if (nameLower.includes('value')) category = 'Value';
+    else if (nameLower.includes('dividend yield')) category = 'Dividend Yield';
+    else if (nameLower.includes('sectoral') || nameLower.includes('thematic') || nameLower.includes('banking') || nameLower.includes('pharma') || nameLower.includes('technology') || nameLower.includes('consumption') || nameLower.includes('infrastructure') || nameLower.includes('manufacturing') || nameLower.includes('digital') || nameLower.includes('energy') || nameLower.includes('healthcare')) category = 'Sectoral/Thematic';
+    else if (currentCategory.toLowerCase().includes('sectoral') || currentCategory.toLowerCase().includes('thematic')) category = 'Sectoral/Thematic';
+    else if (currentCategory.toLowerCase().includes('multi cap')) category = 'Multi Cap';
+    else if (currentCategory.toLowerCase().includes('focused')) category = 'Focused';
+    else if (currentCategory.toLowerCase().includes('value') || currentCategory.toLowerCase().includes('contra')) category = 'Value';
+    else if (currentCategory.toLowerCase().includes('dividend yield')) category = 'Dividend Yield';
+    else if (currentCategory.toLowerCase().includes('large & mid') || currentCategory.toLowerCase().includes('large and mid')) category = 'Large & Mid Cap';
     
     if (category === 'Others') continue; // Skip unrecognized categories
     
@@ -715,7 +747,7 @@ function parseAMFIFunds(text) {
       nav,
       schemeCode,
       amc: currentAMC.replace(' Mutual Fund', ''),
-      riskLevel: category === 'Small Cap' ? 'very-high' : category === 'Mid Cap' ? 'high' : category === 'Large Cap' ? 'moderate' : category === 'ELSS' ? 'moderate' : category === 'Hybrid' ? 'moderate' : 'moderate',
+      riskLevel: category === 'Small Cap' ? 'very-high' : category === 'Mid Cap' ? 'high' : category === 'Large Cap' ? 'moderate' : category === 'ELSS' ? 'moderate' : category === 'Hybrid' ? 'moderate' : category === 'Multi Cap' ? 'high' : category === 'Focused' ? 'high' : category === 'Contra' ? 'high' : category === 'Value' ? 'high' : category === 'Dividend Yield' ? 'moderate' : category === 'Sectoral/Thematic' ? 'very-high' : category === 'Large & Mid Cap' ? 'high' : 'moderate',
     });
   }
   
@@ -727,26 +759,44 @@ function parseAMFIFunds(text) {
     return true;
   });
   
-  // Keep only top 200 — prefer funds with higher NAV (more established)
+  // Keep only top 700 — prefer funds with higher NAV (more established)
   // But only keep funds that have NAV > 10 (filter out debt/liquid with very low NAV noise)
-  const top200 = unique.filter(f => f.nav > 10).slice(0, 200);
-  console.log(`    Filtered to ${top200.length} equity funds`);
+  const filtered = unique.filter(f => f.nav > 10).slice(0, 700);
+  console.log(`    Filtered to ${filtered.length} equity funds`);
   
-  return top200;
+  return filtered;
 }
 
 function mergeAMFIData(existing, amfiFunds) {
   const existingMap = new Map(existing.map(f => [f.slug, f]));
   
+  // Also build a name-based lookup for fuzzy matching (handles slug format differences)
+  const existingByName = new Map();
+  for (const f of existing) {
+    const normalizedName = f.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    existingByName.set(normalizedName, f);
+  }
+  
   // Update existing funds with fresh NAV
+  let matched = 0;
   for (const amfiFund of amfiFunds) {
-    if (existingMap.has(amfiFund.slug)) {
-      const curr = existingMap.get(amfiFund.slug);
+    let curr = existingMap.get(amfiFund.slug);
+    
+    // Fuzzy match by normalized name if slug didn't match
+    if (!curr) {
+      const normalizedName = amfiFund.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      curr = existingByName.get(normalizedName);
+    }
+    
+    if (curr) {
       curr.nav = amfiFund.nav; // Update NAV
-      if (amfiFund.schemeCode) curr.schemeCode = amfiFund.schemeCode;
+      if (amfiFund.schemeCode && !curr.schemeCode) curr.schemeCode = amfiFund.schemeCode;
+      else if (amfiFund.schemeCode) curr.schemeCode = amfiFund.schemeCode;
+      curr.lastUpdated = new Date().toISOString();
+      matched++;
     } else {
       // Add new fund (without returns/rating — those need historical data)
-      existingMap.set(amfiFund.slug, {
+      const newFund = {
         name: amfiFund.name,
         slug: amfiFund.slug,
         category: amfiFund.category,
@@ -758,9 +808,13 @@ function mergeAMFIData(existing, amfiFunds) {
         returns5y: null,
         aum: '',
         riskLevel: amfiFund.riskLevel,
-      });
+        lastUpdated: new Date().toISOString(),
+      };
+      existingMap.set(amfiFund.slug, newFund);
     }
   }
+  
+  console.log(`    Matched ${matched} existing funds with fresh AMFI NAV data`);
   
   return Array.from(existingMap.values());
 }
@@ -817,6 +871,11 @@ async function fetchFundReturns() {
   
   // Only keep funds that have at least 1Y returns (remove incomplete data)
   const completeData = funds.filter(f => f.returns1y !== null || f.schemeCode);
+  // Add lastUpdated timestamp for funds that got returns updated
+  const now = new Date().toISOString();
+  for (const f of completeData) {
+    if (!f.lastUpdated) f.lastUpdated = now;
+  }
   writeData('mutual-funds.json', completeData);
   console.log(`    ✅ Returns calculated for ${updated} funds (${failed} failed). Saved ${completeData.length} funds with data.`);
 }
@@ -928,11 +987,20 @@ function mergeIPOData(existing, bseIPOs, nseData, sebiFilings) {
   // Scraper has more data — replace live entries
   let result = existing.filter(ipo => ipo.status !== 'live');
   
+  // Deduplicate bseIPOs by slug before merging
+  const seenSlugs = new Set(result.map(ipo => ipo.slug));
+  
   for (const bseIPO of bseIPOs) {
     if (!bseIPO.name || bseIPO.name.length < 3) continue;
     
+    const slug = bseIPO.slug || slugify(bseIPO.name);
+    // Skip if this IPO already exists in result (prevents duplicates)
+    if (seenSlugs.has(slug)) continue;
+    seenSlugs.add(slug);
+    
     result.push({
       ...bseIPO,
+      slug,
       issueSize: bseIPO.issueSize || '',
       aiSummary: '',
       highlights: [],

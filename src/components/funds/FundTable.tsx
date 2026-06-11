@@ -48,7 +48,7 @@ function returnColor(val: number | null | undefined): string {
 
 export default function FundTable({ funds, categories, holdingSlugs = [] }: Props) {
   const [catFilter, setCatFilter] = useState('All');
-  const [sortBy, setSortBy] = useState<'returns3y' | 'returns1y' | 'returns5y' | 'holdings'>('returns3y');
+  const [sortBy, setSortBy] = useState<'returns3y' | 'returns1y' | 'returns5y' | 'nav' | 'holdings'>('returns3y');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
 
   const holdingSet = useMemo(() => new Set(holdingSlugs), [holdingSlugs]);
@@ -105,12 +105,15 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
         ))}
       </div>
 
-      <p className="text-xs text-gray-500 mb-3 tabular-nums">{filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : sortBy === 'returns5y' ? '5Y' : 'Holdings'} ({sortDir === 'desc' ? 'high to low' : 'low to high'})</p>
+      <p className="text-xs text-gray-500 mb-3 tabular-nums">{filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : sortBy === 'returns5y' ? '5Y' : sortBy === 'nav' ? 'NAV' : 'Holdings'} ({sortDir === 'desc' ? 'high to low' : 'low to high'})</p>
 
       {/* Table Header */}
       <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 mb-2">
         <div className="col-span-1 text-center">#</div>
         <div className="col-span-3">Fund</div>
+        <div className="col-span-1 text-center">
+          <button onClick={() => handleSort('nav')} className="hover:text-blue-600 cursor-pointer">NAV<SortIcon col="nav" /></button>
+        </div>
         <div className="col-span-1 text-center">
           <button onClick={() => handleSort('returns1y')} className="hover:text-blue-600 cursor-pointer">1Y<SortIcon col="returns1y" /></button>
         </div>
@@ -130,13 +133,13 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
       {/* Mobile Sort */}
       <div className="md:hidden flex flex-wrap gap-2 mb-3">
         <span className="text-xs text-gray-500">Sort:</span>
-        {(['returns1y', 'returns3y', 'returns5y', 'holdings'] as const).map(col => (
+        {(['nav', 'returns1y', 'returns3y', 'returns5y', 'holdings'] as const).map(col => (
           <button
             key={col}
             onClick={() => handleSort(col)}
             className={`text-xs px-2 py-1 rounded ${sortBy === col ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-blue-600'}`}
           >
-            {col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : 'Portfolio'}
+            {col === 'nav' ? 'NAV' : col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : 'Portfolio'}
             {sortBy === col && (sortDir === 'desc' ? ' ↓' : ' ↑')}
           </button>
         ))}
@@ -158,6 +161,11 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
               <div className="col-span-3">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight">{fund.name}</h3>
                 <p className="text-xs text-gray-400 mt-0.5">{fund.category} • {fund.aum}</p>
+              </div>
+              <div className="col-span-1 text-center">
+                <span className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-200">
+                  ₹{fund.nav?.toFixed(2) || '--'}
+                </span>
               </div>
               <div className="col-span-1 text-center">
                 <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns1y)}`}>
@@ -211,7 +219,7 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
                   }`}>{fund.riskLevel.replace('-',' ')}</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mb-2">{fund.category} • {fund.aum}</p>
+              <p className="text-xs text-gray-500 mb-2">{fund.category} • {fund.aum} • NAV ₹{fund.nav?.toFixed(2) || '--'}</p>
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
                 <div>
                   <p className="text-gray-400">1Y</p>
