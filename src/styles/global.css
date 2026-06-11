@@ -337,7 +337,26 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* Gradient text for hero headings */
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-400));
+  color: var(--color-primary-700); /* fallback for unsupported browsers */
+  background: linear-gradient(135deg, var(--color-primary-700), var(--color-primary-500));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-gradient {
+    color: var(--color-primary-300); /* fallback */
+    background: linear-gradient(135deg, var(--color-primary-300), var(--color-primary-100));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.dark .text-gradient {
+  color: var(--color-primary-300); /* fallback */
+  background: linear-gradient(135deg, var(--color-primary-300), var(--color-primary-100));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
