@@ -1,4 +1,4 @@
-# IPOfins — Build & Deploy
+# IPOfins — Build & Deploy.
 # Runs on push to main OR every 12 hours.
 # Data is managed manually (AMFI Excel + Zerodha local fetch).
 # This workflow fetches fresh MF data, commits changes, builds and deploys.
