@@ -58,6 +58,10 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     <meta name="geo.placename" content="India" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
+    <!-- Preconnect to Google Fonts (eliminates DNS+TLS latency from critical chain) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
@@ -121,7 +125,7 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
     <!-- Cookie Consent (for AdSense compliance) -->
     <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl transition-transform duration-300 translate-y-full" aria-hidden="true">
       <div class="container-wide flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-sm text-surface-300">We use cookies for analytics and ads. By continuing, you agree to our <a href="/privacy" class="text-primary-400 hover:underline">Privacy Policy</a>.</p>
+        <p class="text-sm text-surface-300">We use cookies for analytics and ads. By continuing, you agree to our <a href="/privacy" class="text-primary-300 underline hover:text-primary-200">Privacy Policy</a>.</p>
         <div class="flex gap-2">
           <button onclick="acceptCookies()" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 transition-colors">Accept</button>
           <button onclick="dismissCookies()" class="px-4 py-2 bg-surface-700 text-surface-300 text-sm font-medium rounded-lg hover:bg-surface-600 transition-colors">Dismiss</button>
@@ -138,9 +142,12 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
       function acceptCookies() { localStorage.setItem('cookie-consent', 'accepted'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
       function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
     </script>
-    <!-- Load Inter font after everything else -->
+    <!-- Load Inter font non-blocking with font-display=optional -->
     <script is:inline>
-      if('requestIdleCallback' in window){requestIdleCallback(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap';document.head.appendChild(l)})}
+      (function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=optional';l.media='print';l.onload=function(){l.media='all'};document.head.appendChild(l)})();
     </script>
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=optional" />
+    </noscript>
   </body>
 </html>
