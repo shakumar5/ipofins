@@ -256,7 +256,9 @@ export default function HoldingsCompare({ data }: Props) {
                             <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
                             {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                           </div>
-                          <span className="text-green-600 dark:text-green-400 font-semibold">+{h.pct}%</span>
+                          <span className="text-green-600 dark:text-green-400 font-semibold whitespace-nowrap">
+                            <span className="text-surface-400 dark:text-surface-500 font-normal">0%</span> → +{h.pct}%
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -279,13 +281,70 @@ export default function HoldingsCompare({ data }: Props) {
                             <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
                             {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
                           </div>
-                          <span className="text-red-500 dark:text-red-400 font-semibold">-{h.pct}%</span>
+                          <span className="text-red-500 dark:text-red-400 font-semibold whitespace-nowrap">
+                            <span className="text-surface-400 dark:text-surface-500 font-normal">{h.pct}%</span> → 0%
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Increased / Decreased */}
+              {(fund.increased.length > 0 || fund.decreased.length > 0) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-surface-200 dark:divide-surface-600 border-t border-surface-200 dark:border-surface-600">
+                  {/* Increased */}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase">Increased</span>
+                    </div>
+                    {fund.increased.length === 0 ? (
+                      <p className="text-xs text-surface-400 dark:text-surface-500 italic">No holdings increased</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {fund.increased.map((h, i) => (
+                          <div key={i} className="flex justify-between items-center text-xs">
+                            <div>
+                              <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                              {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
+                            </div>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">
+                              <span className="text-surface-400 dark:text-surface-500 font-normal">{h.oldPct}%</span> → {h.newPct}% <span className="text-emerald-500">(+{(h.newPct - h.oldPct).toFixed(2)}%)</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Decreased */}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2 h-2 bg-orange-400 rounded-full"></span>
+                      <span className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase">Decreased</span>
+                    </div>
+                    {fund.decreased.length === 0 ? (
+                      <p className="text-xs text-surface-400 dark:text-surface-500 italic">No holdings decreased</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {fund.decreased.map((h, i) => (
+                          <div key={i} className="flex justify-between items-center text-xs">
+                            <div>
+                              <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                              {h.sector && <span className="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
+                            </div>
+                            <span className="text-orange-600 dark:text-orange-400 font-semibold whitespace-nowrap">
+                              <span className="text-surface-400 dark:text-surface-500 font-normal">{h.oldPct}%</span> → {h.newPct}% <span className="text-orange-500">({(h.newPct - h.oldPct).toFixed(2)}%)</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
