@@ -11,6 +11,15 @@ const footerSections = [
     ],
   },
   {
+    title: 'Mutual Funds',
+    links: [
+      { label: 'All Mutual Funds', href: '/mutual-funds/all' },
+      { label: 'Best Funds', href: '/mutual-funds/best' },
+      { label: 'Holdings Changes', href: '/mutual-funds/holdings-changes' },
+      { label: 'Compare Holdings', href: '/mutual-funds' },
+    ],
+  },
+  {
     title: 'Tools',
     links: [
       { label: 'SIP Calculator', href: '/tools/sip-calculator' },
@@ -46,7 +55,7 @@ const footerSections = [
 <footer class="bg-surface-50 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-700 mt-20 content-auto">
   <div class="container-wide py-12 lg:py-16">
     <!-- Top section -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-12">
       {footerSections.map((section) => (
         <div>
           <h3 class="text-sm font-semibold text-surface-900 dark:text-white uppercase tracking-wider mb-4">
