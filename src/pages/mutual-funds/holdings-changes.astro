@@ -7,6 +7,17 @@ const amcCount = Object.keys(holdingsData.amcs).length;
 const fundCount = Object.keys(holdingsData.holdings).length;
 const monthsList = holdingsData.months;
 
+// For internal linking to static pages
+function slugify(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+function monthSlug(month: string): string {
+  return month.toLowerCase().replace(/\s+/g, '-');
+}
+const amcList = Object.keys(holdingsData.amcs).sort();
+const latestMonth = holdingsData.months[holdingsData.months.length - 1];
+const latestMonthSlug = monthSlug(latestMonth);
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
@@ -59,6 +70,20 @@ const faqJsonLd = {
 
   <section class="container-wide py-4">
     <HoldingsCompare client:load data={holdingsData} />
+  </section>
+
+  <!-- Browse by AMC - SEO internal links -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Browse Holdings Changes by AMC</h2>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">View detailed holdings changes for each AMC — {latestMonth}</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      {amcList.map(amc => (
+        <a
+          href={`/mutual-funds/holdings-changes/${slugify(amc)}/${latestMonthSlug}`}
+          class="px-3 py-2.5 text-sm font-medium text-surface-700 dark:text-surface-300 bg-white dark:bg-surface-800 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 transition-colors border border-surface-200 dark:border-surface-700 text-center"
+        >{amc}</a>
+      ))}
+    </div>
   </section>
 
   <!-- Info -->

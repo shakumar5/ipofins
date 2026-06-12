@@ -1,0 +1,376 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import holdingsData from '../../../../data/fund-holdings.json';
+
+export function getStaticPaths() {
+  // Helper: slugify AMC name
+  function slugify(str: string): string {
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  // Helper: convert "May 2026" to "may-2026" for URL
+  function monthSlug(month: string): string {
+    return month.toLowerCase().replace(/\s+/g, '-');
+  }
+
+  const months = (holdingsData as any).months as string[];
+  const amcs = Object.keys((holdingsData as any).amcs);
+  const paths: any[] = [];
+
+  for (const amc of amcs) {
+    // We generate pages for month pairs (comparing month[i-1] → month[i])
+    for (let i = 1; i < months.length; i++) {
+      paths.push({
+        params: {
+          amc: slugify(amc),
+          month: monthSlug(months[i]),
+        },
+        props: {
+          amcName: amc,
+          currentMonth: months[i],
+          previousMonth: months[i - 1],
+        },
+      });
+    }
+  }
+
+  return paths;
+}
+
+// Helper: slugify AMC name
+function slugify(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+// Helper: convert "May 2026" to "may-2026" for URL
+function monthSlug(month: string): string {
+  return month.toLowerCase().replace(/\s+/g, '-');
+}
+
+// Helper: convert "may-2026" back to "May 2026" for display
+function monthDisplay(slug: string): string {
+  return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Helper: check if a holding is a debt/money-market instrument
+function isDebtHolding(h: any): boolean {
+  if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return true;
+  if (/^\d+\.?\d*%\s/.test(h.name)) return true;
+  if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return true;
+  if (/\(ZCB\)/i.test(h.name)) return true;
+  if (/securitisation trust/i.test(h.name)) return true;
+  return false;
+}
+
+// Helper: categorize fund by name
+function getFundCategory(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes('large cap') || n.includes('largecap') || n.includes('large & mid') || n.includes('large and mid')) {
+    if (n.includes('& mid') || n.includes('and mid')) return 'Large & Mid Cap';
+    return 'Large Cap';
+  }
+  if (n.includes('mid cap') || n.includes('midcap')) return 'Mid Cap';
+  if (n.includes('multi cap') || n.includes('multicap')) return 'Multi Cap';
+  if (n.includes('flexi') || n.includes('flexicap')) return 'Flexi Cap';
+  if (n.includes('small cap') || n.includes('smallcap')) return 'Small Cap';
+  return 'Others';
+}
+
+const { amcName, currentMonth, previousMonth } = Astro.props;
+const { amc: amcSlug, month: monthParam } = Astro.params;
+
+// Compute comparison data at build time
+const holdings = (holdingsData as any).holdings as Record<string, any>;
+const allMonths = (holdingsData as any).months as string[];
+
+interface ComparisonResult {
+  fundName: string;
+  category: string;
+  additions: { name: string; sector: string; pct: number }[];
+  removals: { name: string; sector: string; pct: number }[];
+  increased: { name: string; sector: string; oldPct: number; newPct: number }[];
+  decreased: { name: string; sector: string; oldPct: number; newPct: number }[];
+}
+
+const comparison: ComparisonResult[] = [];
+
+for (const [slug, fund] of Object.entries(holdings)) {
+  if (fund.amc !== amcName) continue;
+
+  const oldHoldings = (fund[previousMonth] || []).filter((h: any) => !isDebtHolding(h));
+  const newHoldings = (fund[currentMonth] || []).filter((h: any) => !isDebtHolding(h));
+
+  if (oldHoldings.length === 0 || newHoldings.length === 0) continue;
+
+  const oldMap = new Map(oldHoldings.map((h: any) => [h.isin || h.name, h]));
+  const newMap = new Map(newHoldings.map((h: any) => [h.isin || h.name, h]));
+
+  const additions: any[] = [];
+  const removals: any[] = [];
+  const increased: any[] = [];
+  const decreased: any[] = [];
+
+  for (const [key, h] of newMap) {
+    if (!oldMap.has(key)) {
+      additions.push({ name: (h as any).name, sector: (h as any).sector, pct: (h as any).pct });
+    } else {
+      const oldH = oldMap.get(key)!;
+      const diff = (h as any).pct - (oldH as any).pct;
+      if (diff > 0.3) {
+        increased.push({ name: (h as any).name, sector: (h as any).sector, oldPct: (oldH as any).pct, newPct: (h as any).pct });
+      } else if (diff < -0.3) {
+        decreased.push({ name: (h as any).name, sector: (h as any).sector, oldPct: (oldH as any).pct, newPct: (h as any).pct });
+      }
+    }
+  }
+
+  for (const [key, h] of oldMap) {
+    if (!newMap.has(key)) {
+      removals.push({ name: (h as any).name, sector: (h as any).sector, pct: (h as any).pct });
+    }
+  }
+
+  if (additions.length > 0 || removals.length > 0 || increased.length > 0 || decreased.length > 0) {
+    comparison.push({
+      fundName: fund.name,
+      category: getFundCategory(fund.name),
+      additions: additions.sort((a, b) => b.pct - a.pct),
+      removals: removals.sort((a, b) => b.pct - a.pct),
+      increased: increased.sort((a, b) => (b.newPct - b.oldPct) - (a.newPct - a.oldPct)),
+      decreased: decreased.sort((a, b) => (a.newPct - a.oldPct) - (b.newPct - b.oldPct)),
+    });
+  }
+}
+
+comparison.sort((a, b) => (b.additions.length + b.removals.length) - (a.additions.length + a.removals.length));
+
+const totalAdditions = comparison.reduce((sum, f) => sum + f.additions.length, 0);
+const totalRemovals = comparison.reduce((sum, f) => sum + f.removals.length, 0);
+const displayMonth = monthDisplay(monthParam);
+
+const pageTitle = `${amcName} Holdings Changes ${displayMonth} - Stocks Bought & Sold | IPOfins`;
+const pageDesc = `See what stocks ${amcName} mutual funds bought and sold in ${displayMonth}. ${totalAdditions} additions, ${totalRemovals} removals across ${comparison.length} funds.`;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": `${amcName} Mutual Fund Holdings Changes - ${displayMonth}`,
+  "description": pageDesc,
+  "url": `https://ipofins.com/mutual-funds/holdings-changes/${amcSlug}/${monthParam}`,
+};
+
+// Other AMCs for internal linking
+const allAmcs = Object.keys((holdingsData as any).amcs).sort();
+const otherAmcs = allAmcs.filter(a => a !== amcName).slice(0, 10);
+---
+
+<BaseLayout title={pageTitle} description={pageDesc} jsonLd={jsonLd}>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds/holdings-changes" class="hover:text-primary-600 transition-colors">Holdings Changes</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{amcName} - {displayMonth}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{amcName} Holdings Changes - {displayMonth}</h1>
+    <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
+      Stocks bought and sold by {amcName} funds between {previousMonth} → {currentMonth}
+    </p>
+
+    <!-- Summary stats -->
+    <div class="mt-4 flex flex-wrap gap-3">
+      <span class="px-3 py-1.5 text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg border border-green-200 dark:border-green-800">
+        {totalAdditions} New Additions
+      </span>
+      <span class="px-3 py-1.5 text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800">
+        {totalRemovals} Removals
+      </span>
+      <span class="px-3 py-1.5 text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 rounded-lg border border-surface-200 dark:border-surface-700">
+        {comparison.length} Funds with Changes
+      </span>
+    </div>
+
+    <!-- Navigation tabs -->
+    <div class="mt-4 flex flex-wrap gap-2">
+      <a href="/mutual-funds/holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">← All AMCs (Interactive)</a>
+      {allMonths.slice(1).map(m => (
+        <a
+          href={`/mutual-funds/holdings-changes/${amcSlug}/${monthSlug(m)}`}
+          class={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            m === currentMonth
+              ? 'bg-primary-600 text-white'
+              : 'text-surface-600 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200'
+          }`}
+        >{m}</a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="container-wide py-4">
+    {comparison.length === 0 ? (
+      <div class="text-center py-12 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 rounded-xl">
+        <div class="w-12 h-12 mx-auto bg-surface-100 dark:bg-surface-700 rounded-full flex items-center justify-center mb-3">
+          <svg class="w-6 h-6 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <p class="text-sm font-medium">No portfolio changes detected</p>
+        <p class="text-xs mt-1 text-surface-400 dark:text-surface-500">
+          This AMC's funds had no significant equity additions or removals between {previousMonth} → {currentMonth}.
+        </p>
+      </div>
+    ) : (
+      <div class="space-y-6">
+        {comparison.map((fund) => (
+          <div class="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">
+            {/* Fund header */}
+            <div class="px-4 py-3 bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-600">
+              <h3 class="font-semibold text-surface-900 dark:text-white text-sm">{fund.fundName}</h3>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+                {fund.category} • {fund.additions.length} additions • {fund.removals.length} removals • {fund.increased.length} increased • {fund.decreased.length} decreased
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-surface-200 dark:divide-surface-600">
+              {/* Additions */}
+              <div class="p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span class="text-xs font-semibold text-green-700 dark:text-green-400 uppercase">New Additions</span>
+                </div>
+                {fund.additions.length === 0 ? (
+                  <p class="text-xs text-surface-400 dark:text-surface-500 italic">No new stocks added</p>
+                ) : (
+                  <div class="space-y-2">
+                    {fund.additions.map((h) => (
+                      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                        <div class="min-w-0">
+                          <span class="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
+                          {h.sector && <span class="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
+                        </div>
+                        <span class="text-green-600 dark:text-green-400 font-semibold whitespace-nowrap">
+                          <span class="text-surface-400 dark:text-surface-500 font-normal">0%</span> → +{h.pct}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Removals */}
+              <div class="p-4">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span class="text-xs font-semibold text-red-700 dark:text-red-400 uppercase">Removed</span>
+                </div>
+                {fund.removals.length === 0 ? (
+                  <p class="text-xs text-surface-400 dark:text-surface-500 italic">No stocks removed</p>
+                ) : (
+                  <div class="space-y-2">
+                    {fund.removals.map((h) => (
+                      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                        <div class="min-w-0">
+                          <span class="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
+                          {h.sector && <span class="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
+                        </div>
+                        <span class="text-red-500 dark:text-red-400 font-semibold whitespace-nowrap">
+                          <span class="text-surface-400 dark:text-surface-500 font-normal">{h.pct}%</span> → 0%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Increased / Decreased */}
+            {(fund.increased.length > 0 || fund.decreased.length > 0) && (
+              <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-surface-200 dark:divide-surface-600 border-t border-surface-200 dark:border-surface-600">
+                {/* Increased */}
+                <div class="p-4">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                    <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase">Increased</span>
+                  </div>
+                  {fund.increased.length === 0 ? (
+                    <p class="text-xs text-surface-400 dark:text-surface-500 italic">No holdings increased</p>
+                  ) : (
+                    <div class="space-y-2">
+                      {fund.increased.map((h) => (
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                          <div class="min-w-0">
+                            <span class="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
+                            {h.sector && <span class="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
+                          </div>
+                          <span class="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">
+                            <span class="text-surface-400 dark:text-surface-500 font-normal">{h.oldPct}%</span> → {h.newPct}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Decreased */}
+                <div class="p-4">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="w-2 h-2 bg-orange-400 rounded-full"></span>
+                    <span class="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase">Decreased</span>
+                  </div>
+                  {fund.decreased.length === 0 ? (
+                    <p class="text-xs text-surface-400 dark:text-surface-500 italic">No holdings decreased</p>
+                  ) : (
+                    <div class="space-y-2">
+                      {fund.decreased.map((h) => (
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-0.5 sm:gap-2 py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                          <div class="min-w-0">
+                            <span class="font-medium text-surface-900 dark:text-white break-words">{h.name}</span>
+                            {h.sector && <span class="ml-1 text-surface-400 dark:text-surface-500">• {h.sector}</span>}
+                          </div>
+                          <span class="text-orange-600 dark:text-orange-400 font-semibold whitespace-nowrap">
+                            <span class="text-surface-400 dark:text-surface-500 font-normal">{h.oldPct}%</span> → {h.newPct}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+
+  <!-- Other AMCs -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Other AMCs - {displayMonth}</h2>
+    <div class="flex flex-wrap gap-2">
+      {otherAmcs.map(otherAmc => (
+        <a
+          href={`/mutual-funds/holdings-changes/${slugify(otherAmc)}/${monthParam}`}
+          class="px-3 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors border border-surface-200 dark:border-surface-700"
+        >{otherAmc}</a>
+      ))}
+      <a
+        href="/mutual-funds/holdings-changes"
+        class="px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 transition-colors border border-primary-200 dark:border-primary-800"
+      >View All AMCs →</a>
+    </div>
+  </section>
+
+  <!-- SEO content -->
+  <section class="container-wide py-6">
+    <div class="max-w-3xl text-sm text-surface-600 dark:text-surface-300 space-y-3">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white">About {amcName} Holdings Changes</h2>
+      <p>This page shows the stocks that {amcName} mutual funds have bought (added) and sold (removed) in {displayMonth} compared to {previousMonth}. Data is sourced from official SEBI-mandated monthly portfolio disclosures published by {amcName}.</p>
+      <p>Tracking what professional fund managers are buying helps identify stocks with institutional conviction. If multiple funds from {amcName} are adding the same stock, it signals strong conviction in that company's fundamentals.</p>
+    </div>
+  </section>
+</BaseLayout>

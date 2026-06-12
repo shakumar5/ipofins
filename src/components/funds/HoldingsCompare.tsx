@@ -25,6 +25,14 @@ interface Props {
   data: HoldingsData;
 }
 
+// Helper: slugify for URL generation
+function slugify(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+function monthSlug(month: string): string {
+  return month.toLowerCase().replace(/\s+/g, '-');
+}
+
 export default function HoldingsCompare({ data }: Props) {
   const [selectedAMC, setSelectedAMC] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -32,6 +40,12 @@ export default function HoldingsCompare({ data }: Props) {
   const [month2, setMonth2] = useState(data.months[1] || data.months[0] || '');
 
   const amcList = useMemo(() => Object.keys(data.amcs).sort(), [data.amcs]);
+
+  // Update URL when AMC and month are selected
+  const staticPageUrl = useMemo(() => {
+    if (!selectedAMC || !month2) return '';
+    return `/mutual-funds/holdings-changes/${slugify(selectedAMC)}/${monthSlug(month2)}`;
+  }, [selectedAMC, month2]);
 
   const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
 
@@ -206,6 +220,9 @@ export default function HoldingsCompare({ data }: Props) {
         {selectedAMC && (
           <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
             Showing changes for <strong>{fundsForAMC.length}</strong> equity funds from {selectedAMC} between {month1} → {month2}
+            {staticPageUrl && (
+              <> • <a href={staticPageUrl} className="text-primary-600 hover:underline font-medium">View dedicated page →</a></>
+            )}
           </p>
         )}
       </div>
