@@ -24,6 +24,14 @@
         "listingPrice": 0,
         "currentPrice": 0,
         "sector": "Others"
+      },
+      {
+        "name": "Vahh Chemicals",
+        "listingDate": "11 Jun 2026",
+        "issuePrice": 8,
+        "listingPrice": 0,
+        "currentPrice": 0,
+        "sector": "Others"
       }
     ],
     "sme": [
@@ -143,6 +151,22 @@
         "name": "0) {\n                filterTables(searchText);\n            }\n        });\n        document.querySelector(\".clear-ipo-search\").addEventListener(\"click\", function () {\n            document.getElementById(\"ipo_search\").value = \"\";\n            filterTables(\"\");\n        })\n    })",
         "listingDate": "05th – 09th Jun 2026",
         "issuePrice": 9,
+        "listingPrice": 0,
+        "currentPrice": 0,
+        "sector": "Others"
+      },
+      {
+        "name": "Hexagon Nutrition",
+        "listingDate": "12 Jun 2026",
+        "issuePrice": 9,
+        "listingPrice": 0,
+        "currentPrice": 0,
+        "sector": "Others"
+      },
+      {
+        "name": "CMR Green Technologies",
+        "listingDate": "10 Jun 2026",
+        "issuePrice": 5,
         "listingPrice": 0,
         "currentPrice": 0,
         "sector": "Others"
