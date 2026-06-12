@@ -31,7 +31,7 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 9
   },
   {
@@ -65,7 +65,7 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 9
   },
   {
@@ -100,7 +100,7 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 9
   },
   {
@@ -134,7 +134,7 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 9
   },
   {
@@ -168,7 +168,7 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 8
   },
   {
@@ -201,7 +201,7 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 8
   },
   {
@@ -234,7 +234,7 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 8
   },
   {
@@ -268,7 +268,7 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 5
   },
   {
@@ -302,7 +302,7 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 3
   },
   {
@@ -336,7 +336,7 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z",
+    "lastUpdated": "2026-06-12T11:35:15.494Z",
     "priceMax": 3
   },
   {
@@ -370,7 +370,7 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z"
+    "lastUpdated": "2026-06-12T11:35:15.494Z"
   },
   {
     "name": "Bio Medica Laboratories",
@@ -403,7 +403,7 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z"
+    "lastUpdated": "2026-06-12T11:35:15.494Z"
   },
   {
     "name": "Rajnandini Fashion India",
@@ -442,7 +442,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z"
+    "lastUpdated": "2026-06-12T11:35:15.494Z"
   },
   {
     "name": "Aureate Tradde",
@@ -481,7 +481,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z"
+    "lastUpdated": "2026-06-12T11:35:15.494Z"
   },
   {
     "name": "Harikanta Overseas",
@@ -520,7 +520,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z"
+    "lastUpdated": "2026-06-12T11:35:15.494Z"
   },
   {
     "name": "Yaashvi Jewellers",
@@ -559,16 +559,16 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.033Z"
+    "lastUpdated": "2026-06-12T11:35:15.494Z"
   },
   {
     "name": "Utkal Speciality Industries India",
     "slug": "utkal-speciality-industries-india",
     "type": "sme",
     "status": "live",
-    "priceRange": "62-66",
-    "priceMax": 66,
-    "lotSize": 2000,
+    "priceRange": "",
+    "priceMax": 0,
+    "lotSize": 0,
     "openDate": "10 Jun 2026",
     "closeDate": "12 Jun 2026",
     "allotmentDate": "15 Jun 2026",
@@ -598,23 +598,23 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.039Z"
+    "lastUpdated": "2026-06-12T11:35:15.500Z"
   },
   {
     "name": "Susan Electricals India",
     "slug": "susan-electricals-india",
     "type": "sme",
     "status": "live",
-    "priceRange": "120-127",
-    "priceMax": 127,
-    "lotSize": 1000,
+    "priceRange": "",
+    "priceMax": 0,
+    "lotSize": 0,
     "openDate": "11 Jun 2026",
     "closeDate": "15 Jun 2026",
     "allotmentDate": "16 Jun 2026",
     "refundDate": "17 Jun 2026",
     "creditDate": "17 Jun 2026",
     "listingDate": "18 Jun 2026",
-    "sector": "Electrical Equipment",
+    "sector": "Others",
     "issueSize": "₹70cr",
     "subscription": null,
     "gmp": null,
@@ -624,13 +624,7 @@
     "founded": "",
     "description": "Susan Electricals India Limited is engaged in the manufacturing of aluminium and copper-based electrical winding wires, conductors and cables in various specifications, sizes and configurations. Its product portfolio includes low tension (LT) cables, LT aerial bunched (AB) cables, high tension (HT) cables, winding aluminium wires and strips, winding copper wires and strips, and aluminium conductors. The company primarily supplies its products to state-owned electricity distribution utilities (DISCOMs), infrastructure and EPC companies.",
     "purpose": "Expansion of existing manufacturing facility at Sahibabad, UP (7.72 Cr, 12.82%); Funding working capital requirements (33 Cr, 54.80%); General corporate purposes (20 Cr, 32.38%)",
-    "highlights": [
-      "Manufactures a diversified range of electrical wires, cables and conductors for multiple applications.",
-      "Supplies products to DISCOMs, EPC contractors and private-sector customers across India.",
-      "Holds BIS licenses and ISO certifications for quality, environmental and safety management systems.",
-      "Has a geographically diversified customer base across several Indian states.",
-      "Led by an experienced promoter with over two decades of industry experience."
-    ],
+    "highlights": [],
     "risks": [
       "A significant portion of revenue depends on government-owned electricity distribution companies (DISCOMs).",
       "The business relies on winning and executing government and institutional tenders.",
@@ -638,28 +632,28 @@
       "The company faces intense competition from existing and potential players in the industry.",
       "Failure to execute expansion and growth strategies could adversely affect business performance."
     ],
-    "drhpUrl": "https://www.bsesme.com/download/338840/SME_IPO%20InPrinciple/SUSAN_20260228205254.pdf",
+    "drhpUrl": "https://zerodha.com/ipo/449835/susan-electricals-india/",
     "aiScore": null,
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.039Z"
+    "lastUpdated": "2026-06-12T11:35:15.500Z"
   },
   {
     "name": "Horizon Reclaim (India)",
     "slug": "horizon-reclaim-india",
     "type": "sme",
     "status": "live",
-    "priceRange": "98-103",
-    "priceMax": 103,
-    "lotSize": 1200,
+    "priceRange": "",
+    "priceMax": 0,
+    "lotSize": 0,
     "openDate": "12 Jun 2026",
     "closeDate": "16 Jun 2026",
     "allotmentDate": "17 Jun 2026",
     "refundDate": "18 Jun 2026",
     "creditDate": "18 Jun 2026",
     "listingDate": "19 Jun 2026",
-    "sector": "Chemicals",
+    "sector": "Others",
     "issueSize": "₹54cr",
     "subscription": null,
     "gmp": null,
@@ -669,13 +663,7 @@
     "founded": "",
     "description": "Horizon Reclaim (India) Limited is engaged in the manufacturing of reclaimed rubber, which is produced by recycling used rubber materials such as old tyres, rubber tubes, tread peelings and industrial rubber scrap, including EPDM rubber. The company offers products across three main categories: Natural Rubber Reclaim, Synthetic Rubber Reclaim (including EPDM and Butyl Reclaim Rubber), and Crumb Rubber, which are used in applications such as footwear, automotive components, floor mats, construction products, road construction and sports surfaces.",
     "purpose": "Repayment/pre-payment of outstanding borrowings (26.7 Cr, 49.20%); Installation of additional plant & machinery (9.43 Cr, 17.38%); Working capital requirements (6 Cr, 11.05%); General corporate purposes (12.14 Cr, 22.37%)",
-    "highlights": [
-      "Over 19 years of experience in manufacturing reclaimed rubber from scrap and used tyres.",
-      "Diverse product portfolio including natural reclaim rubber, synthetic reclaim rubber and crumb rubber.",
-      "Established sourcing network for waste rubber materials from domestic and imported suppliers.",
-      "In-house quality control systems supported by ISO 9001:2015 certification.",
-      "Strategic manufacturing location in Haridwar with access to raw materials and transportation networks."
-    ],
+    "highlights": [],
     "risks": [
       "A significant portion of revenue comes from a limited number of customers.",
       "Operations depend on a limited number of suppliers for key raw materials.",
@@ -683,11 +671,11 @@
       "Failure to meet product quality standards may lead to order cancellations and loss of business.",
       "Under-utilisation of manufacturing capacity could adversely impact future financial performance."
     ],
-    "drhpUrl": "https://gyrcapitaladvisors.com/wp-content/uploads/2026/06/rhphorizon.pdf",
+    "drhpUrl": "https://zerodha.com/ipo/449844/horizon-reclaim-india/",
     "aiScore": null,
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-12T11:31:58.039Z"
+    "lastUpdated": "2026-06-12T11:35:15.500Z"
   }
 ]
