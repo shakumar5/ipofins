@@ -55,10 +55,18 @@ function monthDisplay(slug: string): string {
 // Helper: check if a holding is a debt/money-market instrument
 function isDebtHolding(h: any): boolean {
   if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return true;
-  if (/^\d+\.?\d*%\s/.test(h.name)) return true;
+  if (h.sector && /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Mutual Fund)/i.test(h.sector)) return true;
+  if (/^\d+\.?\d*\s*%\s/.test(h.name)) return true;
   if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return true;
+  if (/\d{2}(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2,4}/i.test(h.name)) return true;
+  if (/T-BILL|TBILL|GOI|G\.?SEC|DAYS?\s+\d/i.test(h.name)) return true;
+  if (/\bNCD\b/i.test(h.name)) return true;
   if (/\(ZCB\)/i.test(h.name)) return true;
   if (/securitisation trust/i.test(h.name)) return true;
+  if (/\bREIT\b|\bInvIT\b/i.test(h.name)) return true;
+  if (/\bPTC\b/i.test(h.name)) return true;
+  if (/commercial paper/i.test(h.name)) return true;
+  if (/\bfund\b.*\b(direct|growth|plan)\b/i.test(h.name)) return true;
   return false;
 }
 
@@ -96,6 +104,10 @@ const comparison: ComparisonResult[] = [];
 
 for (const [slug, fund] of Object.entries(holdings)) {
   if (fund.amc !== amcName) continue;
+
+  // Skip junk entries (Excel headers parsed as fund names)
+  if (/^(Industry|Market|Rating|Quantity|Value|ISIN|%)/i.test(fund.name)) continue;
+  if (/Fair Value|Rs\.?\s*in\s*Lacs/i.test(fund.name)) continue;
 
   const oldHoldings = (fund[previousMonth] || []).filter((h: any) => !isDebtHolding(h));
   const newHoldings = (fund[currentMonth] || []).filter((h: any) => !isDebtHolding(h));
@@ -156,7 +168,7 @@ const jsonLd = {
   "@type": "WebPage",
   "name": `${amcName} Mutual Fund Holdings Changes - ${displayMonth}`,
   "description": pageDesc,
-  "url": `https://ipofins.com/mutual-funds/holdings-changes/${amcSlug}/${monthParam}`,
+  "url": `https://ipofins.com/mutual-funds/mutual-fund-holdings-changes/${amcSlug}/${monthParam}`,
 };
 
 // Other AMCs for internal linking
@@ -171,7 +183,7 @@ const otherAmcs = allAmcs.filter(a => a !== amcName).slice(0, 10);
       <li><span class="mx-1">/</span></li>
       <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
       <li><span class="mx-1">/</span></li>
-      <li><a href="/mutual-funds/holdings-changes" class="hover:text-primary-600 transition-colors">Holdings Changes</a></li>
+      <li><a href="/mutual-funds/mutual-fund-holdings-changes" class="hover:text-primary-600 transition-colors">Holdings Changes</a></li>
       <li><span class="mx-1">/</span></li>
       <li class="text-surface-900 dark:text-white font-medium">{amcName} - {displayMonth}</li>
     </ol>
@@ -198,10 +210,10 @@ const otherAmcs = allAmcs.filter(a => a !== amcName).slice(0, 10);
 
     <!-- Navigation tabs -->
     <div class="mt-4 flex flex-wrap gap-2">
-      <a href="/mutual-funds/holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">← All AMCs (Interactive)</a>
+      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">← All AMCs (Interactive)</a>
       {allMonths.slice(1).map(m => (
         <a
-          href={`/mutual-funds/holdings-changes/${amcSlug}/${monthSlug(m)}`}
+          href={`/mutual-funds/mutual-fund-holdings-changes/${amcSlug}/${monthSlug(m)}`}
           class={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
             m === currentMonth
               ? 'bg-primary-600 text-white'
@@ -354,12 +366,12 @@ const otherAmcs = allAmcs.filter(a => a !== amcName).slice(0, 10);
     <div class="flex flex-wrap gap-2">
       {otherAmcs.map(otherAmc => (
         <a
-          href={`/mutual-funds/holdings-changes/${slugify(otherAmc)}/${monthParam}`}
+          href={`/mutual-funds/mutual-fund-holdings-changes/${slugify(otherAmc)}/${monthParam}`}
           class="px-3 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors border border-surface-200 dark:border-surface-700"
         >{otherAmc}</a>
       ))}
       <a
-        href="/mutual-funds/holdings-changes"
+        href="/mutual-funds/mutual-fund-holdings-changes"
         class="px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 transition-colors border border-primary-200 dark:border-primary-800"
       >View All AMCs →</a>
     </div>

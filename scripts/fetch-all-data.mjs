@@ -38,6 +38,15 @@ function slugify(text) {
 }
 
 function writeData(filename, data) {
+  // Safety: never write empty data (prevents data loss)
+  if (Array.isArray(data) && data.length === 0) {
+    console.log(`  ⚠️ ${filename} — SKIPPED (empty array, would lose data)`);
+    return;
+  }
+  if (typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0) {
+    console.log(`  ⚠️ ${filename} — SKIPPED (empty object, would lose data)`);
+    return;
+  }
   const filepath = join(DATA_DIR, filename);
   writeFileSync(filepath, JSON.stringify(data, null, 2));
   console.log(`  ✅ ${filename} — ${Array.isArray(data) ? data.length + ' records' : 'updated'}`);
@@ -45,7 +54,16 @@ function writeData(filename, data) {
 
 function readExisting(filename) {
   const filepath = join(DATA_DIR, filename);
-  if (existsSync(filepath)) return JSON.parse(readFileSync(filepath, 'utf-8'));
+  if (existsSync(filepath)) {
+    try {
+      const content = readFileSync(filepath, 'utf-8').trim();
+      if (!content || content.length < 2) return []; // Empty or invalid file
+      return JSON.parse(content);
+    } catch (e) {
+      console.log(`    ⚠️ Failed to parse ${filename}: ${e.message}. Treating as empty.`);
+      return [];
+    }
+  }
   return [];
 }
 
@@ -237,6 +255,9 @@ function parseZerodhaListing(html) {
       lotSize: 0,
       openDate: '',
       closeDate: '',
+      allotmentDate: '',
+      refundDate: '',
+      creditDate: '',
       listingDate: '',
       sector: 'Others',
       issueSize: '',
@@ -303,13 +324,16 @@ function parseZerodhaListing(html) {
       name,
       slug: slugify(name),
       type: type === 'mainboard' ? 'mainboard' : 'sme',
-      status: 'listed',
+      status: 'closed',  // Not 'listed' — will be promoted by updateIPOStatuses when listing date arrives
       priceRange: '',
       priceMax: 0,
       detailUrl: link ? `https://zerodha.com/ipo/${link[1]}/${link[2]}` : '',
       lotSize: 0,
       openDate: '',
       closeDate: '',
+      allotmentDate: '',
+      refundDate: '',
+      creditDate: '',
       listingDate: '',
       sector: 'Others',
       issueSize: '',
@@ -365,6 +389,19 @@ async function fetchIPODetail(ipo) {
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
     
+    // --- Correct the IPO name from the detail page's H1 ---
+    // The listing page sometimes maps names to wrong detail URLs.
+    // The detail page's <h1> always has the correct name.
+    const h1Match = clean.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1Match) {
+      const detailName = h1Match[1].replace(/<[^>]+>/g, '').replace(/\s*IPO\s*$/i, '').trim();
+      if (detailName && detailName.length > 3 && detailName !== ipo.name) {
+        console.log(`      ℹ️ Name correction: "${ipo.name}" → "${detailName}" (from detail page)`);
+        ipo.name = detailName;
+        ipo.slug = detailName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
+    }
+    
     // --- IPO Dates ---
     const dateMatch = clean.match(/IPO date[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
     if (dateMatch) {
@@ -380,13 +417,52 @@ async function fetchIPODetail(ipo) {
       }
     }
     
-    // --- Listing Date ---
-    const listingMatch = clean.match(/Listing date[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
-    if (listingMatch) {
-      ipo.listingDate = listingMatch[1].replace(/<[^>]+>/g, '').trim();
+    // --- Schedule Table (preferred source for listing date, allotment date, etc.) ---
+    // Zerodha has a schedule table with rows like:
+    // | Issue open date | 10 Jun 2026 |
+    // | Allotment finalization | 15 Jun 2026 |
+    // | Listing date | 17 Jun 2026 |
+    const scheduleTable = clean.match(/Schedule[\s\S]*?<table[\s\S]*?<\/table>/i);
+    if (scheduleTable) {
+      const rows = [...scheduleTable[0].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+      for (const row of rows) {
+        const cells = [...row[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)];
+        if (cells.length >= 2) {
+          const label = cells[0][1].replace(/<[^>]+>/g, '').trim().toLowerCase();
+          const value = cells[1][1].replace(/<[^>]+>/g, '').trim();
+          
+          if (label.includes('issue open') || label.includes('open date')) {
+            ipo.openDate = value;
+          } else if (label.includes('issue close') || label.includes('close date')) {
+            ipo.closeDate = value;
+          } else if (label.includes('allotment')) {
+            ipo.allotmentDate = value;
+          } else if (label.includes('refund')) {
+            ipo.refundDate = value;
+          } else if (label.includes('share credit') || label.includes('demat credit')) {
+            ipo.creditDate = value;
+          } else if (label.includes('listing date')) {
+            ipo.listingDate = value;
+          }
+        }
+      }
+    }
+    
+    // --- Listing Date fallback (from header section if schedule table didn't have it) ---
+    if (!ipo.listingDate) {
+      const listingMatch = clean.match(/Listing date[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
+      if (listingMatch) {
+        const rawListingDate = listingMatch[1].replace(/<[^>]+>/g, '').trim();
+        // Only store if it's a single date, NOT a range (ranges indicate parsing error)
+        const rangePattern = /\d{1,2}(?:st|nd|rd|th)?\s*(?:–|-|to)\s*\d{1,2}(?:st|nd|rd|th)?/i;
+        if (!rangePattern.test(rawListingDate)) {
+          ipo.listingDate = rawListingDate;
+        }
+      }
     }
     
     // --- Price Range ---
+    // Try structured div first, then fallback to inline header text
     const priceMatch = clean.match(/Price range[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
     if (priceMatch) {
       const priceStr = priceMatch[1].replace(/<[^>]+>/g, '').trim();
@@ -399,7 +475,20 @@ async function fetchIPODetail(ipo) {
         ipo.priceMax = parseInt(prices[0][1].replace(/,/g, ''));
       }
     }
-    
+    // Fallback: extract from inline header text (e.g., "Price range₹120 – ₹127")
+    if (!ipo.priceRange || ipo.priceRange === '0') {
+      const inlinePrice = clean.match(/Price range[^₹]*₹(\d[\d,]*)\s*(?:–|-|&ndash;)\s*₹(\d[\d,]*)/i);
+      if (inlinePrice) {
+        ipo.priceRange = `${inlinePrice[1].replace(/,/g, '')}-${inlinePrice[2].replace(/,/g, '')}`;
+        ipo.priceMax = parseInt(inlinePrice[2].replace(/,/g, ''));
+      } else {
+        const singlePrice = clean.match(/Price range[^₹]*₹(\d[\d,]*)/i);
+        if (singlePrice) {
+          ipo.priceRange = singlePrice[1].replace(/,/g, '');
+          ipo.priceMax = parseInt(singlePrice[1].replace(/,/g, ''));
+        }
+      }
+    }
     // --- Lot Size ---
     const lotMatch = clean.match(/Lot size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
     if (lotMatch) {
@@ -407,12 +496,29 @@ async function fetchIPODetail(ipo) {
       const lotNum = lotStr.match(/(\d[\d,]*)/);
       if (lotNum) ipo.lotSize = parseInt(lotNum[1].replace(/,/g, ''));
     }
+    // Fallback: inline header text (e.g., "Lot size 1000 — ₹127000" or "Lot size 2000")
+    if (!ipo.lotSize || ipo.lotSize === 0) {
+      const inlineLot = clean.match(/Lot size[^0-9]*(\d[\d,]*)/i);
+      if (inlineLot) {
+        const lotVal = parseInt(inlineLot[1].replace(/,/g, ''));
+        if (lotVal >= 50 && lotVal <= 10000) { // Sanity: lot sizes are always 50-10000
+          ipo.lotSize = lotVal;
+        }
+      }
+    }
     
     // --- Issue Size ---
     const issueSizeMatch = clean.match(/Issue size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
     if (issueSizeMatch) {
       const sizeStr = issueSizeMatch[1].replace(/<[^>]+>/g, '').trim();
       ipo.issueSize = sizeStr.includes('cr') ? `₹${sizeStr}` : sizeStr;
+    }
+    // Fallback: inline text (e.g., "Issue size 35cr" or "Issue size₹35cr")
+    if (!ipo.issueSize || ipo.issueSize === '') {
+      const inlineSize = clean.match(/Issue size[^0-9]*(\d[\d,.]*)\s*cr/i);
+      if (inlineSize) {
+        ipo.issueSize = `₹${inlineSize[1]}cr`;
+      }
     }
     
     // --- About / Description ---
@@ -482,7 +588,7 @@ async function fetchIPODetail(ipo) {
     // Clean up detailUrl (not needed in output)
     delete ipo.detailUrl;
     
-    console.log(`      ✅ ${ipo.name}: desc=${ipo.description ? 'yes' : 'no'} lot=${ipo.lotSize} highlights=${ipo.highlights.length} risks=${(ipo.risks || []).length}`);
+    console.log(`      ✅ ${ipo.name}: desc=${ipo.description ? 'yes' : 'no'} lot=${ipo.lotSize} listing=${ipo.listingDate || 'N/A'} allotment=${ipo.allotmentDate || 'N/A'} highlights=${ipo.highlights.length} risks=${(ipo.risks || []).length}`);
   } catch (error) {
     console.log(`      ⚠️ ${ipo.name}: detail fetch failed (${error.message})`);
     delete ipo.detailUrl;
@@ -1001,6 +1107,92 @@ function sanitizeIPORecords(records, nseSubscriptionData = []) {
 // MERGE & UPDATE LOGIC
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * Final data quality validation — removes junk entries, deduplicates,
+ * and fixes garbled data before writing to ipos.json.
+ * This is the last line of defense against bad data reaching the site.
+ */
+function validateIPORecords(records) {
+  let removed = 0;
+  
+  // 1. Remove junk entries (JS/HTML code parsed as names)
+  let validated = records.filter(r => {
+    const combined = (r.name || '') + (r.slug || '');
+    if (/function|document|querySelector|addEventListener|getElementById|filterTables/i.test(combined)) {
+      console.log(`    ⚠️ [Validate] Removed junk entry: ${r.name?.substring(0, 40)}`);
+      removed++;
+      return false;
+    }
+    if (!r.name || r.name.length < 3) {
+      removed++;
+      return false;
+    }
+    return true;
+  });
+  
+  // 2. Deduplicate by slug (keep the record with best data quality)
+  const slugMap = new Map();
+  for (const ipo of validated) {
+    const existing = slugMap.get(ipo.slug);
+    if (!existing) {
+      slugMap.set(ipo.slug, ipo);
+    } else {
+      // Score both — keep the better one
+      const score = (r) => {
+        let s = 0;
+        if (r.lotSize >= 50) s += 10;
+        if (r.description && r.description.length > 30) s += 5;
+        if (r.highlights && r.highlights.length > 0) s += 3;
+        if (r.risks && r.risks.length > 0) s += 3;
+        if (r.listingDate) s += 2;
+        if (r.allotmentDate) s += 2;
+        const maxP = parseInt(r.priceRange?.split('-').pop() || '0');
+        if (maxP >= 20) s += 10;
+        return s;
+      };
+      if (score(ipo) > score(existing)) {
+        slugMap.set(ipo.slug, ipo);
+      }
+      removed++;
+    }
+  }
+  validated = Array.from(slugMap.values());
+  
+  // 3. Detect and fix garbled price/lot (day numbers parsed as values)
+  for (const ipo of validated) {
+    if (ipo.priceRange && ipo.openDate && ipo.closeDate) {
+      const openDay = ipo.openDate.match(/(\d{1,2})/);
+      const closeDay = ipo.closeDate.match(/(\d{1,2})/);
+      if (openDay && closeDay) {
+        const garbled1 = `${openDay[1]}-${closeDay[1]}`;
+        const garbled2 = `${openDay[1].padStart(2, '0')}-${closeDay[1].padStart(2, '0')}`;
+        if (ipo.priceRange === garbled1 || ipo.priceRange === garbled2) {
+          ipo.priceRange = '';
+          ipo.priceMax = 0;
+        }
+      }
+    }
+    // Lot size that matches a day from the IPO dates
+    if (ipo.lotSize > 0 && ipo.lotSize <= 31) {
+      const dayMatch = ipo.openDate?.match(/(\d{1,2})/) || ipo.closeDate?.match(/(\d{1,2})/);
+      if (dayMatch && parseInt(dayMatch[1]) === ipo.lotSize) {
+        ipo.lotSize = 0;
+      }
+    }
+    // Price range "DD-YYYY" is clearly a date
+    if (ipo.priceRange && /^\d{2}-\d{4}$/.test(ipo.priceRange)) {
+      ipo.priceRange = '';
+      ipo.priceMax = 0;
+    }
+  }
+  
+  if (removed > 0) {
+    console.log(`    ✅ [Validate] Removed ${removed} junk/duplicate records. Final count: ${validated.length}`);
+  }
+  
+  return validated;
+}
+
 function mergeIPOData(existing, bseIPOs, nseData, sebiFilings) {
   // Only replace if scraper provides MORE data than existing
   if (bseIPOs.length <= existing.filter(i => i.status === 'live').length) {
@@ -1277,7 +1469,7 @@ function updateIPOStatuses() {
     if (oldStatus === 'upcoming' || oldStatus === 'drhp-filed') continue;
     
     const closeDate = parseIPODate(ipo.closeDate);
-    const listingDate = parseIPODate(ipo.listingDate);
+    const listingDate = parseIPODate(ipo.listingDate, true); // rejectRanges: listing must be a single date
     const openDate = parseIPODate(ipo.openDate);
     
     if (listingDate && todayIST >= listingDate) {
@@ -1305,9 +1497,20 @@ function updateIPOStatuses() {
 /**
  * Parse IPO date strings like "Jun 09, 2026", "Jun 08, 2026", 
  * "10th Jun 2026", "2026-06-10", etc.
+ * 
+ * @param {string} dateStr - The date string to parse
+ * @param {boolean} rejectRanges - If true, return null for date ranges (e.g. "10th – 12th Jun 2026")
+ *                                 Used for listingDate which must be a single date.
  */
-function parseIPODate(dateStr) {
+function parseIPODate(dateStr, rejectRanges = false) {
   if (!dateStr || dateStr.trim() === '') return null;
+  
+  // Detect date ranges: if string contains "–", "-" between two numbers, or "to"
+  // Date ranges are NOT valid listing dates (listing is always a single day)
+  if (rejectRanges) {
+    const rangePattern = /\d{1,2}(?:st|nd|rd|th)?\s*(?:–|-|to)\s*\d{1,2}(?:st|nd|rd|th)?/i;
+    if (rangePattern.test(dateStr)) return null;
+  }
   
   // Try standard Date parse first (handles "Jun 09, 2026" format)
   let d = new Date(dateStr);
@@ -1316,10 +1519,12 @@ function parseIPODate(dateStr) {
     return d;
   }
   
-  // Handle "10th Jun 2026", "04th – 08th Jun 2026" (take last date)
+  // Handle "10th Jun 2026" (single ordinal date only)
   const ordinalPattern = /(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4})/g;
   const matches = [...dateStr.matchAll(ordinalPattern)];
   if (matches.length > 0) {
+    // If multiple ordinal dates found and we're rejecting ranges, return null
+    if (rejectRanges && matches.length > 1) return null;
     const last = matches[matches.length - 1];
     d = new Date(`${last[1]} ${last[2]} ${last[3]}`);
     if (!isNaN(d.getTime())) {
@@ -1456,7 +1661,9 @@ async function main() {
         const protectedIPOs = protectFields(existingIPOs, validIPOs);
         // Apply timestamp preservation for unchanged records
         const finalIPOs = preserveTimestamps(existingIPOs, protectedIPOs);
-        writeData('ipos.json', finalIPOs);
+        // Final data quality validation
+        const cleanIPOs = validateIPORecords(finalIPOs);
+        writeData('ipos.json', cleanIPOs);
       }
     } else {
       console.log(`\n  ℹ️ Scraper returned ${bseIPOs.length} live IPOs, existing has ${liveExisting}. Keeping existing ipos.json.`);
@@ -1485,7 +1692,9 @@ async function main() {
         const protectedExistingIPOs = protectFields(existingIPOs, validExistingIPOs);
         // Apply timestamp preservation for unchanged records
         const finalExistingIPOs = preserveTimestamps(existingIPOs, protectedExistingIPOs);
-        writeData('ipos.json', finalExistingIPOs);
+        // Final data quality validation
+        const cleanExistingIPOs = validateIPORecords(finalExistingIPOs);
+        writeData('ipos.json', cleanExistingIPOs);
       }
     }
     

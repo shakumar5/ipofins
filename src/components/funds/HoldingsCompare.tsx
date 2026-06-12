@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface Holding {
   name: string;
@@ -41,10 +41,12 @@ export default function HoldingsCompare({ data }: Props) {
 
   const amcList = useMemo(() => Object.keys(data.amcs).sort(), [data.amcs]);
 
-  // Update URL when AMC and month are selected
-  const staticPageUrl = useMemo(() => {
-    if (!selectedAMC || !month2) return '';
-    return `/mutual-funds/holdings-changes/${slugify(selectedAMC)}/${monthSlug(month2)}`;
+  // Update browser URL when AMC and month2 are selected
+  useEffect(() => {
+    if (selectedAMC && month2 && typeof window !== 'undefined') {
+      const url = `/mutual-funds/mutual-fund-holdings-changes/${slugify(selectedAMC)}/${monthSlug(month2)}`;
+      window.history.replaceState(null, '', url);
+    }
   }, [selectedAMC, month2]);
 
   const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
@@ -53,14 +55,29 @@ export default function HoldingsCompare({ data }: Props) {
   function isDebtHolding(h: Holding): boolean {
     // Sector contains credit rating (CRISIL AAA, ICRA AA+, FITCH A1+, CARE AAA, etc.)
     if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return true;
-    // Name starts with coupon rate like "7.35% ..."
-    if (/^\d+\.?\d*%\s/.test(h.name)) return true;
-    // Name has maturity date like "(15/10/2027)"
+    // Sector is explicitly debt-related
+    if (h.sector && /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Mutual Fund)/i.test(h.sector)) return true;
+    // Name starts with coupon rate like "7.35% ..." or "7.35 % ..." (with optional space before %)
+    if (/^\d+\.?\d*\s*%\s/.test(h.name)) return true;
+    // Name has maturity date like "(15/10/2027)" or "01DEC2027" or "12NOV27"
     if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return true;
+    if (/\d{2}(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2,4}/i.test(h.name)) return true;
+    // Treasury bills, government securities
+    if (/T-BILL|TBILL|GOI|G\.?SEC|DAYS?\s+\d/i.test(h.name)) return true;
+    // NCDs (Non-Convertible Debentures)
+    if (/\bNCD\b/i.test(h.name)) return true;
     // Zero coupon bonds
     if (/\(ZCB\)/i.test(h.name)) return true;
     // Securitised instruments
     if (/securitisation trust/i.test(h.name)) return true;
+    // REITs and InvITs
+    if (/\bREIT\b|\bInvIT\b/i.test(h.name)) return true;
+    // PTCs (Pass-Through Certificates)
+    if (/\bPTC\b/i.test(h.name)) return true;
+    // Commercial paper
+    if (/commercial paper/i.test(h.name)) return true;
+    // Fund of Funds holdings (other MF schemes listed as holdings)
+    if (/\bfund\b.*\b(direct|growth|plan)\b/i.test(h.name)) return true;
     return false;
   }
 
@@ -99,6 +116,10 @@ export default function HoldingsCompare({ data }: Props) {
 
     for (const [slug, fund] of Object.entries(data.holdings)) {
       if (fund.amc !== selectedAMC) continue;
+
+      // Skip junk entries (Excel headers parsed as fund names)
+      if (/^(Industry|Market|Rating|Quantity|Value|ISIN|%)/i.test(fund.name)) continue;
+      if (/Fair Value|Rs\.?\s*in\s*Lacs/i.test(fund.name)) continue;
 
       const fundCat = getFundCategory(fund.name);
       if (selectedCategory !== 'All' && fundCat !== selectedCategory) continue;
@@ -220,9 +241,6 @@ export default function HoldingsCompare({ data }: Props) {
         {selectedAMC && (
           <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
             Showing changes for <strong>{fundsForAMC.length}</strong> equity funds from {selectedAMC} between {month1} → {month2}
-            {staticPageUrl && (
-              <> • <a href={staticPageUrl} className="text-primary-600 hover:underline font-medium">View dedicated page →</a></>
-            )}
           </p>
         )}
       </div>

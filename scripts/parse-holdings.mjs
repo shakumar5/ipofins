@@ -111,6 +111,7 @@ function detectAMC(filename, sheetData) {
   if (combined.includes('lic mf') || fn.includes('lic ') || fn.startsWith('lic ')) return 'LIC';
   if (combined.includes('angel one') || fn.includes('angel-one')) return 'Angel One';
   if (combined.includes('360 one') || fn.includes('in_mf')) return '360 ONE';
+  if (combined.includes('abakkus')) return 'Abakkus';
   if (combined.includes('choice')) return 'Choice';
   if (combined.includes('jio') || fn.includes('jioblack')) return 'Jio';
   if (combined.includes('baroda') || combined.includes('bob') || fn.includes('bobbnp')) return 'Baroda BNP Paribas';
@@ -295,10 +296,17 @@ function parseHoldingsFromSheet(data) {
     // Skip debt/money market instruments — detected by credit rating in sector column
     // or by instrument name patterns (e.g., "7.35% Bharti Telecom Limited (15/10/2027)")
     if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)\s/i.test(sector)) continue;
-    if (/^\d+\.?\d*%\s/.test(stockName)) continue; // Names starting with coupon rate like "7.35% ..."
+    if (sector && /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Mutual Fund)/i.test(sector)) continue;
+    if (/^\d+\.?\d*\s*%\s/.test(stockName)) continue; // Names starting with coupon rate like "7.35% ..." or "7.35 % ..."
     if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(stockName)) continue; // Names with maturity dates like "(15/10/2027)"
+    if (/\d{2}(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2,4}/i.test(stockName)) continue; // Dates like "01DEC2027"
+    if (/T-BILL|TBILL|GOI|G\.?SEC|DAYS?\s+\d/i.test(stockName)) continue; // Government securities
+    if (/\bNCD\b/i.test(stockName)) continue; // Non-Convertible Debentures
     if (/\(ZCB\)/i.test(stockName)) continue; // Zero coupon bonds
     if (/securitisation trust/i.test(stockName)) continue; // Securitized instruments
+    if (/\bREIT\b|\bInvIT\b/i.test(stockName)) continue; // REITs and InvITs
+    if (/\bPTC\b/i.test(stockName)) continue; // Pass-Through Certificates
+    if (/commercial paper/i.test(stockName)) continue; // Commercial paper
     
     // Get value (Rs in Lakhs)
     let value = colValue >= 0 ? parseFloat(String(row[colValue] || '0').replace(/,/g, '')) || 0 : 0;
@@ -377,6 +385,10 @@ function processFile(filepath, filename) {
       
       if (holdings.length < 3) continue; // Skip if too few holdings (probably not equity)
       
+      // Skip junk fund names (Excel column headers parsed as fund names)
+      if (/^(Industry|Market|Rating|Quantity|Value|ISIN|%|Sl\.?\s*No|Sr\.?\s*No)/i.test(fundName)) continue;
+      if (/Fair Value|Rs\.?\s*in\s*Lacs|Net Assets/i.test(fundName)) continue;
+      
       // Only include equity funds (skip debt, gold, liquid, overnight etc.)
       const fnLower = (fundName + ' ' + sheetName).toLowerCase();
       if (fnLower.includes('liquid') || fnLower.includes('overnight') || 
@@ -389,6 +401,11 @@ function processFile(filepath, filename) {
           fnLower.includes('credit risk') || fnLower.includes('banking & psu debt') ||
           fnLower.includes('banking and psu debt') ||
           fnLower.includes('constant maturity') || fnLower.includes('float') ||
+          fnLower.includes('low duration') || fnLower.includes('short duration') ||
+          fnLower.includes('medium duration') || fnLower.includes('long duration') ||
+          fnLower.includes('dynamic bond') || fnLower.includes('income fund') ||
+          fnLower.includes('arbitrage') || fnLower.includes('nifty sdl') ||
+          fnLower.includes('target maturity') || fnLower.includes('index fund') ||
           fnLower.includes('1d rate')) continue;
       
       results.push({
@@ -493,6 +510,74 @@ for (const entry of allResults) {
 for (const amc of Object.keys(output.amcs)) {
   output.amcs[amc].sort();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// DATA QUALITY VALIDATION — Final pass before writing
+// ═══════════════════════════════════════════════════════════════
+console.log('');
+console.log('  🔍 Running data quality validation...');
+
+let validationIssues = 0;
+
+// 1. Remove holdings with 0% weight (parsing artifacts)
+for (const [slug, fund] of Object.entries(output.holdings)) {
+  const months = Object.keys(fund).filter(k => k !== 'name' && k !== 'amc');
+  for (const month of months) {
+    if (!Array.isArray(fund[month])) continue;
+    const before = fund[month].length;
+    fund[month] = fund[month].filter(h => h.pct > 0);
+    if (before !== fund[month].length) validationIssues += (before - fund[month].length);
+  }
+}
+
+// 2. Clean stock names (trailing special characters from Excel)
+for (const [slug, fund] of Object.entries(output.holdings)) {
+  const months = Object.keys(fund).filter(k => k !== 'name' && k !== 'amc');
+  for (const month of months) {
+    if (!Array.isArray(fund[month])) continue;
+    for (const h of fund[month]) {
+      h.name = h.name.replace(/[\s\$~!^#@\*]+$/g, '').replace(/\s+/g, ' ').trim();
+      if (h.sector) h.sector = h.sector.replace(/[\s\$~!^#@\*]+$/g, '').replace(/\s+/g, ' ').trim();
+    }
+  }
+}
+
+// 3. Remove funds with insufficient data (< 3 holdings in all months)
+const emptyFunds = [];
+for (const [slug, fund] of Object.entries(output.holdings)) {
+  const months = Object.keys(fund).filter(k => k !== 'name' && k !== 'amc');
+  const hasEnough = months.some(m => Array.isArray(fund[m]) && fund[m].length >= 3);
+  if (!hasEnough) {
+    emptyFunds.push(fund.name);
+    delete output.holdings[slug];
+  }
+}
+
+// 4. Remove junk fund names (Excel column headers, etc.)
+const junkFundPatterns = [
+  /^(Industry|Market|Rating|Quantity|Value|ISIN|%|Sl\.?\s*No|Sr\.?\s*No)/i,
+  /Fair Value|Rs\.?\s*in\s*Lacs|Net Assets/i,
+  /^Product Labelling/i,
+  /^Portfolio Statement/i,
+  /^SCHEME CODE/i,
+  /^\(Investment Manager/i,
+];
+for (const [slug, fund] of Object.entries(output.holdings)) {
+  if (junkFundPatterns.some(p => p.test(fund.name))) {
+    delete output.holdings[slug];
+    validationIssues++;
+  }
+}
+
+// 5. Update AMC lists to reflect final holdings
+const finalFundNames = new Set(Object.values(output.holdings).map(f => f.name));
+for (const [amc, funds] of Object.entries(output.amcs)) {
+  output.amcs[amc] = funds.filter(f => finalFundNames.has(f));
+  if (output.amcs[amc].length === 0) delete output.amcs[amc];
+}
+
+console.log(`    Removed ${validationIssues} invalid records`);
+console.log(`    Removed ${emptyFunds.length} funds with insufficient data`);
 
 const fundCount = Object.keys(output.holdings).length;
 const amcCount = Object.keys(output.amcs).length;

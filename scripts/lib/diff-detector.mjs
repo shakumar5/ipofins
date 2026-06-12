@@ -55,11 +55,19 @@ export function protectFields(existingData, newData, keyField = 'slug') {
 
     const merged = { ...newRecord };
     for (const [key, oldValue] of Object.entries(existing)) {
-      if (key === keyField || key === 'lastUpdated') continue;
+      if (key === keyField || key === 'lastUpdated' || key === 'status') continue;
 
       const newValue = merged[key];
-      const oldIsPopulated = oldValue !== null && oldValue !== undefined && oldValue !== '';
-      const newIsEmpty = newValue === null || newValue === undefined || newValue === '';
+      
+      // Determine if old value has real data
+      const oldIsPopulated = oldValue !== null && oldValue !== undefined && oldValue !== '' &&
+        !(typeof oldValue === 'number' && oldValue === 0) &&
+        !(Array.isArray(oldValue) && oldValue.length === 0);
+      
+      // Determine if new value is empty/degraded
+      const newIsEmpty = newValue === null || newValue === undefined || newValue === '' ||
+        (typeof newValue === 'number' && newValue === 0 && typeof oldValue === 'number' && oldValue > 0) ||
+        (Array.isArray(newValue) && newValue.length === 0 && Array.isArray(oldValue) && oldValue.length > 0);
 
       if (oldIsPopulated && newIsEmpty) {
         merged[key] = oldValue;

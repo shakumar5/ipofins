@@ -24,10 +24,19 @@ interface IPORecord {
 
 /**
  * Parse various IPO date string formats into a Date object.
- * Handles: "Jun 09, 2026", "10th Jun 2026", "04th – 08th Jun 2026", "DD-MM-YYYY"
+ * Handles: "Jun 09, 2026", "10th Jun 2026", "DD-MM-YYYY"
+ * 
+ * @param rejectRanges - If true, returns null for date ranges (e.g. "10th – 12th Jun 2026").
+ *                       Used for listingDate which must be a single date.
  */
-function parseIPODate(dateStr: string | undefined | null): Date | null {
+function parseIPODate(dateStr: string | undefined | null, rejectRanges = false): Date | null {
   if (!dateStr || dateStr.trim() === '') return null;
+
+  // Detect date ranges — not valid for single-date fields like listingDate
+  if (rejectRanges) {
+    const rangePattern = /\d{1,2}(?:st|nd|rd|th)?\s*[–\-]\s*\d{1,2}(?:st|nd|rd|th)?/;
+    if (rangePattern.test(dateStr)) return null;
+  }
 
   // Try standard Date parse first (handles "Jun 09, 2026")
   let d = new Date(dateStr);
@@ -36,10 +45,12 @@ function parseIPODate(dateStr: string | undefined | null): Date | null {
     return d;
   }
 
-  // Handle "10th Jun 2026", "04th – 08th Jun 2026" (take last date)
+  // Handle "10th Jun 2026" (single ordinal date)
   const ordinalPattern = /(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4})/g;
   const matches = [...dateStr.matchAll(ordinalPattern)];
   if (matches.length > 0) {
+    // If multiple ordinal dates found and we're rejecting ranges, return null
+    if (rejectRanges && matches.length > 1) return null;
     const last = matches[matches.length - 1];
     d = new Date(`${last[1]} ${last[2]} ${last[3]}`);
     if (!isNaN(d.getTime())) {
@@ -76,7 +87,7 @@ export function computeIPOStatus(ipo: IPORecord): IPOStatus {
 
   const openDate = parseIPODate(ipo.openDate);
   const closeDate = parseIPODate(ipo.closeDate);
-  const listingDate = parseIPODate(ipo.listingDate);
+  const listingDate = parseIPODate(ipo.listingDate, true); // rejectRanges: listing must be a single date
 
   if (listingDate && now >= listingDate) {
     return 'listed';

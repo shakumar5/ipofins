@@ -106,6 +106,51 @@ const jsonLd = {
     </div>
   </section>
 
+  <!-- IPO Schedule -->
+  {(ipo.allotmentDate || ipo.listingDate || ipo.refundDate || ipo.creditDate) && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">IPO Schedule</h2>
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
+            <tr>
+              <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Issue Open Date</td>
+              <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.openDate || '—'}</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Issue Close Date</td>
+              <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.closeDate || '—'}</td>
+            </tr>
+            {ipo.allotmentDate && (
+              <tr>
+                <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Allotment Date</td>
+                <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.allotmentDate}</td>
+              </tr>
+            )}
+            {ipo.refundDate && (
+              <tr>
+                <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Refund Initiation</td>
+                <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.refundDate}</td>
+              </tr>
+            )}
+            {ipo.creditDate && (
+              <tr>
+                <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Share Credit (Demat)</td>
+                <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.creditDate}</td>
+              </tr>
+            )}
+            {ipo.listingDate && (
+              <tr>
+                <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Listing Date</td>
+                <td class="py-2.5 px-3 font-semibold text-primary-600 dark:text-primary-400 text-right">{ipo.listingDate}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )}
+
   <!-- About Company -->
   {ipo.description && (
     <section class="container-wide py-4">
