@@ -3,7 +3,7 @@
     "name": "Hexagon Nutrition",
     "slug": "hexagon-nutrition",
     "type": "mainboard",
-    "status": "closed",
+    "status": "listed",
     "priceRange": "42-45",
     "lotSize": 333,
     "openDate": "Jun 05, 2026",
@@ -31,13 +31,14 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 9
   },
   {
     "name": "GenXAI Analytics",
     "slug": "genxai-analytics",
     "type": "sme",
-    "status": "closed",
+    "status": "listed",
     "priceRange": "110-116",
     "lotSize": 1200,
     "openDate": "Jun 05, 2026",
@@ -64,7 +65,8 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 9
   },
   {
     "name": "Vahh Chemicals",
@@ -98,7 +100,8 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 9
   },
   {
     "name": "UHM Vacation",
@@ -131,7 +134,8 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 9
   },
   {
     "name": "CMR Green Technologies",
@@ -164,7 +168,8 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 8
   },
   {
     "name": "SMR Jewels",
@@ -196,7 +201,8 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 8
   },
   {
     "name": "Merritronix",
@@ -228,7 +234,8 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 8
   },
   {
     "name": "M R Maniveni Foods",
@@ -261,7 +268,8 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 5
   },
   {
     "name": "Q-Line Biotech",
@@ -294,7 +302,8 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 3
   },
   {
     "name": "Autofurnish",
@@ -327,7 +336,8 @@
     "risks": [],
     "riskScore": 6,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.016Z",
+    "priceMax": 3
   },
   {
     "name": "Vegorama Punjabi Angithi",
@@ -360,7 +370,7 @@
     "risks": [],
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Bio Medica Laboratories",
@@ -393,79 +403,7 @@
     "risks": [],
     "riskScore": 7,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.490Z"
-  },
-  {
-    "name": "Utkal Speciality Industries India",
-    "slug": "utkal-speciality-industries-india",
-    "type": "sme",
-    "status": "live",
-    "priceRange": "10-12",
-    "priceMax": 12,
-    "lotSize": 10,
-    "openDate": "Jun 10, 2026",
-    "closeDate": "Jun 12, 2026",
-    "listingDate": "10th – 12th Jun 2026",
-    "sector": "Others",
-    "issueSize": "₹35cr",
-    "subscription": null,
-    "gmp": null,
-    "registrar": "",
-    "founders": "",
-    "headquarters": "Khurda, Odisha",
-    "founded": "",
-    "description": "Utkal Speciality Industries India Limited is engaged in the manufacturing of paper-based products and packaging materials. The company offers a range of products used in food service and packaging applications, including paper plates, paper cups, paper glasses, paper dosa plates, paper bowls, tissue paper, pizza and sweets boxes, and wrap paper for sandwiches and burgers. Its products are available in different sizes, designs, thicknesses, and quality variants to meet the requirements of various customer segments.",
-    "purpose": "Working capital (₹5.31 Cr, 15.37%); Repayment of borrowings (₹11 Cr, 31.85%); New manufacturing facility at Khurda, Odisha (₹9.6 Cr, 27.79%); General corporate purposes (₹8.63 Cr, 24.99%)",
-    "highlights": [],
-    "risks": [
-      "The business has high working capital requirements and may need additional funding to support operations.",
-      "Delays in customer payments or inability to secure financing could adversely affect business performance.",
-      "The proposed new manufacturing facility may not achieve expected capacity utilisation or profitability.",
-      "Additional production capacity may not be fully absorbed by market demand, impacting returns on investment.",
-      "A portion of the planned capital expenditure depends on external bank financing, which is yet to be fully drawn."
-    ],
-    "drhpUrl": "https://zerodha.com/ipo/449814/utkal-speciality-industries-india/",
-    "aiScore": null,
-    "aiSummary": null,
-    "riskScore": 5,
-    "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
-  },
-  {
-    "name": "Susan Electricals India",
-    "slug": "susan-electricals-india",
-    "type": "sme",
-    "status": "live",
-    "priceRange": "11-15",
-    "priceMax": 15,
-    "lotSize": 11,
-    "openDate": "Jun 11, 2026",
-    "closeDate": "Jun 15, 2026",
-    "listingDate": "11th – 15th Jun 2026",
-    "sector": "Others",
-    "issueSize": "₹70cr",
-    "subscription": null,
-    "gmp": null,
-    "registrar": "",
-    "founders": "",
-    "headquarters": "",
-    "founded": "",
-    "description": "",
-    "purpose": "",
-    "highlights": [],
-    "risks": [
-      "A significant portion of revenue depends on government-owned electricity distribution companies (DISCOMs).",
-      "The business relies on winning and executing government and institutional tenders.",
-      "Revenue is dependent on a limited number of customers, making customer concentration a risk.",
-      "The company faces intense competition from existing and potential players in the industry.",
-      "Failure to execute expansion and growth strategies could adversely affect business performance."
-    ],
-    "drhpUrl": "https://zerodha.com/ipo/449835/susan-electricals-india/",
-    "aiScore": null,
-    "aiSummary": null,
-    "riskScore": 5,
-    "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Hexagon Nutrition",
@@ -501,7 +439,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "GenXAI Analytics",
@@ -537,7 +475,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Vahh Chemicals",
@@ -573,7 +511,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "UHM Vacation",
@@ -609,7 +547,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "SMR Jewels",
@@ -645,7 +583,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "CMR Green Technologies",
@@ -681,7 +619,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Merritronix",
@@ -717,7 +655,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Rajnandini Fashion India",
@@ -753,7 +691,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Aureate Tradde",
@@ -789,7 +727,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Harikanta Overseas",
@@ -825,7 +763,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "Yaashvi Jewellers",
@@ -861,7 +799,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z"
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
   },
   {
     "name": "M R Maniveni Foods",
@@ -897,7 +835,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z",
+    "lastUpdated": "2026-06-12T10:19:41.011Z",
     "listingPrice": 41
   },
   {
@@ -934,7 +872,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z",
+    "lastUpdated": "2026-06-12T10:19:41.011Z",
     "listingPrice": 473
   },
   {
@@ -971,7 +909,7 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-11T02:10:36.496Z",
+    "lastUpdated": "2026-06-12T10:19:41.011Z",
     "listingPrice": 45
   },
   {
@@ -1008,6 +946,114 @@
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
+    "lastUpdated": "2026-06-12T10:19:41.011Z"
+  },
+  {
+    "name": "Utkal Speciality Industries India",
+    "slug": "utkal-speciality-industries-india",
+    "type": "sme",
+    "status": "listed",
+    "priceRange": "10-12",
+    "priceMax": 12,
+    "lotSize": 10,
+    "openDate": "Jun 10, 2026",
+    "closeDate": "Jun 12, 2026",
+    "listingDate": "10th – 12th Jun 2026",
+    "sector": "Others",
+    "issueSize": "₹35cr",
+    "subscription": null,
+    "gmp": null,
+    "registrar": "",
+    "founders": "",
+    "headquarters": "Khurda, Odisha",
+    "founded": "",
+    "description": "Utkal Speciality Industries India Limited is engaged in the manufacturing of paper-based products and packaging materials. The company offers a range of products used in food service and packaging applications, including paper plates, paper cups, paper glasses, paper dosa plates, paper bowls, tissue paper, pizza and sweets boxes, and wrap paper for sandwiches and burgers. Its products are available in different sizes, designs, thicknesses, and quality variants to meet the requirements of various customer segments.",
+    "purpose": "Working capital (₹5.31 Cr, 15.37%); Repayment of borrowings (₹11 Cr, 31.85%); New manufacturing facility at Khurda, Odisha (₹9.6 Cr, 27.79%); General corporate purposes (₹8.63 Cr, 24.99%)",
+    "highlights": [],
+    "risks": [
+      "The business has high working capital requirements and may need additional funding to support operations.",
+      "Delays in customer payments or inability to secure financing could adversely affect business performance.",
+      "The proposed new manufacturing facility may not achieve expected capacity utilisation or profitability.",
+      "Additional production capacity may not be fully absorbed by market demand, impacting returns on investment.",
+      "A portion of the planned capital expenditure depends on external bank financing, which is yet to be fully drawn."
+    ],
+    "drhpUrl": "https://zerodha.com/ipo/449814/utkal-speciality-industries-india/",
+    "aiScore": null,
+    "aiSummary": null,
+    "riskScore": 5,
+    "verdict": null,
     "lastUpdated": "2026-06-11T02:10:36.496Z"
+  },
+  {
+    "name": "Horizon Reclaim (India)",
+    "slug": "susan-electricals-india",
+    "type": "sme",
+    "status": "live",
+    "priceRange": "11-15",
+    "priceMax": 15,
+    "lotSize": 11,
+    "openDate": "Jun 11, 2026",
+    "closeDate": "Jun 15, 2026",
+    "listingDate": "11th – 15th Jun 2026",
+    "sector": "Others",
+    "issueSize": "₹70cr",
+    "subscription": null,
+    "gmp": null,
+    "registrar": "",
+    "founders": "",
+    "headquarters": "",
+    "founded": "",
+    "description": "",
+    "purpose": "",
+    "highlights": [],
+    "risks": [
+      "A significant portion of revenue depends on government-owned electricity distribution companies (DISCOMs).",
+      "The business relies on winning and executing government and institutional tenders.",
+      "Revenue is dependent on a limited number of customers, making customer concentration a risk.",
+      "The company faces intense competition from existing and potential players in the industry.",
+      "Failure to execute expansion and growth strategies could adversely affect business performance."
+    ],
+    "drhpUrl": "https://zerodha.com/ipo/449835/susan-electricals-india/",
+    "aiScore": null,
+    "aiSummary": null,
+    "riskScore": 5,
+    "verdict": null,
+    "lastUpdated": "2026-06-12T10:19:41.016Z"
+  },
+  {
+    "name": "Susan Electricals India",
+    "slug": "horizon-reclaim-india",
+    "type": "sme",
+    "status": "live",
+    "priceRange": "12-16",
+    "priceMax": 16,
+    "lotSize": 12,
+    "openDate": "Jun 12, 2026",
+    "closeDate": "Jun 16, 2026",
+    "listingDate": "12th – 16th Jun 2026",
+    "sector": "Others",
+    "issueSize": "₹54cr",
+    "subscription": null,
+    "gmp": null,
+    "registrar": "",
+    "founders": "",
+    "headquarters": "",
+    "founded": "",
+    "description": "",
+    "purpose": "",
+    "highlights": [],
+    "risks": [
+      "A significant portion of revenue comes from a limited number of customers.",
+      "Operations depend on a limited number of suppliers for key raw materials.",
+      "Rising raw material prices or supply disruptions could affect profitability.",
+      "Failure to meet product quality standards may lead to order cancellations and loss of business.",
+      "Under-utilisation of manufacturing capacity could adversely impact future financial performance."
+    ],
+    "drhpUrl": "https://zerodha.com/ipo/449844/horizon-reclaim-india/",
+    "aiScore": null,
+    "aiSummary": null,
+    "riskScore": 5,
+    "verdict": null,
+    "lastUpdated": "2026-06-12T10:19:41.016Z"
   }
 ]
