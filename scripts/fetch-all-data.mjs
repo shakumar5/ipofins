@@ -153,7 +153,7 @@ async function fetchBSEIPOs() {
       }
     }
     
-    // Fetch detail pages for closed IPOs too (for performance data)
+    // Fetch detail pages for closed IPOs too (for enriching ipos.json data)
     if (closed.length > 0) {
       console.log(`    📄 Fetching detail pages for ${closed.length} closed IPO(s)...`);
       for (const ipo of closed) {
@@ -162,49 +162,6 @@ async function fetchBSEIPOs() {
           await new Promise(r => setTimeout(r, 1000));
         }
       }
-      
-      // Update performance data
-      const perfData = readExisting('ipo-performance.json');
-      if (!perfData['2026']) perfData['2026'] = { mainboard: [], sme: [] };
-      closed.forEach(ipo => {
-        // Skip junk entries (JavaScript code parsed as names)
-        if (!ipo.name || ipo.name.length < 3 || /function|document|querySelector|addEventListener|filterTables/i.test(ipo.name)) return;
-        
-        // Determine correct issue price from priceRange (not priceMax which can be garbled)
-        let issuePrice = 0;
-        if (ipo.priceRange && ipo.priceRange.length > 0) {
-          const priceParts = ipo.priceRange.split('-');
-          const maxPrice = parseInt((priceParts[priceParts.length - 1] || '0').replace(/,/g, ''));
-          if (maxPrice >= 10) issuePrice = maxPrice; // Sanity: real IPO prices are always >= ₹10
-        }
-        // Fallback to priceMax only if it looks valid (>= 10)
-        if (issuePrice === 0 && ipo.priceMax >= 10) {
-          issuePrice = ipo.priceMax;
-        }
-        
-        // Skip entries with clearly garbled data (no valid price, no valid listing date)
-        if (issuePrice === 0) return;
-        
-        // Reject date ranges as listing dates (listing is always a single date)
-        const rangePattern = /\d{1,2}(?:st|nd|rd|th)?\s*(?:–|-|to)\s*\d{1,2}(?:st|nd|rd|th)?/i;
-        if (rangePattern.test(ipo.listingDate || '')) return;
-        
-        const entry = {
-          name: ipo.name,
-          listingDate: ipo.listingDate || '',
-          issuePrice,
-          listingPrice: ipo.listingPrice || 0,
-          currentPrice: ipo.listingPrice || 0,
-          sector: ipo.sector || 'Others',
-        };
-        const list = ipo.type === 'mainboard' ? perfData['2026'].mainboard : perfData['2026'].sme;
-        // Prevent duplicates (check both lists to avoid mainboard/sme misclassification dupes)
-        const allEntries = [...perfData['2026'].mainboard, ...perfData['2026'].sme];
-        if (!allEntries.find(e => e.name === ipo.name)) {
-          list.push(entry);
-        }
-      });
-      writeData('ipo-performance.json', perfData);
     }
     
     // Return all IPOs (live + closed) for ipos.json
@@ -598,6 +555,21 @@ async function fetchIPODetail(ipo) {
       ipo.risks = items.map(m => m[1].replace(/<[^>]+>/g, '').trim()).filter(s => s.length > 10).slice(0, 5);
     }
     
+    // --- Listing Price (for closed/listed IPOs) ---
+    // Zerodha shows "Listed at" or "Listing price" for listed IPOs
+    const listingPriceMatch = clean.match(/(?:Listed at|Listing price|Listing day open)[^₹]*₹\s*(\d[\d,]*\.?\d*)/i);
+    if (listingPriceMatch) {
+      ipo.listingPrice = parseFloat(listingPriceMatch[1].replace(/,/g, ''));
+    }
+    // Fallback: try "Listing day close" or table row with listing price
+    if (!ipo.listingPrice) {
+      const listPriceRow = clean.match(/[Ll]isting[\s\S]{0,50}?₹\s*(\d[\d,]*\.?\d*)/);
+      if (listPriceRow) {
+        const val = parseFloat(listPriceRow[1].replace(/,/g, ''));
+        if (val >= 10) ipo.listingPrice = val; // Sanity: must be >= ₹10
+      }
+    }
+    
     // --- Prospectus URL ---
     const prospectusMatch = clean.match(/href="([^"]*)"[^>]*>[\s\S]*?(?:prospectus|DRHP|RHP)/i);
     if (prospectusMatch) {
@@ -612,10 +584,94 @@ async function fetchIPODetail(ipo) {
     // Clean up detailUrl (not needed in output)
     delete ipo.detailUrl;
     
-    console.log(`      ✅ ${ipo.name}: desc=${ipo.description ? 'yes' : 'no'} lot=${ipo.lotSize} listing=${ipo.listingDate || 'N/A'} allotment=${ipo.allotmentDate || 'N/A'} highlights=${ipo.highlights.length} risks=${(ipo.risks || []).length}`);
+    console.log(`      ✅ ${ipo.name}: desc=${ipo.description ? 'yes' : 'no'} lot=${ipo.lotSize} listing=${ipo.listingDate || 'N/A'} allotment=${ipo.allotmentDate || 'N/A'} listingPrice=${ipo.listingPrice || 'N/A'} highlights=${ipo.highlights.length} risks=${(ipo.risks || []).length}`);
   } catch (error) {
     console.log(`      ⚠️ ${ipo.name}: detail fetch failed (${error.message})`);
     delete ipo.detailUrl;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 1b. FETCH CURRENT PRICES — Google Finance (free, no API key)
+// Updates listingPrice and currentPrice in ipo-performance.json
+// ═══════════════════════════════════════════════════════════════
+
+async function fetchCurrentPricesForPerformance() {
+  console.log('\n  📈 [Google Finance] Fetching current prices for performance data...');
+  
+  const perfData = readExisting('ipo-performance.json');
+  if (!perfData || !perfData['2026']) {
+    console.log('    ⚠️ No performance data found');
+    return;
+  }
+  
+  const allEntries = [
+    ...((perfData['2026'].mainboard || []).map(e => ({ ...e, _list: 'mainboard' }))),
+    ...((perfData['2026'].sme || []).map(e => ({ ...e, _list: 'sme' }))),
+  ];
+  
+  // Only fetch for entries that are missing listing or current price
+  const needsUpdate = allEntries.filter(e => !e.listingPrice || !e.currentPrice || e.currentPrice === e.listingPrice);
+  
+  if (needsUpdate.length === 0) {
+    console.log('    ✅ All entries already have prices');
+    return;
+  }
+  
+  console.log(`    Fetching prices for ${needsUpdate.length} IPOs...`);
+  
+  let updated = 0;
+  
+  for (const entry of needsUpdate) {
+    try {
+      // Try Google Finance (NSE ticker first, then BSE)
+      const ticker = entry.name
+        .replace(/\s*(Limited|Ltd|IPO)\s*/gi, '')
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .trim()
+        .replace(/\s+/g, '')
+        .toUpperCase();
+      
+      // Try to fetch from Google Finance page
+      const searchName = encodeURIComponent(entry.name.replace(/\s*(IPO)\s*/gi, '').trim() + ' NSE');
+      const gfUrl = `https://www.google.com/finance/quote/${ticker}:NSE`;
+      
+      const response = await fetchWithHeaders(gfUrl);
+      if (response.ok) {
+        const html = await response.text();
+        // Google Finance shows current price in a data-last-price attribute or specific div
+        const priceMatch = html.match(/data-last-price="([\d.]+)"/);
+        if (priceMatch) {
+          const currentPrice = parseFloat(priceMatch[1]);
+          if (currentPrice >= 1) {
+            // Find and update the entry in perfData
+            const list = entry._list === 'mainboard' ? perfData['2026'].mainboard : perfData['2026'].sme;
+            const target = list.find(e => e.name === entry.name);
+            if (target) {
+              target.currentPrice = Math.round(currentPrice * 100) / 100;
+              // If listing price is 0 but we have issue price, use current price as listing (approx for recently listed)
+              if (!target.listingPrice && target.issuePrice) {
+                // Don't overwrite — listing price should come from Zerodha detail
+              }
+              updated++;
+              console.log(`      ✅ ${entry.name}: ₹${target.currentPrice}`);
+            }
+          }
+        }
+      }
+      
+      // Respectful delay between requests
+      await new Promise(r => setTimeout(r, 1500));
+    } catch (err) {
+      // Silently continue — price fetch is best-effort
+    }
+  }
+  
+  if (updated > 0) {
+    writeData('ipo-performance.json', perfData);
+    console.log(`    ✅ Updated current prices for ${updated} IPOs`);
+  } else {
+    console.log('    ⚠️ Could not fetch prices (Google Finance may be blocking). Prices will update on next run.');
   }
 }
 
@@ -1525,6 +1581,82 @@ function updateIPOStatuses() {
 }
 
 /**
+ * Build performance data from ipos.json — only includes IPOs with status "listed".
+ * This ensures only stocks that have actually started trading appear on the performance page.
+ */
+function buildPerformanceData() {
+  console.log('\n  📊 Building performance data from listed IPOs...');
+  
+  const ipos = readExisting('ipos.json');
+  const listedIPOs = ipos.filter(ipo => ipo.status === 'listed');
+  
+  if (listedIPOs.length === 0) {
+    console.log('    No listed IPOs found');
+    return;
+  }
+  
+  const perfData = readExisting('ipo-performance.json');
+  if (!perfData['2026']) perfData['2026'] = { mainboard: [], sme: [] };
+  
+  let added = 0;
+  let updated = 0;
+  
+  listedIPOs.forEach(ipo => {
+    // Skip junk entries
+    if (!ipo.name || ipo.name.length < 3) return;
+    if (/function|document|querySelector|addEventListener|filterTables/i.test(ipo.name)) return;
+    
+    // Determine issue price from priceRange
+    let issuePrice = 0;
+    if (ipo.priceRange && ipo.priceRange.length > 0) {
+      const priceParts = ipo.priceRange.split('-');
+      const maxPrice = parseInt((priceParts[priceParts.length - 1] || '0').replace(/,/g, ''));
+      if (maxPrice >= 10) issuePrice = maxPrice;
+    }
+    if (issuePrice === 0 && ipo.priceMax >= 10) {
+      issuePrice = ipo.priceMax;
+    }
+    if (issuePrice === 0) return;
+    
+    // Must have a valid single-date listing date
+    const rangePattern = /\d{1,2}(?:st|nd|rd|th)?\s*(?:–|-|to)\s*\d{1,2}(?:st|nd|rd|th)?/i;
+    if (!ipo.listingDate || rangePattern.test(ipo.listingDate)) return;
+    
+    // Check if already exists in performance data
+    const allEntries = [...perfData['2026'].mainboard, ...perfData['2026'].sme];
+    const existing = allEntries.find(e => e.name === ipo.name);
+    
+    if (!existing) {
+      // Add new entry
+      const entry = {
+        name: ipo.name,
+        listingDate: ipo.listingDate,
+        issuePrice,
+        listingPrice: ipo.listingPrice || 0,
+        currentPrice: ipo.listingPrice || 0,
+        sector: ipo.sector || 'Others',
+      };
+      const list = ipo.type === 'mainboard' ? perfData['2026'].mainboard : perfData['2026'].sme;
+      list.push(entry);
+      added++;
+    } else {
+      // Update listing price if we now have it but didn't before
+      if (ipo.listingPrice && (!existing.listingPrice || existing.listingPrice === 0)) {
+        existing.listingPrice = ipo.listingPrice;
+        updated++;
+      }
+      // Update current price if it's still 0
+      if (existing.listingPrice && (!existing.currentPrice || existing.currentPrice === 0)) {
+        existing.currentPrice = existing.listingPrice;
+      }
+    }
+  });
+  
+  writeData('ipo-performance.json', perfData);
+  console.log(`    ✅ Performance data: ${added} added, ${updated} updated (from ${listedIPOs.length} listed IPOs)`);
+}
+
+/**
  * Parse IPO date strings like "Jun 09, 2026", "Jun 08, 2026", 
  * "10th Jun 2026", "2026-06-10", etc.
  * 
@@ -1741,6 +1873,12 @@ async function main() {
     
     // 4. Update IPO statuses based on dates (live → closed → listed)
     updateIPOStatuses();
+    
+    // 4a. Build performance data from listed IPOs only
+    buildPerformanceData();
+    
+    // 4b. Fetch current market prices for performance page
+    await fetchCurrentPricesForPerformance();
   }
   
   // 4. Fetch mutual fund NAVs from AMFI

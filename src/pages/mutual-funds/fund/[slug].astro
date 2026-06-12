@@ -5,7 +5,7 @@ import holdingsData from '../../../data/fund-holdings.json';
 
 export function getStaticPaths() {
   return fundsData.map(fund => ({
-    params: { slug: fund.slug },
+    params: { slug: `${fund.slug}-holdings` },
     props: { fund },
   }));
 }
@@ -17,7 +17,7 @@ const jsonLd = {
   "@type": "FinancialProduct",
   "name": fund.name,
   "description": `${fund.name} - ${fund.category} mutual fund with ${fund.returns3y}% 3-year returns.`,
-  "url": `https://ipofins.com/mutual-funds/fund/${fund.slug}`,
+  "url": `https://ipofins.com/mutual-funds/fund/${fund.slug}-holdings`,
 };
 
 const faqJsonLd = {
@@ -238,7 +238,7 @@ const holdings = rawHoldings.filter((h: any) => {
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">More {fund.category} Funds</h2>
     <div class="space-y-2">
       {fundsData.filter(f => f.category === fund.category && f.slug !== fund.slug).slice(0, 5).map(f => (
-        <a href={`/mutual-funds/fund/${f.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
+        <a href={`/mutual-funds/fund/${f.slug}-holdings`} class="card-compact group block hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{f.name}</h3>

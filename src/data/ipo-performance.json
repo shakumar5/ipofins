@@ -13,16 +13,16 @@
         "name": "CMR Green Technologies",
         "listingDate": "Jun 10, 2026",
         "issuePrice": 192,
-        "listingPrice": 192,
-        "currentPrice": 192,
+        "listingPrice": 275.40,
+        "currentPrice": 250,
         "sector": "Green Energy"
       },
       {
         "name": "Hexagon Nutrition",
         "listingDate": "Jun 12, 2026",
         "issuePrice": 45,
-        "listingPrice": 0,
-        "currentPrice": 0,
+        "listingPrice": 48,
+        "currentPrice": 50.39,
         "sector": "Healthcare & Nutrition"
       }
     ],
@@ -32,7 +32,7 @@
         "listingDate": "May 27, 2026",
         "issuePrice": 77,
         "listingPrice": 126,
-        "currentPrice": 126,
+        "currentPrice": 129.45,
         "sector": "Food & Beverages"
       },
       {
@@ -40,7 +40,7 @@
         "listingDate": "May 29, 2026",
         "issuePrice": 343,
         "listingPrice": 473,
-        "currentPrice": 473,
+        "currentPrice": 460.65,
         "sector": "Biotech"
       },
       {
@@ -48,7 +48,7 @@
         "listingDate": "May 29, 2026",
         "issuePrice": 41,
         "listingPrice": 45,
-        "currentPrice": 45,
+        "currentPrice": 43.47,
         "sector": "Auto Accessories"
       },
       {
@@ -56,7 +56,7 @@
         "listingDate": "May 29, 2026",
         "issuePrice": 139,
         "listingPrice": 115,
-        "currentPrice": 115,
+        "currentPrice": 111.15,
         "sector": "Healthcare"
       },
       {
@@ -64,15 +64,15 @@
         "listingDate": "Jun 01, 2026",
         "issuePrice": 52,
         "listingPrice": 41,
-        "currentPrice": 41,
+        "currentPrice": 41.01,
         "sector": "Food"
       },
       {
         "name": "Harikanta Overseas",
         "listingDate": "Jun 02, 2026",
         "issuePrice": 91,
-        "listingPrice": 91,
-        "currentPrice": 91,
+        "listingPrice": 79.75,
+        "currentPrice": 71.99,
         "sector": "Trading"
       },
       {
@@ -80,7 +80,7 @@
         "listingDate": "Jun 02, 2026",
         "issuePrice": 83,
         "listingPrice": 83,
-        "currentPrice": 83,
+        "currentPrice": 88.58,
         "sector": "Jewellery"
       },
       {
@@ -88,7 +88,7 @@
         "listingDate": "Jun 03, 2026",
         "issuePrice": 63,
         "listingPrice": 63,
-        "currentPrice": 63,
+        "currentPrice": 60.57,
         "sector": "Fashion"
       },
       {
@@ -103,40 +103,40 @@
         "name": "SMR Jewels",
         "listingDate": "Jun 08, 2026",
         "issuePrice": 128,
-        "listingPrice": 128,
-        "currentPrice": 128,
+        "listingPrice": 102.95,
+        "currentPrice": 108.05,
         "sector": "Jewellery"
       },
       {
         "name": "Merritronix",
         "listingDate": "Jun 08, 2026",
         "issuePrice": 149,
-        "listingPrice": 149,
-        "currentPrice": 149,
+        "listingPrice": 283,
+        "currentPrice": 297.25,
         "sector": "Electronics"
       },
       {
         "name": "GenXAI Analytics",
         "listingDate": "Jun 12, 2026",
         "issuePrice": 116,
-        "listingPrice": 0,
-        "currentPrice": 0,
+        "listingPrice": 92.80,
+        "currentPrice": 97.40,
         "sector": "Technology & AI"
       },
       {
         "name": "Vahh Chemicals",
         "listingDate": "Jun 11, 2026",
         "issuePrice": 60,
-        "listingPrice": 0,
-        "currentPrice": 0,
+        "listingPrice": 70,
+        "currentPrice": 68,
         "sector": "Chemicals"
       },
       {
         "name": "UHM Vacation",
         "listingDate": "Jun 11, 2026",
         "issuePrice": 166,
-        "listingPrice": 0,
-        "currentPrice": 0,
+        "listingPrice": 132.80,
+        "currentPrice": 126.16,
         "sector": "Hospitality & Tourism"
       }
     ]

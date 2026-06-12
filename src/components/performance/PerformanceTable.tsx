@@ -31,6 +31,10 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
     let data = filter === 'all' ? allData : filter === 'mainboard' ? allData.filter(i => i.type === 'mainboard') : allData.filter(i => i.type === 'sme');
     
     data = [...data].sort((a, b) => {
+      // Entries without listing price go to the bottom
+      if (!a.listingPrice && b.listingPrice) return 1;
+      if (a.listingPrice && !b.listingPrice) return -1;
+      if (!a.listingPrice && !b.listingPrice) return 0;
       const returnA = ((a.listingPrice - a.issuePrice) / a.issuePrice) * 100;
       const returnB = ((b.listingPrice - b.issuePrice) / b.issuePrice) * 100;
       return sortOrder === 'desc' ? returnB - returnA : returnA - returnB;
@@ -41,8 +45,9 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
 
   const stats = useMemo(() => {
     const total = filtered.length;
-    const positive = filtered.filter(i => i.listingPrice > i.issuePrice).length;
-    const avg = total > 0 ? filtered.reduce((s, i) => s + ((i.listingPrice - i.issuePrice) / i.issuePrice * 100), 0) / total : 0;
+    const withPrice = filtered.filter(i => i.listingPrice > 0);
+    const positive = withPrice.filter(i => i.listingPrice > i.issuePrice).length;
+    const avg = withPrice.length > 0 ? withPrice.reduce((s, i) => s + ((i.listingPrice - i.issuePrice) / i.issuePrice * 100), 0) / withPrice.length : 0;
     return { total, positive, avg };
   }, [filtered]);
 
@@ -145,15 +150,19 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
                 </div>
                 <div className="col-span-2 text-center text-sm font-medium text-gray-800 dark:text-gray-200">₹{ipo.issuePrice}</div>
                 <div className="col-span-2 text-center">
-                  <span className={`text-sm font-bold ${listingReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>₹{ipo.listingPrice}</span>
+                  <span className={`text-sm font-bold ${ipo.listingPrice > 0 ? (listingReturn >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-400'}`}>{ipo.listingPrice > 0 ? `₹${ipo.listingPrice}` : 'Awaiting'}</span>
                 </div>
                 <div className="col-span-1 text-center">
-                  <span className={`text-sm font-bold ${currentReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>₹{ipo.currentPrice}</span>
+                  <span className={`text-sm font-bold ${ipo.currentPrice > 0 ? (currentReturn >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-400'}`}>{ipo.currentPrice > 0 ? `₹${ipo.currentPrice}` : '--'}</span>
                 </div>
                 <div className="col-span-2 text-center">
-                  <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${listingReturn >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                    {listingReturn >= 0 ? '+' : ''}{listingReturn.toFixed(1)}%
-                  </span>
+                  {ipo.listingPrice > 0 ? (
+                    <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${listingReturn >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                      {listingReturn >= 0 ? '+' : ''}{listingReturn.toFixed(1)}%
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-50 text-gray-400">--</span>
+                  )}
                 </div>
               </div>
 
@@ -164,14 +173,18 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{ipo.name}</h3>
                     <p className="text-xs text-gray-500">{ipo.sector} • {ipo.type.toUpperCase()}</p>
                   </div>
-                  <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${listingReturn >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                    {listingReturn >= 0 ? '+' : ''}{listingReturn.toFixed(1)}%
-                  </span>
+                  {ipo.listingPrice > 0 ? (
+                    <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${listingReturn >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                      {listingReturn >= 0 ? '+' : ''}{listingReturn.toFixed(1)}%
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-50 text-gray-400">Pending</span>
+                  )}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div><p className="text-gray-400">Issue</p><p className="font-medium">₹{ipo.issuePrice}</p></div>
-                  <div><p className="text-gray-400">Listing</p><p className={`font-bold ${listingReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>₹{ipo.listingPrice}</p></div>
-                  <div><p className="text-gray-400">Current</p><p className={`font-bold ${currentReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>₹{ipo.currentPrice}</p></div>
+                  <div><p className="text-gray-400">Listing</p><p className={`font-bold ${ipo.listingPrice > 0 ? (listingReturn >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-400'}`}>{ipo.listingPrice > 0 ? `₹${ipo.listingPrice}` : 'Awaiting'}</p></div>
+                  <div><p className="text-gray-400">Current</p><p className={`font-bold ${ipo.currentPrice > 0 ? (currentReturn >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-400'}`}>{ipo.currentPrice > 0 ? `₹${ipo.currentPrice}` : '--'}</p></div>
                 </div>
               </div>
             </a>

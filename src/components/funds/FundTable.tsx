@@ -152,7 +152,7 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
           return (
           <a
             key={fund.slug}
-            href={`/mutual-funds/fund/${fund.slug}`}
+            href={`/mutual-funds/fund/${fund.slug}-holdings`}
             className="block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all list-accent-hover"
           >
             {/* Desktop */}

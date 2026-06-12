@@ -6,7 +6,7 @@ import toolsData from '../../data/tools.json';
 export async function GET() {
   const searchItems = [
     ...iposData.map((i: any) => ({ t: `${i.name} IPO`, u: `/ipo/${i.slug}`, y: 'IPO', m: `${i.sector} • ${i.type}` })),
-    ...fundsData.map((f: any) => ({ t: f.name, u: `/mutual-funds/fund/${f.slug}`, y: 'Fund', m: f.category })),
+    ...fundsData.map((f: any) => ({ t: f.name, u: `/mutual-funds/fund/${f.slug}-holdings`, y: 'Fund', m: f.category })),
     ...articlesData.filter((a: any) => a.content && a.content.trim().length > 0).map((a: any) => ({ t: a.title, u: `/learn/${a.slug}`, y: 'Learn', m: a.category })),
     ...toolsData.map((t: any) => ({ t: t.title, u: `/tools/${t.slug}`, y: 'Tool', m: t.description.slice(0, 40) })),
     { t: 'IPO GMP Today', u: '/ipo/gmp-today', y: 'IPO', m: 'Grey Market Premium' },
