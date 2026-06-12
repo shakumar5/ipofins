@@ -19,19 +19,11 @@
       },
       {
         "name": "Hexagon Nutrition",
-        "listingDate": "05th – 09th Jun 2026",
-        "issuePrice": 9,
+        "listingDate": "Jun 12, 2026",
+        "issuePrice": 45,
         "listingPrice": 0,
         "currentPrice": 0,
-        "sector": "Others"
-      },
-      {
-        "name": "Vahh Chemicals",
-        "listingDate": "11 Jun 2026",
-        "issuePrice": 8,
-        "listingPrice": 0,
-        "currentPrice": 0,
-        "sector": "Others"
+        "sector": "Healthcare & Nutrition"
       }
     ],
     "sme": [
@@ -125,51 +117,27 @@
       },
       {
         "name": "GenXAI Analytics",
-        "listingDate": "05th – 09th Jun 2026",
-        "issuePrice": 9,
+        "listingDate": "Jun 12, 2026",
+        "issuePrice": 116,
         "listingPrice": 0,
         "currentPrice": 0,
-        "sector": "Others"
+        "sector": "Technology & AI"
       },
       {
         "name": "Vahh Chemicals",
-        "listingDate": "05th – 09th Jun 2026",
-        "issuePrice": 9,
+        "listingDate": "Jun 11, 2026",
+        "issuePrice": 60,
         "listingPrice": 0,
         "currentPrice": 0,
-        "sector": "Others"
+        "sector": "Chemicals"
       },
       {
         "name": "UHM Vacation",
-        "listingDate": "05th – 09th Jun 2026",
-        "issuePrice": 9,
+        "listingDate": "Jun 11, 2026",
+        "issuePrice": 166,
         "listingPrice": 0,
         "currentPrice": 0,
-        "sector": "Others"
-      },
-      {
-        "name": "0) {\n                filterTables(searchText);\n            }\n        });\n        document.querySelector(\".clear-ipo-search\").addEventListener(\"click\", function () {\n            document.getElementById(\"ipo_search\").value = \"\";\n            filterTables(\"\");\n        })\n    })",
-        "listingDate": "05th – 09th Jun 2026",
-        "issuePrice": 9,
-        "listingPrice": 0,
-        "currentPrice": 0,
-        "sector": "Others"
-      },
-      {
-        "name": "Hexagon Nutrition",
-        "listingDate": "12 Jun 2026",
-        "issuePrice": 9,
-        "listingPrice": 0,
-        "currentPrice": 0,
-        "sector": "Others"
-      },
-      {
-        "name": "CMR Green Technologies",
-        "listingDate": "10 Jun 2026",
-        "issuePrice": 5,
-        "listingPrice": 0,
-        "currentPrice": 0,
-        "sector": "Others"
+        "sector": "Hospitality & Tourism"
       }
     ]
   }

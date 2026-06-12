@@ -167,16 +167,40 @@ async function fetchBSEIPOs() {
       const perfData = readExisting('ipo-performance.json');
       if (!perfData['2026']) perfData['2026'] = { mainboard: [], sme: [] };
       closed.forEach(ipo => {
+        // Skip junk entries (JavaScript code parsed as names)
+        if (!ipo.name || ipo.name.length < 3 || /function|document|querySelector|addEventListener|filterTables/i.test(ipo.name)) return;
+        
+        // Determine correct issue price from priceRange (not priceMax which can be garbled)
+        let issuePrice = 0;
+        if (ipo.priceRange && ipo.priceRange.length > 0) {
+          const priceParts = ipo.priceRange.split('-');
+          const maxPrice = parseInt((priceParts[priceParts.length - 1] || '0').replace(/,/g, ''));
+          if (maxPrice >= 10) issuePrice = maxPrice; // Sanity: real IPO prices are always >= ₹10
+        }
+        // Fallback to priceMax only if it looks valid (>= 10)
+        if (issuePrice === 0 && ipo.priceMax >= 10) {
+          issuePrice = ipo.priceMax;
+        }
+        
+        // Skip entries with clearly garbled data (no valid price, no valid listing date)
+        if (issuePrice === 0) return;
+        
+        // Reject date ranges as listing dates (listing is always a single date)
+        const rangePattern = /\d{1,2}(?:st|nd|rd|th)?\s*(?:–|-|to)\s*\d{1,2}(?:st|nd|rd|th)?/i;
+        if (rangePattern.test(ipo.listingDate || '')) return;
+        
         const entry = {
           name: ipo.name,
           listingDate: ipo.listingDate || '',
-          issuePrice: ipo.priceMax || 0,
+          issuePrice,
           listingPrice: ipo.listingPrice || 0,
           currentPrice: ipo.listingPrice || 0,
           sector: ipo.sector || 'Others',
         };
         const list = ipo.type === 'mainboard' ? perfData['2026'].mainboard : perfData['2026'].sme;
-        if (!list.find(e => e.name === ipo.name)) {
+        // Prevent duplicates (check both lists to avoid mainboard/sme misclassification dupes)
+        const allEntries = [...perfData['2026'].mainboard, ...perfData['2026'].sme];
+        if (!allEntries.find(e => e.name === ipo.name)) {
           list.push(entry);
         }
       });
@@ -895,10 +919,14 @@ function mergeAMFIData(existing, amfiFunds) {
     }
     
     if (curr) {
-      curr.nav = amfiFund.nav; // Update NAV
+      // Only update lastUpdated if NAV actually changed (prevents unnecessary git diffs)
+      const navChanged = curr.nav !== amfiFund.nav;
+      curr.nav = amfiFund.nav;
       if (amfiFund.schemeCode && !curr.schemeCode) curr.schemeCode = amfiFund.schemeCode;
       else if (amfiFund.schemeCode) curr.schemeCode = amfiFund.schemeCode;
-      curr.lastUpdated = new Date().toISOString();
+      if (navChanged) {
+        curr.lastUpdated = new Date().toISOString();
+      }
       matched++;
     } else {
       // Add new fund (without returns/rating — those need historical data)
@@ -1474,9 +1502,11 @@ function updateIPOStatuses() {
     
     if (listingDate && todayIST >= listingDate) {
       ipo.status = 'listed';
-    } else if (closeDate && todayIST > closeDate) {
+    } else if (closeDate && todayIST >= closeDate) {
+      // Use >= because market closes at 3:30 PM on the close date,
+      // so by the time our script runs (evening/next morning), it's closed
       ipo.status = 'closed';
-    } else if (openDate && closeDate && todayIST >= openDate && todayIST <= closeDate) {
+    } else if (openDate && closeDate && todayIST >= openDate && todayIST < closeDate) {
       ipo.status = 'live';
     }
     

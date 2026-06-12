@@ -92,10 +92,11 @@ export function computeIPOStatus(ipo: IPORecord): IPOStatus {
   if (listingDate && now >= listingDate) {
     return 'listed';
   }
-  if (closeDate && now > closeDate) {
+  if (closeDate && now >= closeDate) {
+    // Use >= because market closes at 3:30 PM on the close date
     return 'closed';
   }
-  if (openDate && closeDate && now >= openDate && now <= closeDate) {
+  if (openDate && closeDate && now >= openDate && now < closeDate) {
     return 'live';
   }
   if (openDate && now < openDate) {
