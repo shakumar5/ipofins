@@ -1,0 +1,168 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StepUpSIPCalculator from '../../components/calculators/StepUpSIPCalculator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Step-Up SIP Calculator - Calculate Growing SIP Returns",
+  "description": "Free Step-Up SIP calculator. See how increasing your SIP by 10% every year creates significantly more wealth than a regular SIP.",
+  "url": "https://ipofins.com/tools/step-up-sip-calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "creator": { "@type": "Organization", "name": "IPOfins", "url": "https://ipofins.com" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Step-Up SIP Calculator", "item": "https://ipofins.com/tools/step-up-sip-calculator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a Step-Up SIP?", "acceptedAnswer": { "@type": "Answer", "text": "A Step-Up SIP allows investors to increase their SIP amount annually by a fixed percentage. It helps align investments with salary growth and can significantly increase long-term wealth creation." } },
+    { "@type": "Question", "name": "How is Step-Up SIP different from a regular SIP?", "acceptedAnswer": { "@type": "Answer", "text": "In a regular SIP, the investment amount remains constant. In a Step-Up SIP, the SIP amount increases periodically, usually every year by a fixed percentage." } },
+    { "@type": "Question", "name": "Is Step-Up SIP better than a normal SIP?", "acceptedAnswer": { "@type": "Answer", "text": "For most salaried investors, Step-Up SIP can generate a larger corpus because contributions increase over time while benefiting from compounding. A 10% step-up can create 50-70% more wealth over 20 years." } },
+    { "@type": "Question", "name": "What step-up percentage should I choose?", "acceptedAnswer": { "@type": "Answer", "text": "Most investors choose between 5% and 15% annually depending on expected salary growth. A 10% step-up is most common as it matches average salary increments in India." } },
+    { "@type": "Question", "name": "Can a small annual increase make a big difference?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Even a 10% annual increase in SIP contributions can potentially create 50-70% more wealth over 20–30 years compared to a flat SIP." } },
+    { "@type": "Question", "name": "Is Step-Up SIP suitable for beginners?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is especially useful for young professionals expecting regular salary increments. Start with a comfortable amount and increase annually." } }
+  ]
+};
+---
+
+<BaseLayout
+  title="Step-Up SIP Calculator 2026 - Calculate Increasing SIP Returns | IPOfins"
+  description="Free Step-Up SIP calculator — see how ₹5,000/month increasing 10% yearly for 20 years at 12% returns builds significantly more wealth than a flat SIP. Try now!"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <!-- Breadcrumb -->
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Step-Up SIP Calculator</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Step-Up SIP Calculator - Calculate Growing SIP Returns
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Calculate how much wealth you can create by increasing your SIP amount every year. A Step-Up SIP aligns with salary growth and can create 50-70% more wealth than a flat SIP over 20 years.
+    </p>
+  </section>
+
+  <!-- Calculator -->
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <StepUpSIPCalculator client:load />
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How Step-Up SIP Works</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        A Step-Up SIP (also called Top-Up SIP or Incremental SIP) automatically increases your monthly SIP contribution by a fixed percentage every year. This is designed to match the natural growth in your income over time.
+      </p>
+      <p class="text-surface-600 dark:text-surface-300 mt-3"><strong>Example:</strong> Starting with ₹5,000/month and 10% annual step-up:</p>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1 mt-2">
+        <li>Year 1: ₹5,000/month</li>
+        <li>Year 2: ₹5,500/month</li>
+        <li>Year 3: ₹6,050/month</li>
+        <li>Year 5: ₹7,320/month</li>
+        <li>Year 10: ₹11,790/month</li>
+        <li>Year 20: ₹30,580/month</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Formula -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Step-Up SIP Formula</h2>
+      <p class="text-surface-600 dark:text-surface-300">The Step-Up SIP is calculated year by year:</p>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 mt-3 font-mono text-xs">
+        <p>For each year Y (from 1 to N):</p>
+        <p class="mt-1">  SIP_Y = Initial_SIP × (1 + step_up_rate)^(Y-1)</p>
+        <p class="mt-1">  FV_Y = SIP_Y × [((1+r)^12 - 1) / r] × (1+r)</p>
+        <p class="mt-2">Total Corpus = Sum of all yearly FVs grown for remaining years</p>
+        <p class="mt-2">Where r = monthly return rate (annual rate / 12)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions About Step-Up SIP</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a Step-Up SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A Step-Up SIP allows investors to increase their SIP amount annually by a fixed percentage. It helps align investments with salary growth and can significantly increase long-term wealth creation. Most mutual fund platforms like Groww, Zerodha Coin, and Kuvera support this feature.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is Step-Up SIP different from a regular SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In a regular SIP, the investment amount remains constant every month for the entire duration. In a Step-Up SIP, the SIP amount increases periodically (usually every year) by a fixed percentage. This means you invest more as your income grows.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is Step-Up SIP better than a normal SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For most salaried investors, yes. Step-Up SIP generates a larger corpus because contributions increase over time while benefiting from compounding. A ₹10,000 SIP with 10% annual step-up at 12% returns for 20 years gives ~₹1.5 Cr vs ~₹1 Cr without step-up — that's 50% more wealth.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What step-up percentage should I choose?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Most investors choose between 5% and 15% annually depending on expected salary growth. A 10% step-up is most popular as it roughly matches average salary increments in India. Don't over-commit — choose a rate you can sustain for the full duration.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can a small annual increase make a big difference?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Absolutely. Even a 10% annual increase in SIP contributions can create 50-70% more wealth over 20-30 years compared to a flat SIP. The combination of increasing principal AND compound returns creates exponential growth.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is Step-Up SIP suitable for beginners?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. It is especially useful for young professionals (25-35) expecting regular salary increments. Start with a comfortable amount today and let the step-up feature automatically increase your investments as your career progresses.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Related Calculators -->
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <a href="/tools/sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">📈</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">SIP Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Regular SIP returns</p>
+      </a>
+      <a href="/tools/retirement-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🏖️</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Retirement Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Plan your retirement</p>
+      </a>
+      <a href="/tools/goal-planner" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🎯</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Goal Planner</p>
+        <p class="text-xs text-surface-500 mt-0.5">Plan any financial goal</p>
+      </a>
+      <a href="/tools/lumpsum-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">💵</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Lumpsum Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">One-time investment</p>
+      </a>
+    </div>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-4">
+      <a href="/tools" class="text-primary-600 hover:underline">View all finance tools →</a>
+    </p>
+  </section>
+</BaseLayout>

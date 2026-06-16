@@ -10,7 +10,7 @@
         <input
           id="search-input"
           type="text"
-          placeholder="Search IPOs, funds, tools, articles..."
+          placeholder="Search IPOs, mutual funds, brokers, tools..."
           class="flex-1 bg-transparent text-surface-900 dark:text-white text-sm outline-none placeholder:text-surface-400"
           autocomplete="off"
         />
@@ -18,18 +18,24 @@
       </div>
       <!-- Results -->
       <div id="search-results" class="max-h-80 overflow-y-auto p-2">
-        <p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>
+        <p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>
+      </div>
+      <!-- Footer hint -->
+      <div class="px-4 py-2 border-t border-surface-100 dark:border-surface-700 flex items-center justify-between">
+        <span class="text-[10px] text-surface-400">Fuzzy search • Type any part of a name</span>
+        <span class="text-[10px] text-surface-400">⌘K / Ctrl+K to open</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Search Logic (loads data on-demand) -->
+<!-- Search Logic (loads data on-demand, fuzzy matching) -->
 <script is:inline>
 (function() {
   var _items = null;
   var _loading = false;
   var _so, _sin, _sr;
+  var _debounce = null;
 
   function init() {
     _so = document.getElementById('search-overlay');
@@ -40,7 +46,10 @@
     if (_sb) _sb.addEventListener('click', openSearch);
     if (_sc) _sc.addEventListener('click', closeSearch);
     if (_so) _so.addEventListener('click', function(e) { if (e.target === _so) closeSearch(); });
-    if (_sin) _sin.addEventListener('input', function(e) { doSearch(e.target.value); });
+    if (_sin) _sin.addEventListener('input', function(e) {
+      clearTimeout(_debounce);
+      _debounce = setTimeout(function() { doSearch(e.target.value); }, 60);
+    });
   }
 
   function loadData() {
@@ -56,7 +65,7 @@
     _so.classList.remove('hidden');
     _sin.value = '';
     _sin.focus();
-    _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+    _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>';
     loadData();
   }
 
@@ -64,32 +73,83 @@
     _so.classList.add('hidden');
   }
 
+  // Fuzzy match: checks if all characters of query appear in order in target
+  function fuzzyScore(query, target) {
+    var q = query.toLowerCase();
+    var t = target.toLowerCase();
+    // Exact substring match gets highest priority
+    if (t.indexOf(q) !== -1) return 100 + (q.length / t.length) * 50;
+    // Word-start matching (e.g. "hd" matches "HDFC")
+    var words = t.split(/[\s\-_]+/);
+    var wordStartMatch = 0;
+    for (var w = 0; w < words.length; w++) {
+      if (words[w].indexOf(q) === 0) { wordStartMatch = 80; break; }
+    }
+    if (wordStartMatch) return wordStartMatch;
+    // Fuzzy: all chars of query appear in order
+    var qi = 0, consecutive = 0, maxConsecutive = 0, score = 0;
+    for (var i = 0; i < t.length && qi < q.length; i++) {
+      if (t[i] === q[qi]) {
+        qi++;
+        consecutive++;
+        if (consecutive > maxConsecutive) maxConsecutive = consecutive;
+        // Bonus for match at start of word
+        if (i === 0 || t[i-1] === ' ' || t[i-1] === '-') score += 5;
+      } else {
+        consecutive = 0;
+      }
+    }
+    if (qi < q.length) return 0; // Not all chars matched
+    return 20 + maxConsecutive * 10 + (q.length / t.length) * 15 + score;
+  }
+
   function doSearch(query) {
     if (!_items) {
-      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Loading search data...</p>';
+      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Loading...</p>';
       loadData();
       return;
     }
-    if (!query || query.length < 2) {
-      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search...</p>';
+    if (!query || query.length < 1) {
+      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>';
       return;
     }
-    var q = query.toLowerCase();
-    var matches = _items.filter(function(item) {
-      return item.t.toLowerCase().indexOf(q) !== -1 || item.m.toLowerCase().indexOf(q) !== -1 || item.y.toLowerCase().indexOf(q) !== -1;
-    }).slice(0, 8);
+    var q = query.trim();
+    // Score each item using the keyword field (k) + title (t) + meta (m)
+    var scored = [];
+    for (var i = 0; i < _items.length; i++) {
+      var item = _items[i];
+      var searchText = (item.k || '') + ' ' + item.t + ' ' + item.m + ' ' + item.y;
+      var s = fuzzyScore(q, searchText);
+      if (s > 0) scored.push({ item: item, score: s });
+    }
+    // Sort by score descending
+    scored.sort(function(a, b) { return b.score - a.score; });
+    var matches = scored.slice(0, 10);
 
     if (matches.length === 0) {
-      _sr.innerHTML = '<p class="text-xs text-surface-500 text-center py-6">No results found</p>';
+      _sr.innerHTML = '<p class="text-xs text-surface-500 text-center py-6">No results for "' + q.replace(/</g,'&lt;') + '"</p>';
       return;
     }
 
-    _sr.innerHTML = matches.map(function(item) {
+    // Category colors
+    var catColors = { IPO: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400', Fund: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', Broker: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', Tool: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', Learn: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' };
+
+    _sr.innerHTML = matches.map(function(m) {
+      var item = m.item;
+      var cc = catColors[item.y] || 'bg-surface-100 text-surface-500';
+      // Highlight matching text in title
+      var title = item.t.replace(/</g,'&lt;');
+      var ql = q.toLowerCase();
+      var tl = title.toLowerCase();
+      var idx = tl.indexOf(ql);
+      if (idx !== -1) {
+        title = title.substring(0, idx) + '<mark class="bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded px-0.5">' + title.substring(idx, idx + q.length) + '</mark>' + title.substring(idx + q.length);
+      }
       return '<a href="' + item.u + '" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">' +
-        '<span class="px-1.5 py-0.5 text-xs font-medium rounded bg-surface-100 dark:bg-surface-700 text-surface-500">' + item.y + '</span>' +
-        '<div class="flex-1 min-w-0"><p class="text-sm font-medium text-surface-900 dark:text-white truncate">' + item.t + '</p>' +
-        '<p class="text-xs text-surface-400 truncate">' + item.m + '</p></div>' +
-        '<svg class="w-4 h-4 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>';
+        '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded ' + cc + ' whitespace-nowrap">' + item.y + '</span>' +
+        '<div class="flex-1 min-w-0"><p class="text-sm font-medium text-surface-900 dark:text-white truncate">' + title + '</p>' +
+        '<p class="text-xs text-surface-400 dark:text-surface-500 truncate">' + (item.m || '').replace(/</g,'&lt;') + '</p></div>' +
+        '<svg class="w-4 h-4 text-surface-300 dark:text-surface-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>';
     }).join('');
   }
 

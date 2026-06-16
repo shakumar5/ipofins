@@ -22,6 +22,20 @@ const {
 
 const siteUrl = 'https://ipofins.com';
 const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
+
+// Site-wide Organization schema for brand authority
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "IPOfins",
+  "url": "https://ipofins.com",
+  "logo": "https://ipofins.com/favicon.svg",
+  "description": "Free, privacy-first financial tools and data for Indian investors. Track IPOs, compare mutual funds, and plan investments without login.",
+  "sameAs": [
+    "https://github.com/ipofins",
+    "https://x.com/ipofins"
+  ]
+};
 ---
 
 <!doctype html>
@@ -64,6 +78,16 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Theme: prevent flash of wrong theme -->
+    <script is:inline>
+      (function(){
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
 
     <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-9843041963430696" />
@@ -110,7 +134,10 @@ const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
       plausible.init()
     </script>
 
-    <!-- JSON-LD -->
+    <!-- JSON-LD: Organization (site-wide) -->
+    <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
+
+    <!-- JSON-LD: Page-specific -->
     {jsonLd && (
       <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     )}

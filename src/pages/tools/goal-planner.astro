@@ -1,0 +1,167 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GoalPlanner from '../../components/calculators/GoalPlanner.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Goal-Based Investment Planner - Plan Any Financial Goal",
+  "description": "Free goal-based investment planner. Enter your goal amount, timeline, and inflation — get the exact monthly SIP or lumpsum needed with fund category suggestions.",
+  "url": "https://ipofins.com/tools/goal-planner",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "creator": { "@type": "Organization", "name": "IPOfins", "url": "https://ipofins.com" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Goal Planner", "item": "https://ipofins.com/tools/goal-planner" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is a goal-based investment plan?", "acceptedAnswer": { "@type": "Answer", "text": "Goal-based investing involves investing for specific financial objectives such as retirement, children's education, home purchase, or marriage. Each goal has a target amount, timeline, and risk profile that determines the investment strategy." } },
+    { "@type": "Question", "name": "Why should I invest based on goals?", "acceptedAnswer": { "@type": "Answer", "text": "Goal-based investing provides clarity on how much to invest, for how long, and in which instruments. It transforms vague saving into purposeful investing with measurable progress." } },
+    { "@type": "Question", "name": "How does inflation affect financial goals?", "acceptedAnswer": { "@type": "Answer", "text": "Inflation increases the future cost of your goals. A goal worth ₹50 lakhs today will cost approximately ₹1 crore in 12 years at 6% inflation. Always plan for the inflation-adjusted amount." } },
+    { "@type": "Question", "name": "Can I achieve goals through SIP investments?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. SIPs are the most practical way for salaried individuals to build goal-specific wealth. Monthly discipline plus compound returns over 5-20 years can achieve most financial goals." } },
+    { "@type": "Question", "name": "What if I already have some savings?", "acceptedAnswer": { "@type": "Answer", "text": "Existing savings reduce your remaining investment requirement. Enter your current savings for this goal, and the calculator will account for their growth and reduce the additional SIP/lumpsum needed." } },
+    { "@type": "Question", "name": "Which mutual fund category is suitable for long-term goals?", "acceptedAnswer": { "@type": "Answer", "text": "For 10+ years: Flexi Cap, Mid Cap, or Small Cap for aggressive growth. For 5-10 years: Large & Mid Cap or Balanced Advantage. For 3-5 years: Large Cap or Conservative Hybrid. Under 3 years: Debt or Liquid Funds." } }
+  ]
+};
+---
+
+<BaseLayout
+  title="Goal-Based Investment Planner 2026 - Plan Education, Marriage, Home Goals | IPOfins"
+  description="Free goal-based investment planner. Plan for child's education, marriage, home purchase, or any financial goal. Get inflation-adjusted target and exact monthly SIP needed."
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Goal-Based Investment Planner</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Goal-Based Investment Planner - Plan Any Financial Goal
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
+      "I want ₹50L for my child's education in 12 years" — this planner shows exactly how much to invest monthly via SIP or lumpsum, with inflation-adjusted targets and fund category recommendations.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <GoalPlanner client:load />
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How the Goal Planner Works</h2>
+      <p class="text-surface-600 dark:text-surface-300">This planner uses three simple steps:</p>
+      <ol class="list-decimal list-inside text-surface-600 dark:text-surface-300 space-y-2 mt-3">
+        <li><strong>Inflation Adjustment:</strong> Converts your goal from today's value to future value at the given inflation rate</li>
+        <li><strong>Existing Savings Credit:</strong> Accounts for growth of any existing savings you've already allocated to this goal</li>
+        <li><strong>Investment Calculation:</strong> Determines the monthly SIP or one-time lumpsum needed to bridge the remaining gap</li>
+      </ol>
+      <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-6 mb-2">Common Financial Goals</h3>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li>Child's higher education: ₹20L-₹1Cr (10-18 years)</li>
+        <li>Child's marriage: ₹15L-₹50L (15-25 years)</li>
+        <li>Home down payment: ₹10L-₹30L (3-7 years)</li>
+        <li>International vacation: ₹5L-₹15L (1-3 years)</li>
+        <li>Emergency fund: 6-12 months expenses (1-2 years)</li>
+        <li>Retirement corpus: use our <a href="/tools/retirement-calculator" class="text-primary-600 hover:underline">Retirement Calculator</a> for detailed planning</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Formula -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Goal Planning Formula</h2>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs space-y-2">
+        <p><strong>Inflation-Adjusted Goal</strong> = Goal × (1 + inflation)^years</p>
+        <p><strong>Existing Savings Growth</strong> = Savings × (1 + return)^years</p>
+        <p><strong>Remaining Target</strong> = Adjusted Goal - Savings Growth</p>
+        <p><strong>Monthly SIP</strong> = Target / [((1+r)^n - 1) / r × (1+r)]</p>
+        <p><strong>Lumpsum Needed</strong> = Target / (1 + return)^years</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Goal-Based Investing</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is goal-based investing?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Goal-based investing means investing with a specific target in mind — child's education, marriage, home purchase, retirement, or any other financial milestone. Each goal gets its own investment plan with a defined amount, timeline, and appropriate fund category based on risk horizon.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why is inflation adjustment important?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">At 6% inflation, costs double every 12 years. A college education costing ₹20L today will cost ₹40L in 12 years. Without inflation adjustment, you'll fall short of your goal. This planner automatically adjusts your target amount for future inflation.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Should I use SIP or lumpsum for goals?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For salaried individuals, SIP is more practical — invest monthly from your salary. Use lumpsum for windfalls (bonus, inheritance). For best results, combine both: regular SIP + lumpsum top-ups from annual bonuses. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> for detailed SIP projections.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which mutual funds for long-term goals (10+ years)?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For goals 10+ years away, equity-oriented funds work best: Flexi Cap Funds (diversified), Mid Cap Funds (higher growth potential), or Index Funds (low cost, market returns). The longer your time horizon, the more equity allocation you can afford because short-term volatility averages out.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What if I already have savings for this goal?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Enter your existing savings in the calculator. It will compute how much those savings will grow to, and reduce your remaining SIP/lumpsum requirement accordingly. Even a small existing amount significantly reduces future contributions needed because of compounding.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to plan for multiple goals simultaneously?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Run this calculator separately for each goal — education, marriage, home, retirement. Add up all the monthly SIPs needed. If the total exceeds your capacity, prioritize by deadline (nearest goals first) and use a <a href="/tools/step-up-sip-calculator" class="text-primary-600 hover:underline">Step-Up SIP</a> to gradually increase contributions as income grows.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Related Calculators -->
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <a href="/tools/sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">📈</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">SIP Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Monthly investments</p>
+      </a>
+      <a href="/tools/step-up-sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🚀</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Step-Up SIP</p>
+        <p class="text-xs text-surface-500 mt-0.5">Growing investments</p>
+      </a>
+      <a href="/tools/retirement-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🏖️</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Retirement Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Retirement planning</p>
+      </a>
+      <a href="/tools/lumpsum-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">💵</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Lumpsum Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">One-time investment</p>
+      </a>
+    </div>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-4">
+      <a href="/tools" class="text-primary-600 hover:underline">View all finance tools →</a>
+    </p>
+  </section>
+</BaseLayout>

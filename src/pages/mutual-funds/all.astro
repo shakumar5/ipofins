@@ -7,6 +7,27 @@ import holdingsData from '../../data/fund-holdings.json';
 const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
 const holdingSlugs = Object.keys((holdingsData as any).holdings || {});
 
+// Only pass fields the React component actually needs (reduces hydration payload from 437KB to ~120KB)
+const fundsForTable = fundsData.map(f => ({
+  name: f.name,
+  slug: f.slug,
+  category: f.category,
+  nav: f.nav,
+  returns1y: f.returns1y,
+  returns3y: f.returns3y,
+  returns5y: f.returns5y,
+  rating: f.rating,
+  aum: f.aum,
+  riskLevel: f.riskLevel,
+}));
+
+// Derive latest update date from data
+const latestUpdate = fundsData.reduce((latest, f) => {
+  if (f.lastUpdated && f.lastUpdated > latest) return f.lastUpdated;
+  return latest;
+}, '');
+const dataDate = latestUpdate ? new Date(latestUpdate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -69,7 +90,7 @@ const faqJsonLd = {
   <section class="container-wide pt-8 pb-4">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">All Mutual Funds 2026</h1>
     <p class="mt-1 text-sm text-surface-500">{fundsData.length} funds • Filter by category • Sort by returns</p>
-    <span class="data-freshness mt-2">🟢 Data as of 7 Jun 2026 • Source: AMFI India</span>
+    <span class="data-freshness mt-2">🟢 Data as of {dataDate} • Source: AMFI India</span>
 
     <!-- Main Tabs -->
     <div class="mt-4 flex gap-2">
@@ -80,7 +101,7 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:load funds={fundsData} categories={categories} holdingSlugs={holdingSlugs} />
+    <FundTable client:only="react" funds={fundsForTable} categories={categories} holdingSlugs={holdingSlugs} />
   </section>
 
   <!-- How to Use Section -->

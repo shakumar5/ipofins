@@ -4,7 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout title="Page Not Found (404)">
   <section class="container-narrow py-24 text-center">
-    <div class="max-w-md mx-auto">
+    <div class="max-w-lg mx-auto">
       <!-- 404 Visual -->
       <div class="text-8xl font-extrabold text-surface-200 dark:text-surface-700 mb-4">404</div>
 
@@ -22,22 +22,59 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <a href="/ipo" class="btn-secondary px-6 py-3">
           Browse IPOs
         </a>
+        <a href="/mutual-funds" class="btn-secondary px-6 py-3">
+          Mutual Funds
+        </a>
         <a href="/tools" class="btn-secondary px-6 py-3">
           Finance Tools
         </a>
       </div>
 
-      <!-- Helpful Links -->
-      <div class="mt-12 pt-8 border-t border-surface-200 dark:border-surface-700">
-        <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">Popular pages:</p>
-        <div class="flex flex-wrap justify-center gap-2">
-          <a href="/ipo" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">IPO Listings</a>
-          <span class="text-surface-300 dark:text-surface-600">•</span>
-          <a href="/tools/sip-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">SIP Calculator</a>
-          <span class="text-surface-300 dark:text-surface-600">•</span>
-          <a href="/broker/compare" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Compare Brokers</a>
-          <span class="text-surface-300 dark:text-surface-600">•</span>
-          <a href="/mutual-funds" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Mutual Funds</a>
+      <!-- Quick Access Sections -->
+      <div class="mt-12 pt-8 border-t border-surface-200 dark:border-surface-700 text-left">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <!-- IPOs -->
+          <div>
+            <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">📈 IPOs</h2>
+            <ul class="space-y-2">
+              <li><a href="/ipo" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">All IPOs</a></li>
+              <li><a href="/ipo/gmp-today" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">IPO GMP Today</a></li>
+              <li><a href="/ipo/upcoming" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Upcoming IPOs</a></li>
+              <li><a href="/ipo/allotment-status" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Allotment Status</a></li>
+              <li><a href="/ipo/subscription-status" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Subscription Status</a></li>
+            </ul>
+          </div>
+          <!-- Mutual Funds -->
+          <div>
+            <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">💰 Mutual Funds</h2>
+            <ul class="space-y-2">
+              <li><a href="/mutual-funds" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">All Mutual Funds</a></li>
+              <li><a href="/mutual-funds/best" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Best Mutual Funds 2026</a></li>
+              <li><a href="/mutual-funds/all" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Compare by Returns</a></li>
+              <li><a href="/mutual-funds/mutual-fund-holdings-changes" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Holdings Changes</a></li>
+              <li><a href="/tools/sip-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">SIP Calculator</a></li>
+            </ul>
+          </div>
+          <!-- Brokers -->
+          <div>
+            <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">🏦 Brokers</h2>
+            <ul class="space-y-2">
+              <li><a href="/broker" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">All Brokers</a></li>
+              <li><a href="/broker/compare" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Compare Brokers</a></li>
+              <li><a href="/broker/zerodha" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Zerodha Review</a></li>
+              <li><a href="/broker/groww" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Groww Review</a></li>
+            </ul>
+          </div>
+          <!-- Tools -->
+          <div>
+            <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">🔧 Tools</h2>
+            <ul class="space-y-2">
+              <li><a href="/tools/sip-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">SIP Calculator</a></li>
+              <li><a href="/tools/lumpsum-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Lumpsum Calculator</a></li>
+              <li><a href="/tools/cagr-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">CAGR Calculator</a></li>
+              <li><a href="/tools/emi-calculator" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">EMI Calculator</a></li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

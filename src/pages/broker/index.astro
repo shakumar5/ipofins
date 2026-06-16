@@ -17,6 +17,17 @@ const jsonLd = {
   }
 };
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is the difference between a discount broker and a full-service broker?", "acceptedAnswer": { "@type": "Answer", "text": "Discount brokers like Zerodha and Groww charge flat ₹20 per trade regardless of trade size, and offer self-service platforms. Full-service brokers like ICICI Direct provide research reports, dedicated relationship managers, and advisory services but charge higher brokerage (often a percentage of trade value)." } },
+    { "@type": "Question", "name": "Which broker is best for beginners in India?", "acceptedAnswer": { "@type": "Answer", "text": "Groww and Zerodha are popular choices for beginners. Groww offers the simplest interface with zero account opening and AMC charges. Zerodha provides comprehensive educational resources through Varsity and a well-designed platform suitable for learning." } },
+    { "@type": "Question", "name": "Is my money safe with a discount broker?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. All SEBI-registered brokers (discount or full-service) must follow the same regulations. Your shares are held in your demat account with CDSL/NSDL depositories, not with the broker. Even if a broker shuts down, your holdings remain safe in your demat account." } },
+    { "@type": "Question", "name": "Can I apply for IPOs through these brokers?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, all major brokers listed here support IPO applications through UPI-based ASBA. You can apply directly from their apps. Zerodha, Groww, Upstox, and Angel One all have seamless one-click IPO application flows integrated into their platforms." } }
+  ]
+};
+
 const discountBrokers = brokersData.filter(b => b.type === 'discount');
 const fullServiceBrokers = brokersData.filter(b => b.type === 'full-service');
 ---
@@ -26,6 +37,8 @@ const fullServiceBrokers = brokersData.filter(b => b.type === 'full-service');
   description="Compare India's best stock brokers side-by-side. Reviews of Zerodha, Groww, Upstox, Angel One, ICICI Direct with pricing, features, pros & cons."
   jsonLd={jsonLd}
 >
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
@@ -164,8 +177,20 @@ const fullServiceBrokers = brokersData.filter(b => b.type === 'full-service');
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I apply for IPOs through these brokers?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, all major brokers listed here support IPO applications through UPI-based ASBA. You can apply directly from their apps. Zerodha, Groww, Upstox, and Angel One all have seamless one-click IPO application flows integrated into their platforms.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, all major brokers listed here support <a href="/ipo" class="text-primary-600 hover:underline">IPO applications</a> through UPI-based ASBA. You can apply directly from their apps. Zerodha, Groww, Upstox, and Angel One all have seamless one-click IPO application flows integrated into their platforms.</p>
       </details>
+    </div>
+  </section>
+
+  <!-- Cross-section Links -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOfins</h2>
+    <div class="flex flex-wrap gap-3">
+      <a href="/ipo" class="btn-secondary">Live IPOs</a>
+      <a href="/ipo/gmp-today" class="btn-secondary">IPO GMP Today</a>
+      <a href="/mutual-funds" class="btn-secondary">Mutual Funds</a>
+      <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
+      <a href="/tools/ipo-profit-calculator" class="btn-secondary">IPO Profit Calculator</a>
     </div>
   </section>
 </BaseLayout>

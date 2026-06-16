@@ -1,0 +1,163 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TaxSavingPlanner from '../../components/calculators/TaxSavingPlanner.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HRA & Tax Saving Planner - 80C, 80D, NPS Deductions Calculator",
+  "description": "Free tax saving planner for salaried employees. Calculate HRA exemption, 80C, 80D, NPS deductions and see how much tax you can save in the old regime.",
+  "url": "https://ipofins.com/tools/tax-saving-planner",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "creator": { "@type": "Organization", "name": "IPOfins", "url": "https://ipofins.com" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Tax Saving Planner", "item": "https://ipofins.com/tools/tax-saving-planner" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is Section 80C?", "acceptedAnswer": { "@type": "Answer", "text": "Section 80C allows tax deductions up to ₹1.5 lakh per year through investments like ELSS mutual funds, PPF, EPF, NSC, 5-year FD, life insurance premiums, home loan principal, and children's tuition fees." } },
+    { "@type": "Question", "name": "What is Section 80D?", "acceptedAnswer": { "@type": "Answer", "text": "Section 80D provides tax benefits on health insurance premiums. Deduction up to ₹25,000 for self/family and additional ₹25,000-₹50,000 for parents (₹50,000 if parents are senior citizens above 60)." } },
+    { "@type": "Question", "name": "What is HRA exemption?", "acceptedAnswer": { "@type": "Answer", "text": "HRA exemption reduces taxable income for salaried employees who pay rent. The exempt amount is the minimum of: actual HRA received, rent paid minus 10% of basic salary, or 50% of basic (metro) / 40% of basic (non-metro)." } },
+    { "@type": "Question", "name": "Can I claim both HRA and home loan benefits?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, in certain situations. If you own a house in one city but rent in another city for work, you can claim both HRA exemption on rent paid and Section 24/80C benefits on home loan interest and principal." } },
+    { "@type": "Question", "name": "What is the maximum tax saving under 80C?", "acceptedAnswer": { "@type": "Answer", "text": "Maximum 80C deduction is ₹1.5 lakh per year. At the 30% tax bracket, this saves up to ₹46,800 in taxes (₹1.5L × 30% + 4% cess). Combined with 80CCD(1B) NPS deduction of ₹50K, total saving can reach ₹62,400." } },
+    { "@type": "Question", "name": "How does this planner help?", "acceptedAnswer": { "@type": "Answer", "text": "The planner calculates your current tax liability without deductions and compares it with tax after applying all eligible deductions (HRA, 80C, 80CCD, 80D, Section 24). Shows exact tax saved and breakdown of each deduction." } }
+  ]
+};
+---
+
+<BaseLayout
+  title="Tax Saving Planner 2026 - HRA, 80C, 80D, NPS Calculator | IPOfins"
+  description="Free tax saving planner for Indian salaried employees. Calculate HRA exemption, Section 80C, 80D, NPS deductions. See your tax before vs after optimisation. Save up to ₹1.5L+ in taxes!"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Tax Saving Planner</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Tax Saving Planner - HRA, 80C, 80D, NPS Deductions
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
+      See exactly how much tax you can save using HRA exemption, Section 80C, 80D, NPS, and home loan deductions. Compare your tax before and after optimisation under the Old Regime.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <TaxSavingPlanner client:load />
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How the Tax Saving Planner Works</h2>
+      <p class="text-surface-600 dark:text-surface-300">This planner calculates tax savings under the Old Tax Regime by applying all eligible deductions:</p>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-2 mt-3">
+        <li><strong>HRA Exemption:</strong> Minimum of (actual HRA, rent - 10% basic, 50%/40% of basic)</li>
+        <li><strong>Section 80C (₹1.5L max):</strong> ELSS, PPF, EPF, LIC, NSC, home loan principal, tuition fees</li>
+        <li><strong>Section 80CCD(1B) (₹50K max):</strong> Additional NPS contribution beyond 80C limit</li>
+        <li><strong>Section 80D:</strong> Health insurance - ₹25K self + ₹25K-₹50K parents</li>
+        <li><strong>Section 24 (₹2L max):</strong> Home loan interest deduction</li>
+        <li><strong>Standard Deduction:</strong> ₹75,000 (applicable to all salaried employees)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Formula -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Tax Calculation (Old Regime FY 2024-25)</h2>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs space-y-2">
+        <p><strong>Income Slabs:</strong></p>
+        <p>Up to ₹2.5L: Nil</p>
+        <p>₹2.5L - ₹5L: 5%</p>
+        <p>₹5L - ₹10L: 20%</p>
+        <p>Above ₹10L: 30%</p>
+        <p class="mt-2"><strong>+ Health & Education Cess: 4%</strong></p>
+        <p class="mt-2"><strong>Tax Saved</strong> = Tax (without deductions) - Tax (with deductions)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Tax Saving</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Section 80C?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Section 80C allows tax deductions up to ₹1.5 lakh per year. Eligible investments include ELSS mutual funds (3-year lock-in), PPF, EPF, NSC, 5-year tax-saving FD, life insurance premiums, home loan principal repayment, and children's tuition fees. ELSS is popular because of its shortest lock-in and potential for highest returns.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Section 80D?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Section 80D provides tax benefits on health insurance premiums. You can claim up to ₹25,000 for self and family, plus ₹25,000 for parents (₹50,000 if parents are senior citizens above 60). This means maximum 80D deduction can be ₹75,000 if your parents are senior citizens.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is HRA exemption calculated?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">HRA exemption is the minimum of three amounts: (1) Actual HRA received from employer, (2) Rent paid minus 10% of basic salary, (3) 50% of basic salary (metro cities) or 40% of basic (non-metro). The lowest of these three becomes your tax-exempt HRA amount.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I claim both HRA and home loan benefits?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. If you own a home in one city but rent in another for employment, you can claim both HRA exemption (on rent paid) and home loan deductions (Section 24 for interest, Section 80C for principal). This is common for people posted to different cities than where they own property.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the maximum total tax saving possible?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In the 30% bracket: 80C saves ₹46,800, NPS 80CCD saves ₹15,600, 80D saves ₹15,600-₹23,400, Section 24 saves up to ₹62,400, HRA can save significantly more. Total potential saving: ₹1.5L-₹2.5L+ depending on your salary and deductions utilized.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Old Regime vs New Regime — which is better?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">If your total deductions (HRA + 80C + 80D + NPS + Section 24) exceed ₹3-4 lakhs, Old Regime is usually better. New Regime is better for those with fewer deductions. This calculator helps you calculate Old Regime tax — compare with New Regime to decide.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Related Calculators -->
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <a href="/tools/tax-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">💹</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Tax Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">LTCG/STCG tax</p>
+      </a>
+      <a href="/tools/ppf-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🏛️</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">PPF Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">80C tax-free saving</p>
+      </a>
+      <a href="/tools/nps-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">👴</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">NPS Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">80CCD deduction</p>
+      </a>
+      <a href="/tools/emi-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🏦</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">EMI Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Home loan Section 24</p>
+      </a>
+    </div>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-4">
+      <a href="/tools" class="text-primary-600 hover:underline">View all finance tools →</a>
+    </p>
+  </section>
+</BaseLayout>

@@ -70,5 +70,53 @@
     "icon": "🎯",
     "color": "primary",
     "category": "investment"
+  },
+  {
+    "title": "Step-Up SIP Calculator",
+    "slug": "step-up-sip-calculator",
+    "description": "Calculate returns when you increase SIP by a fixed percentage every year. See how step-up creates 50-70% more wealth than a flat SIP.",
+    "icon": "🚀",
+    "color": "success",
+    "category": "investment"
+  },
+  {
+    "title": "Rent vs Buy Calculator",
+    "slug": "rent-vs-buy-calculator",
+    "description": "Should you rent or buy a house? Compare total financial outcome of renting + investing vs buying over 10-30 years.",
+    "icon": "🏠",
+    "color": "warning",
+    "category": "planning"
+  },
+  {
+    "title": "Retirement Calculator",
+    "slug": "retirement-calculator",
+    "description": "How much corpus do you need to retire? Get inflation-adjusted retirement goal and exact monthly SIP required.",
+    "icon": "🏖️",
+    "color": "primary",
+    "category": "retirement"
+  },
+  {
+    "title": "Tax Calculator",
+    "slug": "tax-calculator",
+    "description": "Calculate STCG and LTCG tax on stocks, equity MFs, debt MFs, and gold with updated 2024 Budget tax rules.",
+    "icon": "💹",
+    "color": "warning",
+    "category": "tax"
+  },
+  {
+    "title": "Tax Saving Planner",
+    "slug": "tax-saving-planner",
+    "description": "Plan your tax savings with HRA, 80C, 80D, NPS deductions. See tax before vs after optimisation under Old Regime.",
+    "icon": "🧾",
+    "color": "success",
+    "category": "tax"
+  },
+  {
+    "title": "Goal-Based Planner",
+    "slug": "goal-planner",
+    "description": "Plan any financial goal — education, marriage, home. Get inflation-adjusted target and monthly SIP or lumpsum needed.",
+    "icon": "🎯",
+    "color": "primary",
+    "category": "planning"
   }
 ]

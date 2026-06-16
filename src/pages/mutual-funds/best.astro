@@ -23,6 +23,20 @@ const bestFunds = fundsData.filter(f => {
   return score >= 2;
 });
 
+// Only pass fields the React component needs
+const bestFundsForTable = bestFunds.map(f => ({
+  name: f.name,
+  slug: f.slug,
+  category: f.category,
+  nav: f.nav,
+  returns1y: f.returns1y,
+  returns3y: f.returns3y,
+  returns5y: f.returns5y,
+  rating: f.rating,
+  aum: f.aum,
+  riskLevel: f.riskLevel,
+}));
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -95,7 +109,7 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:load funds={bestFunds} categories={categories} holdingSlugs={holdingSlugs} />
+    <FundTable client:only="react" funds={bestFundsForTable} categories={categories} holdingSlugs={holdingSlugs} />
   </section>
 
   <!-- How We Select Section -->

@@ -1,8 +1,34 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Blogs & Guides - IPO, Mutual Funds & Finance Tools",
+  "description": "Complete guide to IPO investing, mutual funds, and finance tools. FAQs, how-tos, and strategies for Indian investors.",
+  "url": "https://ipofins.com/blogs",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://ipofins.com/blogs" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What topics do IPOfins blogs cover?", "acceptedAnswer": { "@type": "Answer", "text": "Our blogs cover three main areas: IPO-related FAQs (how to apply, GMP, allotment process, listing gains), Mutual Fund guidance (SIP, ELSS, direct vs regular plans, taxation), and Tools & Calculators (how to use SIP calculator, EMI planning, CAGR calculation). Each blog is written as an FAQ format for quick answers." } },
+    { "@type": "Question", "name": "Are these blogs written by financial experts?", "acceptedAnswer": { "@type": "Answer", "text": "Our content is researched from official sources (SEBI guidelines, AMFI data, AMC publications) and written for retail investors. We are not SEBI-registered advisors. Our blogs explain concepts and processes — for personalized investment advice, always consult a certified financial planner." } },
+    { "@type": "Question", "name": "How often are blogs updated?", "acceptedAnswer": { "@type": "Answer", "text": "We update our FAQs and guides whenever regulations change (tax rules, SEBI circulars, new IPO processes). Factual data like current interest rates, tax slabs, and fund performance are reviewed quarterly to keep information accurate." } }
+  ]
+};
 ---
 
-<BaseLayout title="Blogs - IPO, Mutual Fund & Finance Tools Guide | IPOfins" description="Complete guide to IPO investing, mutual funds, and finance tools. FAQs, how-tos, and strategies for Indian investors.">
+<BaseLayout title="Blogs - IPO, Mutual Fund & Finance Tools Guide | IPOfins" description="Complete guide to IPO investing, mutual funds, and finance tools. FAQs, how-tos, and strategies for Indian investors." jsonLd={jsonLd}>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>

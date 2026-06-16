@@ -10,6 +10,24 @@ const jsonLd = {
   "name": "Learn Investing - Finance Education",
   "description": "Free guides and articles on IPO investing, mutual funds, trading, and personal finance in India.",
   "url": "https://ipofins.com/learn",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Learn", "item": "https://ipofins.com/learn" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How should a beginner start investing in India?", "acceptedAnswer": { "@type": "Answer", "text": "Start with these steps: (1) Open a demat + trading account with a broker like Zerodha or Groww. (2) Begin a SIP of ₹500–₹5,000 in a large-cap or flexi-cap mutual fund. (3) Learn the basics of equity, debt, and mutual funds. (4) Never invest money you might need in the next 2–3 years." } },
+    { "@type": "Question", "name": "What is the difference between stocks and mutual funds?", "acceptedAnswer": { "@type": "Answer", "text": "Stocks are individual company shares — you pick one company and bear its full risk/reward. Mutual funds pool money from thousands of investors and invest in 30–100 stocks, managed by a professional. Mutual funds offer diversification and are better for beginners. Stocks offer higher potential returns but need research and monitoring." } },
+    { "@type": "Question", "name": "How much money do I need to start investing?", "acceptedAnswer": { "@type": "Answer", "text": "You can start with as little as ₹100 for mutual fund SIP, ₹500 for most equity mutual funds, and any amount to buy stocks (even 1 share). There's no minimum barrier. The key is to start early and stay consistent — even ₹1,000/month for 20 years at 12% return grows to ₹10 lakh." } },
+    { "@type": "Question", "name": "Are these guides suitable for complete beginners?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, all our learn articles are written for beginners with zero prior knowledge. We explain every concept from scratch with real Indian examples, practical tips, and step-by-step instructions. Each article also links to relevant calculators so you can practice with your own numbers." } }
+  ]
 };
 ---
 
@@ -18,6 +36,7 @@ const jsonLd = {
   description="Free educational guides on IPO investing, mutual funds, options trading, broker selection, and personal finance for Indian investors."
   jsonLd={jsonLd}
 >
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

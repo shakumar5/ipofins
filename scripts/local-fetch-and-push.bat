@@ -50,6 +50,18 @@ if exist "C:\Users\shaik\Downloads\Holdings\*.xlsx" (
     echo   No new holdings files found. Skipping.
 )
 
+REM 3b. Sync data to Neon DB (if configured)
+echo.
+echo [3b/4] Syncing to Neon database...
+call node --use-system-ca db/seed/seed-holdings-batch.mjs 2>nul
+if %errorlevel% neq 0 (
+    echo   DB sync skipped (DATABASE_URL not configured or error)
+) else (
+    call node --use-system-ca db/compute/compute-signals.mjs 2>nul
+    call node --use-system-ca db/compute/compute-overlaps.mjs 2>nul
+    echo   DB sync complete!
+)
+
 REM 4. Check if any data files changed (working tree OR staged)
 echo.
 echo [4/4] Checking for changes...

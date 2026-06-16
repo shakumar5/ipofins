@@ -10,12 +10,20 @@
     "fetch-mf": "node scripts/fetch-all-data.mjs --mf-only",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "db:seed": "node --use-system-ca db/seed/seed-from-json.mjs",
+    "db:seed-holdings": "node --use-system-ca db/seed/seed-holdings-batch.mjs",
+    "db:compute-signals": "node --use-system-ca db/compute/compute-signals.mjs",
+    "db:compute-overlaps": "node --use-system-ca db/compute/compute-overlaps.mjs",
+    "db:compute-all": "node --use-system-ca db/compute/compute-signals.mjs && node --use-system-ca db/compute/compute-overlaps.mjs",
+    "db:refresh-holdings": "node scripts/parse-holdings.mjs && node --use-system-ca db/seed/seed-holdings-batch.mjs && node --use-system-ca db/compute/compute-signals.mjs && node --use-system-ca db/compute/compute-overlaps.mjs",
+    "db:status": "node --use-system-ca db/check-full-counts.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
     "@astrojs/react": "^4.0.0",
     "@astrojs/sitemap": "^3.0.0",
+    "@neondatabase/serverless": "^1.1.0",
     "astro": "^6.4.4",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"

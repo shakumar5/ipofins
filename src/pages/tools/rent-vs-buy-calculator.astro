@@ -1,0 +1,167 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RentVsBuyCalculator from '../../components/calculators/RentVsBuyCalculator.tsx';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Rent vs Buy Calculator - Should You Rent or Buy a House in India?",
+  "description": "Free rent vs buy calculator for India. Compare renting + investing vs buying a home over 10-30 years with real numbers.",
+  "url": "https://ipofins.com/tools/rent-vs-buy-calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "creator": { "@type": "Organization", "name": "IPOfins", "url": "https://ipofins.com" },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+      { "@type": "ListItem", "position": 3, "name": "Rent vs Buy Calculator", "item": "https://ipofins.com/tools/rent-vs-buy-calculator" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Is renting better than buying a house?", "acceptedAnswer": { "@type": "Answer", "text": "It depends on factors such as property prices, rent, home loan interest rates, investment returns, and expected property appreciation. In many Indian metros, renting and investing the difference can build more wealth than buying." } },
+    { "@type": "Question", "name": "What factors should I consider before buying a house?", "acceptedAnswer": { "@type": "Answer", "text": "You should compare rent, EMI, maintenance costs, down payment opportunity cost, stamp duty, tax benefits, property appreciation, and alternative investment returns over your intended time horizon." } },
+    { "@type": "Question", "name": "Does buying a house always create wealth?", "acceptedAnswer": { "@type": "Answer", "text": "Not necessarily. In some cases, investing the difference between rent and EMI in equity mutual funds can generate higher wealth than property appreciation, especially when property prices grow below 5-6% annually." } },
+    { "@type": "Question", "name": "What is the 5% rule in real estate?", "acceptedAnswer": { "@type": "Answer", "text": "The 5% rule suggests multiplying property value by 5% and dividing by 12. If this amount exceeds your rent, renting may be more financially advantageous. It is a quick rule of thumb for the rent vs buy decision." } },
+    { "@type": "Question", "name": "How does home loan interest affect the decision?", "acceptedAnswer": { "@type": "Answer", "text": "Higher interest rates significantly increase total ownership cost. At 8.5% for 20 years, you pay nearly double the property price in total. This makes renting more attractive when rates are high." } },
+    { "@type": "Question", "name": "Can investing while renting generate higher returns?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. If your investment returns (12-15% in equity MFs historically) exceed property appreciation (4-7% in most cities), renting and investing the difference (down payment + EMI-rent gap) often results in greater net wealth." } }
+  ]
+};
+---
+
+<BaseLayout
+  title="Rent vs Buy Calculator 2026 - Should You Rent or Buy a House? | IPOfins"
+  description="Free rent vs buy calculator for India. Compare the financial outcome of renting + investing vs buying a home. Enter rent, property price, loan rate, and get your answer."
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Rent vs Buy Calculator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Rent vs Buy Calculator - Should You Rent or Buy a House?
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
+      The most debated personal finance question in India, answered with math. Compare the total financial outcome of renting + investing vs buying a property over 10-30 years.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <RentVsBuyCalculator client:load />
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How This Calculator Works</h2>
+      <p class="text-surface-600 dark:text-surface-300">This calculator compares two scenarios over your chosen time period:</p>
+      <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">Buying Scenario</h3>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li>Down payment + stamp duty/registration (~7%)</li>
+        <li>Monthly EMI payments for the loan tenure</li>
+        <li>Annual maintenance costs (~1% of property value)</li>
+        <li>Property appreciation over the analysis period</li>
+      </ul>
+      <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">Renting + Investing Scenario</h3>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li>Invest the down payment + registration cost upfront</li>
+        <li>Monthly savings (EMI + maintenance - rent) invested in mutual funds</li>
+        <li>Rent increases annually at the specified rate</li>
+        <li>All savings grow at the expected investment return rate</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Formula -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Key Formulas Used</h2>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs space-y-2">
+        <p><strong>EMI:</strong> P × r × (1+r)^n / ((1+r)^n - 1)</p>
+        <p><strong>Property Value:</strong> Price × (1 + appreciation)^years</p>
+        <p><strong>Investment Growth:</strong> Principal × (1 + return)^years</p>
+        <p><strong>Net Buying Wealth:</strong> Property Value - Outstanding Loan</p>
+        <p><strong>Net Renting Wealth:</strong> Total Investment Corpus</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Rent vs Buy</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is renting better than buying a house in India?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">It depends on your city, property prices, rent levels, and investment discipline. In expensive metros like Mumbai and Bangalore where rent-to-price ratio is low (1.5-2.5%), renting + investing often wins. In tier-2 cities with higher rental yields (3-4%), buying may be better.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What factors should I consider before buying?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Compare: total EMI payments over loan tenure, down payment opportunity cost, stamp duty (5-7%), maintenance costs, property appreciation potential, tax benefits (Section 24/80C), and what your money could earn if invested in equity mutual funds instead.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Does buying a house always create wealth?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">No. In many Indian cities, property prices have barely kept pace with inflation (4-6% CAGR) over the last decade. Meanwhile, equity mutual fund SIPs have delivered 12-15% CAGR. The interest paid on home loans (total 1.5-2x the property price) further reduces buying's financial advantage.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the 5% rule?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Multiply the property's value by 5% and divide by 12. If your monthly rent is less than this amount, renting is likely better financially. For a ₹1 Cr property: 5% = ₹5L/year = ₹41,667/month. If rent is ₹25,000, renting wins.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How does home loan interest affect the decision?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">At 8.5% interest for 20 years, you pay about ₹2.07 for every ₹1 borrowed. A ₹50L loan costs ₹1.03 Cr in total payments. This massive interest cost is the biggest hidden expense of home ownership that makes renting + investing attractive.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can investing while renting generate higher returns?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, if you have the discipline. Investing the down payment and monthly EMI-rent difference in equity mutual funds (12-15% historical CAGR) often beats property appreciation (4-7% in most cities). The key requirement is investment discipline — the money saved must actually be invested, not spent.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Related Calculators -->
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <a href="/tools/emi-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🏦</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">EMI Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Home loan EMI</p>
+      </a>
+      <a href="/tools/sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">📈</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">SIP Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Invest the difference</p>
+      </a>
+      <a href="/tools/tax-saving-planner" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🧾</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Tax Saving Planner</p>
+        <p class="text-xs text-surface-500 mt-0.5">HRA & 80C benefits</p>
+      </a>
+      <a href="/tools/lumpsum-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">💵</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Lumpsum Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Down payment growth</p>
+      </a>
+    </div>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-4">
+      <a href="/tools" class="text-primary-600 hover:underline">View all finance tools →</a>
+    </p>
+  </section>
+</BaseLayout>

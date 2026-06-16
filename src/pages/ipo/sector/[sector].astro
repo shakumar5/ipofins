@@ -9,7 +9,7 @@ const sectors = [...new Set(iposData.map(ipo => ipo.sector).filter(Boolean))];
 
 export function getStaticPaths() {
   const allIPOs = withCorrectStatuses(iposRaw as any[]);
-  const sectorSlugs = [...new Set(allIPOs.map(ipo => ipo.sector?.toLowerCase().replace(/\s+/g, '-')).filter(Boolean))];
+  const sectorSlugs = [...new Set(allIPOs.map(ipo => ipo.sector?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')).filter(Boolean))];
   return sectorSlugs.map(sector => ({
     params: { sector },
     props: { sector },
@@ -17,8 +17,8 @@ export function getStaticPaths() {
 }
 
 const { sector } = Astro.props;
-const sectorName = sector.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-const sectorIPOs = iposData.filter(ipo => ipo.sector?.toLowerCase().replace(/\s+/g, '-') === sector);
+const sectorName = sector.replace(/-/g, ' ').replace(/\band\b/g, '&').replace(/\b\w/g, (c: string) => c.toUpperCase());
+const sectorIPOs = iposData.filter(ipo => ipo.sector?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === sector);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -114,9 +114,9 @@ const faqJsonLd = {
     <div class="flex flex-wrap gap-2">
       {sectors.map(s => (
         <a
-          href={`/ipo/sector/${s?.toLowerCase().replace(/\s+/g, '-')}`}
+          href={`/ipo/sector/${s?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
           class={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-            s?.toLowerCase().replace(/\s+/g, '-') === sector
+            s?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === sector
               ? 'bg-primary-600 text-white'
               : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:bg-surface-200'
           }`}
