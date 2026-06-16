@@ -6,10 +6,11 @@ import upcomingData from '../../data/upcoming-ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const liveIPOs = iposData.filter(i => i.status === 'live');
+const openIPOs = iposData.filter(i => i.status === 'live');
+const upcomingIPOs = iposData.filter(i => i.status === 'upcoming');
 const closedIPOs = iposData.filter(i => i.status === 'closed');
 const listedIPOs = iposData.filter(i => i.status === 'listed');
-const totalCount = liveIPOs.length + closedIPOs.length + listedIPOs.length;
+const totalCount = openIPOs.length + upcomingIPOs.length + closedIPOs.length + listedIPOs.length;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -39,23 +40,23 @@ const faqJsonLd = {
 
   <section class="container-wide py-6">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">All IPOs — 2026</h1>
-    <p class="text-sm text-surface-500 mb-6">{totalCount} IPOs • {liveIPOs.length} live • {closedIPOs.length} closed • {listedIPOs.length} listed</p>
+    <p class="text-sm text-surface-500 mb-6">{totalCount} IPOs • {openIPOs.length} open • {upcomingIPOs.length} upcoming • {closedIPOs.length} closed • {listedIPOs.length} listed</p>
 
-    <!-- Live IPOs -->
-    {liveIPOs.length > 0 && (
+    <!-- Open IPOs (currently accepting applications) -->
+    {openIPOs.length > 0 && (
       <div class="mb-4">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
           <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
-          Live — Open for Subscription
+          Open — Accepting Applications Now
         </h2>
         <div class="space-y-2">
-          {liveIPOs.map(ipo => (
+          {openIPOs.map(ipo => (
             <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-success-500">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
-                    <span class="badge text-xs badge-live">live</span>
+                    <span class="badge text-xs badge-live">open</span>
                     <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
                   </div>
                   <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
@@ -71,6 +72,37 @@ const faqJsonLd = {
           ))}
         </div>
         <AdUnit slot="1234567890" format="horizontal" />
+      </div>
+    )}
+
+    <!-- Upcoming IPOs (open date in the future) -->
+    {upcomingIPOs.length > 0 && (
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
+          <span class="w-2 h-2 bg-primary-500 rounded-full"></span>
+          Upcoming — Opening Soon
+        </h2>
+        <div class="space-y-2">
+          {upcomingIPOs.map(ipo => (
+            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-primary-400">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
+                    <span class="badge text-xs bg-primary-50 text-primary-600">upcoming</span>
+                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                  </div>
+                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Opens: {ipo.openDate} – {ipo.closeDate}</p>
+                </div>
+                <div class="flex items-center gap-5 text-xs">
+                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
     )}
 

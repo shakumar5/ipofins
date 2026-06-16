@@ -1,11 +1,17 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import FundTable from '../../components/funds/FundTable.tsx';
-import fundsData from '../../data/mutual-funds.json';
-import holdingsData from '../../data/fund-holdings.json';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import FundTable from '../../../components/funds/FundTable.tsx';
+import fundsData from '../../../data/mutual-funds.json';
+import holdingsData from '../../../data/fund-holdings.json';
 
 const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
-const holdingSlugs = Object.keys((holdingsData as any).holdings || {});
+const allHoldings = (holdingsData as any).holdings || {};
+const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
+// Only include funds that actually have non-empty holdings data for the latest month
+const holdingSlugs = Object.keys(allHoldings).filter(slug => {
+  const monthData = allHoldings[slug]?.[latestMonth];
+  return Array.isArray(monthData) && monthData.length > 0;
+});
 
 // Best = meets 2 of 3 criteria
 const top5ByCat = new Set();
@@ -85,19 +91,19 @@ const faqJsonLd = {
 };
 ---
 
-<BaseLayout title="Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOfins" description="Best mutual funds meeting multiple criteria: top returns + 5-star rating. Large cap, mid cap, small cap, ELSS, hybrid." jsonLd={jsonLd}>
+<BaseLayout title="Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOfins" description="List of best mutual funds in India 2026. Curated collection of top-performing, 5-star rated funds across Large Cap, Mid Cap, Small Cap, ELSS categories. Direct-Growth plans only.">
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
       <li><span class="mx-1">/</span></li>
       <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
       <li><span class="mx-1">/</span></li>
-      <li class="text-surface-900 dark:text-white font-medium">Best</li>
+      <li class="text-surface-900 dark:text-white font-medium">Best Mutual Funds 2026</li>
     </ol>
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">🏆 Best Mutual Funds 2026</h1>
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Best Mutual Funds to Invest in 2026 - Top Rated Collection</h1>
     <p class="mt-1 text-sm text-surface-500">{bestFunds.length} funds meeting 2 of 3: Top 5 by 3Y in category • 5-star rated • Top 10 by 1Y overall</p>
 
     <!-- Main Tabs -->
@@ -109,7 +115,7 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:only="react" funds={bestFundsForTable} categories={categories} holdingSlugs={holdingSlugs} />
+    <FundTable client:only="react" funds={bestFundsForTable} categories={categories} holdingSlugs={holdingSlugs} defaultCategory="All" basePath="/mutual-funds/best" />
   </section>
 
   <!-- How We Select Section -->

@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import FundTable from '../../../components/funds/FundTable.tsx';
+import fundsData from '../../../data/mutual-funds.json';
+import holdingsData from '../../../data/fund-holdings.json';
+
+function catToSlug(cat: string): string {
+  return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
+}
+
+// Best fund selection logic
+const CATEGORIES = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
+const categories = CATEGORIES.filter(c => fundsData.some((f: any) => f.category === c));
+const top5ByCat = new Set<string>();
+for (const cat of categories) {
+  fundsData.filter((f: any) => f.category === cat).sort((a: any, b: any) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach((f: any) => top5ByCat.add(f.slug));
+}
+const fiveStarFunds = new Set(fundsData.filter((f: any) => f.rating === 5).map((f: any) => f.slug));
+const top10By1Y = new Set([...fundsData].sort((a: any, b: any) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map((f: any) => f.slug));
+const bestFunds = fundsData.filter((f: any) => {
+  let score = 0;
+  if (top5ByCat.has(f.slug)) score++;
+  if (fiveStarFunds.has(f.slug)) score++;
+  if (top10By1Y.has(f.slug)) score++;
+  return score >= 2;
+});
+
+export function getStaticPaths() {
+  const cats = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
+  const avail = cats.filter(c => fundsData.some((f: any) => f.category === c));
+  // Compute best funds inline
+  const t5 = new Set<string>();
+  for (const cat of avail) {
+    fundsData.filter((f: any) => f.category === cat).sort((a: any, b: any) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach((f: any) => t5.add(f.slug));
+  }
+  const f5 = new Set(fundsData.filter((f: any) => f.rating === 5).map((f: any) => f.slug));
+  const t10 = new Set([...fundsData].sort((a: any, b: any) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map((f: any) => f.slug));
+  const bf = fundsData.filter((f: any) => { let s = 0; if (t5.has(f.slug)) s++; if (f5.has(f.slug)) s++; if (t10.has(f.slug)) s++; return s >= 2; });
+  const available = avail.filter(c => bf.some((f: any) => f.category === c));
+  return available.map(cat => ({
+    params: { category: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds' },
+    props: { categoryName: cat },
+  }));
+}
+
+const { categoryName } = Astro.props;
+
+const allHoldings = (holdingsData as any).holdings || {};
+const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
+const holdingSlugs = Object.keys(allHoldings).filter(slug => {
+  const monthData = allHoldings[slug]?.[latestMonth];
+  return Array.isArray(monthData) && monthData.length > 0;
+});
+
+const bestFundsForTable = bestFunds.map((f: any) => ({
+  name: f.name, slug: f.slug, category: f.category, nav: f.nav,
+  returns1y: f.returns1y, returns3y: f.returns3y, returns5y: f.returns5y,
+  rating: f.rating, aum: f.aum, riskLevel: f.riskLevel,
+}));
+
+const categoryCount = bestFunds.filter((f: any) => f.category === categoryName).length;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": `Best ${categoryName} Mutual Funds India 2026`,
+  "description": `Top rated ${categoryName} mutual funds in India 2026.`,
+  "url": `https://ipofins.com/mutual-funds/best/${catToSlug(categoryName)}`
+};
+---
+
+<BaseLayout
+  title={`Best ${categoryName} Mutual Funds 2026 - Top Rated | IPOfins`}
+  description={`${categoryCount} best ${categoryName} mutual funds in India 2026. Top performers with highest returns and ratings. Direct-Growth plans only.`}
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds/best" class="hover:text-primary-600 transition-colors">Best Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{categoryName} Mutual Funds</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Best {categoryName} Mutual Funds 2026</h1>
+    <p class="mt-1 text-sm text-surface-500">{categoryCount} top-rated {categoryName} funds • Sorted by performance</p>
+
+    <div class="mt-4 flex gap-2">
+      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">Best Funds</span>
+      <a href="/mutual-funds/all" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">All Funds</a>
+      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
+    </div>
+  </section>
+
+  <section class="container-wide py-4">
+    <FundTable client:only="react" funds={bestFundsForTable} categories={categories} holdingSlugs={holdingSlugs} defaultCategory={categoryName} basePath="/mutual-funds/best" />
+  </section>
+</BaseLayout>

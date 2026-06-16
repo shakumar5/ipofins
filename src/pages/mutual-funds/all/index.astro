@@ -1,11 +1,17 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import FundTable from '../../components/funds/FundTable.tsx';
-import fundsData from '../../data/mutual-funds.json';
-import holdingsData from '../../data/fund-holdings.json';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import FundTable from '../../../components/funds/FundTable.tsx';
+import fundsData from '../../../data/mutual-funds.json';
+import holdingsData from '../../../data/fund-holdings.json';
 
 const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
-const holdingSlugs = Object.keys((holdingsData as any).holdings || {});
+const allHoldings = (holdingsData as any).holdings || {};
+const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
+// Only include funds that actually have non-empty holdings data for the latest month
+const holdingSlugs = Object.keys(allHoldings).filter(slug => {
+  const monthData = allHoldings[slug]?.[latestMonth];
+  return Array.isArray(monthData) && monthData.length > 0;
+});
 
 // Only pass fields the React component actually needs (reduces hydration payload from 437KB to ~120KB)
 const fundsForTable = fundsData.map(f => ({
@@ -31,8 +37,8 @@ const dataDate = latestUpdate ? new Date(latestUpdate).toLocaleDateString('en-IN
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "name": "All Mutual Funds India 2026",
-  "description": "Complete list of mutual funds in India with returns comparison.",
+  "name": "List of All Mutual Funds India 2026",
+  "description": "Complete list of all mutual funds in India with returns comparison, NAV, and ratings.",
   "url": "https://ipofins.com/mutual-funds/all"
 };
 
@@ -76,20 +82,20 @@ const faqJsonLd = {
 };
 ---
 
-<BaseLayout title="All Mutual Funds India 2026 - Compare Returns | IPOfins" description="Complete list of mutual funds in India. Filter by category, sort by 1Y/3Y/5Y returns. Large cap, mid cap, small cap, ELSS, hybrid." jsonLd={jsonLd}>
+<BaseLayout title="List of All Mutual Funds in India 2026 - Compare & Filter | IPOfins" description="Complete list of all mutual funds in India 2026. Compare returns, NAV, ratings across Large Cap, Mid Cap, Small Cap, ELSS, Flexi Cap categories. Sort by 1Y/3Y/5Y performance." jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
       <li><span class="mx-1">/</span></li>
       <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
       <li><span class="mx-1">/</span></li>
-      <li class="text-surface-900 dark:text-white font-medium">All Funds</li>
+      <li class="text-surface-900 dark:text-white font-medium">All Mutual Funds</li>
     </ol>
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">All Mutual Funds 2026</h1>
-    <p class="mt-1 text-sm text-surface-500">{fundsData.length} funds • Filter by category • Sort by returns</p>
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">List of All Mutual Funds in India 2026</h1>
+    <p class="mt-1 text-sm text-surface-500">{fundsData.length} funds • Filter by category • Sort by returns • Direct-Growth plans only</p>
     <span class="data-freshness mt-2">🟢 Data as of {dataDate} • Source: AMFI India</span>
 
     <!-- Main Tabs -->
@@ -101,7 +107,7 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:only="react" funds={fundsForTable} categories={categories} holdingSlugs={holdingSlugs} />
+    <FundTable client:only="react" funds={fundsForTable} categories={categories} holdingSlugs={holdingSlugs} defaultCategory="All" basePath="/mutual-funds/all" />
   </section>
 
   <!-- How to Use Section -->

@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import FundTable from '../../../components/funds/FundTable.tsx';
+import fundsData from '../../../data/mutual-funds.json';
+import holdingsData from '../../../data/fund-holdings.json';
+
+function catToSlug(cat: string): string {
+  return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
+}
+
+export function getStaticPaths() {
+  const cats = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
+  const available = cats.filter(c => fundsData.some((f: any) => f.category === c));
+  return available.map(cat => ({
+    params: { category: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds' },
+    props: { categoryName: cat },
+  }));
+}
+
+const { categoryName } = Astro.props;
+
+const CATEGORIES = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
+const categories = CATEGORIES.filter(c => fundsData.some((f: any) => f.category === c));
+const allHoldings = (holdingsData as any).holdings || {};
+const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
+const holdingSlugs = Object.keys(allHoldings).filter(slug => {
+  const monthData = allHoldings[slug]?.[latestMonth];
+  return Array.isArray(monthData) && monthData.length > 0;
+});
+
+const fundsForTable = fundsData.map((f: any) => ({
+  name: f.name,
+  slug: f.slug,
+  category: f.category,
+  nav: f.nav,
+  returns1y: f.returns1y,
+  returns3y: f.returns3y,
+  returns5y: f.returns5y,
+  rating: f.rating,
+  aum: f.aum,
+  riskLevel: f.riskLevel,
+}));
+
+const categoryCount = fundsData.filter((f: any) => f.category === categoryName).length;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": `${categoryName} Mutual Funds India 2026`,
+  "description": `Complete list of ${categoryName} mutual funds in India 2026 with returns, NAV, and ratings.`,
+  "url": `https://ipofins.com/mutual-funds/all/${catToSlug(categoryName)}`
+};
+---
+
+<BaseLayout
+  title={`${categoryName} Mutual Funds 2026 - Compare Returns & Ratings | IPOfins`}
+  description={`List of ${categoryCount} ${categoryName} mutual funds in India 2026. Compare NAV, 1Y/3Y/5Y returns, ratings. Direct-Growth plans sorted by performance.`}
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds/all" class="hover:text-primary-600 transition-colors">All Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{categoryName} Mutual Funds</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{categoryName} Mutual Funds 2026</h1>
+    <p class="mt-1 text-sm text-surface-500">{categoryCount} {categoryName} funds • Sort by returns • Direct-Growth plans only</p>
+
+    <div class="mt-4 flex gap-2">
+      <a href="/mutual-funds/best" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Best Funds</a>
+      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">All Funds</span>
+      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
+    </div>
+  </section>
+
+  <section class="container-wide py-4">
+    <FundTable client:only="react" funds={fundsForTable} categories={categories} holdingSlugs={holdingSlugs} defaultCategory={categoryName} basePath="/mutual-funds/all" />
+  </section>
+</BaseLayout>

@@ -83,8 +83,9 @@ const faqJsonLd = {
       {categories.map(cat => {
         const count = fundsData.filter(f => f.category === cat).length;
         const topFund = fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0))[0];
+        const catSlug = cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
         return (
-          <a href={`/mutual-funds/all`} class="card-compact text-center group hover:shadow-md transition-shadow">
+          <a href={`/mutual-funds/all/${catSlug}`} class="card-compact text-center group hover:shadow-md transition-shadow">
             <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{cat}</p>
             <p class="text-xs text-surface-500 mt-0.5">{count} funds</p>
             {topFund && <p class={`text-xs font-bold mt-1 ${(topFund.returns1y || 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>Best 1Y: {(topFund.returns1y || 0) >= 0 ? '+' : ''}{topFund.returns1y}%</p>}

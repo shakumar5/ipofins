@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 interface Fund {
   name: string;
@@ -18,23 +18,21 @@ interface Props {
   funds: Fund[];
   categories: string[];
   holdingSlugs?: string[];
+  defaultCategory?: string;
+  basePath?: string;
 }
 
-// Fixed category display order
 const CATEGORY_ORDER = [
-  'Large Cap',
-  'Large & Mid Cap',
-  'Mid Cap',
-  'Multi Cap',
-  'Flexi Cap',
-  'Small Cap',
-  'Value',
-  'Focused',
-  'ELSS',
-  'Sectoral/Thematic',
-  'Contra',
-  'Dividend Yield',
+  'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap',
+  'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield',
 ];
+
+const PAGE_SIZE = 20;
+
+function catToSlug(cat: string): string {
+  if (cat === 'All') return '';
+  return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
+}
 
 function formatReturn(val: number | null | undefined): string {
   if (val === null || val === undefined) return '--';
@@ -46,14 +44,33 @@ function returnColor(val: number | null | undefined): string {
   return val >= 0 ? 'text-green-600' : 'text-red-500';
 }
 
-export default function FundTable({ funds, categories, holdingSlugs = [] }: Props) {
-  const [catFilter, setCatFilter] = useState('All');
+export default function FundTable({ funds, categories, holdingSlugs = [], defaultCategory = 'All', basePath = '' }: Props) {
+  const [catFilter, setCatFilter] = useState(defaultCategory);
   const [sortBy, setSortBy] = useState<'returns3y' | 'returns1y' | 'returns5y' | 'nav' | 'holdings'>('returns3y');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const holdingSet = useMemo(() => new Set(holdingSlugs), [holdingSlugs]);
 
-  // Sort categories in defined order
+  // Update URL when category changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !basePath) return;
+    const slug = catToSlug(catFilter);
+    const newUrl = slug ? `${basePath}/${slug}` : basePath;
+    if (window.location.pathname !== newUrl) {
+      window.history.replaceState(null, '', newUrl);
+    }
+    if (catFilter === 'All') {
+      document.title = document.title.replace(/^[^|]+/, 'List of All Mutual Funds in India 2026 ');
+    } else {
+      document.title = document.title.replace(/^[^|]+/, `${catFilter} Mutual Funds 2026 `);
+    }
+  }, [catFilter, basePath]);
+
+  // Reset page when filter or sort changes
+  useEffect(() => { setCurrentPage(1); }, [catFilter, sortBy, sortDir]);
+
   const orderedCategories = useMemo(() => {
     return CATEGORY_ORDER.filter(cat => categories.includes(cat));
   }, [categories]);
@@ -73,6 +90,17 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
     return data;
   }, [funds, catFilter, sortBy, sortDir, holdingSet]);
 
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const startIdx = (currentPage - 1) * PAGE_SIZE;
+  const endIdx = Math.min(startIdx + PAGE_SIZE, filtered.length);
+  const paginatedFunds = filtered.slice(startIdx, endIdx);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleSort = (col: typeof sortBy) => {
     if (sortBy === col) {
       setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
@@ -88,8 +116,21 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
     </span>
   );
 
+  // Generate page numbers with ellipsis
+  const getPageNumbers = (): (number | '...')[] => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | '...')[] = [1];
+    if (currentPage > 3) pages.push('...');
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      pages.push(i);
+    }
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+    return pages;
+  };
+
   return (
-    <div>
+    <div ref={tableRef}>
       {/* Category Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         <button
@@ -105,7 +146,9 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
         ))}
       </div>
 
-      <p className="text-xs text-gray-500 mb-3 tabular-nums">{filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : sortBy === 'returns5y' ? '5Y' : sortBy === 'nav' ? 'NAV' : 'Holdings'} ({sortDir === 'desc' ? 'high to low' : 'low to high'})</p>
+      <p className="text-xs text-gray-500 mb-3 tabular-nums">
+        Showing {startIdx + 1}–{endIdx} of {filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : sortBy === 'returns5y' ? '5Y' : sortBy === 'nav' ? 'NAV' : 'Holdings'} ({sortDir === 'desc' ? 'high to low' : 'low to high'})
+      </p>
 
       {/* Table Header */}
       <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 mb-2">
@@ -147,8 +190,9 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
 
       {/* Rows */}
       <div className="space-y-1.5">
-        {filtered.map((fund, i) => {
+        {paginatedFunds.map((fund, i) => {
           const hasHold = holdingSet.has(fund.slug);
+          const rank = startIdx + i + 1;
           return (
           <a
             key={fund.slug}
@@ -157,30 +201,22 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
           >
             {/* Desktop */}
             <div className="hidden md:grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-1 text-center text-xs text-gray-400">{i + 1}</div>
+              <div className="col-span-1 text-center text-xs text-gray-400">{rank}</div>
               <div className="col-span-3">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight">{fund.name}</h3>
                 <p className="text-xs text-gray-400 mt-0.5">{fund.category} • {fund.aum}</p>
               </div>
               <div className="col-span-1 text-center">
-                <span className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-200">
-                  ₹{fund.nav?.toFixed(2) || '--'}
-                </span>
+                <span className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-200">₹{fund.nav?.toFixed(2) || '--'}</span>
               </div>
               <div className="col-span-1 text-center">
-                <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns1y)}`}>
-                  {formatReturn(fund.returns1y)}
-                </span>
+                <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns1y)}`}>{formatReturn(fund.returns1y)}</span>
               </div>
               <div className="col-span-1 text-center">
-                <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns3y)}`}>
-                  {formatReturn(fund.returns3y)}
-                </span>
+                <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns3y)}`}>{formatReturn(fund.returns3y)}</span>
               </div>
               <div className="col-span-1 text-center">
-                <span className={`text-xs font-bold tabular-nums ${returnColor(fund.returns5y)}`}>
-                  {formatReturn(fund.returns5y)}
-                </span>
+                <span className={`text-xs font-bold tabular-nums ${returnColor(fund.returns5y)}`}>{formatReturn(fund.returns5y)}</span>
               </div>
               <div className="col-span-1 text-center">
                 <div className="flex justify-center">
@@ -208,7 +244,7 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
             {/* Mobile */}
             <div className="md:hidden">
               <div className="flex justify-between items-start mb-1">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{i+1}. {fund.name}</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{rank}. {fund.name}</h3>
                 <div className="flex items-center gap-1.5">
                   {hasHold && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">✓ Portfolio</span>}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
@@ -242,6 +278,42 @@ export default function FundTable({ funds, categories, holdingSlugs = [] }: Prop
 
       {filtered.length === 0 && (
         <p className="text-center py-8 text-gray-500">No funds found for this filter.</p>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-500">
+            Showing {startIdx + 1}–{endIdx} of {filtered.length} funds
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >← Prev</button>
+            {getPageNumbers().map((page, idx) => (
+              page === '...' ? (
+                <span key={`ellipsis-${idx}`} className="px-2 py-1.5 text-xs text-gray-400">...</span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                  }`}
+                >{page}</button>
+              )
+            ))}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >Next →</button>
+          </div>
+        </div>
       )}
     </div>
   );

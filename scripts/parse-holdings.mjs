@@ -50,10 +50,10 @@ function slugify(text) {
 function detectMonth(filename, sheetData) {
   const fn = (typeof filename === 'string' ? filename : '').toLowerCase();
   // Check filename first
-  if (fn.includes('april') || fn.includes('apr-2026') || fn.includes('30-04') || fn.includes('30-apr') || fn.includes('apr_2026') || fn.includes('april-2026') || fn.includes('_30_04')) return 'April 2026';
-  if (fn.includes('march') || fn.includes('mar-2026') || fn.includes('31-03') || fn.includes('31-mar') || fn.includes('31march') || fn.includes('mar_2026') || fn.includes('march-2026') || fn.includes('_31_03') || fn.includes('mar2026')) return 'March 2026';
-  if (fn.includes('may') || fn.includes('may-2026') || fn.includes('31-05') || fn.includes('may_2026') || fn.includes('_31_05') || fn.includes('may2026') || fn.includes('may 2026')) return 'May 2026';
-  if (fn.includes('june') || fn.includes('jun-2026') || fn.includes('30-06') || fn.includes('jun_2026')) return 'June 2026';
+  if (fn.includes('april') || fn.includes('apr-2026') || fn.includes('30-04') || fn.includes('30-apr') || fn.includes('apr_2026') || fn.includes('april-2026') || fn.includes('_30_04') || fn.includes('30042026')) return 'April 2026';
+  if (fn.includes('march') || fn.includes('mar-2026') || fn.includes('31-03') || fn.includes('31-mar') || fn.includes('31march') || fn.includes('mar_2026') || fn.includes('march-2026') || fn.includes('_31_03') || fn.includes('mar2026') || fn.includes('31032026')) return 'March 2026';
+  if (fn.includes('may') || fn.includes('may-2026') || fn.includes('31-05') || fn.includes('may_2026') || fn.includes('_31_05') || fn.includes('may2026') || fn.includes('may 2026') || fn.includes('31052026')) return 'May 2026';
+  if (fn.includes('june') || fn.includes('jun-2026') || fn.includes('30-06') || fn.includes('jun_2026') || fn.includes('30062026')) return 'June 2026';
   
   // Support folder structure: Holdings/2026/May/
   const pathMatch = fn.match(/holdings[\/\\](\d{4})[\/\\](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)/);
