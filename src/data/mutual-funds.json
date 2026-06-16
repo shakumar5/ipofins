@@ -7026,7 +7026,7 @@
     "name": "Helios Flexi Cap Fund Option",
     "slug": "helios-flexi-cap-fund-option",
     "category": "Flexi Cap",
-    "nav": 15.5,
+    "nav": 15.55,
     "schemeCode": "152135",
     "rating": null,
     "returns1y": 7.9,
@@ -7034,7 +7034,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "moderate",
-    "lastUpdated": "2026-06-16T11:40:54.116Z"
+    "lastUpdated": "2026-06-16T16:24:52.890Z"
   },
   {
     "name": "ITI Flexi Cap Fund- Direct Plan- Growth",
@@ -7348,7 +7348,7 @@
     "name": "Helios Large & Mid Cap Fund Option",
     "slug": "helios-large-mid-cap-fund-option",
     "category": "Mid Cap",
-    "nav": 11.29,
+    "nav": 11.33,
     "schemeCode": "152941",
     "rating": null,
     "returns1y": 8.3,
@@ -7356,7 +7356,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "high",
-    "lastUpdated": "2026-06-16T11:40:54.117Z"
+    "lastUpdated": "2026-06-16T16:24:52.890Z"
   },
   {
     "name": "HSBC Large & Mid Cap Fund",
@@ -7852,7 +7852,7 @@
     "name": "Helios Mid Cap Fund Option",
     "slug": "helios-mid-cap-fund-option",
     "category": "Mid Cap",
-    "nav": 13.41,
+    "nav": 13.43,
     "schemeCode": "153326",
     "rating": null,
     "returns1y": 14.9,
@@ -7860,7 +7860,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "high",
-    "lastUpdated": "2026-06-16T11:40:54.117Z"
+    "lastUpdated": "2026-06-16T16:24:52.890Z"
   },
   {
     "name": "ITI Mid Cap Fund Option",
@@ -8146,7 +8146,7 @@
     "name": "Helios Small Cap Fund Option",
     "slug": "helios-small-cap-fund-option",
     "category": "Small Cap",
-    "nav": 10.66,
+    "nav": 10.69,
     "schemeCode": "153912",
     "rating": null,
     "returns1y": null,
@@ -8154,7 +8154,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "very-high",
-    "lastUpdated": "2026-06-16T11:40:54.117Z"
+    "lastUpdated": "2026-06-16T16:24:52.890Z"
   },
   {
     "name": "ITI Small Cap Fund Option",
@@ -9350,15 +9350,15 @@
     "name": "DSP Value Fund",
     "slug": "dsp-value-fund",
     "category": "Value",
-    "nav": 24.226,
+    "nav": 24.426,
     "schemeCode": "148595",
     "rating": null,
-    "returns1y": 10,
-    "returns3y": 18.3,
-    "returns5y": 14.6,
+    "returns1y": 10.9,
+    "returns3y": 18.6,
+    "returns5y": 14.7,
     "aum": "",
     "riskLevel": "high",
-    "lastUpdated": "2026-06-16T11:40:54.117Z"
+    "lastUpdated": "2026-06-16T16:24:52.890Z"
   },
   {
     "name": "Groww Value Fund (formerly known as Indiabulls Value Fund) Option",
@@ -10064,7 +10064,7 @@
     "name": "Helios Balanced Advantage Fund- Direct Plan- Growth Option",
     "slug": "helios-balanced-advantage-fund-direct-plan-growth-option",
     "category": "Hybrid",
-    "nav": 11.72,
+    "nav": 11.76,
     "schemeCode": "152509",
     "rating": null,
     "returns1y": 3.5,
@@ -10072,7 +10072,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "moderate",
-    "lastUpdated": "2026-06-16T11:40:54.117Z"
+    "lastUpdated": "2026-06-16T16:24:52.890Z"
   },
   {
     "name": "HSBC Balanced Advantage Fund",
