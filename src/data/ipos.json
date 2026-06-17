@@ -11,7 +11,7 @@
     "listingDate": "Jun 12, 2026",
     "sector": "Healthcare & Nutrition",
     "issueSize": "â‚¹139 Cr",
-    "subscription": null,
+    "subscription": 52.52,
     "gmp": null,
     "registrar": "Link Intime",
     "founders": "Amit Sanghvi, Prakash Sanghvi",
@@ -39,7 +39,7 @@
       "qib": 19.77,
       "employee": null
     },
-    "subscriptionUpdatedAt": "2026-06-17T13:23:14.321Z",
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.849Z",
     "listingPrice": 48,
     "allotmentDate": "Jun 11, 2026"
   },
@@ -55,7 +55,7 @@
     "listingDate": "Jun 12, 2026",
     "sector": "Technology & AI",
     "issueSize": "â‚¹20 Cr (approx)",
-    "subscription": null,
+    "subscription": 15.79,
     "gmp": null,
     "registrar": "",
     "founders": "",
@@ -82,7 +82,7 @@
       "qib": 17.58,
       "employee": null
     },
-    "subscriptionUpdatedAt": "2026-06-17T13:23:14.323Z",
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.849Z",
     "listingPrice": 92.8,
     "allotmentDate": "Jun 11, 2026"
   },
@@ -172,7 +172,7 @@
     "sector": "Green Energy",
     "issueSize": "â‚¹850 Cr",
     "subscription": null,
-    "gmp": 192,
+    "gmp": null,
     "registrar": "KFin Technologies",
     "founders": "",
     "headquarters": "India",
@@ -192,7 +192,6 @@
     "verdict": null,
     "lastUpdated": "2026-06-17T15:33:58.389Z",
     "priceMax": 192,
-    "gmpUpdatedAt": "2026-06-17T14:46:18.720Z",
     "listingPrice": 275.4,
     "allotmentDate": "Jun 08, 2026"
   },
@@ -636,8 +635,8 @@
     "listingDate": "17 Jun 2026",
     "sector": "Paper",
     "issueSize": "â‚¹35cr",
-    "subscription": null,
-    "gmp": 1,
+    "subscription": 1.57,
+    "gmp": null,
     "registrar": "CAMEO",
     "founders": "Mr Akash Agrawal",
     "headquarters": "Khurda, Odisha",
@@ -670,8 +669,7 @@
       "qib": 1.12,
       "employee": null
     },
-    "subscriptionUpdatedAt": "2026-06-17T13:23:14.321Z",
-    "gmpUpdatedAt": "2026-06-17T14:46:18.720Z",
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.849Z",
     "financials": {
       "revenue": {
         "2023": 45.9,
@@ -707,7 +705,7 @@
     "listingDate": "18 Jun 2026",
     "sector": "Electrical Equipment",
     "issueSize": "â‚¹70cr",
-    "subscription": null,
+    "subscription": 191.07,
     "gmp": 43,
     "registrar": "Mudra RTA Ventures Private Limited",
     "founders": "Mr. Vishal Jain",
@@ -741,8 +739,8 @@
       "qib": 142.65,
       "employee": null
     },
-    "subscriptionUpdatedAt": "2026-06-17T13:23:14.319Z",
-    "gmpUpdatedAt": "2026-06-17T14:46:18.720Z",
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.849Z",
+    "gmpUpdatedAt": "2026-06-17T15:44:03.002Z",
     "financials": {
       "revenue": {
         "2024": 103.48,
@@ -777,7 +775,7 @@
     "listingDate": "19 Jun 2026",
     "sector": "Chemicals",
     "issueSize": "â‚¹54cr",
-    "subscription": null,
+    "subscription": 235.86,
     "gmp": 55,
     "registrar": "KFin Technologies Limited",
     "founders": "Mr Mohit Bajaj",
@@ -793,10 +791,10 @@
       "The company is ISO 9001:2015 certified for Quality Management Systems, ISO 14001:2015 certified for Environmental Management Systems, and ISO 45001:2018 certified for Occupational Health and Safety Ma"
     ],
     "risks": [
-      "The companyâ€™s business is working capital intensive, with net working capital requirements increasing from Rs 2.72 crore in FY24 to Rs 8.71 crore in FY25 and Rs 10.74 crore in FY26. A significant port",
+      "The company’s business is working capital intensive, with net working capital requirements increasing from Rs 2.72 crore in FY24 to Rs 8.71 crore in FY25 and Rs 10.74 crore in FY26. A significant port",
       "The company currently operates through a single manufacturing facility located in Roorkee, Haridwar, Uttarakhand. Any disruption caused by machinery breakdowns, power outages, fire incidents, industri",
-      "The companyâ€™s top 10 customers contributed Rs 17.39 crore (35.20%), Rs 15.65 crore (43.21%), and Rs 10.17 crore (50.03%) to revenue from operations in FY26, FY25, and FY24, respectively. Any failure t",
-      "The companyâ€™s top 10 suppliers contributed Rs 12.07 crore (42.29%) of its total raw material consumption in FY26, Rs 10.87 crore (52.82%) in FY25, and Rs 8.93 crore (55.67%) in FY24. Any failure of th",
+      "The company’s top 10 customers contributed Rs 17.39 crore (35.20%), Rs 15.65 crore (43.21%), and Rs 10.17 crore (50.03%) to revenue from operations in FY26, FY25, and FY24, respectively. Any failure t",
+      "The company’s top 10 suppliers contributed Rs 12.07 crore (42.29%) of its total raw material consumption in FY26, Rs 10.87 crore (52.82%) in FY25, and Rs 8.93 crore (55.67%) in FY24. Any failure of th",
       "The company has reported negative cash flows from investing activities amounting to Rs 34.65 crore in FY26, Rs 11.74 crore in FY25, and Rs 1.72 crore in FY24. In addition, it recorded negative cash fl"
     ],
     "drhpUrl": "https://gyrcapitaladvisors.com/wp-content/uploads/2026/06/rhphorizon.pdf",
@@ -812,8 +810,8 @@
       "qib": 134.35,
       "employee": null
     },
-    "subscriptionUpdatedAt": "2026-06-17T13:23:14.318Z",
-    "gmpUpdatedAt": "2026-06-17T14:46:18.715Z",
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.849Z",
+    "gmpUpdatedAt": "2026-06-17T15:44:03.002Z",
     "financials": {
       "revenue": {
         "2024": 20.33,
@@ -846,30 +844,54 @@
     "refundDate": "23 Jun 2026",
     "creditDate": "23 Jun 2026",
     "listingDate": "24 Jun 2026",
-    "sector": "Others",
+    "sector": "Castings, Forgings & Fastners",
     "issueSize": "₹36cr",
     "subscription": null,
-    "gmp": null,
-    "registrar": "",
-    "founders": "",
+    "gmp": 51,
+    "registrar": "KFin Technologies Ltd",
+    "founders": "Mr. Hiteshbhai Mansukhbhai Bhuva",
     "headquarters": "",
-    "founded": "",
-    "description": "",
+    "founded": "2020",
+    "description": "Liotech Industries Limited is engaged in the manufacturing and trading of hardware structures and accessories used across industries such as housing, infrastructure, agriculture, automotive, electricity, cement, mining, solar energy, and general engineering. \nThe company manufactures products including door kits, hinges, gate hooks, aldrops, locks, handles, tower bolts, and shelf bottoms, along with trading supplementary products such as door stoppers, magnets, table brackets, bed lifters, and b",
     "purpose": "",
-    "highlights": [],
-    "risks": [
-      "A significant portion of revenue comes from a limited number of customers, with no long-term contracts.",
-      "High dependence on a few suppliers for procurement of raw materials and products.",
-      "Any disruption at the company’s sole manufacturing facility could impact operations and revenues.",
-      "Lower demand for products could lead to underutilization of manufacturing capacity.",
-      "Failure to obtain, renew, or comply with required licenses and approvals may adversely affect operations."
+    "highlights": [
+      "Liotech Industries manufactures a wide range of hardware structures and accessories, including door kits, hinges, gate hooks, aldrops, locks, handles, tower bolts, and shelf bottoms. The company state",
+      "The company claims to provide customised manufacturing solutions based on customer specifications related to product dimensions, thickness, length, and design requirements. It also undertakes trading ",
+      "Liotech Industries operates a manufacturing facility in Rajkot, Gujarat, spread across approximately 12,632 square feet. The company claims that its facility is equipped with plant and machinery for f",
+      "The company is ISO 9001:2015 certified for quality management systems related to the design and manufacture of hardware products, including hinges, handles, tower bolts, magnets, brackets, and related",
+      "The company follows a B2B operational model and claims to provide end-to-end product solutions covering designing, manufacturing, quality testing, packaging, and logistics. Its manufacturing unit in G"
     ],
-    "drhpUrl": "",
+    "risks": [
+      "The top 10 customers contributed Rs 37.19 crore (91.43%), Rs 27.27 crore (97.87%), and Rs 8.36 crore (98.45%) of the company’s revenue during FY25, FY24, and FY23, respectively. Any failure to retain ",
+      "The top 10 suppliers contributed Rs 34.12 crore (96.25%), Rs 25.32 crore (98.21%), and Rs 7.46 crore (99.38%) of the company’s total purchases during FY25, FY24, and FY23, respectively. Any disruption",
+      "The company’s manufacturing facility is located in Rajkot, Gujarat, and a significant portion of its revenue is generated from the western region, which contributed Rs 21.05 crore (51.74%), Rs 19.16 c",
+      "The company recorded negative cash flows from operating activities amounting to Rs 0.52 crore and Rs 0.71 crore in FY24 and FY23, respectively. It also reported negative cash flows from investing acti",
+      "The company’s trade receivables stood at Rs 8.26 crore, Rs 5.91 crore, Rs 4.86 crore, and Rs 0.63 crore as of December 31, 2025, FY25, FY24, and FY23, respectively. Any failure to collect these receiv"
+    ],
+    "drhpUrl": "https://www.wealthminenetworks.com/pdf/Prospectus_Liotech.pdf",
     "aiScore": null,
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-17T15:33:58.394Z"
+    "lastUpdated": "2026-06-17T15:33:58.394Z",
+    "financials": {
+      "revenue": {
+        "2023": 8.49,
+        "2024": 27.86,
+        "2025": 40.68
+      },
+      "total_assets": {
+        "2023": 4.01,
+        "2024": 14.09,
+        "2025": 19.77
+      },
+      "profit": {
+        "2023": 0.34,
+        "2024": 2.93,
+        "2025": 4.16
+      }
+    },
+    "gmpUpdatedAt": "2026-06-17T15:44:03.002Z"
   },
   {
     "name": "Leapfrog Engineering Services",
@@ -885,30 +907,61 @@
     "refundDate": "23 Jun 2026",
     "creditDate": "23 Jun 2026",
     "listingDate": "24 Jun 2026",
-    "sector": "Others",
+    "sector": "Infrastructure Developers & Operators",
     "issueSize": "₹89cr",
-    "subscription": null,
-    "gmp": null,
-    "registrar": "",
-    "founders": "",
+    "subscription": 1.22,
+    "gmp": 0,
+    "registrar": "Integrated Registry Mgt Ser.Pv",
+    "founders": "Mr Prabhav Narasimha Rao",
     "headquarters": "",
-    "founded": "",
-    "description": "",
+    "founded": "2005",
+    "description": "Leapfrog Engineering Services Limited is a provider of engineering, procurement, construction, and commissioning (EPCC) services with a focus on electrical, instrumentation, automation, fire safety, and modular substation systems. \nThe company offers integrated solutions, including electrical engineering, industrial automation, fire protection systems, building automation, modular substations, and enterprise solutions, catering to industries such as oil and gas, metals, pharmaceuticals, and food",
     "purpose": "",
-    "highlights": [],
-    "risks": [
-      "Dependence on a limited number of customers for a significant portion of revenue.",
-      "Business may be affected by changes in laws and regulations in operating sectors.",
-      "Intense competition in the engineering and infrastructure industry may impact growth.",
-      "Inability to hire or retain key employees may affect operations.",
-      "Economic conditions in India and globally can impact business performance."
+    "highlights": [
+      "The company is led by experienced promoters and a qualified management team with significant industry expertise. The managing director has over 30 years of experience in engineering and project manage",
+      "The company has a sizable order book that provides revenue visibility for future periods. As of March 31, 2026, it had an outstanding order book of Rs 384.03 crore, comprising domestic orders worth Rs",
+      "The company claims to have an established presence in international markets, particularly in the Middle East. It has executed over 14 projects in Kuwait over the past decade, contributing to its expor",
+      "The company operates across multiple industry segments, including oil and gas, metals, pharmaceuticals, and food processing. This diversified portfolio may reduce dependency on any single sector and h",
+      "The company claims to have a track record of delivering EPC projects on schedule. Its in-house project management, engineering, and supply chain coordination are designed to support timely execution a"
     ],
-    "drhpUrl": "",
+    "risks": [
+      "The company, along with its promoters, directors, and group companies, is involved in certain ongoing legal proceedings. Any adverse outcome in these proceedings could lead to financial liabilities, i",
+      "The company’s EPCC projects are awarded through a competitive bidding process that requires meeting strict technical and financial qualification criteria. There is no assurance that the company will c",
+      "A significant portion of the company’s export revenue is concentrated in Middle Eastern markets, particularly Kuwait. This exposes the business to region-specific risks, such as economic fluctuations,",
+      "A substantial portion of the company’s revenue is derived from a limited number of key customers. The top 10 customers contributed approximately 91.37%, 85.49%, 98.81%, and 99.32% of revenue from oper",
+      "The company has reported negative cash flows from operating and investing activities in recent periods. Net cash outflow from operating activities stood at Rs 17.15 crore and Rs 1.16 crore for FY25 an"
+    ],
+    "drhpUrl": "https://www.lesgroup.in/images/investor/RHP_Leapfrog_BSE_08042026-2026-04-09-12-31.pdf",
     "aiScore": null,
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-17T15:33:58.394Z"
+    "lastUpdated": "2026-06-17T15:33:58.394Z",
+    "subscriptionDetails": {
+      "retail": 0.29,
+      "nii": 2.22,
+      "qib": 12.48,
+      "employee": null
+    },
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.840Z",
+    "financials": {
+      "revenue": {
+        "2023": 104.18,
+        "2024": 157.85,
+        "2025": 115.5
+      },
+      "total_assets": {
+        "2023": 66.45,
+        "2024": 51.11,
+        "2025": 149.17
+      },
+      "profit": {
+        "2023": 0.28,
+        "2024": 16.39,
+        "2025": 16.22
+      }
+    },
+    "gmpUpdatedAt": "2026-06-17T15:44:03.001Z"
   },
   {
     "name": "Diksha Polymers",
@@ -924,30 +977,54 @@
     "refundDate": "23 Jun 2026",
     "creditDate": "23 Jun 2026",
     "listingDate": "24 Jun 2026",
-    "sector": "Others",
+    "sector": "Plastic products",
     "issueSize": "₹18cr",
     "subscription": null,
-    "gmp": null,
-    "registrar": "",
-    "founders": "",
+    "gmp": 0,
+    "registrar": "Cameo Corporate Services Ltd",
+    "founders": "Mr Vivek Mandelia",
     "headquarters": "",
-    "founded": "",
-    "description": "",
+    "founded": "1998",
+    "description": "Diksha Polymers Limited is a manufacturer of PET bottles, containers, and PET preforms. PET bottles and containers are used for storing products such as beverages, edible oils, pharmaceuticals, agrochemicals, lubricants, and consumer goods, while PET preforms serve as the raw material for manufacturing PET containers. \nThe company also derives a small portion of its revenue from the sale of caps, scrap, and waste materials. Its products are manufactured using injection moulding and blow moulding",
     "purpose": "",
-    "highlights": [],
-    "risks": [
-      "A significant portion of revenue comes from PET bottles and PET preforms, increasing product concentration risk.",
-      "The business depends on plastic-based products and could be affected by future restrictions on plastic usage.",
-      "The company has ongoing tax-related legal proceedings against it and its promoters.",
-      "A large share of purchases has historically been made from related parties.",
-      "High working capital and funding requirements could increase dependence on borrowings and external financing."
+    "highlights": [
+      "The company operates an integrated manufacturing setup for both PET preforms and PET bottles/containers. Following the acquisition of Diksha Packaging’s business in September 2024, it integrated PET p",
+      "Diksha Polymers claims to operate three manufacturing facilities located in the Maharajpura Industrial Area of Gwalior, Madhya Pradesh, spread across a total area of 26,879 sq. ft. As of March 31, 202",
+      "The company claims that its integrated production process enables it to manufacture PET preforms and convert them into finished PET bottles and containers. This allows it to sell both intermediate pro",
+      "The company manufactures PET products used across multiple industries, including food and beverages, pharmaceuticals, agrochemicals, lubricants, and consumer goods. This diversified end-user exposure ",
+      "The company’s revenue has grown significantly over the last three financial years. Revenue from operations increased from Rs 19.72 crore in FY24 to Rs 42.72 crore in FY25 and Rs 51.27 crore in FY26, w"
     ],
-    "drhpUrl": "",
+    "risks": [
+      "PET bottles/containers and PET preforms contribute a substantial portion of the company’s revenue. PET bottles and containers contributed Rs 36.56 crore (71.30%) in FY26, Rs 34.25 crore (80.16%) in FY",
+      "The company is highly dependent on a limited number of suppliers for the procurement of raw materials. The top 10 suppliers accounted for Rs 44.46 crore (99.67%), Rs 40.48 crore (98.30%), and Rs 18.51",
+      "The company derives a significant portion of its revenue from a limited number of customers. The top 10 customers contributed Rs 45.60 crore (88.93%), Rs 39.59 crore (92.67%), and Rs 18.68 crore (94.6",
+      "Trade receivables, inventories, and short-term loans and advances constitute a significant portion of the company’s total assets. As of March 31, 2026, these assets amounted to Rs 22.50 crore, represe",
+      "The company’s entire manufacturing operations are concentrated in Gwalior, Madhya Pradesh, where all three of its manufacturing facilities are located. Any adverse political, economic, regulatory, or "
+    ],
+    "drhpUrl": "https://afsl.co.in/pdfnew/Prospectus_Diksha%20Polymers%20Ltd.pdf",
     "aiScore": null,
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-17T15:33:58.394Z"
+    "lastUpdated": "2026-06-17T15:33:58.394Z",
+    "financials": {
+      "revenue": {
+        "2024": 19.72,
+        "2025": 42.72,
+        "2026": 51.27
+      },
+      "total_assets": {
+        "2024": 6.81,
+        "2025": 25.86,
+        "2026": 28.2
+      },
+      "profit": {
+        "2024": 1.01,
+        "2025": 2.63,
+        "2026": 4.12
+      }
+    },
+    "gmpUpdatedAt": "2026-06-17T15:44:03.001Z"
   },
   {
     "name": "Clay Craft India",
@@ -963,29 +1040,60 @@
     "refundDate": "23 Jun 2026",
     "creditDate": "23 Jun 2026",
     "listingDate": "24 Jun 2026",
-    "sector": "Others",
+    "sector": "Ceramic Products",
     "issueSize": "₹110cr",
-    "subscription": null,
-    "gmp": null,
-    "registrar": "",
-    "founders": "",
+    "subscription": 2.23,
+    "gmp": 40,
+    "registrar": "KARVY",
+    "founders": "Mr Vikas Agarwal",
     "headquarters": "",
-    "founded": "",
-    "description": "",
+    "founded": "1988",
+    "description": "Clay Craft India Limited is engaged in the manufacturing and distribution of ceramic tableware products in India. The company designs, develops, produces, and sells a range of ceramic products, including dinner sets, tea and coffee serving sets, mugs, tumblers, platters, bowls, and tabletop accessories.\nIt caters to retail consumers, institutional buyers, and the hospitality sector, and also undertakes customised product development and manufacturing for corporate and institutional clients.\nThe ",
     "purpose": "",
-    "highlights": [],
-    "risks": [
-      "More than 90% of revenue comes from the Clay Craft and JCPL brands, making brand reputation critical to the business.",
-      "The company relies on key suppliers for raw materials and lacks long-term supply agreements.",
-      "Any interruption in the supply of raw materials could adversely affect operations.",
-      "All manufacturing facilities are located in Rajasthan, exposing the business to region-specific risks.",
-      "Loss of major customers could negatively impact revenue and business performance."
+    "highlights": [
+      "The company operates two manufacturing facilities in Rajasthan with a combined installed capacity of approximately 6,000 metric tonnes per annum. It claims to have an integrated manufacturing setup th",
+      "The company claims to undertake product design, development, decal printing, manufacturing, and packaging within its own facilities. This integrated approach reduces dependence on third-party vendors ",
+      "The company is ISO 9001:2015 certified for the manufacturing, trading, import, and export of tableware products, including dinner sets, coffee mugs, tea sets, and gift sets. It also claims to have an ",
+      "As of March 31, 2026, the company offered approximately 5,770 SKUs across multiple product categories, including dinnerware, mugs, tea and coffee serving sets, platters, bowls, tumblers, vacuum bottle",
+      "The company has built a distribution network of approximately 132 distributors across India as of FY26. In addition to distributors, it sells through modern retail chains, corporate channels, governme"
     ],
-    "drhpUrl": "",
+    "risks": [
+      "The company’s supplier base is concentrated, with its top 3 suppliers accounting for 52.28%, 58.30%, and 54.43% of total raw material purchases in FY26, FY25, and FY24, respectively. The top 10 suppli",
+      "The company operates in a highly competitive ceramic tableware market and faces competition from domestic manufacturers, international brands, imported products, and unorganised players. In the HoReCa",
+      "The company’s business is subject to seasonality, with demand for its ceramic tableware products generally increasing during festive periods. Its sales are also influenced by consumer spending pattern",
+      "The company, its promoters, and directors are involved in certain ongoing legal proceedings. Any adverse judgment, settlement, or regulatory action arising from these proceedings could result in finan",
+      "The company’s top 10 customers contributed 33.73%, 32.72%, and 36.84% of its total revenue in FY26, FY25, and FY24, respectively. This indicates a significant dependence on a relatively small group of"
+    ],
+    "drhpUrl": "https://hemadmin.hemsecurities.com/images/Files/offer/1078.pdf",
     "aiScore": null,
     "aiSummary": null,
     "riskScore": 5,
     "verdict": null,
-    "lastUpdated": "2026-06-17T15:33:58.394Z"
+    "lastUpdated": "2026-06-17T15:33:58.394Z",
+    "subscriptionDetails": {
+      "retail": 1.57,
+      "nii": 1.3,
+      "qib": 4.32,
+      "employee": null
+    },
+    "subscriptionUpdatedAt": "2026-06-17T15:43:36.848Z",
+    "financials": {
+      "revenue": {
+        "2024": 145.42,
+        "2025": 151.94,
+        "2026": 179.89
+      },
+      "total_assets": {
+        "2024": 188.67,
+        "2025": 217.39,
+        "2026": 251.95
+      },
+      "profit": {
+        "2024": 13.5,
+        "2025": 20.76,
+        "2026": 27.01
+      }
+    },
+    "gmpUpdatedAt": "2026-06-17T15:44:02.997Z"
   }
 ]
