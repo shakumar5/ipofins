@@ -964,7 +964,7 @@
     "name": "Taurus Flexi Cap Fund",
     "slug": "taurus-flexi-cap-fund",
     "category": "Flexi Cap",
-    "nav": 230.01,
+    "nav": 229.7,
     "returns1y": -1,
     "returns3y": 12.3,
     "returns5y": 10.4,
@@ -972,7 +972,7 @@
     "riskLevel": "moderate",
     "rating": 2,
     "schemeCode": "118883",
-    "lastUpdated": "2026-06-17T11:23:30.775Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "LIC MF Flexi Cap Fund",
@@ -2711,7 +2711,7 @@
     "name": "Taurus Mid Cap Fund",
     "slug": "taurus-mid-cap-fund",
     "category": "Mid Cap",
-    "nav": 124.48,
+    "nav": 125.36,
     "returns1y": -2.4,
     "returns3y": 11.6,
     "returns5y": 12.1,
@@ -2719,7 +2719,7 @@
     "riskLevel": "high",
     "rating": 1,
     "schemeCode": "118872",
-    "lastUpdated": "2026-06-17T11:23:30.776Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "Helios Mid Cap Fund",
@@ -6788,7 +6788,7 @@
     "name": "Quantum ELSS Tax Saver Fund Option",
     "slug": "quantum-elss-tax-saver-fund-option",
     "category": "ELSS",
-    "nav": 124.04,
+    "nav": 124.69,
     "schemeCode": "111549",
     "rating": null,
     "returns1y": -4.7,
@@ -6796,7 +6796,7 @@
     "returns5y": 11.6,
     "aum": "",
     "riskLevel": "moderate",
-    "lastUpdated": "2026-06-17T11:23:30.775Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "Samco ELSS Tax Saver Fund Option",
@@ -6858,7 +6858,7 @@
     "name": "Taurus ELSS Tax Saver Fund",
     "slug": "taurus-elss-tax-saver-fund",
     "category": "ELSS",
-    "nav": 191.81,
+    "nav": 191.69,
     "schemeCode": "118866",
     "rating": null,
     "returns1y": -5,
@@ -6866,7 +6866,7 @@
     "returns5y": 11.7,
     "aum": "",
     "riskLevel": "moderate",
-    "lastUpdated": "2026-06-17T11:23:30.775Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "Union ELSS Tax Saver Fund Option",
@@ -7754,7 +7754,7 @@
     "name": "Taurus Large Cap Fund",
     "slug": "taurus-large-cap-fund",
     "category": "Large Cap",
-    "nav": 164.65,
+    "nav": 165.28,
     "schemeCode": "118870",
     "rating": null,
     "returns1y": 0.4,
@@ -7762,7 +7762,7 @@
     "returns5y": 10.6,
     "aum": "",
     "riskLevel": "moderate",
-    "lastUpdated": "2026-06-17T11:23:30.776Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "UTI Large Cap Fund Option",
@@ -8272,7 +8272,7 @@
     "name": "QUANTUM SMALL CAP FUND OPTION",
     "slug": "quantum-small-cap-fund-option",
     "category": "Small Cap",
-    "nav": 13.7,
+    "nav": 13.79,
     "schemeCode": "152107",
     "rating": null,
     "returns1y": 6.8,
@@ -8280,7 +8280,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "very-high",
-    "lastUpdated": "2026-06-17T11:23:30.776Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "Sundaram Small Cap Fund Direct Plan - Growth",
@@ -9476,7 +9476,7 @@
     "name": "Quantum Value Fund Option",
     "slug": "quantum-value-fund-option",
     "category": "Value",
-    "nav": 124.12,
+    "nav": 124.79,
     "schemeCode": "103490",
     "rating": null,
     "returns1y": -5.1,
@@ -9484,7 +9484,7 @@
     "returns5y": 11.5,
     "aum": "",
     "riskLevel": "high",
-    "lastUpdated": "2026-06-17T11:23:30.776Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "Sundaram Value Fund Direct Plan - Growth",
@@ -10568,7 +10568,7 @@
     "name": "Zerodha ELSS Tax Saver Nifty LargeMidcap 250 Index Fund option",
     "slug": "zerodha-elss-tax-saver-nifty-largemidcap-250-index-fund-option",
     "category": "Mid Cap",
-    "nav": 14.2243,
+    "nav": 14.2923,
     "schemeCode": "152157",
     "rating": null,
     "returns1y": 3.1,
@@ -10576,7 +10576,7 @@
     "returns5y": null,
     "aum": "",
     "riskLevel": "high",
-    "lastUpdated": "2026-06-17T11:23:30.776Z"
+    "lastUpdated": "2026-06-17T16:42:31.150Z"
   },
   {
     "name": "HDFC Retirement Savings Fund - Hybrid-Debt Plan - Growth Option - Direct Plan",
