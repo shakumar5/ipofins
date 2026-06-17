@@ -13,7 +13,7 @@
         "name": "CMR Green Technologies",
         "listingDate": "Jun 10, 2026",
         "issuePrice": 192,
-        "listingPrice": 275.40,
+        "listingPrice": 275.4,
         "currentPrice": 250,
         "sector": "Green Energy"
       },
@@ -119,8 +119,8 @@
         "name": "GenXAI Analytics",
         "listingDate": "Jun 12, 2026",
         "issuePrice": 116,
-        "listingPrice": 92.80,
-        "currentPrice": 97.40,
+        "listingPrice": 92.8,
+        "currentPrice": 97.4,
         "sector": "Technology & AI"
       },
       {
@@ -135,9 +135,17 @@
         "name": "UHM Vacation",
         "listingDate": "Jun 11, 2026",
         "issuePrice": 166,
-        "listingPrice": 132.80,
+        "listingPrice": 132.8,
         "currentPrice": 126.16,
         "sector": "Hospitality & Tourism"
+      },
+      {
+        "name": "Utkal Speciality Industries India",
+        "listingDate": "17 Jun 2026",
+        "issuePrice": 66,
+        "listingPrice": 66,
+        "currentPrice": 66,
+        "sector": "Paper"
       }
     ]
   }
