@@ -4,7 +4,7 @@ import iposRaw from '../../data/ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
+const liveIPOs = iposData.filter(ipo => ipo.status === 'live' || ipo.status === 'closed');
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
 const jsonLd = {
@@ -61,7 +61,7 @@ const faqJsonLd = {
   description={`Live IPO subscription status ${today}. Track real-time subscription data for all open IPOs — Retail, HNI, QIB category-wise. Updated every 12 hours.`}
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
 
 
@@ -103,33 +103,33 @@ const faqJsonLd = {
               </div>
               
               <!-- Category Bars -->
-              {(ipo as any).subscriptionData ? (
+              {(ipo as any).subscriptionDetails ? (
                 <div class="space-y-4">
                   <div>
                     <div class="flex items-center justify-between mb-1.5">
                       <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Retail Individual (RII)</span>
-                      <span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionData.rii?.toFixed(2) || '—'}x</span>
+                      <span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionDetails.retail?.toFixed(2) || '—'}x</span>
                     </div>
                     <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                      <div class="bg-primary-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionData.rii || 0) * 10, 100)}%`}></div>
+                      <div class="bg-primary-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.retail || 0) * 10, 100)}%`}></div>
                     </div>
                   </div>
                   <div>
                     <div class="flex items-center justify-between mb-1.5">
                       <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Non-Institutional (NII/HNI)</span>
-                      <span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionData.nii?.toFixed(2) || '—'}x</span>
+                      <span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionDetails.nii?.toFixed(2) || '—'}x</span>
                     </div>
                     <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                      <div class="bg-success-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionData.nii || 0) * 8, 100)}%`}></div>
+                      <div class="bg-success-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.nii || 0) * 8, 100)}%`}></div>
                     </div>
                   </div>
                   <div>
                     <div class="flex items-center justify-between mb-1.5">
                       <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Qualified Institutional (QIB)</span>
-                      <span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionData.qib?.toFixed(2) || '—'}x</span>
+                      <span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionDetails.qib?.toFixed(2) || '—'}x</span>
                     </div>
                     <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                      <div class="bg-warning-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionData.qib || 0) * 5, 100)}%`}></div>
+                      <div class="bg-warning-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.qib || 0) * 5, 100)}%`}></div>
                     </div>
                   </div>
                 </div>

@@ -5,11 +5,31 @@
  * Used at build time to ensure static pages always show correct status,
  * even if the data fetch hasn't run recently.
  * 
+ * Status lifecycle (from diagram):
+ * ════════════════════════════════════════════════════════════════════
+ *
+ *   DRHP_FILED  →  UPCOMING  →  OPEN  →  LIVE  →  CLOSED  →  ALLOTMENT  →  LISTED
+ *                                                      ↘ FAILED (manual, undersubscribed)
+ *   WITHDRAWN (manual flag, any stage)
+ *
  * Status transitions:
- *   - today < openDate → "upcoming"
- *   - openDate <= today <= closeDate → "live"
- *   - closeDate < today < listingDate → "closed"
- *   - today >= listingDate → "listed"
+ *   - DRHP_FILED: no open_date yet (RHP not filed, price band not set)
+ *   - UPCOMING:   today < open_date - 2 days (RHP filed, price band set)
+ *   - OPEN:       open_date - 2 days <= today < open_date (finalised, investors can plan)
+ *   - LIVE:       open_date <= today <= close_date (subscription window active)
+ *   - CLOSED:     close_date < today < allotment_date
+ *   - ALLOTMENT:  allotment_date <= today < listing_date
+ *   - LISTED:     today >= listing_date
+ *   - FAILED:     manual flag (undersubscribed IPO)
+ *   - WITHDRAWN:  manual flag (can happen at any stage)
+ *
+ * Why OPEN and LIVE are different:
+ *   OPEN: price band, lot size, dates are all finalised and published —
+ *         but today is still before open_date. Investors can read and plan, not apply yet.
+ *   LIVE: today is inside [open_date, close_date]. Subscription window is
+ *         active — bidding, ASBA, UPI mandate approval all happen now.
+ *   The CTA button is the visible difference: OPEN shows "Opens on [date]",
+ *   LIVE shows "Apply now" — same page, different button and badge colour.
  */
 
 interface IPORecord {
@@ -18,9 +38,12 @@ interface IPORecord {
   status: string;
   openDate?: string;
   closeDate?: string;
+  allotmentDate?: string;
   listingDate?: string;
   [key: string]: any;
 }
+
+export type IPOStatus = 'drhp-filed' | 'upcoming' | 'open' | 'live' | 'closed' | 'allotment' | 'listed' | 'failed' | 'withdrawn';
 
 /**
  * Parse various IPO date string formats into a Date object.
@@ -73,32 +96,60 @@ function parseIPODate(dateStr: string | undefined | null, rejectRanges = false):
   return null;
 }
 
-type IPOStatus = 'live' | 'closed' | 'listed' | 'upcoming' | 'drhp-filed';
-
 /**
  * Compute the correct status for a single IPO based on today's date.
+ * Manual statuses ('failed', 'withdrawn') are never overridden.
  */
 export function computeIPOStatus(ipo: IPORecord): IPOStatus {
-  // Don't change drhp-filed status (they become live via openDate)
-  if (ipo.status === 'drhp-filed') return 'drhp-filed';
+  // Manual flags — never auto-transition these
+  if (ipo.status === 'failed') return 'failed';
+  if (ipo.status === 'withdrawn') return 'withdrawn';
+  // DRHP-filed stays until openDate is populated
+  if (ipo.status === 'drhp-filed') {
+    // If openDate is now set, promote to upcoming/open/live
+    if (!ipo.openDate) return 'drhp-filed';
+    // Fall through to date-based logic
+  }
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
   const openDate = parseIPODate(ipo.openDate);
   const closeDate = parseIPODate(ipo.closeDate);
+  const allotmentDate = parseIPODate(ipo.allotmentDate, true);
   const listingDate = parseIPODate(ipo.listingDate, true); // rejectRanges: listing must be a single date
 
+  // LISTED: today >= listing_date
   if (listingDate && now >= listingDate) {
     return 'listed';
   }
+
+  // ALLOTMENT: allotment_date <= today < listing_date
+  if (allotmentDate && now >= allotmentDate) {
+    return 'allotment';
+  }
+
+  // CLOSED: close_date < today < allotment_date
   if (closeDate && now > closeDate) {
-    // After close date, IPO is closed
     return 'closed';
   }
+
+  // LIVE: open_date <= today <= close_date
   if (openDate && closeDate && now >= openDate && now <= closeDate) {
     return 'live';
   }
+
+  // OPEN: within 2 days of opening (open_date - 2 days <= today < open_date)
+  if (openDate) {
+    const twoDaysBefore = new Date(openDate);
+    twoDaysBefore.setDate(twoDaysBefore.getDate() - 2);
+    
+    if (now >= twoDaysBefore && now < openDate) {
+      return 'open';
+    }
+  }
+
+  // UPCOMING: today < open_date - 2 days (but openDate is known)
   if (openDate && now < openDate) {
     return 'upcoming';
   }
@@ -111,7 +162,7 @@ export function computeIPOStatus(ipo: IPORecord): IPOStatus {
  * Apply correct statuses to all IPOs based on current date.
  * Returns a new array with updated statuses (does not mutate input).
  */
-export function withCorrectStatuses<T extends IPORecord>(ipos: T[]): (T & { status: 'live' | 'closed' | 'listed' | 'upcoming' | 'drhp-filed' })[] {
+export function withCorrectStatuses<T extends IPORecord>(ipos: T[]): (T & { status: IPOStatus })[] {
   return ipos.map(ipo => ({
     ...ipo,
     status: computeIPOStatus(ipo),

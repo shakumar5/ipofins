@@ -4,9 +4,9 @@ import upcomingData from '../../data/upcoming-ipos.json';
 import iposRaw from '../../data/ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
-// Get IPOs from main data that are in "upcoming" state (open date in the future)
+// Get IPOs from main data that are in "upcoming" or "open" state
 const iposData = withCorrectStatuses(iposRaw);
-const openSoonIPOs = iposData.filter(i => i.status === 'upcoming');
+const openSoonIPOs = iposData.filter(i => i.status === 'upcoming' || i.status === 'open');
 
 // From upcoming-ipos.json, categorize by status
 const drhpFiled = upcomingData.filter(ipo => ipo.status === 'drhp-filed');

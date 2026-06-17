@@ -19,7 +19,7 @@
  * @returns {DiffResult}
  */
 export function checkCountThreshold(existingData, newData, options = {}) {
-  const { minRatio = 0.5 } = options;
+  const { minRatio = 0.7 } = options;  // raised from 0.5 — catches up to 30% data loss
 
   if (existingData.length === 0) {
     return { allowed: true, mergedRecords: newData };

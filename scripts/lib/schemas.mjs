@@ -5,14 +5,17 @@
 /**
  * Schema for IPO records (ipos.json).
  * Required: name, slug, type, status, priceRange
- * Optional: lotSize, issueSize, subscription, gmp, lastUpdated
+ * Optional: lotSize, issueSize, subscription, gmp, date fields, lastUpdated
+ *
+ * NOTE: date fields (openDate, closeDate, allotmentDate, listingDate) are validated
+ * as strings only — format correctness is handled by ipo-status.ts parseIPODate().
  */
 export const IPO_SCHEMA = {
   required: {
     name: { type: 'string', nonEmpty: true },
     slug: { type: 'string', nonEmpty: true },
     type: { type: 'string', enum: ['mainboard', 'sme'] },
-    status: { type: 'string', enum: ['live', 'upcoming', 'listed', 'closed', 'drhp-filed'] },
+    status: { type: 'string', enum: ['live', 'upcoming', 'open', 'listed', 'closed', 'allotment', 'drhp-filed', 'failed', 'withdrawn'] },
     priceRange: { type: 'string' },
   },
   optional: {
@@ -20,6 +23,13 @@ export const IPO_SCHEMA = {
     issueSize: { type: 'string' },
     subscription: { type: 'number', min: 0 },
     gmp: { type: 'number' },
+    // Date fields — validated as non-empty strings; format checked by ipo-status.ts
+    openDate: { type: 'string' },
+    closeDate: { type: 'string' },
+    allotmentDate: { type: 'string' },
+    listingDate: { type: 'string' },
+    refundDate: { type: 'string' },
+    creditDate: { type: 'string' },
     lastUpdated: { type: 'string' },
   },
 };
@@ -54,7 +64,7 @@ export const UPCOMING_IPO_SCHEMA = {
   required: {
     name: { type: 'string', nonEmpty: true },
     slug: { type: 'string', nonEmpty: true },
-    status: { type: 'string', enum: ['drhp-filed', 'upcoming'] },
+    status: { type: 'string', enum: ['drhp-filed', 'sebi-approved', 'upcoming'] },
   },
   optional: {
     type: { type: 'string', enum: ['mainboard', 'sme'] },

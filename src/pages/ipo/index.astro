@@ -6,11 +6,13 @@ import upcomingData from '../../data/upcoming-ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const openIPOs = iposData.filter(i => i.status === 'live');
+const liveIPOs = iposData.filter(i => i.status === 'live');
+const openIPOs = iposData.filter(i => i.status === 'open');
 const upcomingIPOs = iposData.filter(i => i.status === 'upcoming');
 const closedIPOs = iposData.filter(i => i.status === 'closed');
+const allotmentIPOs = iposData.filter(i => i.status === 'allotment');
 const listedIPOs = iposData.filter(i => i.status === 'listed');
-const totalCount = openIPOs.length + upcomingIPOs.length + closedIPOs.length + listedIPOs.length;
+const totalCount = liveIPOs.length + openIPOs.length + upcomingIPOs.length + closedIPOs.length + allotmentIPOs.length + listedIPOs.length;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -40,23 +42,23 @@ const faqJsonLd = {
 
   <section class="container-wide py-6">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">All IPOs — 2026</h1>
-    <p class="text-sm text-surface-500 mb-6">{totalCount} IPOs • {openIPOs.length} open • {upcomingIPOs.length} upcoming • {closedIPOs.length} closed • {listedIPOs.length} listed</p>
+    <p class="text-sm text-surface-500 mb-6">{totalCount} IPOs • {liveIPOs.length} live • {openIPOs.length} open • {upcomingIPOs.length} upcoming • {closedIPOs.length} closed • {allotmentIPOs.length} allotment • {listedIPOs.length} listed</p>
 
-    <!-- Open IPOs (currently accepting applications) -->
-    {openIPOs.length > 0 && (
+    <!-- Live IPOs (subscription window active — "Apply Now") -->
+    {liveIPOs.length > 0 && (
       <div class="mb-4">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
           <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
-          Open — Accepting Applications Now
+          Live — Apply Now
         </h2>
         <div class="space-y-2">
-          {openIPOs.map(ipo => (
+          {liveIPOs.map(ipo => (
             <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-success-500">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
-                    <span class="badge text-xs badge-live">open</span>
+                    <span class="badge text-xs badge-live">live</span>
                     <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
                   </div>
                   <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
@@ -72,6 +74,37 @@ const faqJsonLd = {
           ))}
         </div>
         <AdUnit slot="1234567890" format="horizontal" />
+      </div>
+    )}
+
+    <!-- Open IPOs (finalised, opens within 2 days — "Opens on [date]") -->
+    {openIPOs.length > 0 && (
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
+          <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
+          Open — Opens Soon
+        </h2>
+        <div class="space-y-2">
+          {openIPOs.map(ipo => (
+            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-amber-400">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
+                    <span class="badge text-xs bg-amber-50 text-amber-700">open</span>
+                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                  </div>
+                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Opens: {ipo.openDate}</p>
+                </div>
+                <div class="flex items-center gap-5 text-xs">
+                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
     )}
 
@@ -106,12 +139,44 @@ const faqJsonLd = {
       </div>
     )}
 
-    <!-- Closed IPOs (awaiting listing) -->
+    <!-- Allotment IPOs (allotment done, awaiting listing) -->
+    {allotmentIPOs.length > 0 && (
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
+          <span class="w-2 h-2 bg-teal-500 rounded-full"></span>
+          Allotment — Shares Allocated
+        </h2>
+        <div class="space-y-2">
+          {allotmentIPOs.map(ipo => (
+            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-teal-400">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
+                    <span class="badge text-xs bg-teal-50 text-teal-700">allotment</span>
+                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                  </div>
+                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
+                </div>
+                <div class="flex items-center gap-5 text-xs">
+                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Closed IPOs (awaiting allotment) -->
     {closedIPOs.length > 0 && (
       <div class="mb-4">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 flex items-center gap-2">
           <span class="w-2 h-2 bg-surface-400 rounded-full"></span>
-          Closed — Awaiting Listing
+          Closed — Awaiting Allotment
         </h2>
         <div class="space-y-2">
           {closedIPOs.map(ipo => (

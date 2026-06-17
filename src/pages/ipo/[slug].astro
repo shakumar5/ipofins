@@ -5,6 +5,7 @@ import AIInsightBox from '../../components/AIInsightBox.astro';
 import RiskBadge from '../../components/RiskBadge.astro';
 import iposRaw from '../../data/ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
+import type { IPORecord } from '../../types/ipo';
 
 export function getStaticPaths() {
   const allIPOs = withCorrectStatuses(iposRaw as any[]);
@@ -14,15 +15,21 @@ export function getStaticPaths() {
   }));
 }
 
-const { ipo } = Astro.props;
+const { ipo: rawIpo } = Astro.props;
+const ipo = rawIpo as unknown as IPORecord;
 
 const statusConfig = {
   live: { label: 'Live', class: 'badge-live' },
+  open: { label: 'Open', class: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
   upcoming: { label: 'Upcoming', class: 'badge-upcoming' },
   closed: { label: 'Closed', class: 'badge-closed' },
+  allotment: { label: 'Allotment', class: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
   listed: { label: 'Listed', class: 'badge-listed' },
+  'drhp-filed': { label: 'DRHP Filed', class: 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300' },
+  failed: { label: 'Failed', class: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+  withdrawn: { label: 'Withdrawn', class: 'bg-surface-100 text-surface-500 dark:bg-surface-700 dark:text-surface-400' },
 };
-const statusInfo = statusConfig[ipo.status as keyof typeof statusConfig];
+const statusInfo = statusConfig[ipo.status as keyof typeof statusConfig] || statusConfig['upcoming'];
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -213,31 +220,31 @@ const jsonLd = {
         </div>
         <div>
           <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">DRHP / RHP Document (PDF)</p>
-          <p class="text-xs text-surface-500">View on SEBI website →</p>
+          <p class="text-xs text-surface-500">View official prospectus →</p>
         </div>
       </a>
     </section>
   )}
 
-  <!-- Subscription Status (for live IPOs) -->
-  {ipo.subscription && ipo.status === 'live' ? (
+  <!-- Subscription Status (for live/closed IPOs) -->
+  {ipo.subscription && (ipo.status === 'live' || ipo.status === 'closed') ? (
     <section class="container-wide py-4">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Subscription Status</h2>
       <div class="card">
         <div class="space-y-3">
-          {(ipo as any).subscriptionData ? (
+          {ipo.subscriptionDetails ? (
             <>
               <div>
-                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">Retail (RII)</span><span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionData.rii?.toFixed(1) || '—'}x</span></div>
-                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-primary-500 h-2.5 rounded-full" style={`width: ${Math.min(((ipo as any).subscriptionData.rii || 0) * 10, 100)}%`}></div></div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">Retail (RII)</span><span class="text-sm font-bold text-primary-600">{ipo.subscriptionDetails.retail?.toFixed(1) || '—'}x</span></div>
+                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-primary-500 h-2.5 rounded-full" style={`width: ${Math.min((ipo.subscriptionDetails.retail || 0) * 10, 100)}%`}></div></div>
               </div>
               <div>
-                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">NII (HNI)</span><span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionData.nii?.toFixed(1) || '—'}x</span></div>
-                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-success-500 h-2.5 rounded-full" style={`width: ${Math.min(((ipo as any).subscriptionData.nii || 0) * 10, 100)}%`}></div></div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">NII (HNI)</span><span class="text-sm font-bold text-success-500">{ipo.subscriptionDetails.nii?.toFixed(1) || '—'}x</span></div>
+                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-success-500 h-2.5 rounded-full" style={`width: ${Math.min((ipo.subscriptionDetails.nii || 0) * 10, 100)}%`}></div></div>
               </div>
               <div>
-                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">QIB</span><span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionData.qib?.toFixed(1) || '—'}x</span></div>
-                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-warning-500 h-2.5 rounded-full" style={`width: ${Math.min(((ipo as any).subscriptionData.qib || 0) * 5, 100)}%`}></div></div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">QIB</span><span class="text-sm font-bold text-warning-500">{ipo.subscriptionDetails.qib?.toFixed(1) || '—'}x</span></div>
+                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-warning-500 h-2.5 rounded-full" style={`width: ${Math.min((ipo.subscriptionDetails.qib || 0) * 5, 100)}%`}></div></div>
               </div>
             </>
           ) : null}
@@ -248,7 +255,7 @@ const jsonLd = {
         </div>
       </div>
     </section>
-  ) : ipo.status === 'live' ? (
+  ) : (ipo.status === 'live' || ipo.status === 'closed') ? (
     <section class="container-wide py-4">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Subscription Status</h2>
       <div class="card">
@@ -265,14 +272,141 @@ const jsonLd = {
         title={`${ipo.name} — AI Verdict`}
         summary={ipo.aiSummary || 'Analysis being generated.'}
         riskScore={ipo.riskScore}
-        verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral'}
+        verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral' | undefined}
         highlights={ipo.highlights || []}
       />
     </section>
   )}
 
-  <!-- Apply / Trade CTA -->
-  <section class="container-wide py-4">
+  <!-- Listing Performance (for listed IPOs) -->
+  {ipo.status === 'listed' && ipo.listingPrice && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Listing Performance</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="card-compact text-center">
+          <p class="text-xs text-surface-500">Issue Price</p>
+          <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{ipo.priceMax || ipo.priceRange.split('-').pop()}</p>
+        </div>
+        <div class="card-compact text-center">
+          <p class="text-xs text-surface-500">Listing Price</p>
+          <p class={`text-base font-bold mt-1 ${ipo.listingPrice >= (ipo.priceMax || 0) ? 'text-success-500' : 'text-danger-500'}`}>
+            ₹{ipo.listingPrice}
+          </p>
+        </div>
+        <div class="card-compact text-center">
+          <p class="text-xs text-surface-500">Listing Gain/Loss</p>
+          {(() => {
+            const issueP = ipo.priceMax || parseInt(ipo.priceRange.split('-').pop() || '0');
+            const listP = ipo.listingPrice as number;
+            const pct = issueP > 0 ? (((listP - issueP) / issueP) * 100).toFixed(2) : '0';
+            return (
+              <p class={`text-base font-bold mt-1 ${parseFloat(pct) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+                {parseFloat(pct) >= 0 ? '+' : ''}{pct}%
+              </p>
+            );
+          })()}
+        </div>
+        <div class="card-compact text-center">
+          <p class="text-xs text-surface-500">Listing Date</p>
+          <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.listingDate || '—'}</p>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Financial Summary -->
+  {ipo.financials && Object.keys(ipo.financials).length > 0 && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Financial Summary</h2>
+      <div class="card overflow-x-auto">
+        <table class="w-full text-sm min-w-[400px]">
+          <thead>
+            <tr class="border-b border-surface-200 dark:border-surface-700">
+              <th class="py-2 px-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Metric</th>
+              {(() => {
+                const firstKey = Object.keys(ipo.financials!)[0];
+                const years: string[] = (ipo.financials![firstKey] || []).map((y) => y.year || y.label || '');
+                return years.map((yr: string) => (
+                  <th class="py-2 px-3 text-right text-xs font-semibold text-surface-500 uppercase tracking-wider">{yr}</th>
+                ));
+              })()}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
+            {Object.entries(ipo.financials).map(([metric, yearData]) => (
+              <tr>
+                <td class="py-2.5 px-3 text-surface-600 dark:text-surface-400 capitalize">{metric.replace(/_/g, ' ')}</td>
+                {(yearData || []).map((y) => (
+                  <td class="py-2.5 px-3 text-right font-semibold text-surface-900 dark:text-white">
+                    {y.value !== null && y.value !== undefined ? `₹${Number(y.value).toLocaleString('en-IN')} Cr` : '—'}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )}
+
+  <!-- Key Performance Indicators -->
+  {ipo.kpis && Object.keys(ipo.kpis).length > 0 && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Key Performance Indicators</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {ipo.kpis.roe !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">ROE</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.kpis.roe}%</p>
+          </div>
+        )}
+        {ipo.kpis.roce !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">ROCE</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.kpis.roce}%</p>
+          </div>
+        )}
+        {ipo.kpis.ebitdaMargin !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">EBITDA Margin</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.kpis.ebitdaMargin}%</p>
+          </div>
+        )}
+        {ipo.kpis.patMargin !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">PAT Margin</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.kpis.patMargin}%</p>
+          </div>
+        )}
+        {ipo.kpis.eps !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">EPS</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{ipo.kpis.eps}</p>
+          </div>
+        )}
+        {ipo.kpis.nav !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">NAV</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{ipo.kpis.nav}</p>
+          </div>
+        )}
+        {ipo.kpis.debtEquity !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">Debt/Equity</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.kpis.debtEquity}x</p>
+          </div>
+        )}
+        {ipo.kpis.ronw !== undefined && (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">RONW</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.kpis.ronw}%</p>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  <!-- Apply / Trade CTA -->  <section class="container-wide py-4">
     <div class="card bg-gradient-to-r from-primary-50 to-surface-50 dark:from-primary-950/20 dark:to-surface-800 border-primary-200 dark:border-primary-800">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         {ipo.status === 'listed' ? (
@@ -326,7 +460,9 @@ const jsonLd = {
       {ipo.founders && (
         <details class="card-compact group">
           <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Who founded {ipo.name}?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">{ipo.name} was founded by {ipo.founders} in {ipo.founded}. Headquartered in {ipo.headquarters}.</p>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">
+            {ipo.name} was founded by {ipo.founders}{ipo.founded ? ` in ${ipo.founded}` : ''}{ipo.headquarters ? `. Headquartered in ${ipo.headquarters}` : ''}.
+          </p>
         </details>
       )}
     </div>

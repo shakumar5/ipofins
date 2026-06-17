@@ -4,8 +4,17 @@ import iposRaw from '../../data/ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const iposWithGMP = iposData.filter(ipo => ipo.gmp !== undefined && (ipo.status === 'live' || ipo.status === 'upcoming'));
-const listedWithGMP = iposData.filter(ipo => ipo.gmp !== undefined && ipo.status === 'listed');
+const activeStatuses = ['live', 'open', 'upcoming', 'closed', 'allotment'];
+const iposWithGMP = iposData.filter(ipo => ipo.gmp !== undefined && ipo.gmp !== null && activeStatuses.includes(ipo.status));
+// Show recently listed IPOs that have a known listing price — sorted by listing date desc, capped at 10
+const recentlyListed = iposData
+  .filter(ipo => ipo.status === 'listed' && (ipo as any).listingPrice)
+  .sort((a, b) => {
+    const da = new Date((a as any).listingDate || 0).getTime();
+    const db = new Date((b as any).listingDate || 0).getTime();
+    return db - da;
+  })
+  .slice(0, 10);
 
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
@@ -141,21 +150,23 @@ const faqJsonLd = {
     )}
   </section>
 
-  <!-- Recently Listed GMP (Performance) -->
-  {listedWithGMP.length > 0 && (
+  <!-- Recently Listed — GMP vs Actual Performance -->
+  {recentlyListed.length > 0 && (
     <section class="container-wide py-6">
       <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Recently Listed — GMP vs Actual</h2>
       <div class="space-y-3">
-        {listedWithGMP.map(ipo => {
+        {recentlyListed.map(ipo => {
           const upperPrice = parseInt(ipo.priceRange.split('-').pop() || '0');
-          const expectedListing = upperPrice + (ipo.gmp || 0);
-          const actualPrice = upperPrice; // Use issue price as baseline for listed
+          const listingPrice = (ipo as any).listingPrice as number;
+          const listingReturn = upperPrice > 0
+            ? (((listingPrice - upperPrice) / upperPrice) * 100).toFixed(1)
+            : '0';
           return (
             <a href={`/ipo/${ipo.slug}`} class="card-compact group block">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div>
                   <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                  <p class="text-xs text-surface-500 mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
+                  <p class="text-xs text-surface-500 mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()} • Listed {ipo.listingDate}</p>
                 </div>
                 <div class="flex items-center gap-6 text-xs">
                   <div class="text-center">
@@ -163,18 +174,16 @@ const faqJsonLd = {
                     <p class="font-semibold text-surface-800 dark:text-surface-200">₹{upperPrice}</p>
                   </div>
                   <div class="text-center">
-                    <p class="text-surface-400">GMP</p>
-                    <p class={`font-bold ${(ipo.gmp || 0) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-                      {(ipo.gmp || 0) >= 0 ? '+' : ''}₹{ipo.gmp}
+                    <p class="text-surface-400">Actual Listing</p>
+                    <p class={`font-bold ${listingPrice >= upperPrice ? 'text-success-500' : 'text-danger-500'}`}>
+                      ₹{listingPrice}
                     </p>
                   </div>
                   <div class="text-center">
-                    <p class="text-surface-400">Expected</p>
-                    <p class="font-semibold text-primary-600">₹{expectedListing}</p>
-                  </div>
-                  <div class="text-center">
-                    <p class="text-surface-400">Actual Listing</p>
-                    <p class="font-bold text-surface-900 dark:text-white">₹{upperPrice}</p>
+                    <p class="text-surface-400">Return</p>
+                    <p class={`font-bold ${parseFloat(listingReturn) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+                      {parseFloat(listingReturn) >= 0 ? '+' : ''}{listingReturn}%
+                    </p>
                   </div>
                 </div>
               </div>

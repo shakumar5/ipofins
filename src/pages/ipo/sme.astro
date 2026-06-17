@@ -4,13 +4,15 @@ import iposRaw from '../../data/ipos.json';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(iposRaw);
-const smeIPOs = iposData.filter(ipo => ipo.type === 'sme' && ipo.status === 'live');
+const activeStatuses = ['live', 'open', 'upcoming', 'closed', 'allotment'];
+const smeIPOs = iposData.filter(ipo => ipo.type === 'sme' && activeStatuses.includes(ipo.status));
+const liveCount = smeIPOs.filter(i => i.status === 'live').length;
 ---
 
 <IPOLayout title="SME IPOs India 2026 - BSE SME & NSE Emerge | IPOfins" description="All SME IPOs in India 2026. Track small and medium enterprise IPOs on BSE SME and NSE Emerge platforms." activeTab="sme">
   <section class="container-wide py-6">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">SME IPOs — Live</h1>
-    <p class="text-sm text-surface-500 mb-6">{smeIPOs.length} SME IPOs currently open for subscription</p>
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">SME IPOs — 2026</h1>
+    <p class="text-sm text-surface-500 mb-6">{smeIPOs.length} SME IPOs • {liveCount} live now</p>
 
     {smeIPOs.length > 0 ? (
       <div class="space-y-2">
@@ -20,7 +22,7 @@ const smeIPOs = iposData.filter(ipo => ipo.type === 'sme' && ipo.status === 'liv
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
-                  <span class={`badge text-xs ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'listed' ? 'badge-listed' : 'badge-closed'}`}>{ipo.status}</span>
+                  <span class={`badge text-xs ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'open' ? 'bg-amber-50 text-amber-700' : ipo.status === 'listed' ? 'badge-listed' : ipo.status === 'allotment' ? 'bg-teal-50 text-teal-700' : 'badge-closed'}`}>{ipo.status}</span>
                 </div>
                 <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.issueSize} • {ipo.openDate} – {ipo.closeDate}</p>
               </div>

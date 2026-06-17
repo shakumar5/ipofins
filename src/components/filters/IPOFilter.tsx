@@ -41,11 +41,16 @@ export default function IPOFilter({ ipos }: Props) {
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       live: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      open: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       upcoming: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
       closed: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+      allotment: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
       listed: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      'drhp-filed': 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+      failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      withdrawn: 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500',
     };
-    return map[status] || map.closed;
+    return map[status] ?? map.closed;
   };
 
   return (
@@ -118,8 +123,8 @@ export default function IPOFilter({ ipos }: Props) {
                 </div>
               </div>
 
-              {/* Subscription bar for live */}
-              {ipo.subscription && ipo.status === 'live' && (
+              {/* Subscription bar for live/closed */}
+              {ipo.subscription && (ipo.status === 'live' || ipo.status === 'closed') && (
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-500">Subscription</span>

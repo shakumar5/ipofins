@@ -1,16 +1,29 @@
 /**
  * IPOfins — Automated Data Fetcher
- * 
+ *
  * PRIMARY SOURCES:
  * ═══════════════
- * IPO Data:
- *   1. BSE India  → https://www.bseindia.com/publicissue.html (Live IPOs, price, dates)
- *   2. NSE India  → https://www.nseindia.com/market-data/all-upcoming-issues-ipo (Subscription data)
- *   3. SEBI       → https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=3&ssid=15&smid=10 (DRHP filings = upcoming)
- * 
+ * IPO Data (from Zerodha detail pages):
+ *   - IPO name, slug, type (Mainboard/SME), status
+ *   - Price range, lot size, issue size
+ *   - Open/close/allotment/listing/refund/credit dates
+ *   - Company description (About section)
+ *   - Purpose / Objects of the issue
+ *   - Strengths (highlights) and Risks
+ *   - Listing price (for already-listed IPOs)
+ *
+ *   NOTE: drhpUrl is NOT fetched from Zerodha. Zerodha uses its own
+ *   domain in prospectus links. The authoritative RHP/DRHP PDF URL
+ *   is sourced exclusively from Groww (fetch-subscription-gmp.mjs).
+ *
+ * Upcoming IPOs:
+ *   - Zerodha upcoming tab → upcoming-ipos.json
+ *   - SEBI DRHP filings    → drhp-filed entries
+ *
  * Mutual Fund Data:
- *   1. AMFI India → https://www.amfiindia.com/spages/NAVAll.txt (All NAVs, daily)
- * 
+ *   - AMFI India NAVAll.txt → NAV updates
+ *   - mfapi.in              → 1Y/3Y/5Y historical returns
+ *
  * RUNS: Every 12 hours via GitHub Actions
  * ZERO manual intervention. No API keys needed.
  */
@@ -182,6 +195,16 @@ async function fetchBSEIPOs() {
  * Parse Zerodha listing page HTML.
  * The page has three tab sections: live-ipo, upcoming-ipo, closed-ipo
  * Each contains a table with IPO data.
+ * 
+ * Each row structure:
+ *   <tr>
+ *     <td class="ipo-logo"><a href="/ipo/ID/SLUG">...</a></td>
+ *     <td class="name"><a href="..."><span class="ipo-symbol">SYMBOL <span class="ipo-type">SME</span></span>
+ *                         <span class="ipo-name ...">Name</span></a></td>
+ *     <td class="date"><span class="hidden">SORT_DATE</span> IPO date range</td>
+ *     <td class="date">Listing date</td>
+ *     <td class="text-right">₹321  OR  ₹21 &ndash; ₹23</td>
+ *   </tr>
  */
 function parseZerodhaListing(html) {
   const live = [];
@@ -192,47 +215,68 @@ function parseZerodhaListing(html) {
   const liveSection = extractSection(html, 'live-ipo', 'upcoming-ipo');
   const upcomingSection = extractSection(html, 'upcoming-ipo', 'closed-ipo');
   const closedSection = extractSection(html, 'closed-ipo', '</main>');
-  
-  // Parse live IPOs
-  const liveLinks = [...liveSection.matchAll(/href="\/ipo\/(\d+)\/([^"]+)"/g)];
-  const liveNames = [...liveSection.matchAll(/ipo-name[^>]*>([^<]+)/g)];
-  const liveTypes = [...liveSection.matchAll(/ipo-type[^>]*>([^<]+)/g)];
-  const liveDates = [...liveSection.matchAll(/<td class="date">\s*(?:<span[^>]*>[^<]*<\/span>\s*)?([^<]+)/g)];
-  const livePrices = [...liveSection.matchAll(/₹(\d[\d,]*)\s*(?:&ndash;|–|-)\s*₹(\d[\d,]*)|₹(\d[\d,]*)/g)];
-  
-  // Deduplicate live IPOs by slug to avoid desktop/mobile duplicates
-  const seenLive = new Set();
-  
-  for (let i = 0; i < liveLinks.length; i++) {
-    const ipoId = liveLinks[i][1];
-    const ipoSlug = liveLinks[i][2];
-    if (seenLive.has(ipoSlug)) continue;
-    seenLive.add(ipoSlug);
-    
-    const name = liveNames[i] ? liveNames[i][1].trim() : ipoSlug.replace(/-/g, ' ');
-    const type = liveTypes[i] ? liveTypes[i][1].trim().toLowerCase() : 'sme';
-    
-    // Find price for this IPO
-    const priceMatch = livePrices.length > 0 ? livePrices[Math.min(i, livePrices.length - 1)] : null;
-    let priceMin = 0, priceMax = 0;
-    if (priceMatch) {
-      if (priceMatch[1] && priceMatch[2]) {
-        priceMin = parseInt(priceMatch[1].replace(/,/g, ''));
-        priceMax = parseInt(priceMatch[2].replace(/,/g, ''));
-      } else if (priceMatch[3]) {
-        priceMin = priceMax = parseInt(priceMatch[3].replace(/,/g, ''));
+
+  /**
+   * Parse a table section row-by-row, extracting IPO data from each <tr>.
+   * Returns array of IPO objects with name, slug, ipoId, type, priceRange, priceMax.
+   */
+  function parseSection(section) {
+    const results = [];
+    const seen = new Set();
+    // Extract all <tr> blocks
+    const rows = [...section.matchAll(/<tr[\s\S]*?<\/tr>/g)];
+    for (const rowMatch of rows) {
+      const row = rowMatch[0];
+      // Must have a link to /ipo/ID/SLUG
+      const linkMatch = row.match(/href="\/ipo\/(\d+)\/([^"]+)"/);
+      if (!linkMatch) continue;
+      const ipoId = linkMatch[1];
+      const ipoSlug = linkMatch[2];
+      if (seen.has(ipoSlug)) continue; // skip desktop/mobile duplicate
+      seen.add(ipoSlug);
+
+      // Name from ipo-name span
+      const nameMatch = row.match(/ipo-name[^>]*>([^<]+)/);
+      const name = nameMatch ? nameMatch[1].trim() : ipoSlug.replace(/-/g, ' ');
+
+      // Type from ipo-type span
+      const typeMatch = row.match(/ipo-type[^>]*>([^<]+)/);
+      const type = typeMatch ? typeMatch[1].trim().toLowerCase() : 'sme';
+
+      // Price from the last <td> (class="text-right") — has whitespace/newlines around ₹ values
+      // Strip all tags first, then find ₹ numbers
+      const tds = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)];
+      const lastTd = tds[tds.length - 1];
+      let priceMin = 0, priceMax = 0;
+      if (lastTd) {
+        const priceText = lastTd[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        // Match ₹X &ndash; ₹Y  OR  ₹X – ₹Y  OR  ₹X
+        const rangeMatch = priceText.match(/₹\s*(\d[\d,]*)\s*(?:&ndash;|–|-)\s*₹\s*(\d[\d,]*)/);
+        const singleMatch = priceText.match(/₹\s*(\d[\d,]*)/);
+        if (rangeMatch) {
+          priceMin = parseInt(rangeMatch[1].replace(/,/g, ''));
+          priceMax = parseInt(rangeMatch[2].replace(/,/g, ''));
+        } else if (singleMatch) {
+          priceMin = priceMax = parseInt(singleMatch[1].replace(/,/g, ''));
+        }
       }
+
+      results.push({ name, ipoSlug, ipoId, type, priceMin, priceMax });
     }
-    
+    return results;
+  }
+
+  // ── Live IPOs ──────────────────────────────────────────────────────────────
+  for (const { name, ipoSlug, ipoId, type, priceMin, priceMax } of parseSection(liveSection)) {
     live.push({
       name,
-      slug: ipoSlug, // Use URL slug for consistency (avoids name vs URL slug mismatch)
+      slug: ipoSlug,
       type: type === 'mainboard' ? 'mainboard' : 'sme',
       status: 'live',
-      priceRange: priceMax > priceMin ? `${priceMin}-${priceMax}` : `${priceMin}`,
+      priceRange: priceMax > priceMin ? `${priceMin}-${priceMax}` : priceMax > 0 ? `${priceMax}` : '',
       priceMax,
       detailUrl: `https://zerodha.com/ipo/${ipoId}/${ipoSlug}`,
-      // These will be filled from detail page
+      // Filled from detail page fetch:
       lotSize: 0,
       openDate: '',
       closeDate: '',
@@ -259,8 +303,8 @@ function parseZerodhaListing(html) {
       verdict: 'neutral',
     });
   }
-  
-  // Parse upcoming IPOs
+
+  // ── Upcoming IPOs ──────────────────────────────────────────────────────────
   const upLinks = [...upcomingSection.matchAll(/href="\/ipo\/(\d+)\/([^"]+)"/g)];
   const upNames = [...upcomingSection.matchAll(/ipo-name[^>]*>([^<]+)/g)];
   const upTypes = [...upcomingSection.matchAll(/ipo-type[^>]*>([^<]+)/g)];
@@ -328,7 +372,7 @@ function parseZerodhaListing(html) {
       purpose: '',
       highlights: [],
       risks: [],
-      drhpUrl: '',
+      drhpUrl: '', // Will be populated by Groww in fetch-subscription-gmp.mjs
       aiScore: null,
       aiSummary: '',
       riskScore: 5,
@@ -442,49 +486,67 @@ async function fetchIPODetail(ipo) {
       }
     }
     
-    // --- Price Range ---
-    // Try structured div first, then fallback to inline header text
-    const priceMatch = clean.match(/Price range[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
-    if (priceMatch) {
-      const priceStr = priceMatch[1].replace(/<[^>]+>/g, '').trim();
-      const prices = [...priceStr.matchAll(/₹?(\d[\d,]*)/g)];
-      if (prices.length >= 2) {
-        ipo.priceRange = `${prices[0][1].replace(/,/g, '')}-${prices[1][1].replace(/,/g, '')}`;
-        ipo.priceMax = parseInt(prices[1][1].replace(/,/g, ''));
-      } else if (prices.length === 1) {
-        ipo.priceRange = prices[0][1].replace(/,/g, '');
-        ipo.priceMax = parseInt(prices[0][1].replace(/,/g, ''));
+    // --- Price Range & Lot Size ---
+    // Zerodha's ipo-meta block structure (actual HTML):
+    //   <label>Price range</label>
+    //   <div class="value">
+    //       ₹321                          ← single price OR ₹21 &ndash; ₹23
+    //       <div class="text-12">
+    //           <a href="...">Lot size</a>
+    //           400                       ← lot size is inside the nested div
+    //       </div>
+    //   </div>                            ← outer close
+    //
+    // Strategy: find the ipo-meta block first, then parse the Price range section within it.
+    // The label appears AFTER the page <title> so we anchor to the ipo-meta div.
+    const metaBlockMatch = clean.match(/class="[^"]*ipo-meta[^"]*">([\s\S]*?)<\/div>\s*(?:<br|<div class="row ipo-links)/i);
+    const metaBlock = metaBlockMatch ? metaBlockMatch[1] : clean;
+
+    // Within the meta block find: <label>Price range</label> ... </div> </div>
+    const priceBlockMatch = metaBlock.match(/<label>Price range<\/label>\s*<div class="value">([\s\S]*?)<\/div>\s*<\/div>/i);
+    if (priceBlockMatch) {
+      const block = priceBlockMatch[1];
+      // Extract ₹ numbers (ignore lot size number — that's after </a> inside .text-12)
+      // The price part is BEFORE the nested <div class="text-12">
+      const priceOnly = block.split('<div')[0]; // everything before the nested div
+      const priceNums = [...priceOnly.matchAll(/₹\s*(\d[\d,]*)/g)];
+      if (priceNums.length >= 2) {
+        const lo = priceNums[0][1].replace(/,/g, '');
+        const hi = priceNums[1][1].replace(/,/g, '');
+        ipo.priceRange = `${lo}-${hi}`;
+        ipo.priceMax = parseInt(hi);
+      } else if (priceNums.length === 1) {
+        const p = priceNums[0][1].replace(/,/g, '');
+        ipo.priceRange = p;
+        ipo.priceMax = parseInt(p);
+      }
+      // Lot size is the number after </a> inside the .text-12 nested div
+      const lotInBlock = block.match(/<\/a>\s*\n?\s*(\d[\d,]*)/);
+      if (lotInBlock) {
+        const lotVal = parseInt(lotInBlock[1].replace(/,/g, ''));
+        if (lotVal >= 1 && lotVal <= 100000) ipo.lotSize = lotVal;
       }
     }
-    // Fallback: extract from inline header text (e.g., "Price range₹120 – ₹127")
+    // Fallback: extract price from inline header text (e.g., "Price range₹120 – ₹127")
     if (!ipo.priceRange || ipo.priceRange === '0') {
       const inlinePrice = clean.match(/Price range[^₹]*₹(\d[\d,]*)\s*(?:–|-|&ndash;)\s*₹(\d[\d,]*)/i);
       if (inlinePrice) {
         ipo.priceRange = `${inlinePrice[1].replace(/,/g, '')}-${inlinePrice[2].replace(/,/g, '')}`;
         ipo.priceMax = parseInt(inlinePrice[2].replace(/,/g, ''));
       } else {
-        const singlePrice = clean.match(/Price range[^₹]*₹(\d[\d,]*)/i);
+        const singlePrice = clean.match(/₹\s*(\d[\d,]*)\s*\n\s*<div class="text-12">/i);
         if (singlePrice) {
           ipo.priceRange = singlePrice[1].replace(/,/g, '');
           ipo.priceMax = parseInt(singlePrice[1].replace(/,/g, ''));
         }
       }
     }
-    // --- Lot Size ---
-    const lotMatch = clean.match(/Lot size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
-    if (lotMatch) {
-      const lotStr = lotMatch[1].replace(/<[^>]+>/g, '').trim();
-      const lotNum = lotStr.match(/(\d[\d,]*)/);
-      if (lotNum) ipo.lotSize = parseInt(lotNum[1].replace(/,/g, ''));
-    }
-    // Fallback: inline header text (e.g., "Lot size 1000 — ₹127000" or "Lot size 2000")
+    // Fallback: lot size from "Lot size</a> 400" pattern anywhere in page
     if (!ipo.lotSize || ipo.lotSize === 0) {
-      const inlineLot = clean.match(/Lot size[^0-9]*(\d[\d,]*)/i);
+      const inlineLot = clean.match(/Lot size<\/a>\s*\n?\s*(\d[\d,]*)/);
       if (inlineLot) {
         const lotVal = parseInt(inlineLot[1].replace(/,/g, ''));
-        if (lotVal >= 50 && lotVal <= 10000) { // Sanity: lot sizes are always 50-10000
-          ipo.lotSize = lotVal;
-        }
+        if (lotVal >= 1 && lotVal <= 100000) ipo.lotSize = lotVal;
       }
     }
     
@@ -569,13 +631,13 @@ async function fetchIPODetail(ipo) {
         if (val >= 10) ipo.listingPrice = val; // Sanity: must be >= ₹10
       }
     }
-    
-    // --- Prospectus URL ---
-    const prospectusMatch = clean.match(/href="([^"]*)"[^>]*>[\s\S]*?(?:prospectus|DRHP|RHP)/i);
-    if (prospectusMatch) {
-      ipo.drhpUrl = prospectusMatch[1].startsWith('http') ? prospectusMatch[1] : `https://zerodha.com${prospectusMatch[1]}`;
-    }
-    
+
+    // NOTE: drhpUrl is intentionally NOT fetched from Zerodha.
+    // Zerodha links its own domain in prospectus hrefs (zerodha.com/...).
+    // The authoritative RHP/DRHP PDF URL is fetched from Groww in
+    // fetch-subscription-gmp.mjs → fetchGrowwIPODetail → detail.rhpUrl
+    // which points directly to the company/SEBI-hosted PDF.
+
     // --- Risk score based on number of risks ---
     if (ipo.risks && ipo.risks.length > 0) {
       ipo.riskScore = Math.min(10, 4 + ipo.risks.length);
@@ -1314,7 +1376,7 @@ function mergeIPOData(existing, bseIPOs, nseData, sebiFilings) {
       founded: '',
       description: '',
       purpose: '',
-      drhpUrl: bseIPO.drhpUrl || 'https://www.sebi.gov.in/filings/public-issues.html',
+      drhpUrl: bseIPO.drhpUrl || '', // Left empty — Groww fills authoritative RHP URL
       registrar: bseIPO.registrar || '',
     });
   }
@@ -1530,7 +1592,19 @@ async function fetchFundHoldings() {
 
 // ═══════════════════════════════════════════════════════════════
 // DATE-BASED STATUS TRANSITIONS
-// Automatically moves IPOs: live → closed → listed based on dates
+// Full lifecycle: drhp-filed → upcoming → open → live → closed → allotment → listed
+// Manual flags: failed, withdrawn (never auto-transitioned)
+//
+// Status diagram:
+//   DRHP_FILED: no open_date yet
+//   UPCOMING:   today < open_date - 2 days
+//   OPEN:       open_date - 2 days <= today < open_date (finalised, can plan)
+//   LIVE:       open_date <= today <= close_date (subscription active)
+//   CLOSED:     close_date < today < allotment_date
+//   ALLOTMENT:  allotment_date <= today < listing_date
+//   LISTED:     today >= listing_date
+//   FAILED:     manual flag (undersubscribed)
+//   WITHDRAWN:  manual flag (any stage)
 // ═══════════════════════════════════════════════════════════════
 
 function updateIPOStatuses() {
@@ -1549,25 +1623,41 @@ function updateIPOStatuses() {
   for (const ipo of ipos) {
     const oldStatus = ipo.status;
     
-    // Skip if already in a terminal state we don't want to change
-    if (oldStatus === 'upcoming' || oldStatus === 'drhp-filed') continue;
+    // Manual flags — never auto-transition
+    if (oldStatus === 'failed' || oldStatus === 'withdrawn') continue;
     
-    const closeDate = parseIPODate(ipo.closeDate);
-    const listingDate = parseIPODate(ipo.listingDate, true); // rejectRanges: listing must be a single date
+    // DRHP-filed stays until openDate is populated
+    if (oldStatus === 'drhp-filed' && !ipo.openDate) continue;
+    
     const openDate = parseIPODate(ipo.openDate);
+    const closeDate = parseIPODate(ipo.closeDate);
+    const allotmentDate = parseIPODate(ipo.allotmentDate, true);
+    const listingDate = parseIPODate(ipo.listingDate, true);
+    
+    let newStatus = oldStatus;
     
     if (listingDate && todayIST >= listingDate) {
-      ipo.status = 'listed';
-    } else if (closeDate && todayIST >= closeDate) {
-      // Use >= because market closes at 3:30 PM on the close date,
-      // so by the time our script runs (evening/next morning), it's closed
-      ipo.status = 'closed';
-    } else if (openDate && closeDate && todayIST >= openDate && todayIST < closeDate) {
-      ipo.status = 'live';
+      newStatus = 'listed';
+    } else if (allotmentDate && todayIST >= allotmentDate) {
+      newStatus = 'allotment';
+    } else if (closeDate && todayIST > closeDate) {
+      newStatus = 'closed';
+    } else if (openDate && closeDate && todayIST >= openDate && todayIST <= closeDate) {
+      newStatus = 'live';
+    } else if (openDate) {
+      const twoDaysBefore = new Date(openDate);
+      twoDaysBefore.setDate(twoDaysBefore.getDate() - 2);
+      
+      if (todayIST >= twoDaysBefore && todayIST < openDate) {
+        newStatus = 'open';
+      } else if (todayIST < twoDaysBefore) {
+        newStatus = 'upcoming';
+      }
     }
     
-    if (ipo.status !== oldStatus) {
-      console.log(`    ${ipo.name}: ${oldStatus} → ${ipo.status}`);
+    if (newStatus !== oldStatus) {
+      ipo.status = newStatus;
+      console.log(`    ${ipo.name}: ${oldStatus} → ${newStatus}`);
       changes++;
     }
   }

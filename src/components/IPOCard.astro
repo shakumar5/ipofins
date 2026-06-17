@@ -7,7 +7,7 @@ interface Props {
   openDate: string;
   closeDate: string;
   listingDate?: string;
-  status: 'live' | 'upcoming' | 'closed' | 'listed' | 'drhp-filed';
+  status: 'live' | 'open' | 'upcoming' | 'closed' | 'allotment' | 'listed' | 'drhp-filed' | 'failed' | 'withdrawn';
   type: 'mainboard' | 'sme';
   subscription?: number;
   gmp?: number;
@@ -33,12 +33,17 @@ const {
 
 const statusConfig = {
   live: { label: 'Live', class: 'badge-live' },
+  open: { label: 'Open', class: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
   upcoming: { label: 'Upcoming', class: 'badge-upcoming' },
   closed: { label: 'Closed', class: 'badge-closed' },
+  allotment: { label: 'Allotment', class: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
   listed: { label: 'Listed', class: 'badge-listed' },
+  'drhp-filed': { label: 'DRHP Filed', class: 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300' },
+  failed: { label: 'Failed', class: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+  withdrawn: { label: 'Withdrawn', class: 'bg-surface-100 text-surface-500 dark:bg-surface-700 dark:text-surface-400' },
 };
 
-const statusInfo = statusConfig[status];
+const statusInfo = statusConfig[status] || statusConfig['upcoming'];
 ---
 
 <a href={`/ipo/${slug}`} class="card group block">
@@ -81,7 +86,7 @@ const statusInfo = statusConfig[status];
   </div>
 
   <!-- Subscription Bar (for live IPOs) -->
-  {subscription !== undefined && subscription !== null && status === 'live' && (
+  {subscription !== undefined && subscription !== null && (status === 'live' || status === 'closed') && (
     <div class="mb-4">
       <div class="flex items-center justify-between mb-1">
         <span class="text-xs text-surface-500 dark:text-surface-400">Subscription</span>
