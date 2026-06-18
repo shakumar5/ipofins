@@ -15,7 +15,7 @@
     "fetch-data": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-mf": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-gmp-sub": "echo 'DEPRECATED: use npm run pipeline:subscription' && exit 1",
-    "build": "node db/verify-schema.mjs && astro build",
+    "build": "node db/verify-schema.mjs && npx astro build",
     "check": "astro check",
     "preview": "astro preview",
     "astro": "astro",
