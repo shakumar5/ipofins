@@ -30,6 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify Neon schema
+        run: npm run db:verify
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Type check
         run: npm run check
 
@@ -38,10 +43,10 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Deploy to Vercel
+      - name: Deploy prebuilt static site to Vercel
         run: |
           npm i -g vercel@latest
-          vercel --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy dist --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

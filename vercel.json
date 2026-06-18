@@ -1,6 +1,6 @@
 {
   "framework": "astro",
-  "buildCommand": "npm run build",
+  "buildCommand": "node db/verify-schema.mjs && astro build",
   "outputDirectory": "dist",
   "redirects": [
     {

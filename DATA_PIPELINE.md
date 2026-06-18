@@ -125,16 +125,58 @@ npm run pipeline:subscription
 # Monthly — after AMFI publishes new portfolio disclosures
 npm run pipeline:monthly
 
-# Build site (reads from Neon at build time)
+# Build site (verifies Neon schema, then reads DB at build time)
 npm run build
 
-# Deploy (push to main → Vercel build with DATABASE_URL env var)
+# Before deploy: refresh NAV (~12s) + verify DB
+npm run predeploy
+
+# Deploy: push to main → GitHub builds with secrets.DATABASE_URL → uploads dist to Vercel
 git push origin main
 ```
 
+## Deploy (recommended — one Neon database)
+
+**Use a single Neon project** for local pipelines and production builds. No separate prod database.
+
+| Where | What to set |
+|-------|-------------|
+| Local `.env` | `DATABASE_URL` = your Neon pooler URL |
+| GitHub → Secrets | Same `DATABASE_URL` (build reads this) |
+| Vercel → Env vars | Same `DATABASE_URL` (only if Vercel builds on its own; optional if using GitHub prebuilt deploy) |
+
+### Day-to-day deploy (3 steps)
+
+```bash
+npm run predeploy    # ~12s — refresh NAV + verify schema
+npm run build        # ~25 min — static pages from Neon
+git push origin main # CI: verify → check → build → deploy dist (no Vercel rebuild)
+```
+
+### Why this setup
+
+- **Neon** = source of truth (IPOs, NAV, holdings). Git = code only.
+- **`pipeline:nav`** (~12s) for daily NAV; **`pipeline:daily`** when IPOs need refresh too.
+- **`db:verify`** fails fast if `DATABASE_URL` points at an empty/wrong database.
+- **GitHub deploys prebuilt `dist/`** — Vercel does not run a second build with a missing/wrong `DATABASE_URL`.
+
+### If build fails with `relation "ipos" does not exist`
+
+Your `DATABASE_URL` does not match the populated database. Copy the exact string from local `.env` into GitHub Secrets → `DATABASE_URL`.
+
+```bash
+npm run db:verify   # should print: Schema OK — N IPOs
+```
+
+### Disable duplicate Vercel builds (optional)
+
+If GitHub Actions deploys for you, in Vercel → Project → Settings → Git: disable automatic Production deploys, or ignore Vercel build failures when GitHub already deployed `dist`.
+
 ## Vercel Setup
 
-Add `DATABASE_URL` to Vercel project environment variables (Production + Preview). The Astro build queries Neon at build time to generate static pages.
+GitHub Actions builds with `secrets.DATABASE_URL` and runs `vercel deploy dist --prod` (prebuilt static files).
+
+If you also connect Vercel to GitHub directly, set the **same** `DATABASE_URL` on Vercel (Production) so any Vercel-native build succeeds too.
 
 ## Editorial Data (stays in Git)
 
