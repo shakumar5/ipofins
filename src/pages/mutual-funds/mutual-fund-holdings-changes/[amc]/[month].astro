@@ -3,6 +3,7 @@ import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import {
   getAMCsWithHoldings,
   getAvailableMonths,
+  getBuildMonths,
   getAMCHoldingsComparison,
 } from '../../../../lib/data/holdings';
 import { monthSlug, monthDisplay } from '../../../../utils/month-slug';
@@ -13,7 +14,7 @@ function slugify(str: string): string {
 
 export async function getStaticPaths() {
   const amcs = await getAMCsWithHoldings();
-  const months = await getAvailableMonths();
+  const months = await getBuildMonths(4);
   const paths: { params: { amc: string; month: string }; props: Record<string, string> }[] = [];
 
   // months are DESC (newest first): May vs April, April vs March, ...

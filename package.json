@@ -8,6 +8,7 @@
     "start": "astro dev",
     "pipeline:ipo": "node --use-system-ca scripts/pipeline/00-ipo-broker-sync.mjs",
     "pipeline:daily": "node --use-system-ca scripts/pipeline/01-daily-nav-ipo.mjs",
+    "pipeline:daily:full": "node --use-system-ca scripts/pipeline/01-daily-nav-ipo.mjs -- --full-ipo",
     "pipeline:nav": "node --use-system-ca scripts/pipeline/sync-nav-only.mjs",
     "pipeline:subscription": "node --use-system-ca scripts/pipeline/02-ipo-subscription.mjs",
     "pipeline:monthly": "node --use-system-ca scripts/pipeline/03-monthly-mf-holdings.mjs",

@@ -56,6 +56,12 @@ export async function getAMCList(): Promise<AMCInfo[]> {
   }));
 }
 
+/** Recent months for static AMC×month pages (fewer pages = faster builds). */
+export async function getBuildMonths(maxMonths = 4): Promise<string[]> {
+  const months = await getAvailableMonths();
+  return months.slice(0, maxMonths);
+}
+
 export async function getAvailableMonths(): Promise<string[]> {
   const sql = requireDb();
   const rows = await sql`

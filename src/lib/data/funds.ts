@@ -56,6 +56,57 @@ export async function getAllFunds(): Promise<FundRecord[]> {
   return (rows as FundRow[]).map(mapFundRow);
 }
 
+/** Funds that have holdings data — use for static page generation (smaller, faster builds). */
+export async function getFundsWithHoldings(): Promise<FundRecord[]> {
+  const sql = requireDb();
+  const rows = await sql`
+    SELECT
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      fn.nav,
+      fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+    FROM funds f
+    INNER JOIN fund_holdings fh ON fh.fund_id = f.id
+    LEFT JOIN LATERAL (
+      SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
+    ) fn ON true
+    LEFT JOIN fund_returns fr ON fr.fund_id = f.id
+    WHERE f.is_active = true
+    GROUP BY f.id, f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      fn.nav, fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+    ORDER BY f.category, f.name
+  `;
+  return (rows as FundRow[]).map(mapFundRow);
+}
+
+/** Lightweight query for "similar funds" on fund detail pages (avoids loading all funds per page). */
+export async function getRelatedFunds(
+  category: string,
+  excludeSlug: string,
+  limit = 5
+): Promise<FundRecord[]> {
+  const sql = requireDb();
+  const rows = await sql`
+    SELECT
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      fn.nav,
+      fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+    FROM funds f
+    INNER JOIN fund_holdings fh ON fh.fund_id = f.id
+    LEFT JOIN LATERAL (
+      SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
+    ) fn ON true
+    LEFT JOIN fund_returns fr ON fr.fund_id = f.id
+    WHERE f.is_active = true
+      AND f.category = ${category}
+      AND f.slug != ${excludeSlug}
+    GROUP BY f.id, f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      fn.nav, fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+    ORDER BY fr.returns_3y DESC NULLS LAST
+    LIMIT ${limit}
+  `;
+  return (rows as FundRow[]).map(mapFundRow);
+}
+
 export async function getFundBySlug(slug: string): Promise<FundRecord | null> {
   const funds = await getAllFunds();
   return funds.find((f) => f.slug === slug) ?? null;

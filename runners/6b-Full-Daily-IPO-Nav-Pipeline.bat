@@ -1,14 +1,14 @@
 @echo off
-title IPOfins — Daily IPO + NAV (fast)
+title IPOfins — Full Daily IPO + NAV (slow)
 call "%~dp0_common.bat" || exit /b 1
 echo.
 echo ===================================================
-echo   Daily Pipeline — FAST mode
-echo   NAV bulk sync + IPO listing + live/upcoming only
-echo   (For full IPO scrape use 6b-Full-Daily-IPO-Nav-Pipeline.bat)
+echo   FULL Daily Pipeline — SLOW (30-60+ min)
+echo   Enriches ALL IPO detail pages (closed + listed too)
+echo   Use only weekly or when IPO data looks stale
 echo ===================================================
 echo.
-call npm run pipeline:daily
+call npm run pipeline:daily:full
 echo.
 if %errorlevel% neq 0 (echo FAILED) else (echo SUCCESS)
 echo.

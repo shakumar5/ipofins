@@ -1,10 +1,10 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getAllFunds } from '../../../lib/data/funds';
+import { getFundsWithHoldings, getRelatedFunds } from '../../../lib/data/funds';
 import { getFundHoldings, getFundOverlaps } from '../../../lib/data/holdings';
 
 export async function getStaticPaths() {
-  const fundsData = await getAllFunds();
+  const fundsData = await getFundsWithHoldings();
   return fundsData.map(fund => ({
     params: { slug: `${fund.slug}-holdings` },
     props: { fund },
@@ -12,7 +12,7 @@ export async function getStaticPaths() {
 }
 
 const { fund } = Astro.props;
-const fundsData = await getAllFunds();
+const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -256,7 +256,7 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
   <section class="container-wide py-6">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">More {fund.category} Funds</h2>
     <div class="space-y-2">
-      {fundsData.filter(f => f.category === fund.category && f.slug !== fund.slug).slice(0, 5).map(f => (
+      {relatedFunds.map(f => (
         <a href={`/mutual-funds/fund/${f.slug}-holdings`} class="card-compact group block hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div>
