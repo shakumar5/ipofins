@@ -38,11 +38,11 @@ const LumpsumCalculator: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Lumpsum Calculator</h2>
+    <div className="bg-white dark:bg-surface-800 rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold mb-4 text-surface-800 dark:text-white">Lumpsum Calculator</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Lumpsum Investment (₹)
           </label>
           <input
@@ -50,12 +50,12 @@ const LumpsumCalculator: React.FC = () => {
             name="investment"
             value={inputs.investment}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter lumpsum investment"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Expected Annual Return (%)
           </label>
           <input
@@ -63,12 +63,12 @@ const LumpsumCalculator: React.FC = () => {
             name="rate"
             value={inputs.rate}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter expected annual return"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Time Period (Years)
           </label>
           <input
@@ -76,7 +76,7 @@ const LumpsumCalculator: React.FC = () => {
             name="time"
             value={inputs.time}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter time period"
           />
         </div>

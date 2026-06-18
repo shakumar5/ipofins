@@ -16,6 +16,14 @@
     "category": "investment"
   },
   {
+    "title": "SWP Calculator",
+    "slug": "swp-calculator",
+    "description": "Plan systematic withdrawals from your mutual fund corpus. See remaining balance and how long your money lasts.",
+    "icon": "💸",
+    "color": "primary",
+    "category": "retirement"
+  },
+  {
     "title": "CAGR Calculator",
     "slug": "cagr-calculator",
     "description": "Find the Compound Annual Growth Rate of your investments. Compare performance across different time periods.",

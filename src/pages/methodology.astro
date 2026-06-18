@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Data Methodology - IPOfins',
+  description:
+    'How IPOfins sources, processes, and publishes IPO, mutual fund, and market data for Indian investors.',
+  url: 'https://ipofins.com/methodology',
+};
+---
+
+<BaseLayout
+  title="Data Methodology — How IPOfins Sources & Processes Data"
+  description="Learn how IPOfins collects IPO, mutual fund NAV, and monthly holdings data from SEBI, AMFI, NSE, and BSE disclosures."
+  jsonLd={jsonLd}
+>
+  <section class="container-narrow py-16">
+    <div class="max-w-3xl mx-auto">
+      <p class="text-sm font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+        Transparency
+      </p>
+      <h1 class="mt-2 text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+        How We Source Data
+      </h1>
+      <p class="mt-4 text-lg text-surface-600 dark:text-surface-300 leading-relaxed">
+        IPOfins is built on publicly available regulatory and exchange disclosures. We do not repackage
+        unofficial indicators such as grey market premium (GMP). Our goal is to make official data
+        easier to search, compare, and understand.
+      </p>
+
+      <div class="mt-10 space-y-8 text-surface-600 dark:text-surface-300 leading-relaxed">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">IPO Data</h2>
+          <p class="mt-3">
+            IPO timelines, price bands, lot sizes, subscription status, and listing performance are
+            compiled from authorized sources including <strong class="text-surface-800 dark:text-surface-100">SEBI</strong>,{' '}
+            <strong class="text-surface-800 dark:text-surface-100">NSE</strong>, and{' '}
+            <strong class="text-surface-800 dark:text-surface-100">BSE</strong> filings and exchange
+            disclosures. Subscription figures are shown only when officially published.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">Mutual Fund NAV</h2>
+          <p class="mt-3">
+            Fund names, categories, and NAV history are sourced from{' '}
+            <strong class="text-surface-800 dark:text-surface-100">AMFI India</strong> daily NAV
+            disclosures. We focus on Direct-Growth plans where applicable for fair comparison.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">Monthly Holdings &amp; Changes</h2>
+          <p class="mt-3">
+            Mutual fund portfolio holdings are parsed from monthly AMC disclosure files published on
+            fund house websites, as mandated by SEBI. IPOfins normalizes fund names across AMCs,
+            deduplicates overlapping files, and computes month-over-month additions, removals, and
+            weight changes. Coverage grows as new AMC files are processed each month.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">IPOfins Score</h2>
+          <p class="mt-3">
+            Where shown, the IPOfins Score is a quantitative rating based on available financials,
+            valuation context, sector data, and issue structure. It is a research aid—not a buy or
+            sell recommendation. Scores are only displayed when sufficient data is available.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">Update Frequency</h2>
+          <ul class="mt-3 list-disc list-inside space-y-1.5 ml-1">
+            <li>IPO subscription and status data — refreshed on a regular pipeline schedule</li>
+            <li>Mutual fund NAV — daily from AMFI</li>
+            <li>Monthly holdings — after AMC portfolio disclosures are published</li>
+            <li>Calculators — run entirely in your browser; no server-side storage</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">Limitations</h2>
+          <p class="mt-3">
+            Data may be delayed, incomplete, or contain parsing errors despite validation checks.
+            Always verify critical figures on official AMC, exchange, or regulatory websites before
+            investing. See our{' '}
+            <a href="/disclaimer" class="text-primary-600 dark:text-primary-400 hover:underline">disclaimer</a>{' '}
+            for full legal terms.
+          </p>
+        </div>
+
+        <div class="pt-4 border-t border-surface-200 dark:border-surface-700">
+          <p class="text-sm text-surface-500 dark:text-surface-400">
+            Spot an error? Email{' '}
+            <a href="mailto:info@ipofins.com" class="text-primary-600 dark:text-primary-400 hover:underline">info@ipofins.com</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

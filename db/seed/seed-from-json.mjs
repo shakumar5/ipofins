@@ -30,9 +30,7 @@ function readJSON(filename) {
   return JSON.parse(readFileSync(filepath, 'utf-8'));
 }
 
-function slugify(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').substring(0, 80);
-}
+import { extractAmcFromFundName, slugify, CANONICAL_AMCS } from '../../scripts/lib/amc-resolve.mjs';
 
 // ═══════════════════════════════════════════════════════════════
 // SEED MUTUAL FUNDS
@@ -49,38 +47,13 @@ async function seedMutualFunds() {
   const fundAMCMap = {};
   
   for (const fund of funds) {
-    // Try to extract AMC from fund name
-    const amcPatterns = [
-      /^(HDFC)\s/i, /^(ICICI Prudential)\s/i, /^(SBI)\s/i, 
-      /^(Aditya Birla Sun Life)\s/i, /^(Kotak)\s/i, /^(Axis)\s/i,
-      /^(Nippon India)\s/i, /^(DSP)\s/i, /^(Mirae Asset)\s/i,
-      /^(Motilal Oswal)\s/i, /^(Invesco India)\s/i, /^(Canara Robeco)\s/i,
-      /^(Bandhan)\s/i, /^(Bajaj Finserv)\s/i, /^(UTI)\s/i,
-      /^(Tata)\s/i, /^(PPFAS)\s/i, /^(Parag Parikh)\s/i,
-      /^(Edelweiss)\s/i, /^(HSBC)\s/i, /^(Baroda BNP)\s/i,
-      /^(Franklin Templeton|Franklin India)\s/i, /^(Quant)\s/i,
-      /^(Mahindra Manulife)\s/i, /^(360 ONE)\s/i, /^(JM Financial)\s/i,
-      /^(LIC)\s/i, /^(Groww)\s/i, /^(Sundaram)\s/i,
-      /^(PGIM India)\s/i, /^(Bank of India)\s/i, /^(ITI)\s/i,
-      /^(Shriram)\s/i, /^(Helios)\s/i, /^(WhiteOak Capital|White Oak)\s/i,
-      /^(Union)\s/i, /^(Trust)\s/i, /^(Samco)\s/i, /^(NJ)\s/i,
-    ];
-    
-    let amcName = 'Other';
-    for (const pattern of amcPatterns) {
-      const match = fund.name.match(pattern);
-      if (match) {
-        amcName = match[1];
-        break;
-      }
-    }
-    
+    const amcName = extractAmcFromFundName(fund.name);
     amcSet.add(amcName);
     fundAMCMap[fund.slug] = amcName;
   }
 
-  // Insert AMCs
-  const amcRows = [...amcSet].map(name => ({
+  // Insert AMCs (canonical list + any from funds)
+  const amcRows = [...new Set([...CANONICAL_AMCS, ...amcSet])].map((name) => ({
     name,
     slug: slugify(name),
     short_name: name.substring(0, 30),

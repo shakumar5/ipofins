@@ -2,67 +2,179 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "AboutPage",
-  "name": "About ipofins",
-  "description": "ipofins is a free, AI-powered finance intelligence platform helping Indian investors make smarter decisions.",
-  "url": "https://ipofins.com/about"
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: 'About IPOfins',
+  description:
+    'IPOfins is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors.',
+  url: 'https://ipofins.com/about',
 };
 ---
 
-<BaseLayout title="About ipofins - Free Finance Intelligence Platform" description="ipofins provides free IPO tracking, SIP calculators, broker comparisons, and AI-powered investment insights for Indian retail investors." jsonLd={jsonLd}>
+<BaseLayout
+  title="About IPOfins — Financial Intelligence for Indian Investors"
+  description="IPOfins is a financial intelligence platform for IPO analytics, mutual fund portfolio tracking, investment tools, and market insights. Learn about our mission and founder."
+  jsonLd={jsonLd}
+>
   <section class="container-narrow py-16">
     <div class="max-w-3xl mx-auto">
-      <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-        About ipofins
+      <p class="text-sm font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+        About IPOfins
+      </p>
+      <h1 class="mt-2 text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+        Helping Investors Make Smarter Decisions with Data
       </h1>
-      
-      <div class="mt-8 space-y-6 text-surface-600 dark:text-surface-300 leading-relaxed">
-        <p class="text-lg">
-          ipofins is a free finance intelligence platform built for Indian retail investors. We provide tools, data, and AI-powered insights to help you make smarter investment decisions.
-        </p>
 
-        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Our Team</h2>
+      <div class="mt-8 space-y-6 text-surface-600 dark:text-surface-300 leading-relaxed">
+        <p class="text-lg text-surface-700 dark:text-surface-200">
+          IPOfins is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights. Founded by Shailesh Kumar, a technology leader with 16 years of experience across DP World, Myntra, Intuit, Paytm, and SAP Ariba, IPOfins aims to help investors make smarter decisions through data-driven research and transparent analytics.
+        </p>
         <p>
-          ipofins is built and maintained by a small team of developers and finance enthusiasts based in India. We combine software engineering expertise with deep understanding of Indian capital markets to build tools that genuinely help retail investors make informed decisions.
+          Whether you're tracking IPOs, analyzing mutual fund portfolio changes, comparing brokers, or using investment calculators, IPOfins provides reliable information in a simple and user-friendly format—grounded in publicly available market data and quantitative analysis.
         </p>
 
         <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Our Mission</h2>
         <p>
-          Financial literacy and access to quality investment tools shouldn't cost money. We believe every Indian investor — whether investing ₹500 or ₹5 lakhs — deserves access to the same quality of research, analysis, and tools that institutional investors use.
+          To build a trusted financial intelligence platform that empowers retail investors with
+          easy access to investment research, market analytics, and educational resources.
         </p>
 
-        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">What We Offer</h2>
-        <ul class="list-disc list-inside space-y-2">
-          <li><strong>IPO Intelligence</strong> — Track every mainboard and SME IPO with real-time subscription data, GMP tracking, and AI-powered analysis</li>
-          <li><strong>Finance Calculators</strong> — Free SIP, CAGR, EMI, and IPO profit calculators with instant, accurate results</li>
-          <li><strong>Broker Comparisons</strong> — Unbiased side-by-side comparisons of India's top stock brokers</li>
-          <li><strong>Mutual Fund Insights</strong> — NAV data, returns comparison, and fund recommendations by category</li>
-          <li><strong>AI-Powered Analysis</strong> — Machine learning models that score IPOs on risk, value, and opportunity</li>
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">What We Offer</h2>
+
+        <h3 class="text-lg font-semibold text-surface-900 dark:text-white pt-2">IPO Intelligence</h3>
+        <ul class="list-disc list-inside space-y-1.5 ml-1">
+          <li><a href="/ipo/upcoming" class="text-primary-600 dark:text-primary-400 hover:underline">Upcoming IPO Calendar</a></li>
+          <li><a href="/ipo" class="text-primary-600 dark:text-primary-400 hover:underline">Live IPO Tracking</a></li>
+          <li><a href="/ipo/subscription-status" class="text-primary-600 dark:text-primary-400 hover:underline">Subscription Data</a></li>
+          <li><a href="/ipo/performance/2026" class="text-primary-600 dark:text-primary-400 hover:underline">IPO Listing Performance</a></li>
+          <li><a href="/ipo/allotment-status" class="text-primary-600 dark:text-primary-400 hover:underline">Allotment Information</a></li>
+          <li>IPO Analytics and Insights</li>
         </ul>
 
-        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">How We Make Money</h2>
+        <h3 class="text-lg font-semibold text-surface-900 dark:text-white pt-4">Mutual Fund Intelligence</h3>
+        <ul class="list-disc list-inside space-y-1.5 ml-1">
+          <li>Monthly Portfolio Changes</li>
+          <li><a href="/mutual-funds/smart-money" class="text-primary-600 dark:text-primary-400 hover:underline">Smart Money Tracker</a></li>
+          <li>Most Bought Stocks</li>
+          <li>Most Sold Stocks</li>
+          <li>Fresh Entries</li>
+          <li>Complete Exits</li>
+          <li>AMC-wise Portfolio Analysis</li>
+        </ul>
+
+        <h3 class="text-lg font-semibold text-surface-900 dark:text-white pt-4">Investment Tools</h3>
+        <ul class="list-disc list-inside space-y-1.5 ml-1">
+          <li><a href="/tools/sip-calculator" class="text-primary-600 dark:text-primary-400 hover:underline">SIP Calculator</a></li>
+          <li><a href="/tools/lumpsum-calculator" class="text-primary-600 dark:text-primary-400 hover:underline">Lumpsum Calculator</a></li>
+          <li><a href="/tools/swp-calculator" class="text-primary-600 dark:text-primary-400 hover:underline">SWP Calculator</a></li>
+          <li><a href="/tools/step-up-sip-calculator" class="text-primary-600 dark:text-primary-400 hover:underline">Step-up SIP Calculator</a></li>
+          <li><a href="/tools/goal-planner" class="text-primary-600 dark:text-primary-400 hover:underline">Goal Planning Tools</a></li>
+        </ul>
+
+        <h3 class="text-lg font-semibold text-surface-900 dark:text-white pt-4">Learning Resources</h3>
+        <ul class="list-disc list-inside space-y-1.5 ml-1">
+          <li><a href="/learn" class="text-primary-600 dark:text-primary-400 hover:underline">IPO Education</a></li>
+          <li><a href="/blogs/mutual-funds" class="text-primary-600 dark:text-primary-400 hover:underline">Mutual Fund Guides</a></li>
+          <li>Investment Concepts</li>
+          <li><a href="/blogs" class="text-primary-600 dark:text-primary-400 hover:underline">Financial Planning Articles</a></li>
+        </ul>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">About the Founder</h2>
         <p>
-          We're transparent about our business model. ipofins earns revenue through:
+          <strong class="text-surface-900 dark:text-white">Shailesh Kumar</strong> is a technology
+          leader with 16 years of experience in software quality engineering, automation, and
+          large-scale technology platforms.{' '}
+          <a
+            href="https://www.linkedin.com/in/shailesh-kumar-222a1018/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            LinkedIn
+          </a>
         </p>
-        <ul class="list-disc list-inside space-y-1">
-          <li>Contextual advertisements (Google AdSense)</li>
-          <li>Broker affiliate partnerships (when you open an account through our links)</li>
-          <li>Premium subscription for advanced AI features (coming soon)</li>
+        <p>Throughout his career, he has worked with globally recognized organizations including:</p>
+        <ul class="list-disc list-inside space-y-1 ml-1">
+          <li>DP World</li>
+          <li>Myntra</li>
+          <li>Intuit</li>
+          <li>Paytm</li>
+          <li>SAP Ariba</li>
         </ul>
         <p>
-          These revenue sources never influence our analysis or recommendations. Our AI scoring system operates independently of any commercial relationship.
+          His experience spans technology leadership, data platforms, automation, analytics, and
+          building scalable software systems. That background in large-scale data platforms is what
+          powers IPOfins&apos; holdings pipeline and analytics.
         </p>
-
-        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Data Sources & Accuracy</h2>
         <p>
-          We source data from official channels including AMFI India, BSE, NSE, and SEBI filings. Our data refreshes automatically every 12 hours. While we strive for accuracy, all information is provided for educational purposes. Always verify with official sources before making investment decisions.
+          As an active market participant and long-term investor, Shailesh founded IPOfins to bridge
+          the gap between complex financial data and practical investor insights.
+        </p>
+        <p>
+          The vision behind IPOfins is to create a platform where investors can access high-quality
+          financial information, powerful analytics, and clear, actionable market insights without
+          unnecessary complexity.
         </p>
 
-        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Disclaimer</h2>
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">Our Principles</h2>
+        <div class="space-y-4">
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white">Transparency</h3>
+            <p class="mt-1 text-sm">
+              We clearly disclose our data sources, methodology, and monetization model.{' '}
+              <a href="/methodology" class="text-primary-600 dark:text-primary-400 hover:underline">Read our data methodology →</a>
+            </p>
+          </div>
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white">Data-Driven Approach</h3>
+            <p class="mt-1 text-sm">
+              Our insights are based on publicly available market data and quantitative analysis.
+            </p>
+          </div>
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white">Investor First</h3>
+            <p class="mt-1 text-sm">
+              Every feature is designed to help investors make informed decisions.
+            </p>
+          </div>
+          <div>
+            <h3 class="font-semibold text-surface-900 dark:text-white">Continuous Improvement</h3>
+            <p class="mt-1 text-sm">
+              We are constantly improving our platform, data coverage, and analytical capabilities.
+            </p>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">Important Disclaimer</h2>
         <p class="text-sm text-surface-500 dark:text-surface-400">
-          ipofins is not a SEBI-registered investment advisor. The information provided on this platform is for educational and informational purposes only. Investment in securities market is subject to market risks. Past performance does not guarantee future results. Please read all related documents carefully before investing. Consult a qualified financial advisor for personalized advice.
+          IPOfins is an educational and informational platform.
         </p>
+        <p class="text-sm text-surface-500 dark:text-surface-400">
+          We are not registered with SEBI as an Investment Advisor, Research Analyst, or Portfolio
+          Manager. The information provided on this website should not be considered investment
+          advice, stock recommendations, or financial planning advice.
+        </p>
+        <p class="text-sm text-surface-500 dark:text-surface-400">
+          Investors should conduct their own research and consult qualified financial professionals
+          before making investment decisions.
+        </p>
+
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">Connect With Us</h2>
+        <p>
+          We welcome feedback, suggestions, partnership opportunities, and data corrections.
+        </p>
+        <ul class="space-y-2 mt-3">
+          <li>
+            <span class="font-medium text-surface-900 dark:text-white">Email:</span>{' '}
+            <a href="mailto:info@ipofins.com" class="text-primary-600 dark:text-primary-400 hover:underline">info@ipofins.com</a>
+            {' '}&amp;{' '}
+            <a href="mailto:kausshailesh@gmail.com" class="text-primary-600 dark:text-primary-400 hover:underline">kausshailesh@gmail.com</a>
+          </li>
+          <li>
+            <span class="font-medium text-surface-900 dark:text-white">Website:</span>{' '}
+            <a href="https://ipofins.com" class="text-primary-600 dark:text-primary-400 hover:underline">ipofins.com</a>
+          </li>
+        </ul>
       </div>
     </div>
   </section>

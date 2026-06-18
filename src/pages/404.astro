@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Page Not Found (404)">
+<BaseLayout title="Page Not Found (404)" robots="noindex, nofollow">
   <section class="container-narrow py-24 text-center">
     <div class="max-w-lg mx-auto">
       <!-- 404 Visual -->
@@ -38,7 +38,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">📈 IPOs</h2>
             <ul class="space-y-2">
               <li><a href="/ipo" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">All IPOs</a></li>
-              <li><a href="/ipo/gmp-today" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">IPO GMP Today</a></li>
+              <li><a href="/ipo/subscription-status" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">IPO Subscription Status</a></li>
               <li><a href="/ipo/upcoming" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Upcoming IPOs</a></li>
               <li><a href="/ipo/allotment-status" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Allotment Status</a></li>
               <li><a href="/ipo/subscription-status" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Subscription Status</a></li>

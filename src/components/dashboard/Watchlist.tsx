@@ -11,8 +11,8 @@ interface WatchlistItem {
 }
 
 const SAMPLE_WATCHLIST: WatchlistItem[] = [
-  { id: '1', name: 'Hexagon Nutrition IPO', type: 'ipo', status: 'Live', metric: 'GMP', metricValue: '+₹45', alert: 'Subscription at 3.2x' },
-  { id: '2', name: 'CMR Green Technologies IPO', type: 'ipo', status: 'Live', metric: 'GMP', metricValue: '+₹72', alert: 'Closing today!' },
+  { id: '1', name: 'Hexagon Nutrition IPO', type: 'ipo', status: 'Live', metric: 'Subscription', metricValue: '52x', alert: 'Listed' },
+  { id: '2', name: 'CMR Green Technologies IPO', type: 'ipo', status: 'Live', metric: 'Subscription', metricValue: '—', alert: 'Check status' },
   { id: '3', name: 'Quant Small Cap Fund', type: 'fund', status: 'Active', metric: '1Y Return', metricValue: '+28.2%' },
   { id: '4', name: 'PPFAS Flexi Cap Fund', type: 'fund', status: 'Active', metric: 'NAV', metricValue: '₹72.45' },
   { id: '5', name: 'Upcoming: DataMatrix AI IPO', type: 'ipo', status: 'Filed', metric: 'Issue Size', metricValue: '₹500 Cr', alert: 'DRHP Filed - Expected Jun 2026' },
@@ -27,9 +27,9 @@ interface AlertConfig {
 
 const SAMPLE_ALERTS: AlertConfig[] = [
   { id: '1', label: 'New IPO Opens', enabled: true, description: 'Get notified when a new IPO opens for subscription' },
-  { id: '2', label: 'GMP Changes', enabled: true, description: 'Alert when GMP moves more than ₹20' },
+  { id: '2', label: 'Subscription Updates', enabled: true, description: 'Alert when subscription crosses key levels' },
   { id: '3', label: 'Allotment Status', enabled: true, description: 'Notify when IPO allotment status is available' },
-  { id: '4', label: 'High AI Score IPOs', enabled: false, description: 'Alert for IPOs with AI score 7+' },
+  { id: '4', label: 'High IPOfins Score IPOs', enabled: false, description: 'Alert for IPOs with IPOfins Score 7+' },
   { id: '5', label: 'Fund NAV Alerts', enabled: false, description: 'Daily NAV update for watchlisted funds' },
   { id: '6', label: 'Market News', enabled: false, description: 'Important market news and SEBI updates' },
 ];

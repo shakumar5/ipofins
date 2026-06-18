@@ -50,50 +50,63 @@ export default function BrokerCompare({ brokers }: Props) {
       .filter(Boolean) as Broker[];
   }, [selected, brokers]);
 
-  const colClass = selected.length === 2
-    ? 'grid-cols-3'
-    : selected.length === 3
-      ? 'grid-cols-4'
-      : 'grid-cols-5';
+  const colClass =
+    selected.length === 2
+      ? 'grid-cols-[minmax(120px,1.2fr)_repeat(2,minmax(0,1fr))]'
+      : selected.length === 3
+        ? 'grid-cols-[minmax(120px,1.2fr)_repeat(3,minmax(0,1fr))]'
+        : 'grid-cols-[minmax(120px,1.2fr)_repeat(4,minmax(0,1fr))]';
 
   return (
     <div className="space-y-6">
-      {/* Dropdown Selectors */}
-      <div className="flex flex-wrap gap-3 items-end">
-        {selected.map((slug, index) => (
-          <div key={index} className="flex-1 min-w-[140px] max-w-[200px]">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">
-              Broker {index + 1}
-            </label>
-            <div className="flex gap-1">
-              <select
-                value={slug}
-                onChange={(e) => handleChange(index, e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
-              >
-                {brokers.map(b => (
-                  <option key={b.slug} value={b.slug}>{b.name}</option>
-                ))}
-              </select>
-              {selected.length > 2 && (
-                <button
-                  onClick={() => removeSlot(index)}
-                  className="px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                  title="Remove"
+      {/* Dropdown Selectors — aligned with table columns */}
+      <div className="overflow-x-auto">
+        <div className={`grid ${colClass} gap-3 items-end min-w-[640px]`}>
+          <div className="min-w-[120px] px-4 pb-2">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Select brokers</p>
+          </div>
+          {selected.map((slug, index) => (
+            <div key={index} className="min-w-0 px-3">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1 text-center">
+                Broker {index + 1}
+              </label>
+              <div className="flex gap-1">
+                <select
+                  value={slug}
+                  onChange={(e) => handleChange(index, e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
                 >
-                  ✕
-                </button>
-              )}
+                  {brokers.map((b) => (
+                    <option key={b.slug} value={b.slug}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+                {selected.length > 2 && (
+                  <button
+                    onClick={() => removeSlot(index)}
+                    className="px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
+                    title="Remove"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        {selected.length < 4 && (
+          <div className={`grid ${colClass} gap-3 min-w-[640px] mt-3`}>
+            <div />
+            <div className="px-3">
+              <button
+                onClick={addSlot}
+                className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              >
+                + Add Broker
+              </button>
             </div>
           </div>
-        ))}
-        {selected.length < 4 && (
-          <button
-            onClick={addSlot}
-            className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-          >
-            + Add Broker
-          </button>
         )}
       </div>
 
@@ -110,7 +123,12 @@ export default function BrokerCompare({ brokers }: Props) {
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
                       <span className="text-white font-bold text-sm">{broker.logo}</span>
                     </div>
-                    <span className="font-semibold text-gray-900 dark:text-white text-sm">{broker.name}</span>
+                    <a
+                      href={`/broker/${broker.slug}`}
+                      className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {broker.name}
+                    </a>
                     <span className="text-xs text-yellow-500">★ {broker.rating}</span>
                   </div>
                 </th>

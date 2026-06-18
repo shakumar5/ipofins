@@ -1,11 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import fundsData from '../../data/mutual-funds.json';
-import fundHoldingsData from '../../data/fund-holdings.json';
+import { getAllFunds, getHoldingsStats } from '../../lib/data/funds';
 
+const fundsData = await getAllFunds();
 const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
 const totalFunds = fundsData.length;
-const amcCount = Object.keys(fundHoldingsData.amcs).length;
+const { amcCount } = await getHoldingsStats();
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -54,6 +54,8 @@ const faqJsonLd = {
       <a href="/mutual-funds/best" class="btn-primary px-6 py-3">🏆 Best Mutual Funds</a>
       <a href="/mutual-funds/all" class="btn-secondary px-6 py-3">📊 All Mutual Funds</a>
       <a href="/mutual-funds/mutual-fund-holdings-changes" class="btn-secondary px-6 py-3">📋 Holdings Changes</a>
+      <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">💡 Smart Money</a>
+      <a href="/mutual-funds/fund-overlap" class="btn-secondary px-6 py-3">🔗 Fund Overlap</a>
     </div>
   </section>
 

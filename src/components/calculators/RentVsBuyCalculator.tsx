@@ -96,146 +96,146 @@ export default function RentVsBuyCalculator() {
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Price</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(propertyPrice)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Property Price</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(propertyPrice)}</span>
           </div>
           <input type="range" min="1000000" max="50000000" step="500000" value={propertyPrice}
             onChange={(e) => setPropertyPrice(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹10L</span><span>₹5Cr</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹10L</span><span>₹5Cr</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Down Payment</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{downPaymentPercent}% ({formatCurrency(propertyPrice * downPaymentPercent / 100)})</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Down Payment</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{downPaymentPercent}% ({formatCurrency(propertyPrice * downPaymentPercent / 100)})</span>
           </div>
           <input type="range" min="10" max="50" step="5" value={downPaymentPercent}
             onChange={(e) => setDownPaymentPercent(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>10%</span><span>50%</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>10%</span><span>50%</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Home Loan Interest Rate</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{loanRate}%</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Home Loan Interest Rate</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{loanRate}%</span>
           </div>
           <input type="range" min="6" max="14" step="0.1" value={loanRate}
             onChange={(e) => setLoanRate(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>6%</span><span>14%</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>6%</span><span>14%</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Loan Tenure</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{loanTenure} years</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Loan Tenure</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{loanTenure} years</span>
           </div>
           <input type="range" min="5" max="30" step="1" value={loanTenure}
             onChange={(e) => setLoanTenure(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>5 yrs</span><span>30 yrs</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>5 yrs</span><span>30 yrs</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Rent</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">₹{monthlyRent.toLocaleString('en-IN')}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Monthly Rent</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">₹{monthlyRent.toLocaleString('en-IN')}</span>
           </div>
           <input type="range" min="5000" max="200000" step="1000" value={monthlyRent}
             onChange={(e) => setMonthlyRent(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹5,000</span><span>₹2,00,000</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹5,000</span><span>₹2,00,000</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Annual Rent Increase</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{rentIncrease}%</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Annual Rent Increase</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{rentIncrease}%</span>
           </div>
           <input type="range" min="0" max="15" step="1" value={rentIncrease}
             onChange={(e) => setRentIncrease(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>0%</span><span>15%</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>0%</span><span>15%</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Property Appreciation</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{propertyAppreciation}% p.a.</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Property Appreciation</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{propertyAppreciation}% p.a.</span>
           </div>
           <input type="range" min="0" max="15" step="0.5" value={propertyAppreciation}
             onChange={(e) => setPropertyAppreciation(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>0%</span><span>15%</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>0%</span><span>15%</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Investment Return (if renting)</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{investmentReturn}% p.a.</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Investment Return (if renting)</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{investmentReturn}% p.a.</span>
           </div>
           <input type="range" min="6" max="20" step="0.5" value={investmentReturn}
             onChange={(e) => setInvestmentReturn(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>6%</span><span>20%</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>6%</span><span>20%</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Analysis Period</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{analysisPeriod} years</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Analysis Period</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{analysisPeriod} years</span>
           </div>
           <input type="range" min="5" max="30" step="1" value={analysisPeriod}
             onChange={(e) => setAnalysisPeriod(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>5 yrs</span><span>30 yrs</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>5 yrs</span><span>30 yrs</span></div>
         </div>
       </div>
 
       {/* Results */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 space-y-4">
+      <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4">
         {/* Verdict */}
         <div className={`text-center p-4 rounded-lg ${result.buyingIsBetter ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Over {analysisPeriod} years, financially</p>
+          <p className="text-sm text-surface-600 dark:text-surface-400">Over {analysisPeriod} years, financially</p>
           <p className={`text-xl font-extrabold mt-1 ${result.buyingIsBetter ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
             {result.buyingIsBetter ? '🏠 Buying is Better' : '🏘️ Renting + Investing is Better'}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
             by {formatCurrency(result.difference)}
           </p>
         </div>
 
         {/* Comparison */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">🏠 Buying</h4>
             <div>
-              <p className="text-xs text-gray-500">Monthly EMI</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(result.emi)}</p>
+              <p className="text-xs text-surface-500">Monthly EMI</p>
+              <p className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(result.emi)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Property Value ({analysisPeriod}yr)</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(result.propertyValueAtEnd)}</p>
+              <p className="text-xs text-surface-500">Property Value ({analysisPeriod}yr)</p>
+              <p className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(result.propertyValueAtEnd)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Net Wealth (Buying)</p>
+              <p className="text-xs text-surface-500">Net Wealth (Buying)</p>
               <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatCurrency(result.netBuyingWealth)}</p>
             </div>
           </div>
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">🏘️ Renting + Investing</h4>
             <div>
-              <p className="text-xs text-gray-500">Total Rent Paid</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(result.totalRentPaid)}</p>
+              <p className="text-xs text-surface-500">Total Rent Paid</p>
+              <p className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(result.totalRentPaid)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Investment Corpus</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(result.investmentCorpus)}</p>
+              <p className="text-xs text-surface-500">Investment Corpus</p>
+              <p className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(result.investmentCorpus)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Net Wealth (Renting)</p>
+              <p className="text-xs text-surface-500">Net Wealth (Renting)</p>
               <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(result.netRentingWealth)}</p>
             </div>
           </div>

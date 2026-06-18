@@ -1,0 +1,225 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SWPCalculator from '../../components/calculators/SWPCalculator.tsx';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'SWP Calculator - Systematic Withdrawal Plan for Mutual Funds',
+  description:
+    'Free online SWP calculator to estimate monthly mutual fund withdrawals, remaining corpus, and how long your retirement money lasts.',
+  url: 'https://ipofins.com/tools/swp-calculator',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web Browser',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+  creator: { '@type': 'Organization', name: 'IPOfins', url: 'https://ipofins.com' },
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://ipofins.com/tools' },
+      { '@type': 'ListItem', position: 3, name: 'SWP Calculator', item: 'https://ipofins.com/tools/swp-calculator' },
+    ],
+  },
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is SWP in mutual funds?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'SWP (Systematic Withdrawal Plan) lets you withdraw a fixed amount from your mutual fund at regular intervals (usually monthly). The remaining corpus continues to stay invested and grow.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is SWP different from SIP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'SIP invests money regularly into a fund to build wealth. SWP withdraws money regularly from an existing corpus to create income. SIP is for accumulation; SWP is for decumulation in retirement or after goals are met.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is SWP good for retirement income?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'SWP is commonly used for retirement income because it provides predictable monthly cash flow while keeping the balance invested. Keep withdrawals sustainable — typically 6-8% of corpus per year for equity-heavy portfolios.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is SWP return calculated?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Each month, the remaining corpus grows at the monthly return rate, then the fixed withdrawal is deducted. Total withdrawn is the sum of all monthly payouts. Remaining corpus is the balance after the last month in your chosen period.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is a safe monthly SWP amount?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A common rule is withdrawing 0.5-0.7% of corpus per month (6-8% annually) from balanced or equity funds. Higher withdrawals or lower returns can deplete the corpus early. Use this calculator to test your numbers.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is SWP taxable in India?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Each SWP redemption is a mutual fund sale. Gains are taxed as capital gains — equity funds: 20% STCG if held under 1 year, 12.5% LTCG above ₹1.25 lakh/year; debt funds follow slab rates. Only the gain portion is taxed, not the full withdrawal.',
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="SWP Calculator 2026 - Systematic Withdrawal Plan | IPOfins"
+  description="Free SWP calculator for mutual funds — see how ₹50L corpus with ₹40K/month withdrawals lasts 20 years at 10% returns. Plan retirement income with live charts. Try now!"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">SWP Calculator</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      SWP Calculator - Systematic Withdrawal Plan
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
+      Plan monthly income from your mutual fund corpus. See total withdrawn, remaining balance, growth earned, and whether your money lasts the full withdrawal period — ideal for retirement planning.
+    </p>
+  </section>
+
+  <section class="container-narrow py-6">
+    <div class="card max-w-2xl mx-auto">
+      <SWPCalculator client:load />
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How SWP Works</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        A Systematic Withdrawal Plan (SWP) is the opposite of SIP. Instead of investing each month, you redeem a fixed amount while the rest stays invested. Returns on the remaining balance can partially offset withdrawals — which is why withdrawal rate and expected return both matter.
+      </p>
+      <p class="text-surface-600 dark:text-surface-300 mt-3"><strong>Example:</strong> ₹50 lakh corpus, ₹40,000/month SWP, 10% annual return, 20 years:</p>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1 mt-2">
+        <li>Total withdrawn: ~₹96 lakh over 20 years</li>
+        <li>Remaining corpus: ~₹63 lakh still invested</li>
+        <li>Growth earned: ~₹1.09 crore end value minus ₹50 lakh starting corpus</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">SWP Formula</h2>
+      <p class="text-surface-600 dark:text-surface-300">Each month in the SWP simulation:</p>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 mt-3 font-mono text-xs">
+        <p>Balance = Previous Balance × (1 + annual_rate / 12)</p>
+        <p class="mt-1">Balance = Balance − Monthly Withdrawal</p>
+        <p class="mt-2">Repeat for all months in the withdrawal period. If balance &lt; withdrawal, corpus is depleted.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-narrow py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions About SWP</h2>
+    <div class="space-y-4">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is SWP in mutual funds?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+          SWP (Systematic Withdrawal Plan) withdraws a fixed amount from your fund on a schedule (usually monthly). Your remaining units stay invested and can keep growing. Platforms like Groww, Zerodha Coin, and MF Central support SWP setup.
+        </p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is SWP different from SIP?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+          SIP adds money to a fund each month to build wealth. SWP takes money out for regular income. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> while accumulating and SWP when you need payouts in retirement.
+        </p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is SWP good for retirement?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+          Yes — many retirees use SWP for monthly income. Keep withdrawals modest (often 6-8% of corpus per year) relative to expected returns so the corpus does not deplete too early. Pair with our <a href="/tools/retirement-calculator" class="text-primary-600 hover:underline">Retirement Calculator</a> for full planning.
+        </p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is SWP return calculated?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+          Each month, the corpus earns returns on the remaining balance, then your fixed withdrawal is deducted. Total withdrawn is the sum of all monthly payouts. Remaining corpus is what's left after the last month — or zero if depleted early.
+        </p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a safe monthly SWP amount?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+          A conservative approach is 0.5-0.7% of corpus per month from equity-oriented funds. On ₹50 lakh, that's ₹25,000-₹35,000/month. Higher withdrawals work only if returns stay strong — test scenarios with this calculator before committing.
+        </p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is SWP taxable in India?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+          Each SWP installment redeems mutual fund units. Only the capital gains portion is taxed — not the full withdrawal. Equity funds follow STCG/LTCG rules; debt funds are taxed per your income slab. Consult a CA for your specific portfolio mix.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">SWP vs SIP — When to Use Which</h2>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
+        <li><strong>SIP:</strong> Building wealth during working years (ages 25-55)</li>
+        <li><strong>SWP:</strong> Generating income after retirement or goal completion</li>
+        <li><strong>Lumpsum + SWP:</strong> Invest a windfall, then draw monthly income</li>
+      </ul>
+      <p class="mt-3 text-surface-600 dark:text-surface-300">
+        Still building wealth? Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> or <a href="/tools/lumpsum-calculator" class="text-primary-600 hover:underline">Lumpsum Calculator</a>. For retirement corpus targets, try the <a href="/tools/retirement-calculator" class="text-primary-600 hover:underline">Retirement Calculator</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <a href="/tools/sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">📈</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">SIP Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Build wealth monthly</p>
+      </a>
+      <a href="/tools/lumpsum-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">💵</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Lumpsum Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">One-time investment</p>
+      </a>
+      <a href="/tools/retirement-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">🏖️</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Retirement Calculator</p>
+        <p class="text-xs text-surface-500 mt-0.5">Plan your retirement</p>
+      </a>
+      <a href="/tools/step-up-sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">
+        <span class="text-2xl">📊</span>
+        <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">Step-Up SIP</p>
+        <p class="text-xs text-surface-500 mt-0.5">Growing SIP returns</p>
+      </a>
+    </div>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-4">
+      <a href="/tools" class="text-primary-600 hover:underline">View all finance tools →</a>
+    </p>
+  </section>
+</BaseLayout>

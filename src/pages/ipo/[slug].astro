@@ -3,12 +3,12 @@ import IPOLayout from '../../layouts/IPOLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import AIInsightBox from '../../components/AIInsightBox.astro';
 import RiskBadge from '../../components/RiskBadge.astro';
-import iposRaw from '../../data/ipos.json';
+import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import type { IPORecord } from '../../types/ipo';
 
-export function getStaticPaths() {
-  const allIPOs = withCorrectStatuses(iposRaw as any[]);
+export async function getStaticPaths() {
+  const allIPOs = withCorrectStatuses(await getAllIPOs());
   return allIPOs.map(ipo => ({
     params: { slug: ipo.slug },
     props: { ipo },
@@ -42,7 +42,7 @@ const jsonLd = {
 
 <IPOLayout
   activeTab={ipo.type === 'mainboard' ? 'mainboard' : 'sme'}
-  title={`${ipo.name} IPO - Price, GMP & Review | IPOfins`}
+  title={`${ipo.name} IPO - Price, Subscription & Review | IPOfins`}
   description={`${ipo.name} IPO: Price ₹${ipo.priceRange}, lot size ${ipo.lotSize}, issue size ${ipo.issueSize}. ${ipo.description?.slice(0, 100)}`}
   jsonLd={jsonLd}
 >
@@ -69,7 +69,7 @@ const jsonLd = {
             <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               <span class="text-xl font-bold text-white">{ipo.aiScore}</span>
             </div>
-            <p class="text-xs text-surface-500 mt-1">AI Score</p>
+            <p class="text-xs text-surface-500 mt-1" title="Quantitative score based on financials, valuation, and sector data">IPOfins Score</p>
           </div>
         )}
         <RiskBadge score={ipo.riskScore} size="lg" />
@@ -101,11 +101,9 @@ const jsonLd = {
         <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.closeDate}</p>
       </div>
       <div class="card-compact text-center">
-        <p class="text-xs text-surface-500">GMP</p>
-        {ipo.gmp !== null && ipo.gmp !== undefined ? (
-          <p class={`text-base font-bold mt-1 ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-            {ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}
-          </p>
+        <p class="text-xs text-surface-500">Subscription</p>
+        {ipo.subscription !== null && ipo.subscription !== undefined ? (
+          <p class="text-base font-bold mt-1 text-primary-600">{ipo.subscription}x</p>
         ) : (
           <p class="text-base font-bold mt-1 text-surface-400">—</p>
         )}
@@ -267,9 +265,9 @@ const jsonLd = {
   <!-- AI Analysis -->
   {ipo.aiScore && (
     <section class="container-wide py-4">
-      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">AI Investment Analysis</h2>
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Investment Analysis</h2>
       <AIInsightBox
-        title={`${ipo.name} — AI Verdict`}
+        title={`${ipo.name} — IPOfins Verdict`}
         summary={ipo.aiSummary || 'Analysis being generated.'}
         riskScore={ipo.riskScore}
         verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral' | undefined}
@@ -452,7 +450,7 @@ const jsonLd = {
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I apply for {ipo.name} IPO?</summary>
         {ipo.aiScore && ipo.aiSummary ? (
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">AI Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPOfins Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
         ) : (
           <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Review the IPO's fundamentals, financials, and market conditions carefully. Always do your own research before investing.</p>
         )}

@@ -1,11 +1,10 @@
 ---
 import IPOLayout from '../../../layouts/IPOLayout.astro';
 import PerformanceTable from '../../../components/performance/PerformanceTable.tsx';
-import performanceAllData from '../../../data/ipo-performance.json';
-import iposRaw from '../../../data/ipos.json';
+import { getAllIPOs } from '../../../lib/data/ipos';
 import { withCorrectStatuses } from '../../../utils/ipo-status';
 
-const iposData = withCorrectStatuses(iposRaw as any[]);
+const iposData = withCorrectStatuses(await getAllIPOs());
 
 export function getStaticPaths() {
   return ['2024', '2025', '2026'].map(year => ({
@@ -16,9 +15,27 @@ export function getStaticPaths() {
 
 const { year } = Astro.props;
 
-const yearData = (performanceAllData as Record<string, any>)[year] || { mainboard: [], sme: [] };
-const mainboardData = yearData.mainboard || [];
-const smeData = yearData.sme || [];
+function rowYear(listingDate: string | undefined): string | null {
+  if (!listingDate) return null;
+  const y = new Date(listingDate).getFullYear();
+  return isNaN(y) ? null : String(y);
+}
+
+const yearIPOs = iposData.filter(ipo => rowYear(ipo.listingDate) === year);
+const mainboardData = yearIPOs.filter(i => i.type === 'mainboard').map(ipo => ({
+  name: ipo.name,
+  slug: ipo.slug,
+  issuePrice: ipo.priceMax,
+  listingPrice: ipo.listingPrice,
+  listingGain: ipo.listingPrice && ipo.priceMax ? Number(((ipo.listingPrice - ipo.priceMax) / ipo.priceMax * 100).toFixed(1)) : null,
+}));
+const smeData = yearIPOs.filter(i => i.type === 'sme').map(ipo => ({
+  name: ipo.name,
+  slug: ipo.slug,
+  issuePrice: ipo.priceMax,
+  listingPrice: ipo.listingPrice,
+  listingGain: ipo.listingPrice && ipo.priceMax ? Number(((ipo.listingPrice - ipo.priceMax) / ipo.priceMax * 100).toFixed(1)) : null,
+}));
 const existingSlugs = iposData.map(ipo => ipo.slug);
 
 const jsonLd = {
@@ -105,7 +122,7 @@ const faqJsonLd = {
     <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
       <p>IPO listing performance measures how a newly listed stock performs on its first day of trading on the BSE and NSE. When a company goes public through an Initial Public Offering, investors who receive allotment can sell their shares on listing day — the return they earn (or lose) compared to the issue price is called the listing gain or listing loss.</p>
       <p>The data on this page tracks all mainboard and SME IPOs that listed in {year}. Mainboard IPOs are from companies with higher market capitalisation and stricter SEBI listing requirements, while SME IPOs are from smaller companies listed on the BSE SME or NSE Emerge platform. SME IPOs typically show more volatile listing performance due to lower liquidity and smaller issue sizes.</p>
-      <p>Several factors influence listing day performance: overall market sentiment (bull vs bear market), subscription levels (higher oversubscription often correlates with better listing), Grey Market Premium (GMP) trends before listing, the company's financial health, and sector tailwinds. While past IPO performance data helps identify patterns, it should not be the sole basis for investment decisions. Always review the company's fundamentals, DRHP (Draft Red Herring Prospectus), and consult a SEBI-registered advisor before investing.</p>
+      <p>Several factors influence listing day performance: overall market sentiment (bull vs bear market), subscription levels (higher oversubscription often correlates with better listing), the company's financial health, and sector tailwinds. While past IPO performance data helps identify patterns, it should not be the sole basis for investment decisions. Always review the company's fundamentals, DRHP (Draft Red Herring Prospectus), and consult a SEBI-registered advisor before investing.</p>
     </div>
   </section>
 

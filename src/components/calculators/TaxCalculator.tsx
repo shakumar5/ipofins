@@ -64,11 +64,11 @@ export default function TaxCalculator() {
     <div className="space-y-8">
       {/* Asset Type Selector */}
       <div>
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-3">Asset Type</label>
+        <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-3">Asset Type</label>
         <div className="grid grid-cols-2 gap-2">
           {(Object.entries(ASSET_CONFIG) as [AssetType, typeof ASSET_CONFIG[AssetType]][]).map(([key, val]) => (
             <button key={key} onClick={() => setAssetType(key)}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${assetType === key ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${assetType === key ? 'bg-blue-600 text-white' : 'bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600'}`}>
               {val.name}
             </button>
           ))}
@@ -79,77 +79,77 @@ export default function TaxCalculator() {
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Purchase Amount</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(purchaseAmount)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Purchase Amount</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(purchaseAmount)}</span>
           </div>
           <input type="range" min="10000" max="10000000" step="10000" value={purchaseAmount}
             onChange={(e) => setPurchaseAmount(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹10K</span><span>₹1Cr</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹10K</span><span>₹1Cr</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sale Amount</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(saleAmount)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Sale Amount</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(saleAmount)}</span>
           </div>
           <input type="range" min="10000" max="10000000" step="10000" value={saleAmount}
             onChange={(e) => setSaleAmount(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹10K</span><span>₹1Cr</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹10K</span><span>₹1Cr</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Holding Period</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{holdingMonths} months</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Holding Period</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{holdingMonths} months</span>
           </div>
           <input type="range" min="1" max="60" step="1" value={holdingMonths}
             onChange={(e) => setHoldingMonths(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>1 month</span><span>60 months</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>1 month</span><span>60 months</span></div>
         </div>
 
         {(assetType === 'debt_mf' || (assetType === 'gold' && holdingMonths < 24)) && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Income Tax Slab</label>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">{taxSlab}%</span>
+              <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Your Income Tax Slab</label>
+              <span className="text-sm font-bold text-surface-900 dark:text-white">{taxSlab}%</span>
             </div>
             <input type="range" min="5" max="30" step="5" value={taxSlab}
               onChange={(e) => setTaxSlab(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-            <div className="flex justify-between text-xs text-gray-500 mt-1"><span>5%</span><span>30%</span></div>
+              className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+            <div className="flex justify-between text-xs text-surface-500 mt-1"><span>5%</span><span>30%</span></div>
           </div>
         )}
       </div>
 
       {/* Results */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 space-y-4">
+      <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4">
         <div className={`text-center p-4 rounded-lg ${result.capitalGain > 0 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Tax Liability</p>
+          <p className="text-xs text-surface-500 dark:text-surface-400">Tax Liability</p>
           <p className={`text-2xl font-extrabold mt-1 ${result.taxAmount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
             {result.taxAmount > 0 ? formatCurrency(result.taxAmount) : '₹0 (No Tax)'}
           </p>
-          <p className="text-xs text-gray-500 mt-1">{result.taxType} @ {result.taxRate}%</p>
+          <p className="text-xs text-surface-500 mt-1">{result.taxType} @ {result.taxRate}%</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Capital Gain</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(result.capitalGain)}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Capital Gain</p>
+            <p className="text-sm font-bold text-surface-900 dark:text-white mt-1">{formatCurrency(result.capitalGain)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Taxable Gain</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(result.taxableGain)}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Taxable Gain</p>
+            <p className="text-sm font-bold text-surface-900 dark:text-white mt-1">{formatCurrency(result.taxableGain)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Net Profit (After Tax)</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Net Profit (After Tax)</p>
             <p className="text-sm font-bold text-green-500 mt-1">{formatCurrency(result.netProfit)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Effective Tax Rate</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{result.effectiveRate.toFixed(1)}%</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Effective Tax Rate</p>
+            <p className="text-sm font-bold text-surface-900 dark:text-white mt-1">{result.effectiveRate.toFixed(1)}%</p>
           </div>
         </div>
       </div>

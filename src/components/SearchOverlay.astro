@@ -1,26 +1,31 @@
 <!-- Search Overlay -->
-<div id="search-overlay" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm">
+<div
+  id="search-overlay"
+  class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="search-dialog-title"
+  aria-hidden="true"
+>
   <div class="max-w-xl mx-auto mt-20 px-4">
     <div class="bg-white dark:bg-surface-800 rounded-xl shadow-2xl border border-surface-200 dark:border-surface-700 overflow-hidden">
-      <!-- Input -->
       <div class="flex items-center gap-3 px-4 py-3 border-b border-surface-200 dark:border-surface-700">
-        <svg class="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
+        <label id="search-dialog-title" class="sr-only" for="search-input">Search site</label>
         <input
           id="search-input"
-          type="text"
+          type="search"
           placeholder="Search IPOs, mutual funds, brokers, tools..."
           class="flex-1 bg-transparent text-surface-900 dark:text-white text-sm outline-none placeholder:text-surface-400"
           autocomplete="off"
         />
-        <button id="search-close" class="text-xs text-surface-400 border border-surface-300 dark:border-surface-600 px-2 py-0.5 rounded">ESC</button>
+        <button id="search-close" type="button" class="text-xs text-surface-400 border border-surface-300 dark:border-surface-600 px-2 py-0.5 rounded">ESC</button>
       </div>
-      <!-- Results -->
-      <div id="search-results" class="max-h-80 overflow-y-auto p-2">
+      <div id="search-results" class="max-h-80 overflow-y-auto p-2" role="listbox" aria-live="polite">
         <p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>
       </div>
-      <!-- Footer hint -->
       <div class="px-4 py-2 border-t border-surface-100 dark:border-surface-700 flex items-center justify-between">
         <span class="text-[10px] text-surface-400">Fuzzy search • Type any part of a name</span>
         <span class="text-[10px] text-surface-400">⌘K / Ctrl+K to open</span>
@@ -29,13 +34,21 @@
   </div>
 </div>
 
-<!-- Search Logic (loads data on-demand, fuzzy matching) -->
 <script is:inline>
 (function() {
   var _items = null;
   var _loading = false;
-  var _so, _sin, _sr;
+  var _loadError = false;
+  var _so, _sin, _sr, _lastFocus;
   var _debounce = null;
+
+  var catColors = {
+    IPO: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    Fund: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    Broker: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    Tool: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    Learn: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+  };
 
   function init() {
     _so = document.getElementById('search-overlay');
@@ -52,69 +65,123 @@
     });
   }
 
-  function loadData() {
-    if (_items || _loading) return;
+  function isSafePath(path) {
+    return typeof path === 'string' && path.charAt(0) === '/' && path.indexOf('://') === -1 && path.indexOf('javascript:') === -1;
+  }
+
+  function setMessage(text) {
+    _sr.textContent = '';
+    var p = document.createElement('p');
+    p.className = 'text-xs text-surface-400 text-center py-6';
+    p.textContent = text;
+    _sr.appendChild(p);
+  }
+
+  function loadData(cb) {
+    if (_items) { if (cb) cb(); return; }
+    if (_loading) return;
     _loading = true;
+    _loadError = false;
     fetch('/data/search-index.json')
-      .then(function(r) { return r.json(); })
-      .then(function(data) { _items = data; _loading = false; })
-      .catch(function() { _loading = false; });
+      .then(function(r) { if (!r.ok) throw new Error('fetch failed'); return r.json(); })
+      .then(function(data) { _items = data; _loading = false; if (cb) cb(); })
+      .catch(function() { _loading = false; _loadError = true; setMessage('Search unavailable. Please try again.'); });
+  }
+
+  function trapFocus() {
+    var focusables = _so.querySelectorAll('button, input, a[href]');
+    if (!focusables.length) return;
+    var first = focusables[0];
+    var last = focusables[focusables.length - 1];
+    _so.addEventListener('keydown', function(e) {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
   }
 
   function openSearch() {
+    _lastFocus = document.activeElement;
     _so.classList.remove('hidden');
+    _so.setAttribute('aria-hidden', 'false');
     _sin.value = '';
+    setMessage('Start typing to search across IPOs, mutual funds, brokers, tools...');
     _sin.focus();
-    _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>';
+    trapFocus();
     loadData();
   }
 
   function closeSearch() {
     _so.classList.add('hidden');
+    _so.setAttribute('aria-hidden', 'true');
+    if (_lastFocus && _lastFocus.focus) _lastFocus.focus();
   }
 
-  // Fuzzy match: checks if all characters of query appear in order in target
   function fuzzyScore(query, target) {
     var q = query.toLowerCase();
     var t = target.toLowerCase();
-    // Exact substring match gets highest priority
     if (t.indexOf(q) !== -1) return 100 + (q.length / t.length) * 50;
-    // Word-start matching (e.g. "hd" matches "HDFC")
     var words = t.split(/[\s\-_]+/);
-    var wordStartMatch = 0;
     for (var w = 0; w < words.length; w++) {
-      if (words[w].indexOf(q) === 0) { wordStartMatch = 80; break; }
+      if (words[w].indexOf(q) === 0) return 80;
     }
-    if (wordStartMatch) return wordStartMatch;
-    // Fuzzy: all chars of query appear in order
     var qi = 0, consecutive = 0, maxConsecutive = 0, score = 0;
     for (var i = 0; i < t.length && qi < q.length; i++) {
       if (t[i] === q[qi]) {
-        qi++;
-        consecutive++;
+        qi++; consecutive++;
         if (consecutive > maxConsecutive) maxConsecutive = consecutive;
-        // Bonus for match at start of word
         if (i === 0 || t[i-1] === ' ' || t[i-1] === '-') score += 5;
-      } else {
-        consecutive = 0;
-      }
+      } else { consecutive = 0; }
     }
-    if (qi < q.length) return 0; // Not all chars matched
+    if (qi < q.length) return 0;
     return 20 + maxConsecutive * 10 + (q.length / t.length) * 15 + score;
   }
 
+  function renderResults(matches, q) {
+    _sr.textContent = '';
+    var frag = document.createDocumentFragment();
+    matches.forEach(function(m) {
+      var item = m.item;
+      if (!isSafePath(item.u)) return;
+      var a = document.createElement('a');
+      a.href = item.u;
+      a.className = 'flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors';
+      a.setAttribute('role', 'option');
+
+      var badge = document.createElement('span');
+      badge.className = 'px-1.5 py-0.5 text-[10px] font-bold rounded whitespace-nowrap ' + (catColors[item.y] || 'bg-surface-100 text-surface-500');
+      badge.textContent = item.y || '';
+
+      var body = document.createElement('div');
+      body.className = 'flex-1 min-w-0';
+      var title = document.createElement('p');
+      title.className = 'text-sm font-medium text-surface-900 dark:text-white truncate';
+      title.textContent = item.t || '';
+      var meta = document.createElement('p');
+      meta.className = 'text-xs text-surface-400 dark:text-surface-500 truncate';
+      meta.textContent = item.m || '';
+
+      body.appendChild(title);
+      body.appendChild(meta);
+      a.appendChild(badge);
+      a.appendChild(body);
+      frag.appendChild(a);
+    });
+    _sr.appendChild(frag);
+  }
+
   function doSearch(query) {
+    if (_loadError) return;
     if (!_items) {
-      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Loading...</p>';
-      loadData();
+      setMessage('Loading...');
+      loadData(function() { doSearch(query); });
       return;
     }
     if (!query || query.length < 1) {
-      _sr.innerHTML = '<p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>';
+      setMessage('Start typing to search across IPOs, mutual funds, brokers, tools...');
       return;
     }
     var q = query.trim();
-    // Score each item using the keyword field (k) + title (t) + meta (m)
     var scored = [];
     for (var i = 0; i < _items.length; i++) {
       var item = _items[i];
@@ -122,46 +189,21 @@
       var s = fuzzyScore(q, searchText);
       if (s > 0) scored.push({ item: item, score: s });
     }
-    // Sort by score descending
     scored.sort(function(a, b) { return b.score - a.score; });
     var matches = scored.slice(0, 10);
-
     if (matches.length === 0) {
-      _sr.innerHTML = '<p class="text-xs text-surface-500 text-center py-6">No results for "' + q.replace(/</g,'&lt;') + '"</p>';
+      setMessage('No results for "' + q + '"');
       return;
     }
-
-    // Category colors
-    var catColors = { IPO: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400', Fund: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', Broker: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', Tool: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', Learn: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' };
-
-    _sr.innerHTML = matches.map(function(m) {
-      var item = m.item;
-      var cc = catColors[item.y] || 'bg-surface-100 text-surface-500';
-      // Highlight matching text in title
-      var title = item.t.replace(/</g,'&lt;');
-      var ql = q.toLowerCase();
-      var tl = title.toLowerCase();
-      var idx = tl.indexOf(ql);
-      if (idx !== -1) {
-        title = title.substring(0, idx) + '<mark class="bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded px-0.5">' + title.substring(idx, idx + q.length) + '</mark>' + title.substring(idx + q.length);
-      }
-      return '<a href="' + item.u + '" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">' +
-        '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded ' + cc + ' whitespace-nowrap">' + item.y + '</span>' +
-        '<div class="flex-1 min-w-0"><p class="text-sm font-medium text-surface-900 dark:text-white truncate">' + title + '</p>' +
-        '<p class="text-xs text-surface-400 dark:text-surface-500 truncate">' + (item.m || '').replace(/</g,'&lt;') + '</p></div>' +
-        '<svg class="w-4 h-4 text-surface-300 dark:text-surface-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>';
-    }).join('');
+    renderResults(matches, q);
   }
 
   document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
-    if (e.key === 'Escape') closeSearch();
+    if (e.key === 'Escape' && _so && !_so.classList.contains('hidden')) closeSearch();
   });
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>

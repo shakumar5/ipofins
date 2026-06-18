@@ -1,22 +1,17 @@
-# IPOfins — Build & Deploy.
-# Runs on push to main OR every 12 hours.
-# Data is managed manually (AMFI Excel + Zerodha local fetch).
-# This workflow fetches fresh MF data, commits changes, builds and deploys.
+# IPOfins — Build & Deploy
+# Triggers on push to main only. No scheduled data fetching.
+# Data pipelines run manually locally (see DATA_PIPELINE.md).
 
 name: Build & Deploy
 
 on:
-  schedule:
-    # Once daily: 06:30 UTC = 12:00 PM IST (after previous day's NAV is published)
-    - cron: '30 6 * * *'
-  
-  workflow_dispatch:
-
   push:
     branches: [main]
 
+  workflow_dispatch:
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-deploy:
@@ -24,44 +19,26 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-      - name: 🟢 Setup Node.js 22
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22.12.0'
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: 📡 Fetch latest data (MF only - IPO data pushed from local)
-        run: node scripts/fetch-all-data.mjs --mf-only
+      - name: Type check
+        run: npm run check
+
+      - name: Build static site
+        run: npm run build
         env:
-          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: 💾 Commit updated MF data (if changed)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/mutual-funds.json
-          if git diff --cached --quiet; then
-            echo "No MF data changes to commit"
-          else
-            git commit -m "chore: auto-update MF NAV data [$(date -u +%Y-%m-%d)] [skip ci]"
-            git push
-          fi
-
-      - name: 🏗️ Build static site
-        run: npx astro build
-
-      - name: 🚀 Deploy to Vercel
+      - name: Deploy to Vercel
         run: |
           npm i -g vercel@latest
           vercel --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}

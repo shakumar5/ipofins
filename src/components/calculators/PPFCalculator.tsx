@@ -39,11 +39,11 @@ const PPFCalculator: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">PPF Calculator</h2>
+    <div className="bg-white dark:bg-surface-800 rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold mb-4 text-surface-800 dark:text-white">PPF Calculator</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Monthly Investment (₹)
           </label>
           <input
@@ -51,12 +51,12 @@ const PPFCalculator: React.FC = () => {
             name="investment"
             value={inputs.investment}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter monthly investment"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Annual Interest Rate (%)
           </label>
           <input
@@ -64,12 +64,12 @@ const PPFCalculator: React.FC = () => {
             name="rate"
             value={inputs.rate}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter annual interest rate"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Investment Period (Years)
           </label>
           <input
@@ -77,7 +77,7 @@ const PPFCalculator: React.FC = () => {
             name="years"
             value={inputs.years}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter investment period"
           />
         </div>

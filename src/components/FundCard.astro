@@ -6,7 +6,7 @@ interface Props {
   returns1y?: number;
   returns3y?: number;
   returns5y?: number;
-  nav: number;
+  nav?: number | null;
   rating?: number;
   aum?: string;
   riskLevel: 'low' | 'moderate' | 'high' | 'very-high';
@@ -81,7 +81,7 @@ const risk = riskConfig[riskLevel];
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
     <div>
       <p class="text-xs text-surface-500 dark:text-surface-400">NAV</p>
-      <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">₹{nav.toFixed(2)}</p>
+      <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{nav != null ? `₹${nav.toFixed(2)}` : '—'}</p>
     </div>
     {aum && (
       <div class="text-right">

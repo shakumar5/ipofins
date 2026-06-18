@@ -4,14 +4,13 @@ interface Props {
   slug: string;
   priceRange: string;
   lotSize: number;
-  openDate: string;
-  closeDate: string;
+  openDate?: string;
+  closeDate?: string;
   listingDate?: string;
-  status: 'live' | 'open' | 'upcoming' | 'closed' | 'allotment' | 'listed' | 'drhp-filed' | 'failed' | 'withdrawn';
+  status: 'live' | 'open' | 'upcoming' | 'closed' | 'allotment' | 'listed' | 'drhp-filed' | 'sebi-approved' | 'failed' | 'withdrawn';
   type: 'mainboard' | 'sme';
-  subscription?: number;
-  gmp?: number;
-  aiScore?: number;
+  subscription?: number | null;
+  aiScore?: number | null;
   sector?: string;
 }
 
@@ -20,13 +19,12 @@ const {
   slug,
   priceRange,
   lotSize,
-  openDate,
-  closeDate,
+  openDate = '—',
+  closeDate = '—',
   listingDate,
   status,
   type,
   subscription,
-  gmp,
   aiScore,
   sector,
 } = Astro.props;
@@ -39,11 +37,12 @@ const statusConfig = {
   allotment: { label: 'Allotment', class: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
   listed: { label: 'Listed', class: 'badge-listed' },
   'drhp-filed': { label: 'DRHP Filed', class: 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300' },
+  'sebi-approved': { label: 'SEBI Approved', class: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' },
   failed: { label: 'Failed', class: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
   withdrawn: { label: 'Withdrawn', class: 'bg-surface-100 text-surface-500 dark:bg-surface-700 dark:text-surface-400' },
 };
 
-const statusInfo = statusConfig[status] || statusConfig['upcoming'];
+const statusInfo = statusConfig[status as keyof typeof statusConfig] || statusConfig['upcoming'];
 ---
 
 <a href={`/ipo/${slug}`} class="card group block">
@@ -103,17 +102,9 @@ const statusInfo = statusConfig[status] || statusConfig['upcoming'];
 
   <!-- Bottom Row -->
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
-    {gmp !== undefined && gmp !== null && (
-      <div class="flex items-center gap-1">
-        <span class="text-xs text-surface-500 dark:text-surface-400">GMP:</span>
-        <span class={`text-xs font-semibold ${gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-          {gmp >= 0 ? '+' : ''}₹{gmp}
-        </span>
-      </div>
-    )}
     {aiScore !== undefined && aiScore !== null && (
       <div class="flex items-center gap-1">
-        <span class="text-xs text-surface-500 dark:text-surface-400">AI Score:</span>
+        <span class="text-xs text-surface-500 dark:text-surface-400" title="Quantitative score based on financials, valuation, and sector data">IPOfins Score:</span>
         <span class={`text-xs font-bold ${aiScore >= 7 ? 'text-success-500' : aiScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>
           {aiScore}/10
         </span>

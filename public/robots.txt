@@ -7,3 +7,4 @@ Sitemap: https://ipofins.com/sitemap-index.xml
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /admin/
+Disallow: /search

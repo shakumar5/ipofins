@@ -1,9 +1,10 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import fundsData from '../../../data/mutual-funds.json';
-import holdingsData from '../../../data/fund-holdings.json';
+import { getAllFunds } from '../../../lib/data/funds';
+import { getFundHoldings, getFundOverlaps } from '../../../lib/data/holdings';
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const fundsData = await getAllFunds();
   return fundsData.map(fund => ({
     params: { slug: `${fund.slug}-holdings` },
     props: { fund },
@@ -11,6 +12,7 @@ export function getStaticPaths() {
 }
 
 const { fund } = Astro.props;
+const fundsData = await getAllFunds();
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -59,25 +61,26 @@ const faqJsonLd = {
   ]
 };
 
-// Get holdings for this fund (latest month first)
-const fundHoldings = (holdingsData as any).holdings?.[fund.slug] || null;
-const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
-const rawHoldings = fundHoldings?.[latestMonth] || [];
+// Get holdings for this fund (latest month)
+const fundHoldingsRows = (await getFundHoldings(fund.slug)) as Array<Record<string, unknown>>;
+const fundOverlaps = (await getFundOverlaps(fund.slug, 5)) as Array<Record<string, unknown>>;
+const latestMonth = fundHoldingsRows[0]?.month
+  ? new Date(String(fundHoldingsRows[0].month)).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+  : '';
 
-// Filter out debt/money-market instruments (credit ratings in sector field)
-const holdings = rawHoldings.filter((h: any) => {
-  if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return false;
-  if (/^\d+\.?\d*%\s/.test(h.name)) return false;
-  if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return false;
-  if (/\(ZCB\)/i.test(h.name)) return false;
-  if (/securitisation trust/i.test(h.name)) return false;
+const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
+  const name = String(h.name || '');
+  const sector = String(h.sector || '');
+  if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(sector)) return false;
+  if (/^\d+\.?\d*%\s/.test(name)) return false;
   return true;
 });
 ---
 
 <BaseLayout
   title={`${fund.name} - NAV, Returns & Holdings`}
-  description={`${fund.name}: NAV ₹${fund.nav}, 1Y +${fund.returns1y}%, 3Y +${fund.returns3y}%, 5Y +${fund.returns5y}%. ${fund.category} fund, ${fund.riskLevel} risk.`}
+  description={`${fund.name}: NAV ${fund.nav != null ? `₹${fund.nav}` : 'N/A'}, 1Y +${fund.returns1y ?? '—'}%, 3Y +${fund.returns3y ?? '—'}%, 5Y +${fund.returns5y ?? '—'}%. ${fund.category} fund, ${fund.riskLevel} risk.`}
+  ogImage="/og-fund.png"
   jsonLd={jsonLd}
 >
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
@@ -118,7 +121,7 @@ const holdings = rawHoldings.filter((h: any) => {
       </div>
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Current NAV</p>
-        <p class="text-2xl font-extrabold text-primary-600">₹{fund.nav.toFixed(2)}</p>
+        <p class="text-2xl font-extrabold text-primary-600">{fund.nav != null ? `₹${fund.nav.toFixed(2)}` : '—'}</p>
       </div>
     </div>
   </section>
@@ -232,6 +235,22 @@ const holdings = rawHoldings.filter((h: any) => {
       </div>
     </div>
   </section>
+
+  {fundOverlaps.length > 0 && (
+    <section class="container-wide py-6">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">Portfolio Overlap</h2>
+      <p class="text-sm text-surface-500 mb-4">Funds that share the most stock holdings with {fund.name}.</p>
+      <div class="space-y-2">
+        {fundOverlaps.map((row) => (
+          <a href={`/mutual-funds/fund-overlap/${row.slug}`} class="card-compact flex items-center justify-between hover:shadow-md transition-shadow">
+            <span class="text-sm font-medium text-surface-900 dark:text-white">{row.name}</span>
+            <span class="text-sm font-bold text-primary-600">{row.overlap_pct != null ? `${Number(row.overlap_pct).toFixed(1)}% overlap` : '—'}</span>
+          </a>
+        ))}
+      </div>
+      <a href={`/mutual-funds/fund-overlap/${fund.slug}`} class="inline-block mt-3 text-sm text-primary-600 hover:underline">View full overlap analysis →</a>
+    </section>
+  )}
 
   <!-- More Funds from Same Category -->
   <section class="container-wide py-6">

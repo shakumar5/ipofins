@@ -1,17 +1,7 @@
 ---
 /**
  * AdUnit Component — Google AdSense Ad Placement
- * 
- * Usage:
- *   <AdUnit slot="1234567890" format="auto" />
- *   <AdUnit slot="1234567890" format="horizontal" />
- *   <AdUnit slot="1234567890" format="rectangle" />
- * 
- * Props:
- *   - slot: Your AdSense ad slot ID (required)
- *   - format: "auto" | "horizontal" | "rectangle" | "vertical" (default: "auto")
- *   - responsive: boolean (default: true)
- *   - className: additional CSS classes
+ * Ads initialize only after cookie consent via window.__initAdsenseSlots()
  */
 
 interface Props {
@@ -30,7 +20,6 @@ const {
 
 const CLIENT_ID = 'ca-pub-9843041963430696';
 
-// Map format to style
 const styleMap: Record<string, string> = {
   auto: 'display:block',
   horizontal: 'display:block; height:90px',
@@ -48,10 +37,8 @@ const adStyle = styleMap[format] || styleMap.auto;
     data-ad-slot={slot}
     data-ad-format={format === 'auto' ? 'auto' : undefined}
     data-full-width-responsive={responsive ? 'true' : undefined}
+    data-ad-pending="true"
   ></ins>
-  <script is:inline>
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  </script>
 </div>
 
 <style>

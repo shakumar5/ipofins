@@ -10,14 +10,16 @@ interface Props {
   ogImage?: string;
   canonicalUrl?: string;
   jsonLd?: object;
+  robots?: string;
 }
 
 const {
   title,
-  description = 'IPOfins - Free IPO tracker, mutual fund comparison, SIP & EMI calculators. Track live IPOs, GMP, subscription status for Indian investors.',
-  ogImage = '/og-default.svg',
+  description = 'IPOfins - Free IPO tracker, mutual fund comparison, SIP & EMI calculators. Track live IPOs, subscription status for Indian investors.',
+  ogImage = '/og-default.png',
   canonicalUrl,
   jsonLd,
+  robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 } = Astro.props;
 
 const siteUrl = 'https://ipofins.com';
@@ -55,6 +57,9 @@ const organizationSchema = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={`${siteUrl}${ogImage}`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="IPOfins — IPO analytics and mutual fund intelligence for Indian investors" />
     <meta property="og:site_name" content="ipofins" />
     <meta property="og:locale" content="en_IN" />
 
@@ -65,7 +70,7 @@ const organizationSchema = {
     <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
 
     <!-- Additional SEO -->
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="robots" content={robots} />
     <meta name="author" content="ipofins" />
     <meta name="geo.region" content="IN" />
     <meta name="geo.placename" content="India" />
@@ -88,16 +93,25 @@ const organizationSchema = {
       })();
     </script>
 
-    <!-- Google AdSense -->
+    <!-- Google AdSense account (ads load only after cookie consent) -->
     <meta name="google-adsense-account" content="ca-pub-9843041963430696" />
 
-    <!-- Deferred third-party scripts (GA + AdSense - loaded 10s after page load) -->
+    <!-- Third-party scripts load only after explicit cookie consent -->
     <script is:inline>
       (function(){
-        var loaded = false;
-        function loadScripts() {
-          if (loaded) return;
-          loaded = true;
+        var analyticsLoaded = false;
+        window.loadThirdPartyScripts = function() {
+          if (analyticsLoaded) return;
+          analyticsLoaded = true;
+          var p = document.createElement('script');
+          p.async = true;
+          p.src = 'https://plausible.io/js/pa-TzNuTbQbTb4FXM9xfpK3x.js';
+          p.onload = function() {
+            window.plausible = window.plausible || function(){(plausible.q=plausible.q||[]).push(arguments)};
+            plausible.init = plausible.init || function(i){plausible.o=i||{}};
+            plausible.init();
+          };
+          document.head.appendChild(p);
           var g = document.createElement('script');
           g.src = 'https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG';
           g.async = true;
@@ -109,28 +123,30 @@ const organizationSchema = {
             gtag('config', 'G-VRXGEC8RTG');
           };
           document.head.appendChild(g);
-          setTimeout(function() {
-            var a = document.createElement('script');
-            a.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9843041963430696';
-            a.crossOrigin = 'anonymous';
-            a.async = true;
-            document.head.appendChild(a);
-          }, 3000);
-        }
-        // Only load after real user interaction (not simulated)
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(function() { setTimeout(loadScripts, 8000); });
-        } else {
-          setTimeout(loadScripts, 12000);
+          var a = document.createElement('script');
+          a.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9843041963430696';
+          a.crossOrigin = 'anonymous';
+          a.async = true;
+          a.onload = function() {
+            window.__initAdsenseSlots && window.__initAdsenseSlots();
+          };
+          document.head.appendChild(a);
+        };
+        window.__initAdsenseSlots = function() {
+          if (!window.adsbygoogle) return;
+          document.querySelectorAll('ins.adsbygoogle[data-ad-pending="true"]').forEach(function(el) {
+            el.removeAttribute('data-ad-pending');
+            try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+          });
+        };
+        if (localStorage.getItem('cookie-consent') === 'accepted') {
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(function() { window.loadThirdPartyScripts(); });
+          } else {
+            setTimeout(window.loadThirdPartyScripts, 2000);
+          }
         }
       })();
-    </script>
-
-    <!-- Privacy-friendly analytics by Plausible -->
-    <script async src="https://plausible.io/js/pa-TzNuTbQbTb4FXM9xfpK3x.js"></script>
-    <script is:inline>
-      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-      plausible.init()
     </script>
 
     <!-- JSON-LD: Organization (site-wide) -->
@@ -172,7 +188,12 @@ const organizationSchema = {
           if (el) { el.removeAttribute('aria-hidden'); setTimeout(function() { el.classList.remove('translate-y-full'); }, 1000); }
         }
       })();
-      function acceptCookies() { localStorage.setItem('cookie-consent', 'accepted'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
+      function acceptCookies() {
+        localStorage.setItem('cookie-consent', 'accepted');
+        var el = document.getElementById('cookie-consent');
+        el.classList.add('translate-y-full');
+        if (window.loadThirdPartyScripts) window.loadThirdPartyScripts();
+      }
       function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
     </script>
     <!-- Load Inter font non-blocking with font-display=optional -->

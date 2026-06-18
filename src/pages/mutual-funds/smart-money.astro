@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSmartMoneySignals } from '../../lib/data/holdings';
+
+const signals = (await getSmartMoneySignals('ALL', 50)) as Array<Record<string, unknown>>;
+const latestMonth = signals[0]?.month
+  ? new Date(String(signals[0].month)).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+  : 'Latest month';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Smart Money Tracker - Mutual Fund Conviction Signals",
+  "description": "Stocks with the highest mutual fund conviction based on monthly portfolio disclosures.",
+  "url": "https://ipofins.com/mutual-funds/smart-money",
+};
+---
+
+<BaseLayout
+  title="Smart Money Tracker 2026 - Fund Manager Conviction Signals | IPOfins"
+  description="See which stocks mutual funds are accumulating with the highest conviction scores. Based on official AMC monthly portfolio disclosures."
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Smart Money</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Smart Money Tracker</h1>
+    <p class="mt-1 text-sm text-surface-500">Stocks where multiple fund managers are increasing allocation — conviction score from monthly holdings data.</p>
+    <span class="data-freshness mt-2">📊 {latestMonth} • {signals.length} signals</span>
+  </section>
+
+  <section class="container-wide pb-12">
+    {signals.length > 0 ? (
+      <div class="overflow-x-auto card p-0">
+        <table class="w-full text-sm">
+          <thead class="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
+            <tr>
+              <th class="px-4 py-3">Stock</th>
+              <th class="px-4 py-3 text-right">Conviction</th>
+              <th class="px-4 py-3 text-right">Fresh Entries</th>
+              <th class="px-4 py-3 text-right">Increased</th>
+              <th class="px-4 py-3 text-right">Funds Holding</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
+            {signals.map((sig) => (
+              <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30">
+                <td class="px-4 py-3 font-medium text-surface-900 dark:text-white">{sig.name}</td>
+                <td class="px-4 py-3 text-right font-bold text-primary-600">{sig.conviction_score != null ? Number(sig.conviction_score).toFixed(1) : '—'}</td>
+                <td class="px-4 py-3 text-right">{sig.fresh_entries != null ? String(sig.fresh_entries) : '—'}</td>
+                <td class="px-4 py-3 text-right">{sig.increased_count != null ? String(sig.increased_count) : '—'}</td>
+                <td class="px-4 py-3 text-right">{sig.total_funds_holding != null ? String(sig.total_funds_holding) : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="text-surface-500 py-12 text-center">No smart money signals yet. Run the monthly holdings pipeline and compute signals.</p>
+    )}
+    <p class="mt-4 text-xs text-surface-400">Conviction scores are derived from fund portfolio changes (fresh entries, increased weight). Not investment advice.</p>
+  </section>
+</BaseLayout>

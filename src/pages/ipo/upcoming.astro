@@ -1,19 +1,15 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import upcomingData from '../../data/upcoming-ipos.json';
-import iposRaw from '../../data/ipos.json';
+import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
-// Get IPOs from main data that are in "upcoming" or "open" state
-const iposData = withCorrectStatuses(iposRaw);
+const iposData = withCorrectStatuses(await getAllIPOs());
 const openSoonIPOs = iposData.filter(i => i.status === 'upcoming' || i.status === 'open');
+const drhpFiled = iposData.filter(ipo => ipo.status === 'drhp-filed');
+const sebiApproved = iposData.filter(ipo => ipo.status === 'upcoming' && ipo.drhpUrl);
+const generalUpcoming = openSoonIPOs;
 
-// From upcoming-ipos.json, categorize by status
-const drhpFiled = upcomingData.filter(ipo => ipo.status === 'drhp-filed');
-const sebiApproved = upcomingData.filter(ipo => ipo.status === 'sebi-approved');
-const generalUpcoming = upcomingData.filter(ipo => ipo.status === 'upcoming');
-
-const totalUpcoming = openSoonIPOs.length + upcomingData.length;
+const totalUpcoming = openSoonIPOs.length + drhpFiled.length;
 
 const today = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
@@ -74,7 +70,6 @@ const faqJsonLd = {
               <div class="flex items-center gap-5 text-xs">
                 <div><span class="text-surface-400">Price </span><span class="font-bold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
                 <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
               </div>
             </div>
           </a>

@@ -5,6 +5,7 @@
 
 export type IPOStatus =
   | 'drhp-filed'
+  | 'sebi-approved'
   | 'upcoming'
   | 'open'
   | 'live'
@@ -80,12 +81,9 @@ export interface IPORecord {
 
   // ── Documents (Groww — authoritative) ───────────────────────
   drhpUrl?: string;
+  drhpDate?: string;
 
-  // ── GMP (IPOWatch / InvestorGain) ───────────────────────────
-  gmp?: number | null;
-  gmpUpdatedAt?: string;
-
-  // ── Subscription (Groww /ipo/subscription) ──────────────────
+  // ── Subscription (NSE / exchange data) ──────────────────────
   subscription?: number | null;
   subscriptionDetails?: SubscriptionDetails;
   subscriptionUpdatedAt?: string;

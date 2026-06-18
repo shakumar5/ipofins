@@ -25,38 +25,38 @@ export default function IPOProfitCalculator() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">IPO Price (₹)</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-2">IPO Price (₹)</label>
             <input
               type="number" min="10" max="10000" value={ipoPrice}
               onChange={(e) => setIpoPrice(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Expected Listing (₹)</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-2">Expected Listing (₹)</label>
             <input
               type="number" min="10" max="50000" value={listingPrice}
               onChange={(e) => setListingPrice(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Lot Size</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-2">Lot Size</label>
             <input
               type="number" min="1" max="5000" value={lotSize}
               onChange={(e) => setLotSize(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Lots Applied</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-2">Lots Applied</label>
             <input
               type="number" min="1" max="20" value={lotsApplied}
               onChange={(e) => setLotsApplied(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function IPOProfitCalculator() {
       {/* Results */}
       <div className={`rounded-xl p-6 ${result.profit >= 0 ? 'bg-green-50 dark:bg-green-900/10' : 'bg-red-50 dark:bg-red-900/10'}`}>
         <div className="text-center mb-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">
             {result.profit >= 0 ? 'Estimated Profit' : 'Estimated Loss'}
           </p>
           <p className={`text-4xl font-extrabold ${result.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -76,18 +76,18 @@ export default function IPOProfitCalculator() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Investment</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(result.investmentAmount)}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Investment</p>
+            <p className="text-sm font-bold text-surface-900 dark:text-white mt-1">{formatCurrency(result.investmentAmount)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Listing Value</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(result.listingValue)}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Listing Value</p>
+            <p className="text-sm font-bold text-surface-900 dark:text-white mt-1">{formatCurrency(result.listingValue)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Total Shares</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{result.totalShares}</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Total Shares</p>
+            <p className="text-sm font-bold text-surface-900 dark:text-white mt-1">{result.totalShares}</p>
           </div>
         </div>
       </div>

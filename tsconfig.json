@@ -11,5 +11,6 @@
       "@data/*": ["src/data/*"],
       "@utils/*": ["src/utils/*"]
     }
-  }
+  },
+  "exclude": ["dist", "node_modules", "db", "scripts", "src/data/add-articles.mjs"]
 }

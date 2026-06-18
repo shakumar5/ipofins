@@ -81,137 +81,137 @@ export default function TaxSavingPlanner() {
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Gross Annual Income</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(grossIncome)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Gross Annual Income</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(grossIncome)}</span>
           </div>
           <input type="range" min="300000" max="5000000" step="50000" value={grossIncome}
             onChange={(e) => setGrossIncome(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹3L</span><span>₹50L</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹3L</span><span>₹50L</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">HRA Received (Annual)</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(hra)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">HRA Received (Annual)</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(hra)}</span>
           </div>
           <input type="range" min="0" max="600000" step="10000" value={hra}
             onChange={(e) => setHra(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹6L</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹6L</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Annual Rent Paid</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(rentPaid)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Annual Rent Paid</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(rentPaid)}</span>
           </div>
           <input type="range" min="0" max="600000" step="10000" value={rentPaid}
             onChange={(e) => setRentPaid(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹6L</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹6L</span></div>
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Metro City?</label>
+          <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Metro City?</label>
           <button onClick={() => setIsMetro(!isMetro)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium ${isMetro ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
+            className={`px-3 py-1 rounded-lg text-xs font-medium ${isMetro ? 'bg-blue-600 text-white' : 'bg-surface-200 dark:bg-surface-700 text-surface-700 dark:text-surface-300'}`}>
             {isMetro ? 'Yes (50% HRA)' : 'No (40% HRA)'}
           </button>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Section 80C (ELSS, PPF, EPF, LIC)</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(section80C)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Section 80C (ELSS, PPF, EPF, LIC)</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(section80C)}</span>
           </div>
           <input type="range" min="0" max="150000" step="10000" value={section80C}
             onChange={(e) => setSection80C(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹1.5L (max)</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹1.5L (max)</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">NPS (80CCD 1B) - Extra ₹50K</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(nps80CCD)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">NPS (80CCD 1B) - Extra ₹50K</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(nps80CCD)}</span>
           </div>
           <input type="range" min="0" max="50000" step="5000" value={nps80CCD}
             onChange={(e) => setNps80CCD(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹50K (max)</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹50K (max)</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Health Insurance - Self (80D)</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(healthSelf)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Health Insurance - Self (80D)</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(healthSelf)}</span>
           </div>
           <input type="range" min="0" max="25000" step="5000" value={healthSelf}
             onChange={(e) => setHealthSelf(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹25K (max)</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹25K (max)</span></div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Health Insurance - Parents (80D)</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(healthParents)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Health Insurance - Parents (80D)</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(healthParents)}</span>
           </div>
           <input type="range" min="0" max="50000" step="5000" value={healthParents}
             onChange={(e) => setHealthParents(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹50K</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹50K</span></div>
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Parents Senior Citizen?</label>
+          <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Parents Senior Citizen?</label>
           <button onClick={() => setParentsAreSenior(!parentsAreSenior)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium ${parentsAreSenior ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
+            className={`px-3 py-1 rounded-lg text-xs font-medium ${parentsAreSenior ? 'bg-blue-600 text-white' : 'bg-surface-200 dark:bg-surface-700 text-surface-700 dark:text-surface-300'}`}>
             {parentsAreSenior ? 'Yes (₹50K limit)' : 'No (₹25K limit)'}
           </button>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Home Loan Interest (Section 24)</label>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(homeLoanInterest)}</span>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Home Loan Interest (Section 24)</label>
+            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(homeLoanInterest)}</span>
           </div>
           <input type="range" min="0" max="200000" step="10000" value={homeLoanInterest}
             onChange={(e) => setHomeLoanInterest(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-          <div className="flex justify-between text-xs text-gray-500 mt-1"><span>₹0</span><span>₹2L (max)</span></div>
+            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
+          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹2L (max)</span></div>
         </div>
       </div>
 
       {/* Results */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 space-y-4">
+      <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4">
         <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Total Tax Saved (Old Regime)</p>
+          <p className="text-xs text-surface-500 dark:text-surface-400">Total Tax Saved (Old Regime)</p>
           <p className="text-2xl font-extrabold text-green-600 dark:text-green-400 mt-1">{formatCurrency(result.taxSaved)}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Tax Without Deductions</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Tax Without Deductions</p>
             <p className="text-sm font-bold text-red-500 mt-1">{formatCurrency(result.taxWithout)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Tax With Deductions</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Tax With Deductions</p>
             <p className="text-sm font-bold text-green-500 mt-1">{formatCurrency(result.taxWith)}</p>
           </div>
         </div>
 
         {/* Deductions Breakdown */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Deductions Breakdown</p>
+        <div className="pt-4 border-t border-surface-200 dark:border-surface-700 space-y-2">
+          <p className="text-xs font-semibold text-surface-700 dark:text-surface-300">Deductions Breakdown</p>
           <div className="space-y-1">
-            {result.hraDeduction > 0 && <div className="flex justify-between text-xs"><span className="text-gray-600 dark:text-gray-400">HRA Exemption</span><span className="font-medium text-gray-900 dark:text-white">{formatCurrency(result.hraDeduction)}</span></div>}
-            {result.deduction80C > 0 && <div className="flex justify-between text-xs"><span className="text-gray-600 dark:text-gray-400">Section 80C</span><span className="font-medium text-gray-900 dark:text-white">{formatCurrency(result.deduction80C)}</span></div>}
-            {result.deduction80CCD > 0 && <div className="flex justify-between text-xs"><span className="text-gray-600 dark:text-gray-400">NPS 80CCD(1B)</span><span className="font-medium text-gray-900 dark:text-white">{formatCurrency(result.deduction80CCD)}</span></div>}
-            {result.deduction80D > 0 && <div className="flex justify-between text-xs"><span className="text-gray-600 dark:text-gray-400">Section 80D</span><span className="font-medium text-gray-900 dark:text-white">{formatCurrency(result.deduction80D)}</span></div>}
-            {result.deduction24 > 0 && <div className="flex justify-between text-xs"><span className="text-gray-600 dark:text-gray-400">Section 24 (Home Loan)</span><span className="font-medium text-gray-900 dark:text-white">{formatCurrency(result.deduction24)}</span></div>}
-            <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-200 dark:border-gray-700"><span className="text-gray-700 dark:text-gray-300">Total Deductions</span><span className="text-blue-600 dark:text-blue-400">{formatCurrency(result.totalDeductions)}</span></div>
+            {result.hraDeduction > 0 && <div className="flex justify-between text-xs"><span className="text-surface-600 dark:text-surface-400">HRA Exemption</span><span className="font-medium text-surface-900 dark:text-white">{formatCurrency(result.hraDeduction)}</span></div>}
+            {result.deduction80C > 0 && <div className="flex justify-between text-xs"><span className="text-surface-600 dark:text-surface-400">Section 80C</span><span className="font-medium text-surface-900 dark:text-white">{formatCurrency(result.deduction80C)}</span></div>}
+            {result.deduction80CCD > 0 && <div className="flex justify-between text-xs"><span className="text-surface-600 dark:text-surface-400">NPS 80CCD(1B)</span><span className="font-medium text-surface-900 dark:text-white">{formatCurrency(result.deduction80CCD)}</span></div>}
+            {result.deduction80D > 0 && <div className="flex justify-between text-xs"><span className="text-surface-600 dark:text-surface-400">Section 80D</span><span className="font-medium text-surface-900 dark:text-white">{formatCurrency(result.deduction80D)}</span></div>}
+            {result.deduction24 > 0 && <div className="flex justify-between text-xs"><span className="text-surface-600 dark:text-surface-400">Section 24 (Home Loan)</span><span className="font-medium text-surface-900 dark:text-white">{formatCurrency(result.deduction24)}</span></div>}
+            <div className="flex justify-between text-xs font-bold pt-1 border-t border-surface-200 dark:border-surface-700"><span className="text-surface-700 dark:text-surface-300">Total Deductions</span><span className="text-blue-600 dark:text-blue-400">{formatCurrency(result.totalDeductions)}</span></div>
           </div>
         </div>
       </div>

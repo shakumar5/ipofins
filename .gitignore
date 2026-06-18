@@ -19,3 +19,16 @@ Thumbs.db
 
 # Astro
 .astro/
+
+# Market data — stored in Neon DB, never committed
+src/data/ipos.json
+src/data/mutual-funds.json
+src/data/fund-holdings.json
+src/data/upcoming-ipos.json
+src/data/ipo-performance.json
+src/data/ipos_pretty.json
+data/amfi-excel/
+data/temp/
+
+# Deprecated fetch backups
+scripts/ipos_*.json

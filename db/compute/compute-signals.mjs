@@ -306,8 +306,8 @@ async function main() {
   // Determine target month
   let month = targetMonth;
   if (!month) {
-    const latestResult = await sql`SELECT MAX(month) as latest FROM fund_holdings`;
-    if (!latestResult[0].latest) {
+    const latestResult = await sql`SELECT month::text AS latest FROM fund_holdings ORDER BY month DESC LIMIT 1`;
+    if (!latestResult[0]?.latest) {
       console.error('\n  ❌ No holdings data found in database. Run seed first.');
       process.exit(1);
     }

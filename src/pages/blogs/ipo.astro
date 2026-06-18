@@ -7,14 +7,14 @@ const faqJsonLd = {
   "mainEntity": [
     { "@type": "Question", "name": "What is an IPO and how does it work?", "acceptedAnswer": { "@type": "Answer", "text": "An IPO (Initial Public Offering) is when a private company sells shares to the public for the first time. The company files DRHP with SEBI, gets approval, sets a price band, opens subscription for 3 days, allots shares, and lists on BSE/NSE." } },
     { "@type": "Question", "name": "How to invest in IPO in India online?", "acceptedAnswer": { "@type": "Answer", "text": "Open a Demat account with Zerodha/Groww/Upstox. When IPO opens, apply via broker app using UPI. Select lots, enter UPI ID, approve mandate. Money is blocked until allotment." } },
-    { "@type": "Question", "name": "What is IPO GMP?", "acceptedAnswer": { "@type": "Answer", "text": "GMP (Grey Market Premium) is the unofficial price premium at which IPO shares trade before listing. It indicates expected listing gains but is not guaranteed or regulated by SEBI." } },
+    { "@type": "Question", "name": "What is IPO subscription status?", "acceptedAnswer": { "@type": "Answer", "text": "IPO subscription shows oversubscription by category (Retail, NII, QIB) during the open period. Higher QIB/NII subscription often signals institutional demand." } },
     { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Visit the registrar's website (KFin Technologies or Link Intime/MUFG) and enter your PAN or application number. Allotment is typically announced 6 days after IPO closes." } },
-    { "@type": "Question", "name": "Is IPO investment safe?", "acceptedAnswer": { "@type": "Answer", "text": "IPO investment carries market risk. Some IPOs list at premium (profit), others at discount (loss). Research company fundamentals, check subscription data, GMP trends, and AI scores before investing." } }
+    { "@type": "Question", "name": "Is IPO investment safe?", "acceptedAnswer": { "@type": "Answer", "text": "IPO investment carries market risk. Some IPOs list at premium (profit), others at discount (loss). Research company fundamentals and check subscription data before investing." } }
   ]
 };
 ---
 
-<BaseLayout title="IPO Guide India 2026 - Complete FAQ & How-To | IPOfins" description="Complete IPO guide: How to apply, GMP explained, allotment process, listing gains, risks, tax implications. 30+ FAQs answered for Indian investors.">
+<BaseLayout title="IPO Guide India 2026 - Complete FAQ & How-To | IPOfins" description="Complete IPO guide: How to apply, subscription data, allotment process, listing gains, risks, tax implications. 30+ FAQs answered for Indian investors.">
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
@@ -138,30 +138,26 @@ const faqJsonLd = {
         </details>
         <details class="card-compact group">
           <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Why does IPO listing price increase or decrease?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Increases when: Strong demand (high subscription), positive GMP, good market sentiment, strong fundamentals. Decreases when: Overvalued pricing, weak market conditions, low subscription, negative news, or sector downturn. The listing price is determined by pure demand-supply on exchange.</p>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Increases when: Strong demand (high subscription), good market sentiment, strong fundamentals. Decreases when: Overvalued pricing, weak market conditions, low subscription, negative news, or sector downturn. The listing price is determined by pure demand-supply on exchange.</p>
         </details>
       </div>
     </div>
 
-    <!-- GMP -->
-    <div id="gmp">
-      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">🔥 GMP (Grey Market Premium)</h2>
+    <!-- Subscription -->
+    <div id="subscription">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">📈 IPO Subscription</h2>
       <div class="space-y-3">
         <details class="card-compact group">
-          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO GMP?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">GMP (Grey Market Premium) is the unofficial premium at which IPO shares and applications trade in the grey market before listing. If GMP is ₹50 on a ₹200 IPO, expected listing is ~₹250. The grey market is unregulated and operates via dealers/brokers outside the exchange system.</p>
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO subscription status?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Subscription shows how many times each category (Retail, NII, QIB) oversubscribed the IPO. For example, 10x means ten times more bids than shares available in that category.</p>
         </details>
         <details class="card-compact group">
-          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is IPO GMP accurate?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">GMP is directionally correct about 70% of the time but not always accurate on exact listing price. GMP can be manipulated, changes multiple times daily, and is heavily influenced by overall market mood. Use as one of many signals — not sole decision factor.</p>
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Does high subscription guarantee listing gains?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. High subscription is a positive demand signal but not a guarantee. Some heavily subscribed IPOs still list flat or below issue price if market sentiment shifts on listing day.</p>
         </details>
         <details class="card-compact group">
-          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Does GMP guarantee listing gain?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">No. GMP is just market expectation, not a guarantee. There have been cases where GMP was ₹100+ and stock listed flat or at discount. Similarly, sometimes GMP is low but stock lists at good premium. Always cross-check with subscription data and fundamentals.</p>
-        </details>
-        <details class="card-compact group">
-          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Where to check IPO GMP today?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check our <a href="/ipo/gmp-today" class="text-primary-600 hover:underline">GMP Today page</a> — updated every 12 hours. GMP data is sourced from grey market dealers and aggregated. Remember: GMP can change rapidly, especially 1-2 days before listing.</p>
+          <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Where to check live IPO subscription?</summary>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">See our <a href="/ipo/subscription-status" class="text-primary-600 hover:underline">Subscription Status page</a> — sourced from authorized exchange data during the open period.</p>
         </details>
       </div>
     </div>
@@ -176,7 +172,7 @@ const faqJsonLd = {
         </details>
         <details class="card-compact group">
           <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to choose a good IPO?</summary>
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check: 1) Company revenue/profit growth (last 3 years), 2) Purpose of IPO (growth vs debt repay), 3) Peer comparison (PE ratio vs listed peers), 4) Promoter background, 5) Subscription levels (QIB interest), 6) GMP trend, 7) Sector outlook. Our AI score combines these factors.</p>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check: 1) Company revenue/profit growth (last 3 years), 2) Purpose of IPO (growth vs debt repay), 3) Peer comparison (PE ratio vs listed peers), 4) Promoter background, 5) Subscription levels (QIB interest), 6) Sector outlook.</p>
         </details>
         <details class="card-compact group">
           <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is oversubscription in IPO?</summary>
@@ -209,7 +205,7 @@ const faqJsonLd = {
   <section class="container-narrow py-8 border-t border-surface-200 dark:border-surface-700">
     <div class="flex flex-wrap gap-3">
       <a href="/ipo" class="btn-secondary">📊 Live IPOs</a>
-      <a href="/ipo/gmp-today" class="btn-secondary">🔥 GMP Today</a>
+      <a href="/ipo/subscription-status" class="btn-secondary">📈 Subscription Status</a>
       <a href="/ipo/upcoming" class="btn-secondary">🕐 Upcoming IPOs</a>
       <a href="/tools/ipo-profit-calculator" class="btn-secondary">💰 IPO Profit Calculator</a>
       <a href="/blogs/mutual-funds" class="btn-secondary">💰 MF FAQs</a>

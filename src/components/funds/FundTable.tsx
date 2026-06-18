@@ -7,9 +7,9 @@ interface Fund {
   returns1y?: number | null;
   returns3y?: number | null;
   returns5y?: number | null;
-  nav: number;
+  nav: number | null;
   rating?: number | null;
-  aum?: string;
+  aum?: string | null;
   riskLevel: string;
   hasHoldings?: boolean;
 }

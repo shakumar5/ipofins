@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getFundsWithOverlaps } from '../../../lib/data/holdings';
+
+const funds = await getFundsWithOverlaps();
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Mutual Fund Portfolio Overlap",
+  "description": "Compare portfolio overlap between mutual funds to avoid concentration risk.",
+  "url": "https://ipofins.com/mutual-funds/fund-overlap",
+};
+---
+
+<BaseLayout
+  title="Mutual Fund Overlap Checker 2026 - Portfolio Overlap | IPOfins"
+  description="Check how much two mutual funds overlap in stock holdings. Avoid duplicate exposure across your portfolio."
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Fund Overlap</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Fund Overlap Checker</h1>
+    <p class="mt-1 text-sm text-surface-500">Select a fund to see which other schemes share the most stock holdings.</p>
+  </section>
+
+  <section class="container-wide pb-12">
+    {funds.length > 0 ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {funds.map((fund) => (
+          <a href={`/mutual-funds/fund-overlap/${fund.slug}`} class="card-compact block hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
+            <span class="text-sm font-medium text-surface-900 dark:text-white group-hover:text-primary-600">{fund.name}</span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p class="text-surface-500 py-12 text-center">Overlap data not available yet. Run the monthly holdings pipeline and compute overlaps.</p>
+    )}
+  </section>
+</BaseLayout>

@@ -33,7 +33,7 @@ const faqJsonLd = {
 };
 ---
 
-<BaseLayout title="IPO Profit Calculator 2026 - Listing Gains Calculator | IPOfins" description="Free IPO profit calculator. Estimate your potential profit or loss from IPO listing based on issue price, expected listing price, GMP, and lot size." jsonLd={jsonLd}>
+<BaseLayout title="IPO Profit Calculator 2026 - Listing Gains Calculator | IPOfins" description="Free IPO profit calculator. Estimate your potential profit or loss from IPO listing based on issue price, expected listing price, and lot size." jsonLd={jsonLd}>
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
@@ -53,7 +53,7 @@ const faqJsonLd = {
 
   <section class="container-narrow py-6">
     <div class="card max-w-2xl mx-auto">
-      <IPOProfitCalculator client:load />
+      <IPOProfitCalculator client:idle />
     </div>
   </section>
 
@@ -83,7 +83,7 @@ const faqJsonLd = {
   <section class="container-narrow py-8">
     <div class="prose dark:prose-invert max-w-none text-sm">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How to Use This IPO Profit Calculator</h2>
-      <p class="text-surface-600 dark:text-surface-300">Enter the IPO issue price (upper band), expected listing price (based on GMP or your estimate), lot size, and number of lots you've been allotted. The calculator shows your total investment, expected sale value, and net profit or loss.</p>
+      <p class="text-surface-600 dark:text-surface-300">Enter the IPO issue price (upper band), your expected listing price, lot size, and number of lots allotted. The calculator shows your total investment, expected sale value, and net profit or loss.</p>
       <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">Common Use Cases</h3>
       <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-1">
         <li>Estimating listing day profit before selling</li>
@@ -92,14 +92,14 @@ const faqJsonLd = {
         <li>Planning tax implications on listing gains (15% STCG)</li>
       </ul>
       <h3 class="text-base font-semibold text-surface-800 dark:text-surface-200 mt-4 mb-2">Maximizing IPO Returns</h3>
-      <p class="text-surface-600 dark:text-surface-300">Apply for 1 lot from multiple family Demat accounts to increase allotment chances. Track GMP trends in the days before listing — rising GMP usually signals strong demand. For SME IPOs with very high subscription (50x+), consider that allotment probability is low but listing gains tend to be high. Always set a stop-loss on listing day to protect against unexpected negative opens.</p>
+      <p class="text-surface-600 dark:text-surface-300">Apply for 1 lot from multiple family Demat accounts to increase allotment chances. Track subscription trends during the open period — strong QIB/NII demand often signals interest. For SME IPOs with very high subscription (50x+), consider that allotment probability is low but listing gains can be high. Always set a stop-loss on listing day to protect against unexpected negative opens.</p>
     </div>
   </section>
 
   <section class="container-narrow py-8">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related</h2>
     <div class="flex flex-wrap gap-3">
-      <a href="/ipo/gmp-today" class="btn-secondary">IPO GMP Today</a>
+      <a href="/ipo/subscription-status" class="btn-secondary">IPO Subscription</a>
       <a href="/ipo" class="btn-secondary">All IPOs</a>
       <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
       <a href="/tools/cagr-calculator" class="btn-secondary">CAGR Calculator</a>

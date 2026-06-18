@@ -1,9 +1,9 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposRaw from '../../data/ipos.json';
+import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
-const iposData = withCorrectStatuses(iposRaw);
+const iposData = withCorrectStatuses(await getAllIPOs());
 const recentlyClosed = iposData.filter(ipo => ipo.status === 'closed' || ipo.status === 'allotment' || ipo.status === 'listed');
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
@@ -239,7 +239,7 @@ const registrars = [
   <section class="container-wide py-8">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Pages</h2>
     <div class="flex flex-wrap gap-3">
-      <a href="/ipo/gmp-today" class="btn-secondary">GMP Today</a>
+      <a href="/ipo/subscription-status" class="btn-secondary">Subscription Status</a>
       <a href="/ipo/subscription-status" class="btn-secondary">Subscription Status</a>
       <a href="/ipo" class="btn-secondary">All IPOs</a>
       <a href="/ipo/performance/2026" class="btn-secondary">IPO Performance 2026</a>

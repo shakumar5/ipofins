@@ -1,8 +1,9 @@
 ---
 import IPOLayout from '../../../layouts/IPOLayout.astro';
-import upcomingData from '../../../data/upcoming-ipos.json';
+import { getUpcomingIPOs } from '../../../lib/data/ipos';
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const upcomingData = await getUpcomingIPOs();
   return upcomingData.map(ipo => ({
     params: { slug: ipo.slug },
     props: { ipo },

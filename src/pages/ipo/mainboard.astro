@@ -1,15 +1,23 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposRaw from '../../data/ipos.json';
+import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
-const iposData = withCorrectStatuses(iposRaw);
+const iposData = withCorrectStatuses(await getAllIPOs());
 const activeStatuses = ['live', 'open', 'upcoming', 'closed', 'allotment'];
 const mainboardIPOs = iposData.filter(ipo => ipo.type === 'mainboard' && activeStatuses.includes(ipo.status));
 const liveCount = mainboardIPOs.filter(i => i.status === 'live').length;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Mainboard IPOs India 2026",
+  "description": "All mainboard IPOs in India with price bands, subscription data, and analysis.",
+  "url": "https://ipofins.com/ipo/mainboard",
+};
 ---
 
-<IPOLayout title="Mainboard IPOs India 2026 | IPOfins" description="All mainboard IPOs in India 2026. Track large-cap IPOs with price bands, GMP, subscription data, and AI analysis." activeTab="mainboard">
+<IPOLayout title="Mainboard IPOs India 2026 | IPOfins" description="All mainboard IPOs in India 2026. Track large-cap IPOs with price bands, subscription data, and analysis." activeTab="mainboard" jsonLd={jsonLd}>
   <section class="container-wide py-6">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">Mainboard IPOs — 2026</h1>
     <p class="text-sm text-surface-500 mb-6">{mainboardIPOs.length} mainboard IPOs • {liveCount} live now</p>
@@ -29,9 +37,8 @@ const liveCount = mainboardIPOs.filter(i => i.status === 'live').length;
               <div class="flex items-center gap-5 text-xs">
                 <div><span class="text-surface-400">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
                 <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                 {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
-                {ipo.aiScore && <div><span class="text-surface-400">AI </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
+                {ipo.aiScore && <div><span class="text-surface-400">Score </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
               </div>
             </div>
           </a>

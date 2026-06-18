@@ -1,16 +1,17 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import FundTable from '../../../components/funds/FundTable.tsx';
-import fundsData from '../../../data/mutual-funds.json';
-import holdingsData from '../../../data/fund-holdings.json';
+import { getAllFunds } from '../../../lib/data/funds';
+import { getFundSlugsWithHoldings } from '../../../lib/data/holdings';
 
 function catToSlug(cat: string): string {
   return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
 }
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const fundsData = await getAllFunds();
   const cats = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-  const available = cats.filter(c => fundsData.some((f: any) => f.category === c));
+  const available = cats.filter(c => fundsData.some(f => f.category === c));
   return available.map(cat => ({
     params: { category: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds' },
     props: { categoryName: cat },
@@ -18,17 +19,13 @@ export function getStaticPaths() {
 }
 
 const { categoryName } = Astro.props;
+const fundsData = await getAllFunds();
+const holdingSlugs = await getFundSlugsWithHoldings();
 
 const CATEGORIES = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-const categories = CATEGORIES.filter(c => fundsData.some((f: any) => f.category === c));
-const allHoldings = (holdingsData as any).holdings || {};
-const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
-const holdingSlugs = Object.keys(allHoldings).filter(slug => {
-  const monthData = allHoldings[slug]?.[latestMonth];
-  return Array.isArray(monthData) && monthData.length > 0;
-});
+const categories = CATEGORIES.filter(c => fundsData.some(f => f.category === c));
 
-const fundsForTable = fundsData.map((f: any) => ({
+const fundsForTable = fundsData.map(f => ({
   name: f.name,
   slug: f.slug,
   category: f.category,
@@ -81,6 +78,6 @@ const jsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:only="react" funds={fundsForTable} categories={categories} holdingSlugs={holdingSlugs} defaultCategory={categoryName} basePath="/mutual-funds/all" />
+    <FundTable client:load funds={fundsForTable} categories={categories} holdingSlugs={Array.from(holdingSlugs)} defaultCategory={categoryName} basePath="/mutual-funds/all" />
   </section>
 </BaseLayout>

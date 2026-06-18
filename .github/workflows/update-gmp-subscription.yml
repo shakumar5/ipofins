@@ -1,55 +1,18 @@
-# IPOfins — GMP & Subscription Auto-Updater
-# Runs every 2 hours to fetch live GMP and subscription data.
-# Only updates gmp/subscription fields in ipos.json — lightweight and fast.
+# DEPRECATED — replaced by manual pipeline scripts.
+# See DATA_PIPELINE.md
+#
+# Run locally:
+#   npm run pipeline:subscription
+#
+# This workflow is disabled. Delete this file when convenient.
 
-name: Update GMP & Subscription
+name: Update GMP & Subscription (DEPRECATED)
 
 on:
-  schedule:
-    # Every 2 hours during market-relevant hours (IST 8 AM - 10 PM = UTC 2:30 - 16:30)
-    - cron: '30 2,4,6,8,10,12,14,16 * * *'
-  
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  update-gmp-subscription:
+  deprecated:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🟢 Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.12.0'
-
-      - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🌐 Install Puppeteer browser
-        run: npx puppeteer browsers install chrome
-
-      - name: 📡 Fetch GMP & Subscription data
-        run: node --use-system-ca scripts/fetch-subscription-gmp.mjs
-
-      - name: 💾 Commit updated data (if changed)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/ipos.json
-          if git diff --cached --quiet; then
-            echo "No GMP/subscription data changes to commit"
-          else
-            git commit -m "chore: auto-update GMP & subscription [$(date -u +%Y-%m-%dT%H:%M)]"
-            git push
-          fi
-        # NOTE: The commit above does NOT have [skip ci], so pushing ipos.json changes
-        # will trigger the Build & Deploy workflow automatically, rebuilding static pages
-        # with fresh GMP/subscription data. This is intentional.
+      - run: echo "This workflow is deprecated. Use npm run pipeline:subscription locally."

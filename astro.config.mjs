@@ -8,15 +8,15 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      changefreq: 'daily',
-      lastmod: new Date(),
+      changefreq: 'weekly',
+      filter: (page) => !page.includes('/dashboard') && !page.includes('/search'),
     }),
   ],
   output: 'static',
-  build: {
-    inlineStylesheets: 'always',
-  },
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-dom/client'],
+    },
   },
 });

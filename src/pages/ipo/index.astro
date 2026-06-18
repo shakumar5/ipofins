@@ -1,11 +1,11 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
-import iposRaw from '../../data/ipos.json';
-import upcomingData from '../../data/upcoming-ipos.json';
+import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
-const iposData = withCorrectStatuses(iposRaw);
+const iposData = withCorrectStatuses(await getAllIPOs());
+const upcomingFromDb = iposData.filter(i => ['upcoming', 'drhp-filed'].includes(i.status));
 const liveIPOs = iposData.filter(i => i.status === 'live');
 const openIPOs = iposData.filter(i => i.status === 'open');
 const upcomingIPOs = iposData.filter(i => i.status === 'upcoming');
@@ -27,7 +27,7 @@ const faqJsonLd = {
   "mainEntity": [
     { "@type": "Question", "name": "What is an IPO?", "acceptedAnswer": { "@type": "Answer", "text": "IPO (Initial Public Offering) is when a private company sells its shares to the public for the first time on a stock exchange (BSE/NSE). After the IPO, anyone can buy and sell the company's shares on the market." } },
     { "@type": "Question", "name": "How to apply for IPO in India?", "acceptedAnswer": { "@type": "Answer", "text": "Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot." } },
-    { "@type": "Question", "name": "What is IPO GMP?", "acceptedAnswer": { "@type": "Answer", "text": "GMP (Grey Market Premium) is the unofficial premium at which IPO shares trade before listing. If GMP is ₹50 on a ₹100 IPO, expected listing price is ₹150. GMP is not regulated and can change rapidly." } },
+    { "@type": "Question", "name": "What is IPO subscription status?", "acceptedAnswer": { "@type": "Answer", "text": "IPO subscription shows how many times an issue was oversubscribed across retail, NII, and QIB categories. Higher subscription often indicates stronger demand during the bidding period." } },
     { "@type": "Question", "name": "What is the minimum amount to invest in IPO?", "acceptedAnswer": { "@type": "Answer", "text": "Minimum is 1 lot × upper price band. For example, if lot size is 30 shares at ₹500, minimum investment = ₹15,000. The maximum for retail investors is ₹2,00,000." } },
     { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN number or application number. Allotment is typically announced 6 days after the IPO closes." } },
     { "@type": "Question", "name": "How to buy pre-IPO shares?", "acceptedAnswer": { "@type": "Answer", "text": "Pre-IPO shares can be bought through unlisted share dealers or platforms like Tata Capital Unlisted, Stockify, or UnlistedZone. These are private transactions outside stock exchanges. Risks include low liquidity, no SEBI regulation, price manipulation, and lock-in periods post-listing. Always verify the seller's credibility and understand that pre-IPO investing carries significantly higher risk than applying through the normal IPO process." } },
@@ -37,7 +37,7 @@ const faqJsonLd = {
 };
 ---
 
-<IPOLayout title="All IPOs India 2026 - Mainboard & SME | IPOfins" description="Complete list of all IPOs in India 2026. Mainboard, SME, live, upcoming, and listed IPOs with GMP, subscription data & AI analysis." jsonLd={jsonLd} activeTab="all">
+<IPOLayout title="All IPOs India 2026 - Mainboard & SME | IPOfins" description="Complete list of all IPOs in India 2026. Mainboard, SME, live, upcoming, and listed IPOs with subscription data and analysis." jsonLd={jsonLd} activeTab="all">
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <section class="container-wide py-6">
@@ -66,7 +66,6 @@ const faqJsonLd = {
                 <div class="flex items-center gap-5 text-xs">
                   <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
                   <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                   {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
                 </div>
               </div>
@@ -99,7 +98,6 @@ const faqJsonLd = {
                 <div class="flex items-center gap-5 text-xs">
                   <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
                   <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                 </div>
               </div>
             </a>
@@ -130,7 +128,6 @@ const faqJsonLd = {
                 <div class="flex items-center gap-5 text-xs">
                   <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
                   <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                 </div>
               </div>
             </a>
@@ -162,7 +159,6 @@ const faqJsonLd = {
                   <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
                   <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
                   {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
-                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                 </div>
               </div>
             </a>
@@ -194,7 +190,6 @@ const faqJsonLd = {
                   <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
                   <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
                   {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
-                  {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
                 </div>
               </div>
             </a>
@@ -249,8 +244,8 @@ const faqJsonLd = {
         <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot.</p>
       </details>
       <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO GMP (Grey Market Premium)?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">GMP is the unofficial premium at which IPO shares trade before listing. If GMP is ₹50 on a ₹100 IPO, expected listing price is ~₹150. GMP is not SEBI-regulated and can change rapidly based on market sentiment.</p>
+        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO subscription status?</summary>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Subscription shows how many times each investor category oversubscribed the IPO (e.g. 10x means ten times the shares available were bid for). Data comes from exchange filings during the open period.</p>
       </details>
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the minimum amount to invest in IPO?</summary>

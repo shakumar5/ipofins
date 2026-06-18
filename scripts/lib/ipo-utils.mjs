@@ -1,0 +1,129 @@
+/** Shared helpers for Zerodha/Groww IPO pipelines */
+
+export function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .substring(0, 80);
+}
+
+export function fuzzyMatch(name1, name2) {
+  const normalize = (s) =>
+    String(s || '')
+      .toLowerCase()
+      .replace(/\s*(limited|ltd|ipo|india|pvt|private|company|technologies|industries)\s*/gi, '')
+      .replace(/[^a-z0-9]/g, '');
+  const n1 = normalize(name1);
+  const n2 = normalize(name2);
+  if (!n1 || !n2) return false;
+  if (n1 === n2) return true;
+  if (n1.length >= 8 && n2.length >= 8 && (n1.includes(n2) || n2.includes(n1))) return true;
+  if (n1.length >= 10 && n2.length >= 10 && n1.slice(0, 10) === n2.slice(0, 10)) return true;
+  return false;
+}
+
+/** Stricter match for deduplication — avoids merging different companies */
+export function strictMatch(name1, name2) {
+  const normalize = (s) =>
+    String(s || '')
+      .toLowerCase()
+      .replace(/\s*(limited|ltd|\.|ipo)\s*/gi, '')
+      .replace(/[^a-z0-9]/g, '');
+  const n1 = normalize(name1);
+  const n2 = normalize(name2);
+  if (!n1 || !n2) return false;
+  if (n1 === n2) return true;
+  // One is a prefix of the other only if the shorter is >= 12 chars
+  const short = n1.length < n2.length ? n1 : n2;
+  const long = n1.length < n2.length ? n2 : n1;
+  if (short.length >= 12 && long.startsWith(short)) return true;
+  return false;
+}
+
+export function findByName(list, name) {
+  return list.find((item) => fuzzyMatch(item.name, name));
+}
+
+export async function fetchHTML(url) {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status} from ${url}`);
+  return response.text();
+}
+
+/** Normalize assorted date strings to YYYY-MM-DD for Postgres DATE columns */
+export function parseDateToISO(dateStr) {
+  if (!dateStr) return null;
+  const s = String(dateStr).trim();
+  if (!s) return null;
+
+  // Already ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+
+  // DD-MM-YYYY or DD/MM/YYYY
+  const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dmy) {
+    return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+  }
+
+  // Epoch ms
+  if (/^\d{13}$/.test(s)) {
+    return new Date(Number(s)).toISOString().slice(0, 10);
+  }
+
+  // "Jun 09, 2026" / "10 Jun 2026" / "10th Jun 2026"
+  const ordinal = s.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
+  const d = new Date(ordinal);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+
+  return null;
+}
+
+export function tsToISO(ts) {
+  if (!ts) return null;
+  const n = Number(ts);
+  if (!n || Number.isNaN(n)) return null;
+  return new Date(n).toISOString().slice(0, 10);
+}
+
+export function coalesce(...vals) {
+  for (const v of vals) {
+    if (v === undefined || v === null) continue;
+    if (typeof v === 'string' && v.trim() === '') continue;
+    if (typeof v === 'number' && v === 0) continue;
+    return v;
+  }
+  return null;
+}
+
+export function formatIssueSizeCr(rupees) {
+  if (!rupees) return null;
+  const n = Number(rupees);
+  if (!n || Number.isNaN(n)) return null;
+  const crores = Math.round((n / 1e7) * 100) / 100;
+  return `₹${crores} Cr`;
+}
+
+export function parsePriceRange(priceRange) {
+  if (!priceRange) return { min: null, max: null };
+  const match = String(priceRange).match(/([\d,.]+)\s*[-–to]+\s*([\d,.]+)/i);
+  if (match) {
+    return {
+      min: parseFloat(match[1].replace(/,/g, '')),
+      max: parseFloat(match[2].replace(/,/g, '')),
+    };
+  }
+  const single = parseFloat(String(priceRange).replace(/[^\d.]/g, ''));
+  return { min: single || null, max: single || null };
+}
+
+export function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}

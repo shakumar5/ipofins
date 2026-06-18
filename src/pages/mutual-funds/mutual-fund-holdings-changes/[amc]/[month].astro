@@ -1,34 +1,30 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
-import holdingsData from '../../../../data/fund-holdings.json';
+import {
+  getAMCsWithHoldings,
+  getAvailableMonths,
+  getAMCHoldingsComparison,
+} from '../../../../lib/data/holdings';
+import { monthSlug, monthDisplay } from '../../../../utils/month-slug';
 
-export function getStaticPaths() {
-  // Helper: slugify AMC name
-  function slugify(str: string): string {
-    return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  }
+function slugify(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
 
-  // Helper: convert "May 2026" to "may-2026" for URL
-  function monthSlug(month: string): string {
-    return month.toLowerCase().replace(/\s+/g, '-');
-  }
+export async function getStaticPaths() {
+  const amcs = await getAMCsWithHoldings();
+  const months = await getAvailableMonths();
+  const paths: { params: { amc: string; month: string }; props: Record<string, string> }[] = [];
 
-  const months = (holdingsData as any).months as string[];
-  const amcs = Object.keys((holdingsData as any).amcs);
-  const paths: any[] = [];
-
+  // months are DESC (newest first): May vs April, April vs March, ...
   for (const amc of amcs) {
-    // We generate pages for month pairs (comparing month[i-1] → month[i])
-    for (let i = 1; i < months.length; i++) {
+    for (let i = 0; i < months.length - 1; i++) {
       paths.push({
-        params: {
-          amc: slugify(amc),
-          month: monthSlug(months[i]),
-        },
+        params: { amc: amc.slug, month: monthSlug(months[i]) },
         props: {
-          amcName: amc,
+          amcName: amc.name,
           currentMonth: months[i],
-          previousMonth: months[i - 1],
+          previousMonth: months[i + 1],
         },
       });
     }
@@ -37,143 +33,32 @@ export function getStaticPaths() {
   return paths;
 }
 
-// Helper: slugify AMC name
-function slugify(str: string): string {
-  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
-
-// Helper: convert "May 2026" to "may-2026" for URL
-function monthSlug(month: string): string {
-  return month.toLowerCase().replace(/\s+/g, '-');
-}
-
-// Helper: convert "may-2026" back to "May 2026" for display
-function monthDisplay(slug: string): string {
-  return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-// Helper: check if a holding is a debt/money-market instrument
-function isDebtHolding(h: any): boolean {
-  if (h.sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(h.sector)) return true;
-  if (h.sector && /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Mutual Fund)/i.test(h.sector)) return true;
-  if (/^\d+\.?\d*\s*%\s/.test(h.name)) return true;
-  if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(h.name)) return true;
-  if (/\d{2}(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2,4}/i.test(h.name)) return true;
-  if (/T-BILL|TBILL|GOI|G\.?SEC|DAYS?\s+\d/i.test(h.name)) return true;
-  if (/\bNCD\b/i.test(h.name)) return true;
-  if (/\(ZCB\)/i.test(h.name)) return true;
-  if (/securitisation trust/i.test(h.name)) return true;
-  if (/\bREIT\b|\bInvIT\b/i.test(h.name)) return true;
-  if (/\bPTC\b/i.test(h.name)) return true;
-  if (/commercial paper/i.test(h.name)) return true;
-  if (/\bfund\b.*\b(direct|growth|plan)\b/i.test(h.name)) return true;
-  return false;
-}
-
-// Helper: categorize fund by name
-function getFundCategory(name: string): string {
-  const n = name.toLowerCase();
-  if (n.includes('large cap') || n.includes('largecap') || n.includes('large & mid') || n.includes('large and mid')) {
-    if (n.includes('& mid') || n.includes('and mid')) return 'Large & Mid Cap';
-    return 'Large Cap';
-  }
-  if (n.includes('mid cap') || n.includes('midcap')) return 'Mid Cap';
-  if (n.includes('multi cap') || n.includes('multicap')) return 'Multi Cap';
-  if (n.includes('flexi') || n.includes('flexicap')) return 'Flexi Cap';
-  if (n.includes('small cap') || n.includes('smallcap')) return 'Small Cap';
-  return 'Others';
-}
-
 const { amcName, currentMonth, previousMonth } = Astro.props;
 const { amc: amcSlug, month: monthParam } = Astro.params;
 
-// Compute comparison data at build time
-const holdings = (holdingsData as any).holdings as Record<string, any>;
-const allMonths = (holdingsData as any).months as string[];
-
-interface ComparisonResult {
-  fundName: string;
-  category: string;
-  additions: { name: string; sector: string; pct: number }[];
-  removals: { name: string; sector: string; pct: number }[];
-  increased: { name: string; sector: string; oldPct: number; newPct: number }[];
-  decreased: { name: string; sector: string; oldPct: number; newPct: number }[];
-}
-
-const comparison: ComparisonResult[] = [];
-
-for (const [slug, fund] of Object.entries(holdings)) {
-  if (fund.amc !== amcName) continue;
-
-  // Skip junk entries (Excel headers parsed as fund names)
-  if (/^(Industry|Market|Rating|Quantity|Value|ISIN|%)/i.test(fund.name)) continue;
-  if (/Fair Value|Rs\.?\s*in\s*Lacs/i.test(fund.name)) continue;
-
-  const oldHoldings = (fund[previousMonth] || []).filter((h: any) => !isDebtHolding(h));
-  const newHoldings = (fund[currentMonth] || []).filter((h: any) => !isDebtHolding(h));
-
-  if (oldHoldings.length === 0 || newHoldings.length === 0) continue;
-
-  const oldMap = new Map(oldHoldings.map((h: any) => [h.isin || h.name, h]));
-  const newMap = new Map(newHoldings.map((h: any) => [h.isin || h.name, h]));
-
-  const additions: any[] = [];
-  const removals: any[] = [];
-  const increased: any[] = [];
-  const decreased: any[] = [];
-
-  for (const [key, h] of newMap) {
-    if (!oldMap.has(key)) {
-      additions.push({ name: (h as any).name, sector: (h as any).sector, pct: (h as any).pct });
-    } else {
-      const oldH = oldMap.get(key)!;
-      const diff = (h as any).pct - (oldH as any).pct;
-      if (diff > 0.3) {
-        increased.push({ name: (h as any).name, sector: (h as any).sector, oldPct: (oldH as any).pct, newPct: (h as any).pct });
-      } else if (diff < -0.3) {
-        decreased.push({ name: (h as any).name, sector: (h as any).sector, oldPct: (oldH as any).pct, newPct: (h as any).pct });
-      }
-    }
-  }
-
-  for (const [key, h] of oldMap) {
-    if (!newMap.has(key)) {
-      removals.push({ name: (h as any).name, sector: (h as any).sector, pct: (h as any).pct });
-    }
-  }
-
-  if (additions.length > 0 || removals.length > 0 || increased.length > 0 || decreased.length > 0) {
-    comparison.push({
-      fundName: fund.name,
-      category: getFundCategory(fund.name),
-      additions: additions.sort((a, b) => b.pct - a.pct),
-      removals: removals.sort((a, b) => b.pct - a.pct),
-      increased: increased.sort((a, b) => (b.newPct - b.oldPct) - (a.newPct - a.oldPct)),
-      decreased: decreased.sort((a, b) => (a.newPct - a.oldPct) - (b.newPct - b.oldPct)),
-    });
-  }
-}
-
-comparison.sort((a, b) => (b.additions.length + b.removals.length) - (a.additions.length + a.removals.length));
+const amcList = await getAMCsWithHoldings();
+const allMonths = await getAvailableMonths();
+const amcRecord = amcList.find((a) => a.slug === amcSlug);
+const comparison = amcRecord
+  ? await getAMCHoldingsComparison(amcRecord.slug, currentMonth)
+  : [];
 
 const totalAdditions = comparison.reduce((sum, f) => sum + f.additions.length, 0);
 const totalRemovals = comparison.reduce((sum, f) => sum + f.removals.length, 0);
-const displayMonth = monthDisplay(monthParam);
+const displayMonth = monthDisplay(monthParam || '');
 
 const pageTitle = `${amcName} Holdings Changes ${displayMonth} - Stocks Bought & Sold | IPOfins`;
 const pageDesc = `See what stocks ${amcName} mutual funds bought and sold in ${displayMonth}. ${totalAdditions} additions, ${totalRemovals} removals across ${comparison.length} funds.`;
 
 const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "name": `${amcName} Mutual Fund Holdings Changes - ${displayMonth}`,
-  "description": pageDesc,
-  "url": `https://ipofins.com/mutual-funds/mutual-fund-holdings-changes/${amcSlug}/${monthParam}`,
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: `${amcName} Mutual Fund Holdings Changes - ${displayMonth}`,
+  description: pageDesc,
+  url: `https://ipofins.com/mutual-funds/mutual-fund-holdings-changes/${amcSlug}/${monthParam}`,
 };
 
-// Other AMCs for internal linking
-const allAmcs = Object.keys((holdingsData as any).amcs).sort();
-const otherAmcs = allAmcs.filter(a => a !== amcName).slice(0, 10);
+const otherAmcs = amcList.map((a) => a.name).filter((a) => a !== amcName).slice(0, 10);
 ---
 
 <BaseLayout title={pageTitle} description={pageDesc} jsonLd={jsonLd}>

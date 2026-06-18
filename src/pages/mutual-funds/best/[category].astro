@@ -1,8 +1,11 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import FundTable from '../../../components/funds/FundTable.tsx';
-import fundsData from '../../../data/mutual-funds.json';
-import holdingsData from '../../../data/fund-holdings.json';
+import { getAllFunds } from '../../../lib/data/funds';
+import { getFundSlugsWithHoldings } from '../../../lib/data/holdings';
+
+const fundsData = await getAllFunds();
+const holdingSlugs = await getFundSlugsWithHoldings();
 
 function catToSlug(cat: string): string {
   return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
@@ -25,18 +28,18 @@ const bestFunds = fundsData.filter((f: any) => {
   return score >= 2;
 });
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const fundsData = await getAllFunds();
   const cats = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-  const avail = cats.filter(c => fundsData.some((f: any) => f.category === c));
-  // Compute best funds inline
+  const avail = cats.filter(c => fundsData.some(f => f.category === c));
   const t5 = new Set<string>();
   for (const cat of avail) {
-    fundsData.filter((f: any) => f.category === cat).sort((a: any, b: any) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach((f: any) => t5.add(f.slug));
+    fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach(f => t5.add(f.slug));
   }
-  const f5 = new Set(fundsData.filter((f: any) => f.rating === 5).map((f: any) => f.slug));
-  const t10 = new Set([...fundsData].sort((a: any, b: any) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map((f: any) => f.slug));
-  const bf = fundsData.filter((f: any) => { let s = 0; if (t5.has(f.slug)) s++; if (f5.has(f.slug)) s++; if (t10.has(f.slug)) s++; return s >= 2; });
-  const available = avail.filter(c => bf.some((f: any) => f.category === c));
+  const f5 = new Set(fundsData.filter(f => f.rating === 5).map(f => f.slug));
+  const t10 = new Set([...fundsData].sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map(f => f.slug));
+  const bf = fundsData.filter(f => { let s = 0; if (t5.has(f.slug)) s++; if (f5.has(f.slug)) s++; if (t10.has(f.slug)) s++; return s >= 2; });
+  const available = avail.filter(c => bf.some(f => f.category === c));
   return available.map(cat => ({
     params: { category: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds' },
     props: { categoryName: cat },
@@ -45,14 +48,7 @@ export function getStaticPaths() {
 
 const { categoryName } = Astro.props;
 
-const allHoldings = (holdingsData as any).holdings || {};
-const latestMonth = (holdingsData as any).months?.[(holdingsData as any).months.length - 1] || '';
-const holdingSlugs = Object.keys(allHoldings).filter(slug => {
-  const monthData = allHoldings[slug]?.[latestMonth];
-  return Array.isArray(monthData) && monthData.length > 0;
-});
-
-const bestFundsForTable = bestFunds.map((f: any) => ({
+const bestFundsForTable = bestFunds.map(f => ({
   name: f.name, slug: f.slug, category: f.category, nav: f.nav,
   returns1y: f.returns1y, returns3y: f.returns3y, returns5y: f.returns5y,
   rating: f.rating, aum: f.aum, riskLevel: f.riskLevel,
@@ -98,6 +94,6 @@ const jsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:only="react" funds={bestFundsForTable} categories={categories} holdingSlugs={holdingSlugs} defaultCategory={categoryName} basePath="/mutual-funds/best" />
+    <FundTable client:load funds={bestFundsForTable} categories={categories} holdingSlugs={Array.from(holdingSlugs)} defaultCategory={categoryName} basePath="/mutual-funds/best" />
   </section>
 </BaseLayout>

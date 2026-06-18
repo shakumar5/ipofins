@@ -4,18 +4,18 @@ import BaseLayout from './BaseLayout.astro';
 interface Props {
   title: string;
   description?: string;
+  ogImage?: string;
   jsonLd?: object;
   activeTab: string;
 }
 
-const { title, description, jsonLd, activeTab } = Astro.props;
+const { title, description, ogImage = '/og-ipo.png', jsonLd, activeTab } = Astro.props;
 
 const tabs = [
   { key: 'all', label: 'All', href: '/ipo' },
   { key: 'mainboard', label: 'Mainboard', href: '/ipo/mainboard' },
   { key: 'sme', label: 'SME', href: '/ipo/sme' },
   { key: 'upcoming', label: 'Upcoming', href: '/ipo/upcoming' },
-  { key: 'gmp-today', label: 'GMP', href: '/ipo/gmp-today' },
   { key: 'subscription', label: 'Subscription', href: '/ipo/subscription-status' },
   { key: 'allotment', label: 'Allotment', href: '/ipo/allotment-status' },
   { key: 'performance', label: 'Performance', href: '/ipo/performance/2026' },
@@ -23,7 +23,7 @@ const tabs = [
 ];
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+<BaseLayout title={title} description={description} ogImage={ogImage} jsonLd={jsonLd}>
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

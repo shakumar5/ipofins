@@ -1,18 +1,31 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Privacy Policy - IPOfins",
+  "url": "https://ipofins.com/privacy",
+};
 ---
 
-<BaseLayout title="Privacy Policy - ipofins" description="ipofins privacy policy. How we collect, use, and protect your data.">
+<BaseLayout title="Privacy Policy - ipofins" description="ipofins privacy policy. How we collect, use, and protect your data." jsonLd={jsonLd}>
   <section class="container-narrow py-16">
     <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Privacy Policy</h1>
-    <div class="mt-8 space-y-6 text-sm text-surface-600 dark:text-surface-300 leading-relaxed">
+    <div class="mt-8 space-y-6 text-sm text-surface-600 dark:text-surface-300 leading-relaxed prose prose-surface dark:prose-invert max-w-none">
       <p><strong>Last updated:</strong> June 2026</p>
       <h2 class="text-lg font-bold text-surface-900 dark:text-white pt-4">Information We Collect</h2>
-      <p>ipofins is a static website. We do not collect personal information, require registration, or store user data on our servers. The calculators run entirely in your browser.</p>
+      <p>IPOfins is a static website. We do not require registration and do not store personal portfolios on our servers. Financial calculators run entirely in your browser. Market data (IPOs, mutual funds, holdings) is loaded from our database at build time and served as static pages.</p>
       <h2 class="text-lg font-bold text-surface-900 dark:text-white pt-4">Cookies & Analytics</h2>
-      <p>We may use privacy-focused analytics (such as Plausible or Google Analytics) to understand traffic patterns. We use localStorage for theme preferences only (dark/light mode). No personal data is stored.</p>
+      <p>We use a cookie consent banner before loading third-party services. If you click <strong>Accept</strong>, we may load:</p>
+      <ul>
+        <li><strong>Plausible Analytics</strong> — privacy-focused traffic analytics</li>
+        <li><strong>Google Analytics</strong> — usage statistics</li>
+        <li><strong>Google AdSense</strong> — advertising (may set cookies per Google&apos;s policy)</li>
+      </ul>
+      <p>If you click <strong>Dismiss</strong>, these scripts are not loaded. We always use <code>localStorage</code> for theme preference (dark/light mode) and your cookie consent choice — this does not leave your device.</p>
       <h2 class="text-lg font-bold text-surface-900 dark:text-white pt-4">Third-Party Services</h2>
-      <p>We may display ads via Google AdSense and use affiliate links for broker partnerships. These third parties may use cookies per their own privacy policies. We do not share personal data with these parties.</p>
+      <p>Google AdSense and affiliate broker links may process data according to their own privacy policies when you interact with ads or outbound links. We do not sell your personal information.</p>
       <h2 class="text-lg font-bold text-surface-900 dark:text-white pt-4">Contact</h2>
       <p>For privacy-related queries, contact us at <a href="mailto:info@ipofins.com" class="text-primary-600 hover:underline">info@ipofins.com</a></p>
     </div>

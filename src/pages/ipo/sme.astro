@@ -1,15 +1,23 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
-import iposRaw from '../../data/ipos.json';
+import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 
-const iposData = withCorrectStatuses(iposRaw);
+const iposData = withCorrectStatuses(await getAllIPOs());
 const activeStatuses = ['live', 'open', 'upcoming', 'closed', 'allotment'];
 const smeIPOs = iposData.filter(ipo => ipo.type === 'sme' && activeStatuses.includes(ipo.status));
 const liveCount = smeIPOs.filter(i => i.status === 'live').length;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "SME IPOs India 2026",
+  "description": "All SME IPOs on BSE SME and NSE Emerge with subscription and listing data.",
+  "url": "https://ipofins.com/ipo/sme",
+};
 ---
 
-<IPOLayout title="SME IPOs India 2026 - BSE SME & NSE Emerge | IPOfins" description="All SME IPOs in India 2026. Track small and medium enterprise IPOs on BSE SME and NSE Emerge platforms." activeTab="sme">
+<IPOLayout title="SME IPOs India 2026 - BSE SME & NSE Emerge | IPOfins" description="All SME IPOs in India 2026. Track small and medium enterprise IPOs on BSE SME and NSE Emerge platforms." activeTab="sme" jsonLd={jsonLd}>
   <section class="container-wide py-6">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">SME IPOs — 2026</h1>
     <p class="text-sm text-surface-500 mb-6">{smeIPOs.length} SME IPOs • {liveCount} live now</p>
@@ -29,8 +37,7 @@ const liveCount = smeIPOs.filter(i => i.status === 'live').length;
               <div class="flex items-center gap-5 text-xs">
                 <div><span class="text-surface-400">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
                 <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                {ipo.gmp !== undefined && ipo.gmp !== null && <div><span class="text-surface-400">GMP </span><span class={`font-bold ${ipo.gmp >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{ipo.gmp >= 0 ? '+' : ''}₹{ipo.gmp}</span></div>}
-                {ipo.aiScore && <div><span class="text-surface-400">AI </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
+                {ipo.aiScore && <div><span class="text-surface-400">Score </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
               </div>
             </div>
           </a>
@@ -66,7 +73,7 @@ const liveCount = smeIPOs.filter(i => i.status === 'live').length;
         <ul class="list-disc list-inside space-y-1">
           <li><strong>Listing gains:</strong> SME IPOs frequently deliver 50-200% listing gains (but also carry loss risk)</li>
           <li><strong>Early-stage investing:</strong> Get in early on promising small companies before they grow</li>
-          <li><strong>High GMP opportunities:</strong> SME IPOs often have high grey market premiums indicating demand</li>
+          <li><strong>Subscription demand:</strong> SME IPOs can show very high oversubscription during the bidding period</li>
           <li><strong>Portfolio diversification:</strong> Exposure to small-cap and micro-cap segments</li>
           <li><strong>Sector-specific bets:</strong> Many niche sectors only have SME-listed companies</li>
         </ul>

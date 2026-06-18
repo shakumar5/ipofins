@@ -40,7 +40,9 @@ const jsonLd = {
       Compare Stock Brokers - Side by Side
     </h1>
     <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Select 2 to 4 brokers from the dropdowns below and compare them on fees, platforms, strengths, and weaknesses. Find the perfect broker for your trading style.
+      Select 2 to 4 brokers from the dropdowns below and compare them on fees, platforms, strengths, and weaknesses.
+      Read individual <a href="/broker" class="text-primary-600 hover:underline">broker reviews</a> or use our
+      <a href="/learn/best-stock-broker-2026" class="text-primary-600 hover:underline">broker selection guide</a>.
     </p>
   </section>
 
@@ -61,10 +63,14 @@ const jsonLd = {
         <div>
           <h3 class="text-sm font-semibold text-surface-900 dark:text-white mb-1">Quick Recommendation</h3>
           <p class="text-sm text-surface-600 dark:text-surface-300">
-            <strong>Most retail investors:</strong> Zerodha — best platform quality + reliability.
-            <strong>Beginners:</strong> Groww — simplest UI + zero AMC.
-            <strong>Active traders:</strong> Dhan — fastest execution + options tools.
-            <strong>Zero brokerage:</strong> m.Stock — one-time ₹999 fee, then free forever.
+            <strong>Most retail investors:</strong>
+            <a href="/broker/zerodha" class="text-primary-600 hover:underline">Zerodha</a> — best platform quality + reliability.
+            <strong>Beginners:</strong>
+            <a href="/broker/groww" class="text-primary-600 hover:underline">Groww</a> — simplest UI + zero AMC.
+            <strong>Active traders:</strong>
+            <a href="/broker/dhan" class="text-primary-600 hover:underline">Dhan</a> — fastest execution + options tools.
+            <strong>Zero brokerage:</strong>
+            <a href="/broker/mstock" class="text-primary-600 hover:underline">m.Stock</a> — one-time ₹999 fee, then free forever.
           </p>
         </div>
       </div>
@@ -78,15 +84,15 @@ const jsonLd = {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <div class="card-compact">
           <h3 class="text-sm font-semibold text-surface-900 dark:text-white mb-2">🏃 Active Traders</h3>
-          <p class="text-xs text-surface-600 dark:text-surface-300">Need: fast execution, advanced charting, low per-trade fees. Look at: Zerodha, Dhan, Fyers.</p>
+          <p class="text-xs text-surface-600 dark:text-surface-300">Need: fast execution, advanced charting, low per-trade fees. Look at: <a href="/broker/zerodha" class="text-primary-600 hover:underline">Zerodha</a>, <a href="/broker/dhan" class="text-primary-600 hover:underline">Dhan</a>, <a href="/broker/fyers" class="text-primary-600 hover:underline">Fyers</a>.</p>
         </div>
         <div class="card-compact">
           <h3 class="text-sm font-semibold text-surface-900 dark:text-white mb-2">📈 Long-term Investors</h3>
-          <p class="text-xs text-surface-600 dark:text-surface-300">Need: research reports, mutual fund access, low AMC. Look at: Groww, m.Stock, ICICI Direct.</p>
+          <p class="text-xs text-surface-600 dark:text-surface-300">Need: research reports, mutual fund access, low AMC. Look at: <a href="/broker/groww" class="text-primary-600 hover:underline">Groww</a>, <a href="/broker/mstock" class="text-primary-600 hover:underline">m.Stock</a>, <a href="/broker/icici-direct" class="text-primary-600 hover:underline">ICICI Direct</a>.</p>
         </div>
         <div class="card-compact">
           <h3 class="text-sm font-semibold text-surface-900 dark:text-white mb-2">🤖 Algo/API Traders</h3>
-          <p class="text-xs text-surface-600 dark:text-surface-300">Need: free API, good documentation, reliable uptime. Look at: Fyers, Angel One (SmartAPI), Zerodha (Kite Connect).</p>
+          <p class="text-xs text-surface-600 dark:text-surface-300">Need: free API, good documentation, reliable uptime. Look at: <a href="/broker/fyers" class="text-primary-600 hover:underline">Fyers</a>, <a href="/broker/angel-one" class="text-primary-600 hover:underline">Angel One</a> (SmartAPI), <a href="/broker/zerodha" class="text-primary-600 hover:underline">Zerodha</a> (Kite Connect).</p>
         </div>
       </div>
     </div>
@@ -110,12 +116,49 @@ const jsonLd = {
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Discount broker vs full-service broker — which is better?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Discount brokers (Zerodha, Groww, Upstox) charge flat ₹20/trade and are best for self-directed investors. Full-service brokers (ICICI Direct, HDFC Securities) charge percentage-based fees but offer research, advisory, and 3-in-1 accounts. Most modern investors prefer discount brokers for the cost savings.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Discount brokers (<a href="/broker/zerodha" class="text-primary-600 hover:underline">Zerodha</a>, <a href="/broker/groww" class="text-primary-600 hover:underline">Groww</a>, <a href="/broker/upstox" class="text-primary-600 hover:underline">Upstox</a>) charge flat ₹20/trade and are best for self-directed investors. Full-service brokers (<a href="/broker/icici-direct" class="text-primary-600 hover:underline">ICICI Direct</a>, <a href="/broker/hdfc-securities" class="text-primary-600 hover:underline">HDFC Securities</a>) charge percentage-based fees but offer research, advisory, and 3-in-1 accounts. Most modern investors prefer discount brokers for the cost savings.</p>
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How long does it take to open a trading account?</summary>
         <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Most discount brokers offer instant account opening through e-KYC with Aadhaar. The process takes 10-15 minutes, and you can start trading within 24-48 hours after verification. You'll need PAN card, Aadhaar, bank details, and a selfie for video KYC.</p>
       </details>
+    </div>
+  </section>
+
+  <!-- Broker Review Links -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Individual Broker Reviews</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {brokersData.map((broker) => (
+        <a
+          href={`/broker/${broker.slug}`}
+          class="card-compact text-center group hover:shadow-md transition-shadow"
+        >
+          <div class="w-9 h-9 mx-auto bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-sm">{broker.logo}</span>
+          </div>
+          <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-2">{broker.name}</p>
+          <p class="text-xs text-surface-500 mt-0.5">★ {broker.rating}</p>
+        </a>
+      ))}
+    </div>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mt-4">
+      <a href="/broker" class="text-primary-600 hover:underline">View all broker reviews →</a>
+    </p>
+  </section>
+
+  <!-- Cross-section Links -->
+  <section class="container-wide py-8 border-t border-surface-200 dark:border-surface-700">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOfins</h2>
+    <div class="flex flex-wrap gap-3">
+      <a href="/broker" class="btn-secondary">All Broker Reviews</a>
+      <a href="/learn/best-stock-broker-2026" class="btn-secondary">How to Choose a Broker</a>
+      <a href="/learn/how-to-open-demat-account" class="btn-secondary">Open Demat Account</a>
+      <a href="/ipo" class="btn-secondary">Live IPOs</a>
+      <a href="/ipo/subscription-status" class="btn-secondary">IPO Subscription</a>
+      <a href="/mutual-funds" class="btn-secondary">Mutual Funds</a>
+      <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
+      <a href="/tools/ipo-profit-calculator" class="btn-secondary">IPO Profit Calculator</a>
     </div>
   </section>
 </BaseLayout>

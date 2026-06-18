@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holdings';
+import { getAllFunds } from '../../../lib/data/funds';
+
+export async function getStaticPaths() {
+  const funds = await getFundsWithOverlaps();
+  const allFunds = await getAllFunds();
+  const fundMap = new Map(allFunds.map((f) => [f.slug, f]));
+
+  return funds.map((f) => ({
+    params: { slug: f.slug },
+    props: { fundName: fundMap.get(f.slug)?.name || f.name },
+  }));
+}
+
+const { slug } = Astro.params;
+const { fundName } = Astro.props;
+const overlaps = (await getFundOverlaps(slug!, 15)) as Array<Record<string, unknown>>;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": `${fundName} - Portfolio Overlap`,
+  "url": `https://ipofins.com/mutual-funds/fund-overlap/${slug}`,
+};
+---
+
+<BaseLayout
+  title={`${fundName} Overlap - Similar Mutual Funds | IPOfins`}
+  description={`See which mutual funds overlap most with ${fundName}. Compare shared stock holdings and overlap percentage.`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds/fund-overlap" class="hover:text-primary-600 transition-colors">Fund Overlap</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium truncate max-w-[200px]">{fundName}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{fundName}</h1>
+    <p class="mt-1 text-sm text-surface-500">Funds with the highest portfolio overlap (shared stocks by weight).</p>
+  </section>
+
+  <section class="container-wide pb-12">
+    {overlaps.length > 0 ? (
+      <div class="overflow-x-auto card p-0">
+        <table class="w-full text-sm">
+          <thead class="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
+            <tr>
+              <th class="px-4 py-3">Fund</th>
+              <th class="px-4 py-3 text-right">Overlap %</th>
+              <th class="px-4 py-3 text-right">Common Stocks</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
+            {overlaps.map((row) => (
+              <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30">
+                <td class="px-4 py-3">
+                  <a href={`/mutual-funds/fund-overlap/${row.slug}`} class="font-medium text-primary-600 hover:underline">{row.name}</a>
+                  <span class="text-xs text-surface-400 block">
+                    <a href={`/mutual-funds/fund/${row.slug}-holdings`} class="hover:underline">View holdings →</a>
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right font-bold">{row.overlap_pct != null ? `${Number(row.overlap_pct).toFixed(1)}%` : '—'}</td>
+                <td class="px-4 py-3 text-right">{row.common_stocks != null ? String(row.common_stocks) : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="text-surface-500 py-12 text-center">No overlap data for this fund.</p>
+    )}
+    <p class="mt-4">
+      <a href="/mutual-funds/fund-overlap" class="text-sm text-primary-600 hover:underline">← All funds</a>
+    </p>
+  </section>
+</BaseLayout>

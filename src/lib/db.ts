@@ -1,45 +1,25 @@
 /**
  * Finverse — Neon Database Client
- * 
- * Used at build time by Astro pages and by data scripts.
- * Uses @neondatabase/serverless for HTTP-based queries (no persistent connection needed).
- * 
- * Usage in Astro pages:
- *   import { sql } from '../lib/db';
- *   const funds = await sql`SELECT * FROM funds WHERE category = ${category}`;
- * 
- * Usage in scripts:
- *   import { sql } from '../src/lib/db.ts';  // or use scripts/lib/db.mjs
+ *
+ * Used at build time by Astro pages. Requires DATABASE_URL in .env or Vercel env.
  */
 
 import { neon } from '@neondatabase/serverless';
 
 const DATABASE_URL = import.meta.env.DATABASE_URL || process.env.DATABASE_URL;
 
-if (!DATABASE_URL) {
-  throw new Error(
-    'DATABASE_URL is not set. Add it to .env file or environment variables.\n' +
-    'Get it from: https://console.neon.tech → Your Project → Connection Details'
-  );
+export function isDbConfigured(): boolean {
+  return !!DATABASE_URL;
 }
 
-/**
- * Tagged template literal for SQL queries.
- * Automatically parameterizes values to prevent SQL injection.
- * 
- * @example
- * const funds = await sql`SELECT * FROM funds WHERE category = ${category}`;
- * const ipo = await sql`SELECT * FROM ipos WHERE slug = ${slug}`;
- */
-export const sql = neon(DATABASE_URL);
+export const sql: ReturnType<typeof neon> | null = DATABASE_URL ? neon(DATABASE_URL) : null;
 
-/**
- * Helper: Execute a query and return typed results.
- * Useful when you want explicit typing in TypeScript.
- */
-export async function query<T = Record<string, unknown>>(
-  strings: TemplateStringsArray,
-  ...values: unknown[]
-): Promise<T[]> {
-  return sql(strings, ...values) as Promise<T[]>;
+export function requireDb() {
+  if (!sql) {
+    throw new Error(
+      'DATABASE_URL is not set. Add it to .env (local) or Vercel environment variables.\n' +
+        'Run data pipelines first: npm run pipeline:daily'
+    );
+  }
+  return sql;
 }

@@ -42,11 +42,11 @@ const FDCalculator: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">FD Calculator</h2>
+    <div className="bg-white dark:bg-surface-800 rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold mb-4 text-surface-800 dark:text-white">FD Calculator</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Principal Amount (₹)
           </label>
           <input
@@ -54,12 +54,12 @@ const FDCalculator: React.FC = () => {
             name="principal"
             value={inputs.principal}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter principal amount"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Rate of Interest (%)
           </label>
           <input
@@ -67,12 +67,12 @@ const FDCalculator: React.FC = () => {
             name="rate"
             value={inputs.rate}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter rate of interest"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Time Period (Years)
           </label>
           <input
@@ -80,18 +80,18 @@ const FDCalculator: React.FC = () => {
             name="time"
             value={inputs.time}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter time period"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
             Compounding Frequency
           </label>
           <select
             name="compounding"
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-surface-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="1">Annually</option>
             <option value="2">Semi-Annually</option>
