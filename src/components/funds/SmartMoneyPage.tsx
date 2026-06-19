@@ -8,6 +8,13 @@ const StockSignalTab = lazy(() => import('./StockSignalTab'));
 import type { SmartMoneyTrackerData } from '../../lib/data/holdings';
 import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
 import type { SectorIntelligenceData } from '../../lib/sector-intelligence';
+import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import {
+  getSmartMoneyPageMeta,
+  SMART_MONEY_TAB_HASH,
+  type SmartMoneyTab,
+} from '../../lib/smart-money-meta';
+
 import {
   loadSignalsIndex,
   loadSignalsMonth,
@@ -19,21 +26,7 @@ import { fetchJsonCached } from '../../lib/client-data';
 const SECTOR_URL = '/data/sector-intelligence.json';
 const BASE_PATH = '/mutual-funds/smart-money';
 
-type Tab = 'tracker' | 'signals' | 'stock-signal' | 'sectors';
-
-const TAB_HASH: Record<Tab, string> = {
-  tracker: '',
-  signals: '#signals',
-  'stock-signal': '#stock-signal',
-  sectors: '#sector-intelligence',
-};
-
-const TAB_TITLES: Record<Tab, string> = {
-  tracker: 'Smart Money Tracker 2026 - Fund Buying, Selling & Sector Rotation | IPOFins',
-  signals: 'Smart Money Signal 2026 - Institutional Conviction Scores | IPOFins',
-  'stock-signal': 'Stock Signal 2026 - Mutual Fund Institutional Activity | IPOFins',
-  sectors: 'Sector Intelligence 2026 - Mutual Fund Sector Rotation | IPOFins',
-};
+type Tab = SmartMoneyTab;
 
 function tabFromHash(): Tab | null {
   if (typeof window === 'undefined') return null;
@@ -64,11 +57,11 @@ export default function SmartMoneyPage() {
   const applyTab = useCallback((next: Tab, push = true) => {
     setTab(next);
     if (typeof window === 'undefined') return;
-    const target = `${BASE_PATH}${TAB_HASH[next]}`;
+    const target = `${BASE_PATH}${SMART_MONEY_TAB_HASH[next]}`;
     if (push && `${window.location.pathname}${window.location.hash}` !== target) {
       window.history.pushState({ smTab: next }, '', target);
     }
-    document.title = TAB_TITLES[next];
+    applyClientPageMeta(getSmartMoneyPageMeta(next));
   }, []);
 
   useEffect(() => {

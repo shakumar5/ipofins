@@ -42,9 +42,10 @@ function filterStockRows(
       } else if (view === 'most_sold') {
         weightTotal = funds.reduce((s, f) => s + (f.prevPct - f.newPct), 0);
       } else if (view === 'fresh_entries') {
-        weightTotal = funds.reduce((s, f) => s + f.newPct, 0);
+        // Portfolio weight is per-fund (% of NAV); average across funds, don't sum
+        weightTotal = funds.reduce((s, f) => s + f.newPct, 0) / funds.length;
       } else if (view === 'complete_exits') {
-        weightTotal = funds.reduce((s, f) => s + f.prevPct, 0);
+        weightTotal = funds.reduce((s, f) => s + f.prevPct, 0) / funds.length;
       }
 
       return {
@@ -126,8 +127,8 @@ export default function SmartMoneyTracker({ data, onMonthChange, loadingMonth }:
       : view === 'most_sold'
         ? 'Weight Reduced'
         : view === 'fresh_entries'
-          ? 'Weight Added'
-          : 'Weight Exited';
+          ? 'Avg Weight'
+          : 'Avg Weight';
 
   function sortIndicator(key: SortKey) {
     if (sortKey !== key) return '';
@@ -320,8 +321,8 @@ export default function SmartMoneyTracker({ data, onMonthChange, loadingMonth }:
       )}
 
       <p className="mt-4 text-xs text-surface-400">
-        Fresh Entries show new positions (weight added to portfolio). Complete Exits show stocks fully sold out (weight removed).
-        Most Bought / Sold show weight changes on existing positions only.
+        Fresh Entries and Complete Exits show average portfolio weight (% of NAV) across funds that added or exited the stock.
+        Most Bought / Sold show total weight change on existing positions across all funds.
         Data from official AMC monthly portfolio disclosures. Not investment advice.
       </p>
     </div>

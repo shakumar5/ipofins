@@ -5,6 +5,7 @@ import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getAllFunds } from '../../../lib/data/funds';
 import { selectBestFunds } from '../../../lib/best-funds';
 import { catToSlug } from '../../../lib/fund-category-slug';
+import { getFundTablePageMeta } from '../../../lib/fund-table-meta';
 
 export async function getStaticPaths() {
   const fundsData = await getAllFunds();
@@ -20,19 +21,20 @@ const { categoryName } = Astro.props;
 const fundsData = await getAllFunds();
 const bestFunds = selectBestFunds(fundsData);
 const categoryCount = bestFunds.filter((f) => f.category === categoryName).length;
+const pageMeta = getFundTablePageMeta('best', categoryName, categoryCount);
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "name": `Best ${categoryName} Mutual Funds India 2026`,
-  "description": `Top rated ${categoryName} mutual funds in India 2026.`,
-  "url": `https://ipofins.com/mutual-funds/best/${catToSlug(categoryName)}`
+  "name": pageMeta.heading,
+  "description": pageMeta.description,
+  "url": `https://ipofins.com${pageMeta.path}`
 };
 ---
 
 <BaseLayout
-  title={`Best ${categoryName} Mutual Funds 2026 - Top Rated | IPOFins`}
-  description={`${categoryCount} best ${categoryName} mutual funds in India 2026. Top performers with highest returns and ratings. Direct-Growth plans only.`}
+  title={pageMeta.title}
+  description={pageMeta.description}
   jsonLd={jsonLd}
 >
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
@@ -43,13 +45,13 @@ const jsonLd = {
       <li><span class="mx-1">/</span></li>
       <li><a href="/mutual-funds/best" class="hover:text-primary-600 transition-colors">Best Funds</a></li>
       <li><span class="mx-1">/</span></li>
-      <li class="text-surface-900 dark:text-white font-medium">{categoryName} Mutual Funds</li>
+      <li class="text-surface-900 dark:text-white font-medium" data-breadcrumb-leaf>{pageMeta.breadcrumbLabel}</li>
     </ol>
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Best {categoryName} Mutual Funds 2026</h1>
-    <p class="mt-1 text-sm text-surface-500">{categoryCount} top-rated {categoryName} funds • Sorted by performance</p>
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading}</h1>
+    <p class="mt-1 text-sm text-surface-500" data-page-subtitle>{pageMeta.subtitle}</p>
 
     <MfSectionTabs active="best" />
   </section>

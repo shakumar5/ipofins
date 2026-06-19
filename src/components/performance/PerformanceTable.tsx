@@ -1,4 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import {
+  getIpoPerformancePageMeta,
+  ipoFilterFromSearch,
+  type IpoPerformanceFilter,
+} from '../../lib/ipo-performance-meta';
 
 interface IPOPerformance {
   name: string;
@@ -16,6 +22,7 @@ interface Props {
   mainboardData: IPOPerformance[];
   smeData: IPOPerformance[];
   existingSlugs?: string[];
+  year: string;
 }
 
 function pctReturn(issue?: number | null, price?: number | null): number | null {
@@ -23,9 +30,49 @@ function pctReturn(issue?: number | null, price?: number | null): number | null 
   return ((price - issue) / issue) * 100;
 }
 
-export default function PerformanceTable({ mainboardData, smeData, existingSlugs = [] }: Props) {
-  const [filter, setFilter] = useState<'all' | 'mainboard' | 'sme'>('all');
+export default function PerformanceTable({ mainboardData, smeData, existingSlugs = [], year }: Props) {
+  const [filter, setFilter] = useState<IpoPerformanceFilter>(() => {
+    if (typeof window === 'undefined') return 'all';
+    return ipoFilterFromSearch(window.location.search);
+  });
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  const counts = useMemo(
+    () => ({
+      all: mainboardData.length + smeData.length,
+      mainboard: mainboardData.length,
+      sme: smeData.length,
+    }),
+    [mainboardData.length, smeData.length],
+  );
+
+  const syncFilter = useCallback(
+    (next: IpoPerformanceFilter) => {
+      setFilter(next);
+      if (typeof window === 'undefined') return;
+      const basePath = `/ipo/performance/${year}`;
+      const newUrl = next === 'all' ? basePath : `${basePath}?type=${next}`;
+      if (`${window.location.pathname}${window.location.search}` !== newUrl) {
+        window.history.replaceState(null, '', newUrl);
+      }
+      applyClientPageMeta(getIpoPerformancePageMeta(year, next, counts));
+    },
+    [year, counts],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const syncFromUrl = () => {
+      const next = ipoFilterFromSearch(window.location.search);
+      setFilter(next);
+      applyClientPageMeta(getIpoPerformancePageMeta(year, next, counts));
+    };
+
+    syncFromUrl();
+    window.addEventListener('popstate', syncFromUrl);
+    return () => window.removeEventListener('popstate', syncFromUrl);
+  }, [year, counts]);
 
   const allData = useMemo(() => {
     const mb = mainboardData.map(i => ({ ...i, type: 'mainboard' as const }));
@@ -68,7 +115,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
         {(['all', 'mainboard', 'sme'] as const).map(f => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => syncFilter(f)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               filter === f
                 ? 'bg-blue-600 text-white'

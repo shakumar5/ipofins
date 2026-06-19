@@ -1,9 +1,7 @@
-/** Update document title and meta tags when switching tabs client-side. */
-export function applyClientPageMeta(opts: {
-  title: string;
-  description: string;
-  path?: string;
-}) {
+import type { PageMeta } from './page-meta';
+
+/** Update document title, meta tags, and on-page heading when switching tabs client-side. */
+export function applyClientPageMeta(opts: PageMeta) {
   if (typeof document === 'undefined') return;
 
   document.title = opts.title;
@@ -24,5 +22,20 @@ export function applyClientPageMeta(opts: {
     setMeta('meta[property="og:url"]', canonical);
     const link = document.querySelector('link[rel="canonical"]');
     if (link) link.setAttribute('href', canonical);
+  }
+
+  if (opts.heading) {
+    const heading = document.querySelector('[data-page-heading]');
+    if (heading) heading.textContent = opts.heading;
+  }
+
+  if (opts.subtitle) {
+    const subtitle = document.querySelector('[data-page-subtitle]');
+    if (subtitle) subtitle.textContent = opts.subtitle;
+  }
+
+  if (opts.breadcrumbLabel) {
+    const crumb = document.querySelector('[data-breadcrumb-leaf]');
+    if (crumb) crumb.textContent = opts.breadcrumbLabel;
   }
 }

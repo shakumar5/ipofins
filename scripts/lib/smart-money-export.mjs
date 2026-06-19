@@ -136,9 +136,9 @@ function aggregateChanges(rows) {
             : changeType === 'decreased'
               ? roundPct(funds.reduce((s, f) => s + (f.prevPct - f.newPct), 0))
               : changeType === 'fresh_entry'
-                ? roundPct(funds.reduce((s, f) => s + f.newPct, 0))
+                ? roundPct(funds.reduce((s, f) => s + f.newPct, 0) / funds.length)
                 : changeType === 'complete_exit'
-                  ? roundPct(funds.reduce((s, f) => s + f.prevPct, 0))
+                  ? roundPct(funds.reduce((s, f) => s + f.prevPct, 0) / funds.length)
                   : 0;
         result.push({
           stockName: bucket.stockName,

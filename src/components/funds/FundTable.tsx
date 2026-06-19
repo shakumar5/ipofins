@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useDeferredValue, useTransition, useCallback } from 'react';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import { catToSlug, categoryFromPath } from '../../lib/fund-category-slug';
 import { getFundTablePageMeta, type FundTableKind } from '../../lib/fund-table-meta';
 
 interface Fund {
@@ -48,11 +49,6 @@ function sortLabel(sortBy: SortKey): string {
   }
 }
 
-function catToSlug(cat: string): string {
-  if (cat === 'All') return '';
-  return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
-}
-
 function formatReturn(val: number | null | undefined): string {
   if (val === null || val === undefined) return '--';
   return val >= 0 ? `+${val}%` : `${val}%`;
@@ -82,11 +78,15 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
     return counts;
   }, [funds]);
 
+  const orderedCategories = useMemo(() => {
+    return CATEGORY_ORDER.filter(cat => categories.includes(cat));
+  }, [categories]);
+
   const syncCategory = useCallback(
     (category: string) => {
       startTransition(() => setCatFilter(category));
       if (typeof window === 'undefined' || !basePath) return;
-      const slug = catToSlug(category);
+      const slug = category === 'All' ? '' : catToSlug(category);
       const newUrl = slug ? `${basePath}/${slug}` : basePath;
       if (window.location.pathname !== newUrl) {
         window.history.replaceState(null, '', newUrl);
@@ -98,12 +98,25 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
     [basePath, table, categoryCounts, funds.length],
   );
 
+  // Sync title, meta, and heading on mount and browser back/forward
+  useEffect(() => {
+    if (typeof window === 'undefined' || !basePath) return;
+
+    const syncFromUrl = () => {
+      const category = categoryFromPath(window.location.pathname, basePath, orderedCategories);
+      startTransition(() => setCatFilter(category));
+      applyClientPageMeta(
+        getFundTablePageMeta(table, category, categoryCounts[category] ?? funds.length),
+      );
+    };
+
+    syncFromUrl();
+    window.addEventListener('popstate', syncFromUrl);
+    return () => window.removeEventListener('popstate', syncFromUrl);
+  }, [basePath, table, orderedCategories, categoryCounts, funds.length]);
+
   // Reset page when filter, search, or sort changes
   useEffect(() => { setCurrentPage(1); }, [catFilter, deferredSearch, sortBy, sortDir]);
-
-  const orderedCategories = useMemo(() => {
-    return CATEGORY_ORDER.filter(cat => categories.includes(cat));
-  }, [categories]);
 
   const normalizedSearch = deferredSearch.trim().toLowerCase();
 
