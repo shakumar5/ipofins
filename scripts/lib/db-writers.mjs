@@ -7,6 +7,11 @@ import { sql, isDbConfigured } from './db.mjs';
 import { slugify } from './ipo-utils.mjs';
 import { buildFundMatcher } from './fund-match.mjs';
 import {
+  indexTerRecords,
+  normalizeTerSchemeName,
+  terForDbFund,
+} from './amfi-ter.mjs';
+import {
   bulkUpsertFundNavs,
   bulkUpsertAmfiFunds,
   bulkAssignSchemeCodes,
@@ -360,4 +365,79 @@ export function mergeAuthorizedIPOs(nseIPOs, bseIPOs, sebiFilings) {
   }
 
   return Array.from(map.values());
+}
+
+// ─── Expense Ratio (AMFI TER) ────────────────────────────────
+
+export async function upsertExpenseRatiosFromAMFI(terRecords, terMonth) {
+  requireDb();
+  const indexes = indexTerRecords(terRecords);
+
+  const funds = await sql`
+    SELECT id, name, slug, scheme_code, expense_ratio
+    FROM funds
+    WHERE is_active = true
+  `;
+
+  let updated = 0;
+  let matched = 0;
+  const matchedKeys = new Set();
+
+  for (const fund of funds) {
+    const ter = terForDbFund(fund, indexes);
+    if (ter == null) continue;
+
+    matched++;
+    matchedKeys.add(`${normalizeTerSchemeName(fund.name)}|${fund.slug.endsWith('-direct-plan') ? 'd' : 'r'}`);
+
+    const prev = fund.expense_ratio != null ? Number(fund.expense_ratio) : null;
+    if (prev === ter) continue;
+
+    await sql`
+      UPDATE funds
+      SET expense_ratio = ${ter}, updated_at = NOW()
+      WHERE id = ${fund.id}
+    `;
+    updated++;
+  }
+
+  // Secondary pass: match AMFI rows not hit via fund.name (full TER scheme label)
+  for (const row of terRecords) {
+    const schemeName = String(row.Scheme_Name || '').trim();
+    if (!schemeName) continue;
+
+    const isDirect = /\bdirect\b/i.test(schemeName);
+    const isRegular = /\bregular\b/i.test(schemeName);
+    if (!isDirect && !isRegular) continue;
+
+    const key = normalizeTerSchemeName(schemeName);
+    const passKey = `${key}|${isDirect ? 'd' : 'r'}`;
+    if (matchedKeys.has(passKey)) continue;
+
+    const fund = [...funds].find((f) => {
+      const fundKey = normalizeTerSchemeName(f.name);
+      if (fundKey !== key) return false;
+      return isDirect ? f.slug.endsWith('-direct-plan') : !f.slug.endsWith('-direct-plan');
+    });
+    if (!fund) continue;
+
+    const ter = parseFloat(String(row.TER_total ?? row.TER ?? '').replace(/%/g, ''));
+    if (!Number.isFinite(ter)) continue;
+
+    matched++;
+    matchedKeys.add(passKey);
+    const rounded = Math.round(ter * 100) / 100;
+    const prev = fund.expense_ratio != null ? Number(fund.expense_ratio) : null;
+    if (prev === rounded) continue;
+
+    await sql`
+      UPDATE funds
+      SET expense_ratio = ${rounded}, updated_at = NOW()
+      WHERE id = ${fund.id}
+    `;
+    updated++;
+  }
+
+  const unmatched = terRecords.length - matched;
+  return { updated, matched, unmatched: Math.max(0, unmatched), month: terMonth };
 }

@@ -2,7 +2,7 @@
  * Build sector-intelligence.json — sector rotation across all fund holdings.
  */
 import { isDebtInstrument, isValidEquitySector } from './stock-utils.mjs';
-import { buildSectorIntelligence } from '../../src/lib/sector-intelligence.ts';
+import { buildSectorIntelligence } from './sector-intelligence-core.mjs';
 
 export async function buildSectorIntelligenceExport(sql) {
   const monthRows = await sql`

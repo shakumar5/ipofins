@@ -8,7 +8,7 @@ import {
   computeCategoryMaxes,
   consecutiveStrictTrend,
   SIGNAL_CATEGORIES,
-} from '../../src/lib/smart-money-signals.ts';
+} from './smart-money-signals-core.mjs';
 
 const EQUITY_FUND_CATEGORIES = new Set(SIGNAL_CATEGORIES);
 

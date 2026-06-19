@@ -19,6 +19,8 @@ export interface FundRecord {
   rating: number | null;
   schemeCode: string;
   lastUpdated: string | null;
+  expenseRatio: number | null;
+  expenseRatioRegular: number | null;
 }
 
 type FundRow = Record<string, unknown>;
@@ -37,6 +39,9 @@ function mapFundRow(row: FundRow): FundRecord {
     rating: row.rating != null ? Number(row.rating) : null,
     schemeCode: String(row.scheme_code || ''),
     lastUpdated: row.last_computed ? String(row.last_computed) : null,
+    expenseRatio: row.expense_ratio != null ? Number(row.expense_ratio) : null,
+    expenseRatioRegular:
+      row.expense_ratio_regular != null ? Number(row.expense_ratio_regular) : null,
   };
 }
 
@@ -54,12 +59,13 @@ async function loadAllFunds(): Promise<FundRecord[]> {
   const sql = requireDb();
   const rows = await sql`
     SELECT
-      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum, f.expense_ratio,
       fn.nav,
       COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
       COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
       COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
-      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed,
+      ter_regular.expense_ratio AS expense_ratio_regular
     FROM funds f
     LEFT JOIN LATERAL (
       SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
@@ -78,6 +84,14 @@ async function loadAllFunds(): Promise<FundRecord[]> {
         )
       LIMIT 1
     ) fr_base ON true
+    LEFT JOIN LATERAL (
+      SELECT f2.expense_ratio
+      FROM funds f2
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND f2.is_active = true
+      LIMIT 1
+    ) ter_regular ON true
     WHERE f.is_active = true
       AND f.scheme_code IS NOT NULL
       AND TRIM(f.scheme_code) <> ''
@@ -100,12 +114,13 @@ export async function getFundsWithHoldings(): Promise<FundRecord[]> {
 
   const rows = await sql`
     SELECT
-      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum, f.expense_ratio,
       fn.nav,
       COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
       COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
       COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
-      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed,
+      ter_regular.expense_ratio AS expense_ratio_regular
     FROM funds f
     LEFT JOIN LATERAL (
       SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
@@ -124,6 +139,14 @@ export async function getFundsWithHoldings(): Promise<FundRecord[]> {
         )
       LIMIT 1
     ) fr_base ON true
+    LEFT JOIN LATERAL (
+      SELECT f2.expense_ratio
+      FROM funds f2
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND f2.is_active = true
+      LIMIT 1
+    ) ter_regular ON true
     WHERE f.is_active = true
       AND f.slug = ANY(${[...slugs]})
     ORDER BY f.category, f.name
@@ -140,12 +163,13 @@ export async function getRelatedFunds(
   const sql = requireDb();
   const rows = await sql`
     SELECT
-      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum, f.expense_ratio,
       fn.nav,
       COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
       COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
       COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
-      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed,
+      ter_regular.expense_ratio AS expense_ratio_regular
     FROM funds f
     INNER JOIN fund_holdings fh ON fh.fund_id = f.id
     LEFT JOIN LATERAL (
@@ -165,13 +189,22 @@ export async function getRelatedFunds(
         )
       LIMIT 1
     ) fr_base ON true
+    LEFT JOIN LATERAL (
+      SELECT f2.expense_ratio
+      FROM funds f2
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND f2.is_active = true
+      LIMIT 1
+    ) ter_regular ON true
     WHERE f.is_active = true
       AND f.category = ${category}
       AND f.slug != ${excludeSlug}
-    GROUP BY f.id, f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+    GROUP BY f.id, f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum, f.expense_ratio,
       fn.nav,
       fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed,
-      fr_base.returns_1y, fr_base.returns_3y, fr_base.returns_5y, fr_base.last_computed
+      fr_base.returns_1y, fr_base.returns_3y, fr_base.returns_5y, fr_base.last_computed,
+      ter_regular.expense_ratio
     ORDER BY COALESCE(fr.returns_3y, fr_base.returns_3y) DESC NULLS LAST
     LIMIT ${limit}
   `;
@@ -182,12 +215,13 @@ export async function getFundBySlug(slug: string): Promise<FundRecord | null> {
   const sql = requireDb();
   const rows = await sql`
     SELECT
-      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum, f.expense_ratio,
       fn.nav,
       COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
       COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
       COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
-      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed,
+      ter_regular.expense_ratio AS expense_ratio_regular
     FROM funds f
     LEFT JOIN LATERAL (
       SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
@@ -206,6 +240,14 @@ export async function getFundBySlug(slug: string): Promise<FundRecord | null> {
         )
       LIMIT 1
     ) fr_base ON true
+    LEFT JOIN LATERAL (
+      SELECT f2.expense_ratio
+      FROM funds f2
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND f2.is_active = true
+      LIMIT 1
+    ) ter_regular ON true
     WHERE f.is_active = true AND f.slug = ${slug}
     LIMIT 1
   `;
