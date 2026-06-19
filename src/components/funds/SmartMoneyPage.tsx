@@ -128,11 +128,11 @@ export default function SmartMoneyPage() {
     };
   }, [tab, trackerData, startTransition]);
 
-  const loadSignalsForMonth = useCallback(async (month: string) => {
+  const loadSignalsForMonth = useCallback(async (month: string, category = 'Large Cap') => {
     setSignalsLoading(true);
     setSignalsError(null);
     try {
-      const data = await loadSignalsMonth(month);
+      const data = await loadSignalsMonth(month, category);
       startTransition(() => {
         setSignalsData(data);
         setSignalsMonth(month);
@@ -154,7 +154,7 @@ export default function SmartMoneyPage() {
         const index = await loadSignalsIndex();
         const month = index.months[0] || '';
         if (!month) throw new Error('No signal months available');
-        const data = await loadSignalsMonth(month);
+        const data = await loadSignalsMonth(month, 'Large Cap');
         if (cancelled) return;
         startTransition(() => {
           setSignalsData(data);
@@ -242,6 +242,9 @@ export default function SmartMoneyPage() {
             loading={signalsLoading}
             month={signalsMonth}
             onMonthChange={loadSignalsForMonth}
+            onCategoryChange={(category) => {
+              if (signalsMonth) loadSignalsForMonth(signalsMonth, category);
+            }}
           />
           </Suspense>
         ) : null
@@ -263,6 +266,9 @@ export default function SmartMoneyPage() {
             loading={signalsLoading}
             month={signalsMonth}
             onMonthChange={loadSignalsForMonth}
+            onCategoryChange={(category) => {
+              if (signalsMonth) loadSignalsForMonth(signalsMonth, category);
+            }}
           />
           </Suspense>
         ) : null

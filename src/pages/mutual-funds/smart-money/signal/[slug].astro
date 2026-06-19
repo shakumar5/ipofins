@@ -5,6 +5,10 @@ import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
 import { monthFileSlug } from '../../../../lib/client-data';
 
+function categoryFileSlug(category: string): string {
+  return category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 export function getStaticPaths() {
   const dataDir = join(process.cwd(), 'public', 'data');
   const indexPath = join(dataDir, 'smart-money-signals-index.json');
@@ -13,14 +17,33 @@ export function getStaticPaths() {
     return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder' } }];
   }
 
-  const index = JSON.parse(readFileSync(indexPath, 'utf-8')) as { months: string[] };
+  const index = JSON.parse(readFileSync(indexPath, 'utf-8')) as {
+    months: string[];
+    categories?: string[];
+    layout?: string;
+  };
   const slugs = new Set<string>();
+  const signalsDir = join(dataDir, 'smart-money-signals');
 
-  for (const month of index.months) {
-    const monthPath = join(dataDir, 'smart-money-signals', `${monthFileSlug(month)}.json`);
-    if (!existsSync(monthPath)) continue;
-    const file = JSON.parse(readFileSync(monthPath, 'utf-8')) as { rows: { stockSlug: string }[] };
-    for (const r of file.rows) slugs.add(r.stockSlug);
+  if (index.layout === 'by-category' && index.categories?.length) {
+    for (const month of index.months) {
+      for (const category of index.categories) {
+        const monthPath = join(
+          signalsDir,
+          `${monthFileSlug(month)}--${categoryFileSlug(category)}.json`,
+        );
+        if (!existsSync(monthPath)) continue;
+        const file = JSON.parse(readFileSync(monthPath, 'utf-8')) as { rows: { stockSlug: string }[] };
+        for (const r of file.rows) slugs.add(r.stockSlug);
+      }
+    }
+  } else {
+    for (const month of index.months) {
+      const monthPath = join(signalsDir, `${monthFileSlug(month)}.json`);
+      if (!existsSync(monthPath)) continue;
+      const file = JSON.parse(readFileSync(monthPath, 'utf-8')) as { rows: { stockSlug: string }[] };
+      for (const r of file.rows) slugs.add(r.stockSlug);
+    }
   }
 
   if (slugs.size === 0) {

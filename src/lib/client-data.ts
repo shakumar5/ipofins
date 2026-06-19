@@ -1,5 +1,6 @@
 /** Cached fetch for large static JSON payloads (smart money, etc.). */
 
+const MAX_CACHE_ENTRIES = 5;
 const jsonCache = new Map<string, unknown>();
 
 export async function fetchJsonCached<T>(url: string): Promise<T> {
@@ -8,6 +9,10 @@ export async function fetchJsonCached<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = (await res.json()) as T;
+  if (jsonCache.size >= MAX_CACHE_ENTRIES) {
+    const oldest = jsonCache.keys().next().value;
+    if (oldest) jsonCache.delete(oldest);
+  }
   jsonCache.set(url, data);
   return data;
 }

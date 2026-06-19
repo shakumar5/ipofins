@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
-import { SIGNAL_OPTIONS } from '../../lib/smart-money-signals';
+import { SIGNAL_OPTIONS, buildInterpretation } from '../../lib/smart-money-signals';
+
+const LIST_LIMIT = 150;
 
 interface Props {
   data: SmartMoneySignalsData;
   month?: string;
   onMonthChange?: (month: string) => void;
+  onCategoryChange?: (category: string) => void;
   loading?: boolean;
 }
 
@@ -80,7 +83,7 @@ function StockDetail({ row }: { row: SmartMoneySignalRow }) {
       )}
 
       <p className="text-sm text-surface-600 dark:text-surface-300 leading-relaxed border-t border-surface-200 dark:border-surface-700 pt-4">
-        {row.interpretation}
+        {row.interpretation || buildInterpretation(row.stockName, row.signal)}
       </p>
 
       <a
@@ -122,10 +125,10 @@ function Metric({
   );
 }
 
-export default function StockSignalTab({ data, month: monthProp, onMonthChange, loading }: Props) {
+export default function StockSignalTab({ data, month: monthProp, onMonthChange, onCategoryChange, loading }: Props) {
   const [monthLocal, setMonthLocal] = useState(data.months[0] || '');
   const month = monthProp ?? monthLocal;
-  const [category, setCategory] = useState('All');
+  const [category, setCategory] = useState(data.categories[0] || 'Large Cap');
   const [signalFilter, setSignalFilter] = useState<string>('All');
   const [search, setSearch] = useState('');
 
@@ -139,7 +142,19 @@ export default function StockSignalTab({ data, month: monthProp, onMonthChange, 
         if (q && !r.stockName.toLowerCase().includes(q)) return false;
         return true;
       })
-      .sort((a, b) => b.convictionScore - a.convictionScore);
+      .sort((a, b) => b.convictionScore - a.convictionScore)
+      .slice(0, LIST_LIMIT);
+  }, [data.rows, month, category, signalFilter, search]);
+
+  const totalMatching = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return data.rows.filter((r) => {
+      if (month && r.month !== month) return false;
+      if (category !== 'All' && r.category !== category) return false;
+      if (signalFilter !== 'All' && r.signal !== signalFilter) return false;
+      if (q && !r.stockName.toLowerCase().includes(q)) return false;
+      return true;
+    }).length;
   }, [data.rows, month, category, signalFilter, search]);
 
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
@@ -158,8 +173,10 @@ export default function StockSignalTab({ data, month: monthProp, onMonthChange, 
             <select
               value={category}
               onChange={(e) => {
-                setCategory(e.target.value);
+                const next = e.target.value;
+                setCategory(next);
                 setSelectedSlug(null);
+                onCategoryChange?.(next);
               }}
               className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             >
@@ -219,7 +236,7 @@ export default function StockSignalTab({ data, month: monthProp, onMonthChange, 
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-6">
           <div className="card p-0 max-h-[640px] overflow-y-auto">
             <p className="sticky top-0 z-10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-surface-500 bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
-              {rows.length} stocks
+              {rows.length} stocks{totalMatching > rows.length ? ` (top ${LIST_LIMIT} of ${totalMatching})` : ''}
             </p>
             <ul className="divide-y divide-surface-100 dark:divide-surface-700">
               {rows.map((row) => {

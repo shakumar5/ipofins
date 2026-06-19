@@ -1,4 +1,5 @@
 import type { SmartMoneySignalRow, FactorBreakdown } from '../../lib/smart-money-signals';
+import { buildInterpretation } from '../../lib/smart-money-signals';
 
 
 
@@ -172,7 +173,7 @@ export default function SmartMoneySignalDetail({ row }: Props) {
 
         <p className="text-sm text-surface-700 dark:text-surface-300 text-center leading-relaxed">
 
-          {row.interpretation}
+          {row.interpretation || buildInterpretation(row.stockName, row.signal)}
 
         </p>
 
@@ -180,6 +181,8 @@ export default function SmartMoneySignalDetail({ row }: Props) {
 
 
 
+      {b && (
+        <>
       <Divider />
 
 
@@ -209,6 +212,8 @@ export default function SmartMoneySignalDetail({ row }: Props) {
         </div>
 
       </section>
+        </>
+      )}
 
 
 

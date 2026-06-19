@@ -18,7 +18,8 @@ Grey Market Premium (GMP) is **not published by any authorized source** (NSE, BS
 | 0 | `npm run pipeline:ipo` | Daily / before deploy (manual) | Zerodha + Groww (listing, detail, subscription) | `ipos`, `ipo_subscriptions`, `ipo_performance` |
 | 1 | `npm run pipeline:daily` | Daily (manual) | AMFI NAVAll.txt + `pipeline:ipo` (incremental) | `funds`, `fund_navs`, `ipos`, … |
 | 2 | `npm run pipeline:subscription` | Hourly during IPO season (manual) | Groww subscription page | `ipo_subscriptions` |
-| 3 | `npm run pipeline:monthly` | 1–2× per month (manual) | AMFI portfolio Excel disclosures | `fund_holdings` → compute signals & overlaps |
+| 3 | `npm run pipeline:monthly` | 1–2× per month (manual) | AMFI portfolio Excel + AMFI TER API | `fund_holdings`, `funds.expense_ratio` → compute signals & overlaps |
+| — | GitHub `Quarterly Expense Ratio` workflow | Auto: 1 Jan / Apr / Jul / Oct | AMFI TER API | `funds.expense_ratio` → build → Vercel deploy |
 
 ## Workflow
 

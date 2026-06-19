@@ -8,6 +8,7 @@ import { sql, isDbConfigured } from './lib/db.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
 import { buildSectorIntelligenceExport } from './lib/sector-intelligence-export.mjs';
+import { slimSignalRow, signalCategoryFileName } from './lib/signal-export-utils.mjs';
 import { unpackMonthHoldings } from './lib/holdings-month.mjs';
 import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs';
 
@@ -198,6 +199,31 @@ function writeSplitByMonth(subdir, indexName, indexPayload, months, monthPayload
   }
 }
 
+/** One JSON file per month × category — keeps client payloads small. */
+function writeSignalsByCategory(signals) {
+  const dir = join(OUT_DIR, 'smart-money-signals');
+  mkdirSync(dir, { recursive: true });
+  writeJson('smart-money-signals-index.json', {
+    months: signals.months,
+    categories: signals.categories,
+    layout: 'by-category',
+  });
+
+  for (const month of signals.months) {
+    for (const category of signals.categories) {
+      const rows = signals.rows
+        .filter((r) => r.month === month && r.category === category)
+        .map(slimSignalRow);
+      const fileName = signalCategoryFileName(month, category);
+      const rel = join('smart-money-signals', fileName);
+      const full = join(OUT_DIR, rel);
+      writeFileSync(full, JSON.stringify({ month, category, rows }));
+      const kb = (readFileSync(full).length / 1024).toFixed(0);
+      console.log(`  ✓ ${rel} (${kb} KB, ${rows.length} rows)`);
+    }
+  }
+}
+
 async function main() {
   console.log('\n  Export client data → public/data/\n');
   mkdirSync(OUT_DIR, { recursive: true });
@@ -271,16 +297,7 @@ async function main() {
       writeJson('smart-money-conviction.json', conviction);
 
       const signals = await buildSmartMoneySignalsExport(sql);
-      writeSplitByMonth(
-        'smart-money-signals',
-        'smart-money-signals-index.json',
-        { months: signals.months, categories: signals.categories },
-        signals.months,
-        (month) => ({
-          month,
-          rows: signals.rows.filter((r) => r.month === month),
-        }),
-      );
+      writeSignalsByCategory(signals);
 
       const sectors = await buildSectorIntelligenceExport(sql);
       writeJson('sector-intelligence.json', sectors);

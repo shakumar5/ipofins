@@ -13,7 +13,7 @@
     "pipeline:nav": "node scripts/node-with-ca.mjs scripts/pipeline/sync-nav-only.mjs",
     "pipeline:subscription": "node scripts/node-with-ca.mjs scripts/pipeline/02-ipo-subscription.mjs",
     "pipeline:monthly": "node scripts/node-with-ca.mjs scripts/pipeline/03-monthly-mf-holdings.mjs",
-    "pipeline:ter": "node scripts/node-with-ca.mjs scripts/pipeline/04-quarterly-expense-ratio.mjs",
+    "pipeline:ter": "node scripts/node-with-ca.mjs scripts/pipeline/sync-ter-only.mjs",
     "fetch-data": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-mf": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-gmp-sub": "echo 'DEPRECATED: use npm run pipeline:subscription' && exit 1",

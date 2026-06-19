@@ -441,3 +441,13 @@ export async function upsertExpenseRatiosFromAMFI(terRecords, terMonth) {
   const unmatched = terRecords.length - matched;
   return { updated, matched, unmatched: Math.max(0, unmatched), month: terMonth };
 }
+
+/** Fetch latest AMFI TER and upsert funds.expense_ratio (used by monthly holdings pipeline). */
+export async function syncExpenseRatiosFromAMFI(monthArg = null) {
+  const { fetchAMFITERRecords, financialYearForDate } = await import('./amfi-ter.mjs');
+  requireDb();
+  const fy = financialYearForDate();
+  const { month, records } = await fetchAMFITERRecords(monthArg, fy);
+  const result = await upsertExpenseRatiosFromAMFI(records, month);
+  return { month, records: records.length, ...result };
+}

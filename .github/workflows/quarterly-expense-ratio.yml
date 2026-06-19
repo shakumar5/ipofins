@@ -1,0 +1,62 @@
+# Quarterly AMFI expense ratio sync → rebuild → deploy fund detail pages
+#
+# Runs automatically on 1st of Jan, Apr, Jul, Oct (09:00 IST).
+# Fund detail pages read expense_ratio from Neon at build time.
+
+name: Quarterly Expense Ratio
+
+on:
+  schedule:
+    # 03:30 UTC = 09:00 IST — 1st of Jan, Apr, Jul, Oct
+    - cron: '30 3 1 1,4,7,10 *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-ter-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Neon schema
+        run: npm run db:verify
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Sync expense ratio from AMFI
+        run: npm run pipeline:ter
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Type check
+        run: npm run check
+
+      - name: Build static site
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy prebuilt static site to Vercel
+        run: |
+          npm i -g vercel@latest
+          mkdir -p .vercel/output/static
+          cp -r dist/* .vercel/output/static/
+          echo '{"version":3,"routes":[{"handle":"filesystem"}]}' > .vercel/output/config.json
+          vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
