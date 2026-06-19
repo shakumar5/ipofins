@@ -10,6 +10,7 @@ import { execSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { requireDb } from '../lib/db-writers.mjs';
+import { nodeExecCmd } from '../lib/node-runner.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -34,12 +35,12 @@ async function main() {
 
   const parseFlags = fullReload ? '' : ' --incremental';
   run(`node scripts/parse-holdings.mjs${parseFlags}`, 'Parse Excel → fund-holdings.json');
-  run('node --use-system-ca db/seed/fix-amc-assignments.mjs', 'Fix AMCs + sync missing funds');
+  run(nodeExecCmd('db/seed/fix-amc-assignments.mjs'), 'Fix AMCs + sync missing funds');
 
-  const seedFlags = fullReload ? ' --full' : '';
-  run(`node --use-system-ca db/seed/seed-holdings-batch.mjs${seedFlags}`, 'Seed holdings into Neon');
-  run('node --use-system-ca db/seed/dedupe-stocks-canonical.mjs', 'Deduplicate stocks + remove debt rows');
-  run('node --use-system-ca scripts/export-client-data.mjs', 'Export client JSON (holdings, smart money)');
+  const seedFlags = fullReload ? '--full' : '';
+  run(nodeExecCmd('db/seed/seed-holdings-batch.mjs', seedFlags), 'Seed holdings into Neon');
+  run(nodeExecCmd('db/seed/dedupe-stocks-canonical.mjs'), 'Deduplicate stocks + remove debt rows');
+  run(nodeExecCmd('scripts/export-client-data.mjs'), 'Export client JSON (holdings, smart money)');
 
   const { neon } = await import('@neondatabase/serverless');
   const { readFileSync } = await import('fs');
@@ -50,7 +51,7 @@ async function main() {
   if (fullReload) {
     const monthRows = await sql`SELECT DISTINCT month::text AS month FROM fund_holdings ORDER BY month ASC`;
     for (const row of monthRows) {
-      run(`node --use-system-ca db/compute/compute-signals.mjs --month=${row.month}`, `Compute signals for ${row.month}`);
+      run(nodeExecCmd('db/compute/compute-signals.mjs', `--month=${row.month}`), `Compute signals for ${row.month}`);
     }
   } else {
     const [latest] = await sql`SELECT month::text AS month FROM fund_holdings ORDER BY month DESC LIMIT 1`;
@@ -59,10 +60,10 @@ async function main() {
       console.error('\n  ❌ No holdings in fund_holdings');
       process.exit(1);
     }
-    run(`node --use-system-ca db/compute/compute-signals.mjs --month=${m}`, `Compute signals for ${m}`);
+    run(nodeExecCmd('db/compute/compute-signals.mjs', `--month=${m}`), `Compute signals for ${m}`);
   }
 
-  run('node --use-system-ca db/compute/compute-overlaps.mjs', 'Compute fund overlaps (latest month)');
+  run(nodeExecCmd('db/compute/compute-overlaps.mjs'), 'Compute fund overlaps (latest month)');
 
   console.log('\n  ✅ Pipeline 3 complete');
   console.log('  ℹ️  Full reload: npm run pipeline:monthly -- --full\n');

@@ -18,6 +18,7 @@ import {
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { nodeExtraArgs } from '../lib/node-runner.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FULL_IPO = process.argv.includes('--full-ipo');
@@ -25,7 +26,7 @@ const FULL_IPO = process.argv.includes('--full-ipo');
 function runIPOSync() {
   return new Promise((resolve, reject) => {
     const script = join(__dirname, '00-ipo-broker-sync.mjs');
-    const args = ['--use-system-ca', script, '--no-clean'];
+    const args = [...nodeExtraArgs(), script, '--no-clean'];
     if (!FULL_IPO) args.push('--quick');
 
     const child = spawn(process.execPath, args, {
