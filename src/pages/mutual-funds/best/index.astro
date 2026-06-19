@@ -1,43 +1,12 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import FundTable from '../../../components/funds/FundTable.tsx';
-import { getAllFunds } from '../../../lib/data/funds';
-import { getFundSlugsWithHoldings } from '../../../lib/data/holdings';
+import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
+import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
+import { getMfHubBuildData } from '../../../lib/mf-hub-build';
+import { mfTabConfig } from '../../../lib/mf-section-config';
 
-const fundsData = await getAllFunds();
-const holdingSlugs = await getFundSlugsWithHoldings();
-
-const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
-
-// Best = meets 2 of 3 criteria
-const top5ByCat = new Set();
-for (const cat of categories) {
-  fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach(f => top5ByCat.add(f.slug));
-}
-const fiveStarFunds = new Set(fundsData.filter(f => f.rating === 5).map(f => f.slug));
-const top10By1Y = new Set([...fundsData].sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map(f => f.slug));
-
-const bestFunds = fundsData.filter(f => {
-  let score = 0;
-  if (top5ByCat.has(f.slug)) score++;
-  if (fiveStarFunds.has(f.slug)) score++;
-  if (top10By1Y.has(f.slug)) score++;
-  return score >= 2;
-});
-
-// Only pass fields the React component needs
-const bestFundsForTable = bestFunds.map(f => ({
-  name: f.name,
-  slug: f.slug,
-  category: f.category,
-  nav: f.nav,
-  returns1y: f.returns1y,
-  returns3y: f.returns3y,
-  returns5y: f.returns5y,
-  rating: f.rating,
-  aum: f.aum,
-  riskLevel: f.riskLevel,
-}));
+const hub = await getMfHubBuildData();
+const cfg = mfTabConfig('best');
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -53,7 +22,7 @@ const faqJsonLd = {
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "How are Best Funds selected on IPOfins?",
+      "name": "How are Best Funds selected on IPOFins?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "We select best funds using a multi-criteria approach: a fund must meet at least 2 of 3 criteria — top 5 by 3-year return in its category, 5-star rating, or top 10 by 1-year return overall. This ensures consistent performance across timeframes."
@@ -80,14 +49,14 @@ const faqJsonLd = {
       "name": "What is the difference between Direct and Regular plans?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Direct plans have lower expense ratios (no distributor commission) and give 0.5-1.5% higher returns annually. All funds listed on IPOfins are Direct-Growth plans. You can invest through Zerodha Coin, Groww, or AMC websites."
+        "text": "Direct plans have lower expense ratios (no distributor commission) and give 0.5-1.5% higher returns annually. All funds listed on IPOFins are Direct-Growth plans. You can invest through Zerodha Coin, Groww, or AMC websites."
       }
     }
   ]
 };
 ---
 
-<BaseLayout title="Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOfins" description="List of best mutual funds in India 2026. Curated collection of top-performing, 5-star rated funds across Large Cap, Mid Cap, Small Cap, ELSS categories. Direct-Growth plans only." jsonLd={jsonLd}>
+<BaseLayout title={cfg.title} description={cfg.description} jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
@@ -99,19 +68,15 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Best Mutual Funds to Invest in 2026 - Top Rated Collection</h1>
-    <p class="mt-1 text-sm text-surface-500">{bestFunds.length} funds meeting 2 of 3: Top 5 by 3Y in category • 5-star rated • Top 10 by 1Y overall</p>
-
-    <!-- Main Tabs -->
-    <div class="mt-4 flex gap-2">
-      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">Best Funds</span>
-      <a href="/mutual-funds/all" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">All Funds</a>
-      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
-    </div>
+    <MfSectionHeader
+      active="best"
+      heading={cfg.heading}
+      subtitle={`${hub.bestFundsCount} funds — ${cfg.subtitle}`}
+    />
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:load funds={bestFundsForTable} categories={categories} holdingSlugs={Array.from(holdingSlugs)} defaultCategory="All" basePath="/mutual-funds/best" />
+    <FundTableLoader client:idle table="best" basePath="/mutual-funds/best" />
   </section>
 
   <!-- How We Select Section -->
@@ -129,7 +94,7 @@ const faqJsonLd = {
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
     <div class="space-y-4 max-w-3xl">
       <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How are "Best Funds" selected on IPOfins?</summary>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How are "Best Funds" selected on IPOFins?</summary>
         <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We select best funds based on a multi-criteria approach: a fund must meet at least 2 of 3 criteria — top 5 by 3-year return in its category, 5-star rating, or top 10 by 1-year return overall. This ensures funds have consistent performance across multiple timeframes.</p>
       </details>
       <details class="card group">
@@ -142,7 +107,7 @@ const faqJsonLd = {
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the difference between Direct and Regular plans?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Direct plans have lower expense ratios (no distributor commission) and give 0.5-1.5% higher returns annually compared to regular plans. All funds listed on IPOfins are Direct-Growth plans. You can invest in direct plans through platforms like Zerodha Coin, Groww, or directly from AMC websites.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Direct plans have lower expense ratios (no distributor commission) and give 0.5-1.5% higher returns annually compared to regular plans. All funds listed on IPOFins are Direct-Growth plans. You can invest in direct plans through platforms like Zerodha Coin, Groww, or directly from AMC websites.</p>
       </details>
     </div>
   </section>

@@ -7,6 +7,7 @@ import toolsData from '../data/tools.json';
 import { getAllIPOs } from '../lib/data/ipos';
 import { getHoldingsStats } from '../lib/data/funds';
 import { withCorrectStatuses } from '../utils/ipo-status';
+import { BRAND_NAME } from '../lib/brand';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
 const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
@@ -20,7 +21,7 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "WebSite",
-      "name": "ipofins",
+      "name": BRAND_NAME,
       "url": "https://ipofins.com",
       "description": "Financial intelligence platform for IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors",
       "potentialAction": {
@@ -34,7 +35,7 @@ const jsonLd = {
     },
     {
       "@type": "Organization",
-      "name": "ipofins",
+      "name": BRAND_NAME,
       "url": "https://ipofins.com",
       "logo": "https://ipofins.com/favicon.svg",
       "description": "IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors.",
@@ -44,7 +45,7 @@ const jsonLd = {
 };
 ---
 
-<BaseLayout title="IPOfins - IPO Analytics, Mutual Funds & Investment Tools India" description="IPOfins — IPO analytics, mutual fund holdings changes, and free investment calculators for Indian investors. Data-driven research, no login required." jsonLd={jsonLd}>
+<BaseLayout title="IPOFins - IPO Analytics, Mutual Funds & Investment Tools India" description="IPOFins — IPO analytics, mutual fund holdings changes, and free investment calculators for Indian investors. Data-driven research, no login required." jsonLd={jsonLd}>
   <!-- Hero Section -->
   <section class="relative overflow-hidden">
     <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-surface-50 dark:from-surface-900 dark:via-surface-900 dark:to-primary-950/20"></div>
@@ -59,7 +60,7 @@ const jsonLd = {
           <span class="text-gradient">Track every IPO.</span>
         </h1>
         <p class="mt-4 text-lg text-surface-600 dark:text-surface-300 max-w-xl leading-relaxed">
-          IPOfins helps Indian investors with IPO analytics, mutual fund portfolio tracking, investment tools, and market insights—built on data-driven research and transparent analytics.
+          IPOFins helps Indian investors with IPO analytics, mutual fund portfolio tracking, investment tools, and market insights—built on data-driven research and transparent analytics.
         </p>
         <p class="mt-3 text-sm text-surface-500 dark:text-surface-400 max-w-xl">
           Data sourced from SEBI, AMFI, NSE &amp; BSE disclosures. Not investment advice.{' '}
@@ -342,7 +343,7 @@ const jsonLd = {
   <section class="container-wide py-6 lg:py-8 content-auto">
     <div class="text-center mb-10">
       <h2 class="section-title">Your Privacy, Our Priority</h2>
-      <p class="section-subtitle mt-2 max-w-xl mx-auto">IPOfins is a fully static, no-login platform. We don't collect, store, or sell any personal data.</p>
+      <p class="section-subtitle mt-2 max-w-xl mx-auto">IPOFins is a fully static, no-login platform. We don't collect, store, or sell any personal data.</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="card-compact text-center">
@@ -368,7 +369,7 @@ const jsonLd = {
       </div>
     </div>
     <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-8 max-w-2xl mx-auto">
-      <strong>Disclaimer:</strong> IPOfins is for informational purposes only. We are not SEBI-registered advisors. Mutual fund investments are subject to market risks — read all scheme-related documents carefully. Past performance does not guarantee future returns. Always consult a certified financial advisor before making investment decisions.
+      <strong>Disclaimer:</strong> IPOFins is for informational purposes only. We are not SEBI-registered advisors. Mutual fund investments are subject to market risks — read all scheme-related documents carefully. Past performance does not guarantee future returns. Always consult a certified financial advisor before making investment decisions.
     </p>
   </section>
 </BaseLayout>

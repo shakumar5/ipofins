@@ -3,6 +3,8 @@
  */
 
 import { requireDb } from '../db';
+import { LISTABLE_EQUITY_CATEGORIES } from '../holdings-utils';
+import { getFundSlugsWithHoldings } from './holdings';
 
 export interface FundRecord {
   name: string;
@@ -38,41 +40,92 @@ function mapFundRow(row: FundRow): FundRecord {
   };
 }
 
+/** Active equity Direct Growth funds for UI lists (AMFI scheme_code, one row per scheme). */
+let allFundsCache: Promise<FundRecord[]> | null = null;
+
 export async function getAllFunds(): Promise<FundRecord[]> {
+  if (!allFundsCache) {
+    allFundsCache = loadAllFunds();
+  }
+  return allFundsCache;
+}
+
+async function loadAllFunds(): Promise<FundRecord[]> {
   const sql = requireDb();
   const rows = await sql`
     SELECT
       f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
       fn.nav,
-      fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+      COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
+      COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
+      COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
     FROM funds f
     LEFT JOIN LATERAL (
       SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
     ) fn ON true
     LEFT JOIN fund_returns fr ON fr.fund_id = f.id
+    LEFT JOIN LATERAL (
+      SELECT fr2.returns_1y, fr2.returns_3y, fr2.returns_5y, fr2.last_computed
+      FROM funds f2
+      INNER JOIN fund_returns fr2 ON fr2.fund_id = f2.id
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND (
+          fr2.returns_1y IS NOT NULL
+          OR fr2.returns_3y IS NOT NULL
+          OR fr2.returns_5y IS NOT NULL
+        )
+      LIMIT 1
+    ) fr_base ON true
     WHERE f.is_active = true
+      AND f.scheme_code IS NOT NULL
+      AND TRIM(f.scheme_code) <> ''
+      AND f.slug LIKE '%-direct-plan'
+      AND f.category = ANY(${LISTABLE_EQUITY_CATEGORIES})
+      AND f.name NOT ILIKE '%IDCW%'
+      AND f.name NOT ILIKE '%dividend payout%'
+      AND f.name NOT ILIKE '%dividend plan%'
+      AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     ORDER BY f.category, f.name
   `;
   return (rows as FundRow[]).map(mapFundRow);
 }
 
-/** Funds that have holdings data — use for static page generation (smaller, faster builds). */
+/** Funds with holdings — builds detail pages for listable Direct Plan funds. */
 export async function getFundsWithHoldings(): Promise<FundRecord[]> {
   const sql = requireDb();
+  const slugs = await getFundSlugsWithHoldings();
+  if (slugs.size === 0) return [];
+
   const rows = await sql`
     SELECT
       f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
       fn.nav,
-      fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+      COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
+      COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
+      COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
     FROM funds f
-    INNER JOIN fund_holdings fh ON fh.fund_id = f.id
     LEFT JOIN LATERAL (
       SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
     ) fn ON true
     LEFT JOIN fund_returns fr ON fr.fund_id = f.id
+    LEFT JOIN LATERAL (
+      SELECT fr2.returns_1y, fr2.returns_3y, fr2.returns_5y, fr2.last_computed
+      FROM funds f2
+      INNER JOIN fund_returns fr2 ON fr2.fund_id = f2.id
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND (
+          fr2.returns_1y IS NOT NULL
+          OR fr2.returns_3y IS NOT NULL
+          OR fr2.returns_5y IS NOT NULL
+        )
+      LIMIT 1
+    ) fr_base ON true
     WHERE f.is_active = true
-    GROUP BY f.id, f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
-      fn.nav, fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+      AND f.slug = ANY(${[...slugs]})
     ORDER BY f.category, f.name
   `;
   return (rows as FundRow[]).map(mapFundRow);
@@ -89,27 +142,75 @@ export async function getRelatedFunds(
     SELECT
       f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
       fn.nav,
-      fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
+      COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
+      COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
+      COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
     FROM funds f
     INNER JOIN fund_holdings fh ON fh.fund_id = f.id
     LEFT JOIN LATERAL (
       SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
     ) fn ON true
     LEFT JOIN fund_returns fr ON fr.fund_id = f.id
+    LEFT JOIN LATERAL (
+      SELECT fr2.returns_1y, fr2.returns_3y, fr2.returns_5y, fr2.last_computed
+      FROM funds f2
+      INNER JOIN fund_returns fr2 ON fr2.fund_id = f2.id
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND (
+          fr2.returns_1y IS NOT NULL
+          OR fr2.returns_3y IS NOT NULL
+          OR fr2.returns_5y IS NOT NULL
+        )
+      LIMIT 1
+    ) fr_base ON true
     WHERE f.is_active = true
       AND f.category = ${category}
       AND f.slug != ${excludeSlug}
     GROUP BY f.id, f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
-      fn.nav, fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed
-    ORDER BY fr.returns_3y DESC NULLS LAST
+      fn.nav,
+      fr.returns_1y, fr.returns_3y, fr.returns_5y, fr.last_computed,
+      fr_base.returns_1y, fr_base.returns_3y, fr_base.returns_5y, fr_base.last_computed
+    ORDER BY COALESCE(fr.returns_3y, fr_base.returns_3y) DESC NULLS LAST
     LIMIT ${limit}
   `;
   return (rows as FundRow[]).map(mapFundRow);
 }
 
 export async function getFundBySlug(slug: string): Promise<FundRecord | null> {
-  const funds = await getAllFunds();
-  return funds.find((f) => f.slug === slug) ?? null;
+  const sql = requireDb();
+  const rows = await sql`
+    SELECT
+      f.name, f.slug, f.category, f.scheme_code, f.risk_level, f.rating, f.aum,
+      fn.nav,
+      COALESCE(fr.returns_1y, fr_base.returns_1y) AS returns_1y,
+      COALESCE(fr.returns_3y, fr_base.returns_3y) AS returns_3y,
+      COALESCE(fr.returns_5y, fr_base.returns_5y) AS returns_5y,
+      COALESCE(fr.last_computed, fr_base.last_computed) AS last_computed
+    FROM funds f
+    LEFT JOIN LATERAL (
+      SELECT nav FROM fund_navs WHERE fund_id = f.id ORDER BY date DESC LIMIT 1
+    ) fn ON true
+    LEFT JOIN fund_returns fr ON fr.fund_id = f.id
+    LEFT JOIN LATERAL (
+      SELECT fr2.returns_1y, fr2.returns_3y, fr2.returns_5y, fr2.last_computed
+      FROM funds f2
+      INNER JOIN fund_returns fr2 ON fr2.fund_id = f2.id
+      WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+        AND f2.id <> f.id
+        AND (
+          fr2.returns_1y IS NOT NULL
+          OR fr2.returns_3y IS NOT NULL
+          OR fr2.returns_5y IS NOT NULL
+        )
+      LIMIT 1
+    ) fr_base ON true
+    WHERE f.is_active = true AND f.slug = ${slug}
+    LIMIT 1
+  `;
+  const row = (rows as FundRow[])[0];
+  return row ? mapFundRow(row) : null;
 }
 
 export async function getFundsByCategory(category: string): Promise<FundRecord[]> {

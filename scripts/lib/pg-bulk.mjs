@@ -63,6 +63,34 @@ export async function bulkUpsertFundHoldings(rows, chunkSize = 3000) {
 }
 
 /**
+ * Bulk upsert full portfolio stock counts (parsed before top-N trim).
+ */
+export async function bulkUpsertFundPortfolioStats(rows, chunkSize = 2000) {
+  if (!rows.length) return 0;
+  const pool = getPgPool();
+  let upserted = 0;
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const fundIds = chunk.map((r) => r.fund_id);
+    const months = chunk.map((r) => r.month);
+    const totals = chunk.map((r) => r.total_stocks);
+
+    await pool.query(
+      `INSERT INTO fund_portfolio_stats (fund_id, month, total_stocks)
+       SELECT u.fund_id, u.month::date, u.total_stocks
+       FROM UNNEST($1::int[], $2::text[], $3::int[]) AS u(fund_id, month, total_stocks)
+       ON CONFLICT (fund_id, month) DO UPDATE SET
+         total_stocks = EXCLUDED.total_stocks`,
+      [fundIds, months, totals],
+    );
+    upserted += chunk.length;
+  }
+
+  return upserted;
+}
+
+/**
  * Batch-update fund AMC assignments in one query per AMC group.
  */
 export async function batchUpdateFundAmcs(updates) {

@@ -38,6 +38,8 @@ async function main() {
 
   const seedFlags = fullReload ? ' --full' : '';
   run(`node --use-system-ca db/seed/seed-holdings-batch.mjs${seedFlags}`, 'Seed holdings into Neon');
+  run('node --use-system-ca db/seed/dedupe-stocks-canonical.mjs', 'Deduplicate stocks + remove debt rows');
+  run('node --use-system-ca scripts/export-client-data.mjs', 'Export client JSON (holdings, smart money)');
 
   const { neon } = await import('@neondatabase/serverless');
   const { readFileSync } = await import('fs');

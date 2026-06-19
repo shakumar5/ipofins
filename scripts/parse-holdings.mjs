@@ -32,13 +32,27 @@ import { readdirSync, writeFileSync, statSync, readFileSync, existsSync } from '
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { unpackMonthHoldings } from './lib/holdings-month.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const INPUT_DIR = 'C:/Users/shaik/Downloads/Holdings/';
+const INPUT_DIR = process.env.HOLDINGS_INPUT_DIR || 'C:/Users/shaik/Downloads/Holdings/';
 const OUTPUT_FILE = join(__dirname, '..', 'src', 'data', 'fund-holdings.json');
+const TOP_HOLDINGS_LIMIT = 20;
+
+function packMonthHoldings(holdings) {
+  const sorted = [...holdings].sort((a, b) => b.pct - a.pct);
+  return {
+    stocks: sorted.slice(0, TOP_HOLDINGS_LIMIT),
+    totalStocks: sorted.length,
+  };
+}
+
+function monthStocks(fund, month) {
+  return unpackMonthHoldings(fund[month]).stocks;
+}
 
 function slugify(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').substring(0, 80);
@@ -108,10 +122,26 @@ function detectMonthFromPortfolioStatement(sheetData) {
   };
   for (let i = 0; i < Math.min(15, sheetData.length); i++) {
     const rowStr = JSON.stringify(sheetData[i] || []);
-    const m = rowStr.match(/portfolio statement as on\s+([a-z]+)\s+(\d{1,2}),?\s+(\d{4})/i);
+    const m = rowStr.match(/portfolio statement as on\s+([a-z]+)\s+(\d{1,2}),?\s*(\d{4})/i);
     if (m) {
       const mon = monthMap[m[1].toLowerCase()];
       if (mon) return `${mon} ${m[3]}`;
+    }
+    const mAsOn = rowStr.match(/as on\s+([a-z]+)\s+(\d{1,2}),?\s*(\d{4})/i);
+    if (mAsOn) {
+      const mon = monthMap[mAsOn[1].toLowerCase()];
+      if (mon) return `${mon} ${mAsOn[3]}`;
+    }
+    const mHyphen = rowStr.match(/as on\s+(\d{1,2})-([a-z]+)-(\d{4})/i);
+    if (mHyphen) {
+      const mon = monthMap[mHyphen[2].toLowerCase()];
+      if (mon) return `${mon} ${mHyphen[3]}`;
+    }
+    // Quant: "AS ON 29 May 2026"
+    const mDayFirst = rowStr.match(/as on\s+(\d{1,2})\s+([a-z]+)\s+(\d{4})/i);
+    if (mDayFirst) {
+      const mon = monthMap[mDayFirst[2].toLowerCase()];
+      if (mon) return `${mon} ${mDayFirst[3]}`;
     }
     const m2 = rowStr.match(/month ended\s+\d{1,2}\s+([a-z]+)/i);
     if (m2) {
@@ -123,8 +153,94 @@ function detectMonthFromPortfolioStatement(sheetData) {
         }
       }
     }
+    const mSlash = rowStr.match(/portfolio as on\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);
+    if (mSlash) {
+      const monNum = parseInt(mSlash[2], 10);
+      const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const mon = months[monNum];
+      let year = mSlash[3];
+      if (year.length === 2) year = `20${year}`;
+      if (mon) return `${mon} ${year}`;
+    }
   }
   return null;
+}
+
+/** AMC subfolders under Holdings/ — filenames inside are ignored; sheet content is used. */
+const AMC_HOLDINGS_FOLDERS = {
+  invesco: 'Invesco India',
+  mirae: 'Mirae Asset',
+  groww: 'Groww',
+  kotak: 'Kotak',
+  union: 'Union',
+  iti: 'ITI',
+  bandhan: 'Bandhan',
+  hdfc: 'HDFC',
+  tata: 'Tata',
+  quant: 'Quant',
+  sundaram: 'Sundaram',
+  hdfc_: 'HDFC',
+  tata_: 'Tata',
+  quant_: 'Quant',
+  groww_: 'Groww',
+  mirae_: 'Mirae Asset',
+  invesco_: 'Invesco India',
+  bandhan_: 'Bandhan',
+};
+
+function normalizeAmcFolderKey(seg) {
+  return seg.toLowerCase().replace(/\s+/g, '').replace(/_+$/g, '');
+}
+
+/** e.g. tata_Monthly-Portfolio....xlsx → Tata */
+function detectAMCFromFilenamePrefix(filename) {
+  const m = filename.match(/^([a-z][a-z0-9]*)_/i);
+  if (!m) return null;
+  const key = normalizeAmcFolderKey(m[1]);
+  return AMC_HOLDINGS_FOLDERS[key] || AMC_HOLDINGS_FOLDERS[`${key}_`] || null;
+}
+
+const PATH_MONTH_KEYS = {
+  january: 'January', jan: 'January',
+  february: 'February', feb: 'February',
+  march: 'March', mar: 'March',
+  april: 'April', apr: 'April',
+  may: 'May',
+  june: 'June', jun: 'June',
+};
+
+function detectAMCFromPath(filepath) {
+  const parts = filepath.replace(/\\/g, '/').split('/');
+  const hi = parts.findIndex((p) => p.toLowerCase() === 'holdings');
+  if (hi < 0) return null;
+  for (let i = hi + 1; i < parts.length - 1; i++) {
+    const raw = parts[i].toLowerCase().replace(/\s+/g, '');
+    if (/^(january|february|march|april|may|june|jan|feb|mar|apr|may|jun)-\d{4}$/.test(raw)) continue;
+    const key = normalizeAmcFolderKey(raw);
+    if (AMC_HOLDINGS_FOLDERS[key]) return AMC_HOLDINGS_FOLDERS[key];
+    if (AMC_HOLDINGS_FOLDERS[`${key}_`]) return AMC_HOLDINGS_FOLDERS[`${key}_`];
+    if (AMC_HOLDINGS_FOLDERS[raw]) return AMC_HOLDINGS_FOLDERS[raw];
+  }
+  return null;
+}
+
+/** Month from folder e.g. Holdings/invesco/may-2026/anything.xlsx */
+function detectMonthFromPath(filepath) {
+  const norm = filepath.replace(/\\/g, '/').toLowerCase();
+  const m = norm.match(/\/(january|february|march|april|may|june|jan|feb|mar|apr|may|jun)-(\d{4})(?:\/|$)/);
+  if (!m) return null;
+  const mon = PATH_MONTH_KEYS[m[1]];
+  return mon ? `${mon} ${m[2]}` : null;
+}
+
+/** Prefer sheet date + folder month when AMC uses random filenames. */
+function resolveMonth(filename, filepath, sheetData) {
+  const fromPath = detectMonthFromPath(filepath);
+  const fromSheet = sheetData ? detectMonthFromPortfolioStatement(sheetData) : null;
+  const fromFile = detectMonth(filename, sheetData) || detectMonth(filepath, sheetData);
+  const opaqueFile = detectAMCFromPath(filepath) || detectAMCFromFilenamePrefix(filename) || !detectMonth(filename, null);
+  if (opaqueFile) return fromSheet || fromPath || fromFile;
+  return fromFile || fromSheet || fromPath;
 }
 
 function dedupeFundMonthEntries(results) {
@@ -198,14 +314,15 @@ function detectAMC(filename, sheetData) {
   if (combined.includes('hsbc')) return 'HSBC';
   if (combined.includes('shriram')) return 'Shriram';
   if (combined.includes('sundaram')) return 'Sundaram';
+  if (combined.includes('union asset') || combined.includes('union mutual') || /\bunion\s+amf\b/i.test(combined)) return 'Union';
   if (combined.includes('trust') || fn.includes('trustmf')) return 'Trust MF';
   if (combined.includes('unifi')) return 'Unifi';
   if (combined.includes('choice')) return 'Choice';
   if (combined.includes('jio') || fn.includes('jioblack')) return 'Jio BlackRock';
   if (combined.includes('abakkus')) return 'Abakkus';
-  if (fn.includes('leeqtf') || fn.includes('portfolio-disclosures-monthly')) return 'Kotak';
-  if (fn.includes('monthlyportfolio_') || (fn.includes('monthly_portfolio_') && !fn.includes('choice') && !fn.includes('iti') && !fn.includes('samco'))) return 'Kotak';
-  if (fn.includes('portf') && fn.includes('holding') && fn.includes('may')) return 'Kotak';
+  // Kotak: only when explicitly named — never infer from generic filenames
+  if (combined.includes('kotak mahindra mutual') || combined.includes('kotak mahindra asset')) return 'Kotak';
+  if (fn.includes('kotak') && !fn.includes('kotak mahindra bank')) return 'Kotak';
   
   return 'Unknown';
 }
@@ -235,6 +352,41 @@ function fundNameFromFilename(filename) {
   if (/choice/i.test(stem) && /mutual|portfolio/i.test(stem)) {
     return 'Choice Flexi Cap Fund';
   }
+
+  m = spaced.match(/^Monthly\s+HDFC\s+(.+?)\s*-\s*\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i);
+  if (m) return `HDFC ${m[1].trim()}`;
+
+  m = stem.match(/^[A-Z]{2,3}[-–—]+Canara-Robeco-(.+?)[-–—]+(?:January|February|March|April|May|June|Jan|Feb|Mar|Apr|May|Jun)[-–—]+\d{4}$/i);
+  if (m) return `CANARA ROBECO ${m[1].replace(/-/g, ' ').trim()}`;
+
+  m = stem.match(/^invesco-india-(.+?)_(?:january|february|march|april|may|june|jan|feb|mar|apr|may|jun)_(\d{4})_equity$/i);
+  if (m) {
+    const words = m[1].split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1));
+    let name = words.join(' ');
+    if (!/\bfund\b/i.test(name)) name += ' Fund';
+    return `Invesco India ${name}`;
+  }
+
+  m = stem.match(/^(contra-fund|flexi-cap|focused-fund|large-cap|large-mid-cap|midcap-fund|multi-cap|smallcap)(?:[a-f0-9]+)?$/i);
+  if (m) {
+    const invescoHashNames = {
+      'contra-fund': 'Invesco India Contra Fund',
+      'flexi-cap': 'Invesco India Flexi Cap Fund',
+      'focused-fund': 'Invesco India Focused Fund',
+      'large-cap': 'Invesco India Largecap Fund',
+      'large-mid-cap': 'Invesco India Large & Mid Cap Fund',
+      'midcap-fund': 'Invesco India Midcap Fund',
+      'multi-cap': 'Invesco India Multicap Fund',
+      'smallcap': 'Invesco India Smallcap Fund',
+    };
+    return invescoHashNames[m[1].toLowerCase()] || null;
+  }
+
+  // Bandhan: "Bandhan Midcap Fund 30 April 2026.xlsx"
+  m = spaced.match(
+    /^Bandhan\s+(.+?)\s+\d{1,2}\s+(?:January|February|March|April|May|June|Jan|Feb|Mar|Apr|May|Jun)\s+\d{4}$/i
+  );
+  if (m) return `Bandhan ${m[1].trim()}`;
 
   return null;
 }
@@ -274,7 +426,7 @@ function detectFundName(sheetData, sheetName, filename) {
       }
       // Fund name pattern: reasonably long, contains fund-related keywords
       if (val.length > 10 && val.length < 150 && 
-          (val.includes('Fund') || val.includes('FUND') || val.includes('ETF') || val.includes('FOF') || val.includes('Scheme')) &&
+          (val.includes('Fund') || val.includes('FUND') || val.includes('ETF') || val.includes('FOF') || val.includes('Scheme') || /\bELSS\b/i.test(val) || /\bTAX SAVER\b/i.test(val)) &&
           !val.includes('Portfolio') && !val.includes('Monthly') &&
           !val.includes('Generated') && !val.includes('Statement') &&
           !val.includes('Name of') && !val.includes('ISIN')) {
@@ -435,7 +587,7 @@ function parseUtiHoldingsFromBlock(data, startIdx, endIdx) {
   }
 
   holdings.sort((a, b) => b.pct - a.pct);
-  return holdings.slice(0, 20);
+  return holdings;
 }
 
 function parseUtiSebiExposureFile(data, month) {
@@ -492,8 +644,9 @@ function parseHoldingsFromSheet(data) {
       for (let j = 0; j < row.length; j++) {
         const h = String(row[j] || '').toLowerCase().replace(/\r\n/g, ' ');
         if (h.includes('name') && h.includes('instrument')) colName = j;
-        else if (h === 'isin') colISIN = j;
-        else if (h.includes('industry') || h.includes('rating') || h.includes('sector')) colSector = j;
+        else if (h.includes('isin')) colISIN = j;
+        else if (h.includes('industry') || h.includes('sector')) colSector = j;
+        else if (colSector < 0 && h.includes('rating')) colSector = j;
         else if (h.includes('quantity') || h === 'qty') colQty = j;
         else if (h.includes('market') || h.includes('fair value') || h.includes('value')) colValue = j;
         else if (h.includes('% to') || h.includes('% of') || h.includes('net assets') || h.includes('nav')) colPct = j;
@@ -508,6 +661,59 @@ function parseHoldingsFromSheet(data) {
   if (colName === -1) colName = colISIN > 0 ? colISIN - 1 : 1;
   if (colISIN === -1) colISIN = colName + 1;
   if (colPct === -1) colPct = -1; // Will look for it
+
+  // Kotak-style offset columns: header "Name of Instrument" col is empty but names sit near ISIN
+  let headerNameWorks = false;
+  for (let i = headerIdx + 1; i < Math.min(headerIdx + 40, data.length); i++) {
+    const row = data[i] || [];
+    const nm = String(row[colName] || '').trim();
+    const isin = String(row[colISIN] || '').trim();
+    if (
+      nm.length >= 3 &&
+      /^IN[0E][A-Z0-9]{9}$/.test(isin) &&
+      !/^IN[0E][A-Z0-9]{9}$/.test(nm)
+    ) {
+      headerNameWorks = true;
+      break;
+    }
+  }
+
+  if (!headerNameWorks) {
+    let dataColName = -1;
+    let dataColISIN = -1;
+    for (let i = headerIdx + 1; i < Math.min(headerIdx + 40, data.length); i++) {
+      const row = data[i];
+      if (!row) continue;
+      for (let j = 0; j < row.length; j++) {
+        const cell = String(row[j] || '').trim();
+        if (!/^IN[0E][A-Z0-9]{9}$/.test(cell)) continue;
+        dataColISIN = j;
+        for (let k = j - 1; k >= 0; k--) {
+          const nm = String(row[k] || '').trim();
+          if (nm.length >= 3 && !/^(equity|listed|awaiting|sub total|total|net|\|)$/i.test(nm)) {
+            dataColName = k;
+            break;
+          }
+        }
+        if (dataColName < 0 || dataColName >= j) {
+          for (let k = j + 1; k < row.length; k++) {
+            const nm = String(row[k] || '').trim();
+            if (nm.length >= 3 && !/^IN[0E][A-Z0-9]{9}$/.test(nm) && !/^(equity|listed|awaiting)/i.test(nm)) {
+              dataColName = k;
+              break;
+            }
+          }
+        }
+        if (dataColName < 0) dataColName = Math.max(0, j - 1);
+        break;
+      }
+      if (dataColISIN >= 0 && dataColName >= 0 && String(row[dataColName] || '').trim().length >= 3) break;
+    }
+    if (dataColISIN >= 0) {
+      colISIN = dataColISIN;
+      colName = dataColName;
+    }
+  }
   
   // First pass: determine if pct column uses decimal format (0.0487) or percentage format (4.87)
   let maxPctValue = 0;
@@ -546,9 +752,11 @@ function parseHoldingsFromSheet(data) {
     
     if (!hasISIN && qty === 0) continue;
     
-    // Get sector
+    // Get sector — skip industry codes (numeric) and credit ratings
     let sector = colSector >= 0 ? String(row[colSector] || '').trim() : '';
-    
+    if (sector && /^\d+$/.test(sector)) sector = '';
+    if (sector && /^\[?(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)/i.test(sector)) continue;
+
     // Skip debt/money market instruments — detected by credit rating in sector column
     // or by instrument name patterns (e.g., "7.35% Bharti Telecom Limited (15/10/2027)")
     if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)\s/i.test(sector)) continue;
@@ -595,9 +803,8 @@ function parseHoldingsFromSheet(data) {
   
   // Sort by percentage descending (top holdings first)
   holdings.sort((a, b) => b.pct - a.pct);
-  
-  // Return top 20 holdings only (keep data manageable)
-  return holdings.slice(0, 20);
+
+  return holdings;
 }
 
 function isJioBlackRockFile(filepath, filename) {
@@ -651,8 +858,7 @@ function parseJioBlackRockFile(wb, filename, filepath) {
     if (data.length < 5) continue;
 
     const month =
-      detectMonth(filename, data) ||
-      detectMonth(filepath, data) ||
+      resolveMonth(filename, filepath, data) ||
       detectMonthFromPortfolioStatement(data);
     if (!month) continue;
 
@@ -675,8 +881,74 @@ function parseJioBlackRockFile(wb, filename, filepath) {
   return results;
 }
 
+function detectAMCFromSheet(sheetData, filename = '') {
+  const blob = JSON.stringify((sheetData || []).slice(0, 15)).toLowerCase();
+  const fn = String(filename).toLowerCase();
+  const pairs = [
+    [/kotak\s+mahindra\s+(mutual|asset)/i, 'Kotak'],
+    [/lic\s+mf|lic\s+mutual/i, 'LIC'],
+    [/iti\s+mutual/i, 'ITI'],
+    [/union\s+(asset\s+)?mutual|union\s+amf/i, 'Union'],
+    [/mirae\s+asset/i, 'Mirae Asset'],
+    [/groww|indiabulls/i, 'Groww'],
+    [/bandhan\s+mutual|bandhan\s+asset/i, 'Bandhan'],
+    [/canara\s+robeco/i, 'Canara Robeco'],
+    [/zerodha/i, 'Zerodha'],
+  ];
+  for (const [re, name] of pairs) {
+    if (re.test(blob) || re.test(fn)) return name;
+  }
+  return null;
+}
+
+function shouldSkipExternalAmc(amc, fundName = '') {
+  if (amc === 'Zerodha') return true;
+  if (/zerodha\s+nifty/i.test(fundName)) return true;
+  return false;
+}
+
+function isLicPortfolioFile(filepath, filename) {
+  return /^leeqtf/i.test(filename);
+}
+
+function fundNameFromLicSheet(data) {
+  for (let i = 0; i < Math.min(4, data.length); i++) {
+    const row = data[i] || [];
+    for (const cell of row) {
+      const val = String(cell || '').trim();
+      if (/^LIC\s+MF\s/i.test(val) && val.length < 120) return val;
+    }
+  }
+  return null;
+}
+
+function parseLicPortfolioFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 5) continue;
+    const month =
+      resolveMonth(filename, filepath, data) ||
+      detectMonthFromPortfolioStatement(data);
+    if (!month) continue;
+    const fundName = fundNameFromLicSheet(data);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'LIC',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
 function isSundaramPortfolioFile(filepath, filename) {
-  if (!/^monthlyportfolio_/i.test(filename)) return false;
+  if (!/^(?:sundaram_)?monthlyportfolio_/i.test(filename)) return false;
   try {
     const wb = XLSX.readFile(filepath, { sheets: ['Index'], sheetRows: 8 });
     if (!wb.SheetNames.includes('Index')) return false;
@@ -701,14 +973,21 @@ function buildSundaramSheetFundMap(wb) {
     const shortName = String(row[1] || '').trim();
     const schemeName = String(row[2] || '').trim();
     if (shortName && schemeName && /sundaram/i.test(schemeName)) {
-      map.set(shortName, schemeName);
+      map.set(shortName.toUpperCase(), schemeName);
     }
   }
   return map;
 }
 
+const SUNDARAM_SHEET_CODES = {
+  SUNBCF: 'Sundaram Large Cap Fund',
+  MULTIP: 'Sundaram Large And Mid Cap Fund',
+};
+
 function fundNameFromSundaramSheet(data, sheetName, sheetFundMap) {
-  if (sheetFundMap.has(sheetName)) return sheetFundMap.get(sheetName);
+  const code = String(sheetName || '').trim().toUpperCase();
+  if (sheetFundMap.has(code)) return sheetFundMap.get(code);
+  if (SUNDARAM_SHEET_CODES[code]) return SUNDARAM_SHEET_CODES[code];
 
   for (let i = 0; i < Math.min(4, data.length); i++) {
     const row = data[i] || [];
@@ -741,8 +1020,7 @@ function parseIndexMappedAmcFile(wb, filename, filepath, amc, sheetFundMap, fund
     if (data.length < 5) continue;
 
     const month =
-      detectMonth(filename, data) ||
-      detectMonth(filepath, data) ||
+      resolveMonth(filename, filepath, data) ||
       detectMonthFromPortfolioStatement(data);
     if (!month) continue;
 
@@ -788,6 +1066,491 @@ function parseTrustPortfolioFile(wb, filename, filepath) {
   );
 }
 
+function isItiPortfolioFile(filepath, filename) {
+  if (/in_mf_monthly_portfolio_fa_holding/i.test(filename)) return true;
+  if (/monthly_portfolio_-_/i.test(filename)) return true;
+  if (!/^\d+-monthly_portfolio/i.test(filename) && !/iti/i.test(filename)) return false;
+  try {
+    const wb = XLSX.readFile(filepath, { sheets: ['Index'], sheetRows: 12 });
+    if (!wb.SheetNames.includes('Index')) return false;
+    const idx = XLSX.utils.sheet_to_json(wb.Sheets.Index, { header: 1 });
+    return /"iti [^"]+fund"/i.test(JSON.stringify(idx)) || JSON.stringify(idx).toLowerCase().includes('iti flexi cap');
+  } catch {
+    return false;
+  }
+}
+
+function buildItiSheetFundMap(wb) {
+  const map = new Map();
+  if (!wb.SheetNames.includes('Index')) return map;
+
+  const idx = XLSX.utils.sheet_to_json(wb.Sheets.Index, { header: 1 });
+  for (const row of idx) {
+    if (!row || row.length < 3) continue;
+    const shortName = String(row[1] || '').trim();
+    const schemeName = String(row[2] || '').trim();
+    if (shortName && schemeName && /^ITI /i.test(schemeName)) {
+      map.set(shortName, schemeName);
+    }
+  }
+  return map;
+}
+
+function fundNameFromItiSheet(data, sheetName, sheetFundMap) {
+  if (sheetFundMap.has(sheetName)) return sheetFundMap.get(sheetName);
+
+  for (let i = 0; i < Math.min(8, data.length); i++) {
+    const row = data[i] || [];
+    for (const cell of row) {
+      const val = String(cell || '').trim();
+      if (
+        /^ITI /i.test(val) &&
+        !/live\s*schemes/i.test(val) &&
+        val.length < 120
+      ) {
+        return val;
+      }
+    }
+  }
+  return null;
+}
+
+function parseItiPortfolioFile(wb, filename, filepath) {
+  const sheetFundMap = buildItiSheetFundMap(wb);
+  return parseIndexMappedAmcFile(
+    wb,
+    filename,
+    filepath,
+    'ITI',
+    sheetFundMap,
+    fundNameFromItiSheet
+  );
+}
+
+function isKotakConsolidatedFile(filepath, filename) {
+  if (/consolidatedsebiportfolio/i.test(filename)) return true;
+  if (/consolidated.*portfolio/i.test(filename) && /kotak/i.test(`${filepath}/${filename}`)) return true;
+  return false;
+}
+
+function fundNameFromKotakSheet(data) {
+  for (let i = 0; i < Math.min(6, data.length); i++) {
+    const row = data[i] || [];
+    for (const cell of row) {
+      const val = String(cell || '').trim();
+      const m = val.match(/Portfolio of (.+?) as on/i);
+      if (m && /kotak/i.test(m[1])) return m[1].trim();
+    }
+  }
+  return null;
+}
+
+function parseKotakConsolidatedFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    if (/^index$/i.test(sheetName)) continue;
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 5) continue;
+    const month =
+      resolveMonth(filename, filepath, data) ||
+      detectMonthFromPortfolioStatement(data);
+    if (!month) continue;
+    const fundName = fundNameFromKotakSheet(data);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'Kotak',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
+function isSbiConsolidatedFile(filepath, filename) {
+  return /all-schemes-monthly-portfolio/i.test(filename);
+}
+
+function buildSbiSheetFundMap(wb) {
+  const map = new Map();
+  if (!wb.SheetNames.includes('Index')) return map;
+
+  const idx = XLSX.utils.sheet_to_json(wb.Sheets.Index, { header: 1 });
+  for (const row of idx) {
+    if (!row || row.length < 3) continue;
+    const shortCode = String(row[1] || '').trim();
+    const schemeName = String(row[2] || '').trim();
+    if (shortCode && schemeName && /^sbi\s+/i.test(schemeName)) {
+      map.set(shortCode.toUpperCase(), schemeName);
+    }
+  }
+  return map;
+}
+
+const SBI_SHEET_CODES = {
+  SLMF: 'SBI Large and Midcap Fund',
+};
+
+function fundNameFromSbiSheet(data, sheetName, sheetFundMap) {
+  const code = String(sheetName || '').trim().toUpperCase();
+  if (sheetFundMap.has(code)) return sheetFundMap.get(code);
+  if (SBI_SHEET_CODES[code]) return SBI_SHEET_CODES[code];
+
+  for (let i = 0; i < Math.min(8, data.length); i++) {
+    const row = data[i] || [];
+    for (let ci = 0; ci < row.length; ci++) {
+      const val = String(row[ci] || '').trim();
+      if (/^scheme name\s*:/i.test(val)) {
+        const next = String(row[ci + 1] || '').trim();
+        if (next.length > 5) return next;
+      }
+    }
+  }
+  return null;
+}
+
+function parseSbiConsolidatedFile(wb, filename, filepath) {
+  const sheetFundMap = buildSbiSheetFundMap(wb);
+  return parseIndexMappedAmcFile(
+    wb,
+    filename,
+    filepath,
+    'SBI',
+    sheetFundMap,
+    fundNameFromSbiSheet
+  );
+}
+
+function isUnionPortfolioFile(filepath, filename) {
+  return /monthly-portfolio-report-union-/i.test(filename);
+}
+
+function fundNameFromUnionSheet(data, filename) {
+  for (let i = 0; i < Math.min(12, data.length); i++) {
+    const row = data[i] || [];
+    for (const cell of row) {
+      const val = String(cell || '').trim();
+      const m = val.match(/MONTHLY PORTFOLIO STATEMENT OF (.+?) AS ON/i);
+      if (m) return m[1].trim();
+    }
+  }
+  const fm = filename.match(/Union-(.+?)-Fund-\d{2}-\d{2}-\d{4}/i);
+  if (fm) return `Union ${fm[1].replace(/-/g, ' ')} Fund`;
+  return null;
+}
+
+function parseUnionPortfolioFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 5) continue;
+    const month =
+      resolveMonth(filename, filepath, data) ||
+      detectMonthFromPortfolioStatement(data);
+    if (!month) continue;
+    const fundName = fundNameFromUnionSheet(data, filename);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'Union',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
+function isGrowwMonthlyPortfolioFile(filepath, filename) {
+  if (/groww_monthly\s+portfolio/i.test(filename.toLowerCase())) return true;
+  const pathLow = filepath.replace(/\\/g, '/').toLowerCase();
+  if (/(?:^|[/\\])groww_?(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(filename)) return true;
+  if (/groww/i.test(filename) && /\.xlsx?$/i.test(filename)) return sniffGrowwWorkbook(filepath);
+  return false;
+}
+
+function sniffGrowwWorkbook(filepath) {
+  try {
+    const wb = XLSX.readFile(filepath, { sheetRows: 4 });
+    let hits = 0;
+    for (const sn of wb.SheetNames.slice(0, 10)) {
+      const data = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1 });
+      if (fundNameFromGrowwSheet(data)) hits++;
+      if (hits >= 2) return true;
+    }
+    return hits >= 1;
+  } catch {
+    return false;
+  }
+}
+
+function fundNameFromGrowwSheet(data) {
+  for (let i = 0; i < Math.min(4, data.length); i++) {
+    for (const cell of data[i] || []) {
+      const val = String(cell || '').trim();
+      const m = val.match(/^IB\d+-Groww\s+(.+)$/i);
+      if (m) return `Groww ${m[1].trim()}`;
+    }
+  }
+  return null;
+}
+
+function parseGrowwConsolidatedFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 5) continue;
+    const month = resolveMonth(filename, filepath, data);
+    if (!month) continue;
+    const fundName = fundNameFromGrowwSheet(data);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'Groww',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
+function isMiraePortfolioFile(filepath, filename) {
+  const pathLow = filepath.replace(/\\/g, '/').toLowerCase();
+  if (/(?:^|[/\\])mirae(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(filename)) return true;
+  return /^ma[a-z]{3,4}-(?:april|may)\d{4}\.xlsx$/i.test(filename);
+}
+
+function fundNameFromMiraeSheet(data) {
+  for (let i = 0; i < Math.min(8, data.length); i++) {
+    for (const cell of data[i] || []) {
+      const val = String(cell || '').trim();
+      if (/^Mirae Asset\s+/i.test(val) && (/\bFund\b/i.test(val) || /\bELSS\b/i.test(val))) {
+        return val.replace(/\s*\([^)]*\)\s*$/g, '').trim();
+      }
+    }
+  }
+  return null;
+}
+
+function parseMiraePortfolioFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 8) continue;
+    const month = resolveMonth(filename, filepath, data);
+    if (!month) continue;
+    const fundName = fundNameFromMiraeSheet(data);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'Mirae Asset',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
+function isInvescoPortfolioFile(filepath, filename) {
+  const pathLow = filepath.replace(/\\/g, '/').toLowerCase();
+  if (/(?:^|[/\\])invesco_?(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(filename)) return true;
+  return /^invesco-india-.+\.xlsx$/i.test(filename);
+}
+
+function fundNameFromInvescoSheet(data) {
+  for (let i = 0; i < Math.min(12, data.length); i++) {
+    for (const cell of data[i] || []) {
+      const val = String(cell || '').trim().replace(/\r\n/g, '\n');
+      const firstLine = val.split('\n')[0].trim();
+      if (
+        /^Invesco India\s+/i.test(firstLine) &&
+        (/\bFund\b/i.test(firstLine) || /\bELSS\b/i.test(firstLine))
+      ) {
+        return firstLine.replace(/\s*\(.*$/s, '').trim();
+      }
+    }
+  }
+  return null;
+}
+
+function parseInvescoPortfolioFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    if (/^index$/i.test(sheetName)) continue;
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 6) continue;
+    const month = resolveMonth(filename, filepath, data);
+    if (!month) continue;
+    const fundName =
+      fundNameFromInvescoSheet(data) ||
+      fundNameFromFilename(filename) ||
+      detectFundName(data, sheetName, filename);
+    if (!fundName || !/invesco/i.test(fundName)) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName: fundName.replace(/\s+/g, ' ').trim(),
+      amc: 'Invesco India',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
+function isTataConsolidatedFile(filepath, filename) {
+  const pathLow = filepath.replace(/\\/g, '/').toLowerCase();
+  if (/(?:^|[/\\])tata_?(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(filename)) return true;
+  if (/^tata_/i.test(filename)) return true;
+  return sniffTataWorkbook(filepath);
+}
+
+function sniffTataWorkbook(filepath) {
+  try {
+    const wb = XLSX.readFile(filepath, { sheetRows: 8 });
+    if (!wb.SheetNames.includes('Index')) return false;
+    const data = XLSX.utils.sheet_to_json(wb.Sheets.Index, { header: 1 });
+    return /tata\s+.+(fund|etf)/i.test(JSON.stringify(data));
+  } catch {
+    return false;
+  }
+}
+
+function buildTataEquitySheetMap(wb) {
+  const map = new Map();
+  if (!wb.SheetNames.includes('Index')) return map;
+  const idx = XLSX.utils.sheet_to_json(wb.Sheets.Index, { header: 1 });
+  for (const row of idx) {
+    if (String(row[0] || '').toLowerCase() !== 'equity') continue;
+    const code = String(row[1] || '').trim();
+    const name = String(row[2] || '').trim();
+    if (code && name) map.set(code, name);
+  }
+  return map;
+}
+
+function fundNameFromTataSheet(data, sheetName, equityMap) {
+  if (equityMap.has(sheetName)) return equityMap.get(sheetName);
+  for (let i = 0; i < Math.min(10, data.length); i++) {
+    for (const cell of data[i] || []) {
+      const val = String(cell || '').trim();
+      if (/^tata\s+/i.test(val) && (/\bfund\b/i.test(val) || /\betf\b/i.test(val))) {
+        return val.replace(/\s*\(.*$/s, '').trim();
+      }
+    }
+  }
+  return null;
+}
+
+function parseTataConsolidatedFile(wb, filename, filepath) {
+  const equityMap = buildTataEquitySheetMap(wb);
+  const skipSheets = /^index$|dividend|risk-o-meter|debt index|replication/i;
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    if (skipSheets.test(sheetName)) continue;
+    if (equityMap.size > 0 && !equityMap.has(sheetName)) continue;
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 10) continue;
+    const month = resolveMonth(filename, filepath, data);
+    if (!month) continue;
+    const fundName = fundNameFromTataSheet(data, sheetName, equityMap);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'Tata',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
+function isQuantConsolidatedFile(filepath, filename) {
+  const pathLow = filepath.replace(/\\/g, '/').toLowerCase();
+  if (/(?:^|[/\\])quant_?(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(filename)) return true;
+  if (/^quant_/i.test(filename)) return true;
+  return sniffQuantWorkbook(filepath);
+}
+
+function sniffQuantWorkbook(filepath) {
+  try {
+    const wb = XLSX.readFile(filepath, { sheetRows: 6 });
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+    return /quant\s+mutual\s+fund/i.test(JSON.stringify(data));
+  } catch {
+    return false;
+  }
+}
+
+function fundNameFromQuantSheet(data) {
+  const isSchemeName = (val) => {
+    const v = String(val || '').trim();
+    if (!/^quant\s+/i.test(v)) return false;
+    if (!/\bfund\b/i.test(v) && !/\belss\b/i.test(v)) return false;
+    if (/^quant\s+mutual\s+fund$/i.test(v)) return false;
+    return true;
+  };
+  const normalize = (val) =>
+    val.replace(/^quant\b/i, 'Quant').replace(/\s*\(.*$/s, '').trim();
+
+  // Scheme name is consistently on row 2 (index 1), below the AMC header row.
+  for (const cell of data[1] || []) {
+    const val = String(cell || '').trim();
+    if (isSchemeName(val)) return normalize(val);
+  }
+  for (let i = 0; i < Math.min(6, data.length); i++) {
+    for (const cell of data[i] || []) {
+      const val = String(cell || '').trim();
+      if (isSchemeName(val)) return normalize(val);
+    }
+  }
+  return null;
+}
+
+function parseQuantConsolidatedFile(wb, filename, filepath) {
+  const results = [];
+  for (const sheetName of wb.SheetNames) {
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+    if (data.length < 8) continue;
+    const month = resolveMonth(filename, filepath, data);
+    if (!month) continue;
+    const fundName = fundNameFromQuantSheet(data);
+    if (!fundName) continue;
+    if (shouldSkipNonEquityFund(fundName.toLowerCase())) continue;
+    const holdings = parseHoldingsFromSheet(data);
+    if (holdings.length < 3) continue;
+    results.push({
+      fundName,
+      amc: 'Quant',
+      month,
+      holdings,
+      slug: slugify(fundName),
+    });
+  }
+  return results;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // PROCESS A SINGLE FILE (may have multiple sheets = multiple funds)
 // ═══════════════════════════════════════════════════════════════
@@ -796,6 +1559,8 @@ function processFile(filepath, filename) {
   
   const pathLower = filepath.toLowerCase().replace(/\\/g, '/');
   const fileLow = filename.toLowerCase();
+  const folderAMC = detectAMCFromPath(filepath);
+  const prefixAMC = detectAMCFromFilenamePrefix(filename);
 
   // Skip non-portfolio ancillary files
   if (/risk-o-meter|divmast|fut disclo|average-aum|annexure/i.test(fileLow) && !/portfolio-disclosure|monthly-portfolio/i.test(fileLow)) {
@@ -803,11 +1568,12 @@ function processFile(filepath, filename) {
   }
 
   // Detect AMC from full path (folders like "Monthly-Portfolio-Disclosure-April-2026" = ICICI)
-  let pathAMC = null;
+  let pathAMC = folderAMC || prefixAMC;
   if (pathLower.includes('monthly-portfolio-disclosure-')) pathAMC = 'ICICI Prudential';
   if (pathLower.includes('monthly portfolio-mar-2026') || pathLower.includes('monthly disclosure-april')) pathAMC = 'Aditya Birla Sun Life';
   if (pathLower.includes('all-schemes-monthly-portfolio')) pathAMC = 'SBI';
-  if (pathLower.includes('portfolio-disclosures-monthly')) pathAMC = 'Kotak';
+  // portfolio-disclosures-monthly = Zerodha ETF disclosures, not Kotak MF
+  if (pathLower.includes('portfolio-disclosures-monthly')) pathAMC = 'Zerodha';
   if (pathLower.includes('fw_uti') || pathLower.includes('uti_mf')) pathAMC = 'UTI';
   if (pathLower.includes('31052026_abslmf') || pathLower.includes('abslmf')) pathAMC = 'Aditya Birla Sun Life';
   if (pathLower.includes('bank-of-india') || pathLower.includes('bank_of_india') || pathLower.includes('boi_')) pathAMC = 'Bank of India';
@@ -815,18 +1581,29 @@ function processFile(filepath, filename) {
   if (pathLower.includes('old-bridge') || pathLower.includes('oldbridge') || pathLower.includes('old_bridge')) pathAMC = 'Old Bridge';
   if (pathLower.includes('franklin') || pathLower.includes('templeton')) pathAMC = 'Franklin India';
   if (pathLower.includes('taurus')) pathAMC = 'Taurus';
-  if (pathLower.includes('abakkus')) pathAMC = 'Abakkus';
+  if (pathLower.includes('bandhan')) pathAMC = 'Bandhan';
+  if (pathLower.includes('mirae')) pathAMC = 'Mirae Asset';
+  if (/^ma[a-z]{3,4}-(?:april|may)\d{4}\.xlsx$/i.test(fileLow)) pathAMC = 'Mirae Asset';
   if (pathLower.includes('trustmf') || pathLower.includes('trust-mf')) pathAMC = 'Trust MF';
   if (pathLower.includes('jioblack') || pathLower.includes('jio-black')) pathAMC = 'Jio BlackRock';
   if (pathLower.includes('angel-one') || pathLower.includes('angelone')) pathAMC = 'Angel One';
   if (pathLower.includes('unifi')) pathAMC = 'Unifi';
   if (pathLower.includes('groww') || /ib\d+-groww/i.test(fileLow)) pathAMC = 'Groww';
+  if (/groww_monthly\s+portfolio/i.test(fileLow)) pathAMC = 'Groww';
+  if (pathLower.includes('invesco') || /^invesco-india-/i.test(fileLow)) pathAMC = 'Invesco India';
   if (/cmfle?xi/i.test(fileLow)) pathAMC = 'Capitalmind';
   if (pathLower.includes('pgim') || fileLow.startsWith('pgim')) pathAMC = 'PGIM India';
   if (pathLower.includes('shriram')) pathAMC = 'Shriram';
   if (pathLower.includes('choice')) pathAMC = 'Choice';
   if (pathLower.includes('edel_portfolio') || fileLow.startsWith('edel_')) pathAMC = 'Edelweiss';
+  if (pathLower.includes('union')) pathAMC = 'Union';
+  if (pathLower.includes('kotak')) pathAMC = 'Kotak';
   if (/samco/i.test(fileLow)) pathAMC = 'Samco';
+  if (/in_mf_monthly_portfolio_fa_holding/i.test(fileLow) || /monthly_portfolio_-_/i.test(fileLow)) {
+    pathAMC = 'ITI';
+  }
+  if (/monthly-portfolio-report-union-/i.test(fileLow)) pathAMC = 'Union';
+  if (/consolidatedsebiportfolio/i.test(fileLow)) pathAMC = 'Kotak';
   
   if (isUtiSebiExposureFile(filepath, filename)) {
     try {
@@ -868,6 +1645,96 @@ function processFile(filepath, filename) {
     }
   }
 
+  if (isLicPortfolioFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseLicPortfolioFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isItiPortfolioFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseItiPortfolioFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isKotakConsolidatedFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseKotakConsolidatedFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isUnionPortfolioFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseUnionPortfolioFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isGrowwMonthlyPortfolioFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseGrowwConsolidatedFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isMiraePortfolioFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseMiraePortfolioFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isInvescoPortfolioFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseInvescoPortfolioFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isTataConsolidatedFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseTataConsolidatedFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isQuantConsolidatedFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseQuantConsolidatedFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
+  if (isSbiConsolidatedFile(filepath, filename)) {
+    try {
+      const wb = XLSX.readFile(filepath);
+      return parseSbiConsolidatedFile(wb, filename, filepath);
+    } catch (e) {
+      return results;
+    }
+  }
+
   try {
     const wb = XLSX.readFile(filepath);
     
@@ -880,14 +1747,20 @@ function processFile(filepath, filename) {
       
       if (data.length < 5) continue;
       
-      const month = detectMonth(filename, data) || detectMonth(filepath, data);
+      const month = resolveMonth(filename, filepath, data);
       if (!month) continue; // Skip if can't determine month
       
-      const amc = pathAMC || detectAMC(filepath, data) || detectAMC(filename, data);
-      let fundName = fundNameFromFilename(filename) || detectFundName(data, sheetName, filename);
+      const contentFirst = Boolean(folderAMC || prefixAMC || pathAMC);
+      let fundName = contentFirst
+        ? (detectFundName(data, sheetName, filename) || fundNameFromFilename(filename))
+        : (fundNameFromFilename(filename) || detectFundName(data, sheetName, filename));
       if (pathAMC === 'ICICI Prudential' && filename.startsWith('ICICI')) {
         fundName = filename.replace(/\.xlsx?$/i, '');
       }
+      const sheetAmc = detectAMCFromSheet(data, filename);
+      const amc = sheetAmc || pathAMC || detectAMC(filepath, data) || detectAMC(filename, data);
+      if (shouldSkipExternalAmc(amc, fundName)) continue;
+
       const holdings = parseHoldingsFromSheet(data);
       
       if (holdings.length < 3) continue; // Skip if too few holdings (probably not equity)
@@ -955,9 +1828,27 @@ function sortMonthLabels(months) {
 
 function detectMonthQuick(filepath, filename) {
   const pathNorm = filepath.replace(/\\/g, '/');
+  const fromPath = detectMonthFromPath(filepath);
+  if (fromPath) return fromPath;
   const fromName = detectMonth(filename, null) || detectMonth(pathNorm, null);
   if (fromName) return fromName;
-  if (/jioblackro-/i.test(filename) || /sebi exposure/i.test(filename) || /^monthlyportfolio_/i.test(filename) || /^monthly port_/i.test(filename)) {
+  if (
+    detectAMCFromPath(filepath) ||
+    detectAMCFromFilenamePrefix(filename) ||
+    /jioblackro-/i.test(filename) ||
+    /sebi exposure/i.test(filename) ||
+    /^monthlyportfolio_/i.test(filename) ||
+    /^sundaram_monthlyportfolio_/i.test(filename) ||
+    /^monthly port_/i.test(filename) ||
+    /groww_monthly\s+portfolio/i.test(filename) ||
+    /(?:^|[/\\])mirae_?(?:[/\\]|$)/i.test(pathNorm) ||
+    /(?:^|[/\\])invesco_?(?:[/\\]|$)/i.test(pathNorm) ||
+    /(?:^|[/\\])groww_?(?:[/\\]|$)/i.test(pathNorm) ||
+    /(?:^|[/\\])tata_?(?:[/\\]|$)/i.test(pathNorm) ||
+    /(?:^|[/\\])quant_?(?:[/\\]|$)/i.test(pathNorm) ||
+    /^tata_/i.test(filename) ||
+    /^quant_/i.test(filename)
+  ) {
     return peekWorkbookMonth(filepath);
   }
   return null;
@@ -972,6 +1863,34 @@ function rebuildAmcMap(holdings) {
   }
   for (const amc of Object.keys(amcs)) amcs[amc].sort();
   return amcs;
+}
+
+function cleanupHoldingsJson(holdings) {
+  for (const [slug, fund] of Object.entries(holdings)) {
+    if (/^invesco-india-.+-fund-.+-fund$/.test(slug)) {
+      delete holdings[slug];
+      continue;
+    }
+    if (fund.amc === 'Invesco India' && fund.name?.includes('(') && !fund.name?.includes(')')) {
+      delete holdings[slug];
+    }
+  }
+  const stub = holdings['invesco-india-large-and-mid-cap-fund'];
+  const canon = holdings['invesco-india-large-mid-cap-fund'];
+  if (stub) {
+    if (canon) {
+      for (const key of Object.keys(stub)) {
+        if (key !== 'name' && key !== 'amc' && !canon[key]) canon[key] = stub[key];
+      }
+    } else {
+      holdings['invesco-india-large-mid-cap-fund'] = {
+        ...stub,
+        name: 'Invesco India Large & Mid Cap Fund',
+        amc: 'Invesco India',
+      };
+    }
+    delete holdings['invesco-india-large-and-mid-cap-fund'];
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1065,7 +1984,7 @@ for (const entry of allResults) {
     };
   }
   
-  output.holdings[slug][month] = holdings;
+  output.holdings[slug][month] = packMonthHoldings(holdings);
   
   // Track AMCs
   if (!output.amcs[amc]) output.amcs[amc] = [];
@@ -1093,10 +2012,11 @@ let validationIssues = 0;
 for (const [slug, fund] of Object.entries(output.holdings)) {
   const months = Object.keys(fund).filter(k => k !== 'name' && k !== 'amc');
   for (const month of months) {
-    if (!Array.isArray(fund[month])) continue;
-    const before = fund[month].length;
-    fund[month] = fund[month].filter(h => h.pct > 0);
-    if (before !== fund[month].length) validationIssues += (before - fund[month].length);
+    const packed = unpackMonthHoldings(fund[month]);
+    const before = packed.stocks.length;
+    const filtered = packed.stocks.filter((h) => h.pct > 0);
+    if (before !== filtered.length) validationIssues += before - filtered.length;
+    fund[month] = { stocks: filtered, totalStocks: packed.totalStocks };
   }
 }
 
@@ -1104,8 +2024,7 @@ for (const [slug, fund] of Object.entries(output.holdings)) {
 for (const [slug, fund] of Object.entries(output.holdings)) {
   const months = Object.keys(fund).filter(k => k !== 'name' && k !== 'amc');
   for (const month of months) {
-    if (!Array.isArray(fund[month])) continue;
-    for (const h of fund[month]) {
+    for (const h of monthStocks(fund, month)) {
       h.name = h.name.replace(/[\s\$~!^#@\*]+$/g, '').replace(/\s+/g, ' ').trim();
       if (h.sector) h.sector = h.sector.replace(/[\s\$~!^#@\*]+$/g, '').replace(/\s+/g, ' ').trim();
     }
@@ -1116,7 +2035,7 @@ for (const [slug, fund] of Object.entries(output.holdings)) {
 const emptyFunds = [];
 for (const [slug, fund] of Object.entries(output.holdings)) {
   const months = Object.keys(fund).filter(k => k !== 'name' && k !== 'amc');
-  const hasEnough = months.some(m => Array.isArray(fund[m]) && fund[m].length >= 3);
+  const hasEnough = months.some((m) => monthStocks(fund, m).length >= 3);
   if (!hasEnough) {
     emptyFunds.push(fund.name);
     delete output.holdings[slug];
@@ -1134,6 +2053,15 @@ const junkFundPatterns = [
 ];
 for (const [slug, fund] of Object.entries(output.holdings)) {
   if (junkFundPatterns.some(p => p.test(fund.name))) {
+    delete output.holdings[slug];
+    validationIssues++;
+  }
+  // Invesco hash-filename duplicates (truncated scheme name in slug)
+  if (/^invesco-india-.+-fund-.+-fund$/.test(slug)) {
+    delete output.holdings[slug];
+    validationIssues++;
+  }
+  if (fund.amc === 'Invesco India' && fund.name && fund.name.includes('(') && !fund.name.includes(')')) {
     delete output.holdings[slug];
     validationIssues++;
   }
@@ -1183,6 +2111,9 @@ if ((incremental || monthFilterArg) && existsSync(OUTPUT_FILE)) {
   finalOutput = existing;
   console.log(`  🔀 Merged into existing JSON (${existing.months.length} months total)`);
 }
+
+cleanupHoldingsJson(finalOutput.holdings);
+finalOutput.amcs = rebuildAmcMap(finalOutput.holdings);
 
 writeFileSync(OUTPUT_FILE, JSON.stringify(finalOutput, null, 2));
 console.log('');

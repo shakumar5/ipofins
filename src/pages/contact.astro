@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { BRAND_NAME, BRAND_EMAIL } from '../lib/brand';
 ---
 
-<BaseLayout title="Contact Us - ipofins" description="Get in touch with the ipofins team for questions, feedback, or partnership inquiries.">
+<BaseLayout title={`Contact Us - ${BRAND_NAME}`} description={`Get in touch with the ${BRAND_NAME} team for questions, feedback, or partnership inquiries.`}>
   <section class="container-narrow py-16">
     <div class="max-w-xl mx-auto text-center">
       <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Contact Us</h1>
@@ -11,15 +12,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="mt-10 space-y-6 text-left">
         <div class="card">
           <h2 class="font-semibold text-surface-900 dark:text-white mb-2">General Inquiries</h2>
-          <p class="text-sm text-surface-600 dark:text-surface-300"><a href="mailto:info@ipofins.com" class="hover:text-primary-600 transition-colors">info@ipofins.com</a></p>
+          <p class="text-sm text-surface-600 dark:text-surface-300"><a href={`mailto:${BRAND_EMAIL}`} class="hover:text-primary-600 transition-colors">{BRAND_EMAIL}</a></p>
         </div>
         <div class="card">
           <h2 class="font-semibold text-surface-900 dark:text-white mb-2">Advertising & Partnerships</h2>
-          <p class="text-sm text-surface-600 dark:text-surface-300"><a href="mailto:info@ipofins.com" class="hover:text-primary-600 transition-colors">info@ipofins.com</a></p>
+          <p class="text-sm text-surface-600 dark:text-surface-300"><a href={`mailto:${BRAND_EMAIL}`} class="hover:text-primary-600 transition-colors">{BRAND_EMAIL}</a></p>
         </div>
         <div class="card">
           <h2 class="font-semibold text-surface-900 dark:text-white mb-2">Report Data Issues</h2>
-          <p class="text-sm text-surface-600 dark:text-surface-300"><a href="mailto:info@ipofins.com" class="hover:text-primary-600 transition-colors">info@ipofins.com</a></p>
+          <p class="text-sm text-surface-600 dark:text-surface-300"><a href={`mailto:${BRAND_EMAIL}`} class="hover:text-primary-600 transition-colors">{BRAND_EMAIL}</a></p>
         </div>
       </div>
 

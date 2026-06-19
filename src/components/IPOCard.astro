@@ -104,7 +104,7 @@ const statusInfo = statusConfig[status as keyof typeof statusConfig] || statusCo
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
     {aiScore !== undefined && aiScore !== null && (
       <div class="flex items-center gap-1">
-        <span class="text-xs text-surface-500 dark:text-surface-400" title="Quantitative score based on financials, valuation, and sector data">IPOfins Score:</span>
+        <span class="text-xs text-surface-500 dark:text-surface-400" title="Quantitative score based on financials, valuation, and sector data">IPOFins Score:</span>
         <span class={`text-xs font-bold ${aiScore >= 7 ? 'text-success-500' : aiScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>
           {aiScore}/10
         </span>

@@ -1,0 +1,67 @@
+---
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
+import { monthFileSlug } from '../../../../lib/client-data';
+
+export function getStaticPaths() {
+  const dataDir = join(process.cwd(), 'public', 'data');
+  const indexPath = join(dataDir, 'smart-money-signals-index.json');
+
+  if (!existsSync(indexPath)) {
+    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder' } }];
+  }
+
+  const index = JSON.parse(readFileSync(indexPath, 'utf-8')) as { months: string[] };
+  const slugs = new Set<string>();
+
+  for (const month of index.months) {
+    const monthPath = join(dataDir, 'smart-money-signals', `${monthFileSlug(month)}.json`);
+    if (!existsSync(monthPath)) continue;
+    const file = JSON.parse(readFileSync(monthPath, 'utf-8')) as { rows: { stockSlug: string }[] };
+    for (const r of file.rows) slugs.add(r.stockSlug);
+  }
+
+  if (slugs.size === 0) {
+    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder' } }];
+  }
+
+  return [...slugs].map((slug) => ({
+    params: { slug },
+    props: { stockSlug: slug },
+  }));
+}
+
+const { stockSlug } = Astro.props;
+const isPlaceholder = stockSlug === '_placeholder';
+---
+
+<BaseLayout
+  title="Smart Money Signal - Institutional Conviction | IPOFins"
+  description="Detailed smart money signal breakdown: conviction score, fund buying activity, AMC participation, and institutional confidence."
+  ogImage="/og-fund.png"
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds/smart-money" class="hover:text-primary-600 transition-colors">Smart Money</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Signal Detail</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide py-8 pb-12">
+    {isPlaceholder ? (
+      <div class="text-center py-12 text-surface-500 text-sm">
+        <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate signal pages.</p>
+        <a href="/mutual-funds/smart-money" class="text-primary-600 mt-2 inline-block">← Back to Smart Money</a>
+      </div>
+    ) : (
+      <SmartMoneySignalDetailPage client:only="react" stockSlug={stockSlug}>
+        <div slot="fallback" class="py-12 text-center text-sm text-surface-500">Loading…</div>
+      </SmartMoneySignalDetailPage>
+    )}
+  </section>
+</BaseLayout>

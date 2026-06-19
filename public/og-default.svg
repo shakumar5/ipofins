@@ -12,7 +12,7 @@
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="60" y="540" width="120" height="4" rx="2" fill="url(#accent)"/>
   <rect x="60" y="80" width="64" height="64" rx="16" fill="url(#accent)"/>
-  <text x="140" y="125" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="800" fill="white">ipofins</text>
+  <text x="140" y="125" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="800" fill="white">IPOFins</text>
   <text x="60" y="280" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="800" fill="white">IPO Analytics &amp;</text>
   <text x="60" y="350" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="800" fill="white">Investment Intelligence</text>
   <text x="60" y="420" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#94a3b8">Track IPOs • Compare Funds • Calculate Returns • Indian Markets</text>

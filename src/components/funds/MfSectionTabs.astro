@@ -1,0 +1,30 @@
+---
+interface Props {
+  active: 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap';
+}
+
+const { active } = Astro.props;
+
+const tabs = [
+  { id: 'best', label: 'Best Funds', href: '/mutual-funds/best' },
+  { id: 'all', label: 'All Funds', href: '/mutual-funds/all' },
+  { id: 'holdings-changes', label: 'Holdings Changes', href: '/mutual-funds/mutual-fund-holdings-changes' },
+  { id: 'overlap-checker', label: 'Portfolio Overlap Checker', href: '/mutual-funds/portfolio-overlap-checker' },
+  { id: 'fund-overlap', label: 'Fund Overlap', href: '/mutual-funds/fund-overlap' },
+] as const;
+
+const tabClass = (key: Props['active']) =>
+  key === active
+    ? 'px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg'
+    : 'px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors';
+---
+
+<div class="mt-4 flex flex-wrap gap-2">
+  {tabs.map((tab) => (
+    tab.id === active ? (
+      <span class={tabClass(tab.id)}>{tab.label}</span>
+    ) : (
+      <a href={tab.href} class={tabClass(tab.id)}>{tab.label}</a>
+    )
+  ))}
+</div>

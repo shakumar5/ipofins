@@ -29,7 +29,7 @@ const SAMPLE_ALERTS: AlertConfig[] = [
   { id: '1', label: 'New IPO Opens', enabled: true, description: 'Get notified when a new IPO opens for subscription' },
   { id: '2', label: 'Subscription Updates', enabled: true, description: 'Alert when subscription crosses key levels' },
   { id: '3', label: 'Allotment Status', enabled: true, description: 'Notify when IPO allotment status is available' },
-  { id: '4', label: 'High IPOfins Score IPOs', enabled: false, description: 'Alert for IPOs with IPOfins Score 7+' },
+  { id: '4', label: 'High IPOFins Score IPOs', enabled: false, description: 'Alert for IPOs with IPOFins Score 7+' },
   { id: '5', label: 'Fund NAV Alerts', enabled: false, description: 'Daily NAV update for watchlisted funds' },
   { id: '6', label: 'Market News', enabled: false, description: 'Important market news and SEBI updates' },
 ];

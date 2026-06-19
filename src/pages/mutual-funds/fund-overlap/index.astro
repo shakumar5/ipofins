@@ -1,8 +1,10 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getFundsWithOverlaps } from '../../../lib/data/holdings';
+import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
+import FundOverlapLoader from '../../../components/funds/FundOverlapLoader.tsx';
+import { mfTabConfig } from '../../../lib/mf-section-config';
 
-const funds = await getFundsWithOverlaps();
+const cfg = mfTabConfig('fund-overlap');
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -14,8 +16,8 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title="Mutual Fund Overlap Checker 2026 - Portfolio Overlap | IPOfins"
-  description="Check how much two mutual funds overlap in stock holdings. Avoid duplicate exposure across your portfolio."
+  title={cfg.title}
+  description={cfg.description}
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
 >
@@ -30,21 +32,14 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Fund Overlap Checker</h1>
-    <p class="mt-1 text-sm text-surface-500">Select a fund to see which other schemes share the most stock holdings.</p>
+    <MfSectionHeader
+      active="fund-overlap"
+      heading={cfg.heading}
+      subtitle={cfg.subtitle}
+    />
   </section>
 
   <section class="container-wide pb-12">
-    {funds.length > 0 ? (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {funds.map((fund) => (
-          <a href={`/mutual-funds/fund-overlap/${fund.slug}`} class="card-compact block hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-            <span class="text-sm font-medium text-surface-900 dark:text-white group-hover:text-primary-600">{fund.name}</span>
-          </a>
-        ))}
-      </div>
-    ) : (
-      <p class="text-surface-500 py-12 text-center">Overlap data not available yet. Run the monthly holdings pipeline and compute overlaps.</p>
-    )}
+    <FundOverlapLoader client:idle />
   </section>
 </BaseLayout>

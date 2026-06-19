@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useDeferredValue, useTransition, useCallback } from 'react';
+import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import { getFundTablePageMeta, type FundTableKind } from '../../lib/fund-table-meta';
 
 interface Fund {
   name: string;
@@ -12,22 +14,39 @@ interface Fund {
   aum?: string | null;
   riskLevel: string;
   hasHoldings?: boolean;
+  stockCount?: number;
 }
 
 interface Props {
   funds: Fund[];
   categories: string[];
-  holdingSlugs?: string[];
   defaultCategory?: string;
   basePath?: string;
+  table?: FundTableKind;
 }
+
+const DESKTOP_GRID =
+  'grid-cols-[24px_minmax(0,2.2fr)_repeat(6,minmax(44px,1fr))_minmax(56px,1fr)_minmax(44px,1fr)_minmax(68px,1fr)_minmax(48px,1fr)]';
 
 const CATEGORY_ORDER = [
   'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap',
-  'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield',
+  'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral', 'Sectoral/Thematic', 'Contra', 'Dividend Yield', 'Index',
 ];
 
 const PAGE_SIZE = 20;
+
+type SortKey = 'returns3y' | 'returns1y' | 'returns5y' | 'nav' | 'holdings' | 'stocks';
+
+function sortLabel(sortBy: SortKey): string {
+  switch (sortBy) {
+    case 'returns1y': return '1Y';
+    case 'returns3y': return '3Y';
+    case 'returns5y': return '5Y';
+    case 'nav': return 'NAV';
+    case 'holdings': return 'Holdings';
+    case 'stocks': return 'No. of Stocks';
+  }
+}
 
 function catToSlug(cat: string): string {
   if (cat === 'All') return '';
@@ -44,51 +63,72 @@ function returnColor(val: number | null | undefined): string {
   return val >= 0 ? 'text-green-600' : 'text-red-500';
 }
 
-export default function FundTable({ funds, categories, holdingSlugs = [], defaultCategory = 'All', basePath = '' }: Props) {
+export default function FundTable({ funds, categories, defaultCategory = 'All', basePath = '', table = 'all' }: Props) {
   const [catFilter, setCatFilter] = useState(defaultCategory);
-  const [sortBy, setSortBy] = useState<'returns3y' | 'returns1y' | 'returns5y' | 'nav' | 'holdings'>('returns3y');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortKey>('returns3y');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const tableRef = useRef<HTMLDivElement>(null);
+  const [, startTransition] = useTransition();
 
-  const holdingSet = useMemo(() => new Set(holdingSlugs), [holdingSlugs]);
+  const deferredSearch = useDeferredValue(searchQuery);
 
-  // Update URL when category changes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !basePath) return;
-    const slug = catToSlug(catFilter);
-    const newUrl = slug ? `${basePath}/${slug}` : basePath;
-    if (window.location.pathname !== newUrl) {
-      window.history.replaceState(null, '', newUrl);
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: funds.length };
+    for (const f of funds) {
+      counts[f.category] = (counts[f.category] ?? 0) + 1;
     }
-    if (catFilter === 'All') {
-      document.title = document.title.replace(/^[^|]+/, 'List of All Mutual Funds in India 2026 ');
-    } else {
-      document.title = document.title.replace(/^[^|]+/, `${catFilter} Mutual Funds 2026 `);
-    }
-  }, [catFilter, basePath]);
+    return counts;
+  }, [funds]);
 
-  // Reset page when filter or sort changes
-  useEffect(() => { setCurrentPage(1); }, [catFilter, sortBy, sortDir]);
+  const syncCategory = useCallback(
+    (category: string) => {
+      startTransition(() => setCatFilter(category));
+      if (typeof window === 'undefined' || !basePath) return;
+      const slug = catToSlug(category);
+      const newUrl = slug ? `${basePath}/${slug}` : basePath;
+      if (window.location.pathname !== newUrl) {
+        window.history.replaceState(null, '', newUrl);
+      }
+      applyClientPageMeta(
+        getFundTablePageMeta(table, category, categoryCounts[category] ?? funds.length),
+      );
+    },
+    [basePath, table, categoryCounts, funds.length],
+  );
+
+  // Reset page when filter, search, or sort changes
+  useEffect(() => { setCurrentPage(1); }, [catFilter, deferredSearch, sortBy, sortDir]);
 
   const orderedCategories = useMemo(() => {
     return CATEGORY_ORDER.filter(cat => categories.includes(cat));
   }, [categories]);
 
+  const normalizedSearch = deferredSearch.trim().toLowerCase();
+
   const filtered = useMemo(() => {
     let data = catFilter === 'All' ? funds : funds.filter(f => f.category === catFilter);
+    if (normalizedSearch) {
+      data = data.filter(f => f.name.toLowerCase().includes(normalizedSearch));
+    }
     data = [...data].sort((a, b) => {
       if (sortBy === 'holdings') {
-        const aH = holdingSet.has(a.slug) ? 1 : 0;
-        const bH = holdingSet.has(b.slug) ? 1 : 0;
+        const aH = a.hasHoldings ? 1 : 0;
+        const bH = b.hasHoldings ? 1 : 0;
         return sortDir === 'desc' ? bH - aH : aH - bH;
+      }
+      if (sortBy === 'stocks') {
+        const aVal = a.stockCount ?? 0;
+        const bVal = b.stockCount ?? 0;
+        return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
       }
       const aVal = (a[sortBy] as number) || 0;
       const bVal = (b[sortBy] as number) || 0;
       return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
     });
     return data;
-  }, [funds, catFilter, sortBy, sortDir, holdingSet]);
+  }, [funds, catFilter, normalizedSearch, sortBy, sortDir]);
 
   // Pagination
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -102,12 +142,14 @@ export default function FundTable({ funds, categories, holdingSlugs = [], defaul
   };
 
   const handleSort = (col: typeof sortBy) => {
-    if (sortBy === col) {
-      setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
-    } else {
-      setSortBy(col);
-      setSortDir('desc');
-    }
+    startTransition(() => {
+      if (sortBy === col) {
+        setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
+      } else {
+        setSortBy(col);
+        setSortDir('desc');
+      }
+    });
   };
 
   const SortIcon = ({ col }: { col: typeof sortBy }) => (
@@ -134,55 +176,122 @@ export default function FundTable({ funds, categories, holdingSlugs = [], defaul
       {/* Category Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         <button
-          onClick={() => setCatFilter('All')}
+          onClick={() => syncCategory('All')}
           className={`px-3 py-1.5 text-sm font-medium rounded-lg tab-bounce ${catFilter === 'All' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}
-        >All ({funds.length})</button>
+        >All ({categoryCounts.All})</button>
         {orderedCategories.map(cat => (
           <button
             key={cat}
-            onClick={() => setCatFilter(cat)}
+            onClick={() => syncCategory(cat)}
             className={`px-3 py-1.5 text-sm font-medium rounded-lg tab-bounce ${catFilter === cat ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}
-          >{cat} ({funds.filter(f => f.category === cat).length})</button>
+          >{cat} ({categoryCounts[cat] ?? 0})</button>
         ))}
       </div>
 
       <p className="text-xs text-gray-500 mb-3 tabular-nums">
-        Showing {startIdx + 1}–{endIdx} of {filtered.length} funds • Sorted by {sortBy === 'returns1y' ? '1Y' : sortBy === 'returns3y' ? '3Y' : sortBy === 'returns5y' ? '5Y' : sortBy === 'nav' ? 'NAV' : 'Holdings'} ({sortDir === 'desc' ? 'high to low' : 'low to high'})
+        Showing {filtered.length === 0 ? 0 : startIdx + 1}–{endIdx} of {filtered.length} funds
+        {normalizedSearch ? ` matching "${searchQuery.trim()}"` : ''}
+        {' • '}
+        Sorted by {sortLabel(sortBy)} ({sortDir === 'desc' ? 'high to low' : 'low to high'})
       </p>
 
+      {/* Mobile search */}
+      <div className="md:hidden mb-3">
+        <label htmlFor="fund-search-mobile" className="sr-only">Search fund name</label>
+        <div className="relative">
+          <input
+            id="fund-search-mobile"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search fund name…"
+            className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Table Header */}
-      <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 mb-2">
-        <div className="col-span-1 text-center">#</div>
-        <div className="col-span-3">Fund</div>
-        <div className="col-span-1 text-center">
+      <div className={`hidden md:grid ${DESKTOP_GRID} gap-2 px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 mb-2`}>
+        <div className="text-center">#</div>
+        <div>
+          <span className="block mb-1.5">Fund</span>
+          <label htmlFor="fund-search-desktop" className="sr-only">Search fund name</label>
+          <div className="relative normal-case tracking-normal">
+            <input
+              id="fund-search-desktop"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search fund…"
+              className="w-full pl-7 pr-7 py-1.5 text-xs font-normal border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm leading-none p-0.5"
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="text-center">
           <button onClick={() => handleSort('nav')} className="hover:text-blue-600 cursor-pointer">NAV<SortIcon col="nav" /></button>
         </div>
-        <div className="col-span-1 text-center">
+        <div className="text-center">
           <button onClick={() => handleSort('returns1y')} className="hover:text-blue-600 cursor-pointer">1Y<SortIcon col="returns1y" /></button>
         </div>
-        <div className="col-span-1 text-center">
+        <div className="text-center">
           <button onClick={() => handleSort('returns3y')} className="hover:text-blue-600 cursor-pointer">3Y<SortIcon col="returns3y" /></button>
         </div>
-        <div className="col-span-1 text-center">
+        <div className="text-center">
           <button onClick={() => handleSort('returns5y')} className="hover:text-blue-600 cursor-pointer">5Y<SortIcon col="returns5y" /></button>
         </div>
-        <div className="col-span-1 text-center">Rating</div>
-        <div className="col-span-1 text-center">Risk</div>
-        <div className="col-span-1 text-center">
+        <div className="text-center">Rating</div>
+        <div className="text-center">Risk</div>
+        <div className="text-center">
           <button onClick={() => handleSort('holdings')} className="hover:text-blue-600 cursor-pointer">Holdings<SortIcon col="holdings" /></button>
+        </div>
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => handleSort('stocks')}
+            className="hover:text-blue-600 cursor-pointer"
+            title="Number of stocks in latest portfolio"
+          >
+            No. of Stocks<SortIcon col="stocks" />
+          </button>
         </div>
       </div>
 
       {/* Mobile Sort */}
       <div className="md:hidden flex flex-wrap gap-2 mb-3">
         <span className="text-xs text-gray-500">Sort:</span>
-        {(['nav', 'returns1y', 'returns3y', 'returns5y', 'holdings'] as const).map(col => (
+        {(['nav', 'returns1y', 'returns3y', 'returns5y', 'holdings', 'stocks'] as const).map(col => (
           <button
             key={col}
             onClick={() => handleSort(col)}
             className={`text-xs px-2 py-1 rounded ${sortBy === col ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-blue-600'}`}
           >
-            {col === 'nav' ? 'NAV' : col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : 'Portfolio'}
+            {col === 'nav' ? 'NAV' : col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : col === 'stocks' ? 'Stocks' : 'Portfolio'}
             {sortBy === col && (sortDir === 'desc' ? ' ↓' : ' ↑')}
           </button>
         ))}
@@ -191,41 +300,40 @@ export default function FundTable({ funds, categories, holdingSlugs = [], defaul
       {/* Rows */}
       <div className="space-y-1.5">
         {paginatedFunds.map((fund, i) => {
-          const hasHold = holdingSet.has(fund.slug);
+          const hasHold = fund.hasHoldings === true;
+          const stockCount = fund.stockCount;
           const rank = startIdx + i + 1;
-          return (
-          <a
-            key={fund.slug}
-            href={`/mutual-funds/fund/${fund.slug}-holdings`}
-            className="block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all list-accent-hover"
-          >
+          const rowClass =
+            'block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-all list-accent-hover';
+          const rowInner = (
+            <>
             {/* Desktop */}
-            <div className="hidden md:grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-1 text-center text-xs text-gray-400">{rank}</div>
-              <div className="col-span-3">
+            <div className={`hidden md:grid ${DESKTOP_GRID} gap-2 items-center`}>
+              <div className="text-center text-xs text-gray-400">{rank}</div>
+              <div>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight">{fund.name}</h3>
                 <p className="text-xs text-gray-400 mt-0.5">{fund.category} • {fund.aum}</p>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 <span className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-200">₹{fund.nav?.toFixed(2) || '--'}</span>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns1y)}`}>{formatReturn(fund.returns1y)}</span>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 <span className={`text-sm font-bold tabular-nums ${returnColor(fund.returns3y)}`}>{formatReturn(fund.returns3y)}</span>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 <span className={`text-xs font-bold tabular-nums ${returnColor(fund.returns5y)}`}>{formatReturn(fund.returns5y)}</span>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 <div className="flex justify-center">
                   {fund.rating ? Array.from({ length: fund.rating }).map((_, j) => (
                     <svg key={j} className="w-2.5 h-2.5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                   )) : <span className="text-xs text-gray-400">--</span>}
                 </div>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize ${
                   fund.riskLevel === 'low' ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400' :
                   fund.riskLevel === 'moderate' ? 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400' :
@@ -233,11 +341,18 @@ export default function FundTable({ funds, categories, holdingSlugs = [], defaul
                   'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                 }`}>{fund.riskLevel.replace('-', ' ')}</span>
               </div>
-              <div className="col-span-1 text-center">
+              <div className="text-center">
                 {hasHold ? (
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 border border-green-200 dark:border-green-800">✓ Available</span>
                 ) : (
-                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800">Coming Soon</span>
+                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400 border border-surface-200 dark:border-surface-700">No Data</span>
+                )}
+              </div>
+              <div className="text-center">
+                {stockCount ? (
+                  <span className="text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200">{stockCount}</span>
+                ) : (
+                  <span className="text-xs text-gray-400">--</span>
                 )}
               </div>
             </div>
@@ -247,6 +362,7 @@ export default function FundTable({ funds, categories, holdingSlugs = [], defaul
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{rank}. {fund.name}</h3>
                 <div className="flex items-center gap-1.5">
                   {hasHold && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">✓ Portfolio</span>}
+                  {stockCount ? <span className="text-[10px] font-semibold tabular-nums text-gray-600 dark:text-gray-300">{stockCount} stocks</span> : null}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
                     fund.riskLevel === 'low' ? 'bg-green-50 text-green-600' :
                     fund.riskLevel === 'moderate' ? 'bg-yellow-50 text-yellow-600' :
@@ -271,13 +387,30 @@ export default function FundTable({ funds, categories, holdingSlugs = [], defaul
                 </div>
               </div>
             </div>
-          </a>
+            </>
+          );
+          return hasHold ? (
+            <a
+              key={fund.slug}
+              href={`/mutual-funds/fund/${fund.slug}-holdings`}
+              className={`${rowClass} hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer`}
+            >
+              {rowInner}
+            </a>
+          ) : (
+            <div key={fund.slug} className={`${rowClass} opacity-95`} aria-disabled="true">
+              {rowInner}
+            </div>
           );
         })}
       </div>
 
       {filtered.length === 0 && (
-        <p className="text-center py-8 text-gray-500">No funds found for this filter.</p>
+        <p className="text-center py-8 text-gray-500">
+          {normalizedSearch
+            ? `No funds matching "${searchQuery.trim()}"${catFilter !== 'All' ? ` in ${catFilter}` : ''}.`
+            : 'No funds found for this filter.'}
+        </p>
       )}
 
       {/* Pagination */}

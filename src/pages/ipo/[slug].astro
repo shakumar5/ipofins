@@ -42,7 +42,7 @@ const jsonLd = {
 
 <IPOLayout
   activeTab={ipo.type === 'mainboard' ? 'mainboard' : 'sme'}
-  title={`${ipo.name} IPO - Price, Subscription & Review | IPOfins`}
+  title={`${ipo.name} IPO - Price, Subscription & Review | IPOFins`}
   description={`${ipo.name} IPO: Price ₹${ipo.priceRange}, lot size ${ipo.lotSize}, issue size ${ipo.issueSize}. ${ipo.description?.slice(0, 100)}`}
   jsonLd={jsonLd}
 >
@@ -69,7 +69,7 @@ const jsonLd = {
             <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               <span class="text-xl font-bold text-white">{ipo.aiScore}</span>
             </div>
-            <p class="text-xs text-surface-500 mt-1" title="Quantitative score based on financials, valuation, and sector data">IPOfins Score</p>
+            <p class="text-xs text-surface-500 mt-1" title="Quantitative score based on financials, valuation, and sector data">IPOFins Score</p>
           </div>
         )}
         <RiskBadge score={ipo.riskScore} size="lg" />
@@ -267,7 +267,7 @@ const jsonLd = {
     <section class="container-wide py-4">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Investment Analysis</h2>
       <AIInsightBox
-        title={`${ipo.name} — IPOfins Verdict`}
+        title={`${ipo.name} — IPOFins Verdict`}
         summary={ipo.aiSummary || 'Analysis being generated.'}
         riskScore={ipo.riskScore}
         verdict={ipo.verdict as 'apply' | 'avoid' | 'neutral' | undefined}
@@ -450,7 +450,7 @@ const jsonLd = {
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I apply for {ipo.name} IPO?</summary>
         {ipo.aiScore && ipo.aiSummary ? (
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPOfins Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
+          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPOFins Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
         ) : (
           <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Review the IPO's fundamentals, financials, and market conditions carefully. Always do your own research before investing.</p>
         )}

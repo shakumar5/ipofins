@@ -1,0 +1,17 @@
+---
+import MfSectionTabs from './MfSectionTabs.astro';
+
+interface Props {
+  active: 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap';
+  heading: string;
+  subtitle: string;
+  freshness?: string;
+}
+
+const { active, heading, subtitle, freshness } = Astro.props;
+---
+
+<h1 class="text-2xl font-bold text-surface-900 dark:text-white">{heading}</h1>
+<p class="mt-1 text-sm text-surface-500">{subtitle}</p>
+{freshness && <span class="data-freshness mt-2">{freshness}</span>}
+<MfSectionTabs active={active} />

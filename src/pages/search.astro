@@ -1,31 +1,32 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { BRAND_NAME, BRAND_URL } from '../lib/brand';
 
 const query = (Astro.url.searchParams.get('q') || '').trim();
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: query ? `Search: ${query}` : 'Search IPOfins',
+  name: query ? `Search: ${query}` : `Search ${BRAND_NAME}`,
   url: query
-    ? `https://ipofins.com/search?q=${encodeURIComponent(query)}`
-    : 'https://ipofins.com/search',
+    ? `${BRAND_URL}/search?q=${encodeURIComponent(query)}`
+    : `${BRAND_URL}/search`,
   isPartOf: {
     '@type': 'WebSite',
-    name: 'IPOfins',
-    url: 'https://ipofins.com',
+    name: BRAND_NAME,
+    url: BRAND_URL,
   },
 };
 ---
 
 <BaseLayout
-  title={query ? `Search: ${query} | IPOfins` : 'Search IPOfins'}
-  description="Search IPOs, mutual funds, brokers, tools, and guides on IPOfins."
+  title={query ? `Search: ${query} | ${BRAND_NAME}` : `Search ${BRAND_NAME}`}
+  description={`Search IPOs, mutual funds, brokers, tools, and guides on ${BRAND_NAME}.`}
   robots="noindex, follow"
   jsonLd={jsonLd}
 >
   <section class="container-narrow py-12">
-    <h1 class="text-2xl font-extrabold text-surface-900 dark:text-white">Search IPOfins</h1>
+    <h1 class="text-2xl font-extrabold text-surface-900 dark:text-white">Search {BRAND_NAME}</h1>
     <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
       Find IPOs, mutual funds, brokers, calculators, and guides.
     </p>

@@ -1,44 +1,22 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import FundTable from '../../../components/funds/FundTable.tsx';
+import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
+import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getAllFunds } from '../../../lib/data/funds';
-import { getFundSlugsWithHoldings } from '../../../lib/data/holdings';
-
-function catToSlug(cat: string): string {
-  return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
-}
+import { catToSlug } from '../../../lib/fund-category-slug';
 
 export async function getStaticPaths() {
   const fundsData = await getAllFunds();
-  const cats = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-  const available = cats.filter(c => fundsData.some(f => f.category === c));
-  return available.map(cat => ({
-    params: { category: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds' },
+  const available = [...new Set(fundsData.map((f) => f.category))];
+  return available.map((cat) => ({
+    params: { category: catToSlug(cat) },
     props: { categoryName: cat },
   }));
 }
 
 const { categoryName } = Astro.props;
 const fundsData = await getAllFunds();
-const holdingSlugs = await getFundSlugsWithHoldings();
-
-const CATEGORIES = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-const categories = CATEGORIES.filter(c => fundsData.some(f => f.category === c));
-
-const fundsForTable = fundsData.map(f => ({
-  name: f.name,
-  slug: f.slug,
-  category: f.category,
-  nav: f.nav,
-  returns1y: f.returns1y,
-  returns3y: f.returns3y,
-  returns5y: f.returns5y,
-  rating: f.rating,
-  aum: f.aum,
-  riskLevel: f.riskLevel,
-}));
-
-const categoryCount = fundsData.filter((f: any) => f.category === categoryName).length;
+const categoryCount = fundsData.filter((f) => f.category === categoryName).length;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -50,7 +28,7 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title={`${categoryName} Mutual Funds 2026 - Compare Returns & Ratings | IPOfins`}
+  title={`${categoryName} Mutual Funds 2026 - Compare Returns & Ratings | IPOFins`}
   description={`List of ${categoryCount} ${categoryName} mutual funds in India 2026. Compare NAV, 1Y/3Y/5Y returns, ratings. Direct-Growth plans sorted by performance.`}
   jsonLd={jsonLd}
 >
@@ -70,14 +48,15 @@ const jsonLd = {
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{categoryName} Mutual Funds 2026</h1>
     <p class="mt-1 text-sm text-surface-500">{categoryCount} {categoryName} funds • Sort by returns • Direct-Growth plans only</p>
 
-    <div class="mt-4 flex gap-2">
-      <a href="/mutual-funds/best" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Best Funds</a>
-      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">All Funds</span>
-      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
-    </div>
+    <MfSectionTabs active="all" />
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:load funds={fundsForTable} categories={categories} holdingSlugs={Array.from(holdingSlugs)} defaultCategory={categoryName} basePath="/mutual-funds/all" />
+    <FundTableLoader
+      client:idle
+      table="all"
+      basePath="/mutual-funds/all"
+      defaultCategory={categoryName}
+    />
   </section>
 </BaseLayout>

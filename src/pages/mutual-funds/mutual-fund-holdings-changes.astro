@@ -1,18 +1,22 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import MfSectionHeader from '../../components/funds/MfSectionHeader.astro';
+import HoldingsCompare from '../../components/funds/HoldingsCompare.tsx';
 import { getAMCsWithHoldings, getAvailableMonths } from '../../lib/data/holdings';
 import { getHoldingsStats } from '../../lib/data/funds';
 import { monthSlug } from '../../utils/month-slug';
+import { mfTabConfig } from '../../lib/mf-section-config';
 
+const cfg = mfTabConfig('holdings-changes');
 const amcListData = await getAMCsWithHoldings();
-const monthsList = await getAvailableMonths();
 const { amcCount, fundsCovered: fundCount, latestMonth } = await getHoldingsStats();
+const monthsList = await getAvailableMonths();
 
 function slugify(str: string): string {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
-const amcList = amcListData.map(a => a.name).sort();
-const latestMonthLabel = latestMonth || monthsList[0] || '';
+const amcList = amcListData.map((a) => a.name).sort();
+const latestMonthLabel = latestMonth || monthsList[monthsList.length - 1] || '';
 const latestMonthSlug = monthSlug(latestMonthLabel);
 const amcSlugByName = Object.fromEntries(amcListData.map((a) => [a.name, a.slug]));
 
@@ -38,8 +42,8 @@ const faqJsonLd = {
 ---
 
 <BaseLayout
-  title="Mutual Fund Holdings Changes 2026 - Track Additions & Removals | IPOfins"
-  description="Compare mutual fund portfolio holdings month-on-month. See which stocks top funds are buying and selling. Data from AMC monthly disclosures."
+  title={cfg.title}
+  description={cfg.description}
   jsonLd={jsonLd}
 >
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
@@ -54,27 +58,16 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Mutual Fund Holdings Changes</h1>
-    <p class="mt-1 text-sm text-surface-500">Compare portfolio holdings between months. See what stocks top fund managers are buying and selling.</p>
-    <span class="data-freshness mt-2">🟢 Latest data: {latestMonthLabel || '—'} • {amcCount} AMCs • {fundCount} equity funds with holdings</span>
-
-    <!-- Main Tabs -->
-    <div class="mt-4 flex gap-2">
-      <a href="/mutual-funds/best" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Best Funds</a>
-      <a href="/mutual-funds/all" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">All Funds</a>
-      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">Holdings Changes</span>
-    </div>
+    <MfSectionHeader
+      active="holdings-changes"
+      heading={cfg.heading}
+      subtitle={cfg.subtitle}
+      freshness={`🟢 Latest data: ${latestMonthLabel || '—'} • ${amcCount} AMCs • ${fundCount} equity funds with holdings`}
+    />
   </section>
 
   <section class="container-wide py-4">
-    <div class="card p-6">
-      <p class="text-surface-600 dark:text-surface-300">
-        Select an AMC below to view month-on-month portfolio changes. Data is sourced from official AMFI monthly disclosures stored in our database.
-      </p>
-      <p class="mt-2 text-sm text-surface-500">
-        Smart Money signals and conviction scores are computed after each monthly pipeline run (<code>npm run pipeline:monthly</code>).
-      </p>
-    </div>
+    <HoldingsCompare client:idle pageMode="hub" />
   </section>
 
   <!-- Browse by AMC - SEO internal links -->
@@ -136,7 +129,7 @@ const faqJsonLd = {
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How can I use this to make better investment decisions?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">By tracking what professional fund managers are buying, you can identify stocks that have institutional conviction. If multiple top-performing funds are adding the same stock, it signals strong fundamentals. Similarly, if funds are exiting a stock, it may indicate deteriorating prospects. However, this should be one input in your research — not the sole decision factor.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">By tracking what professional fund managers are buying, you can identify stocks that have institutional conviction. If multiple top-performing funds are adding the same stock, it signals strong fundamentals. For a macro view of sector rotation across all funds, see <a href="/mutual-funds/smart-money#sector-intelligence" class="text-primary-600 hover:underline">Sector Intelligence</a> on the Smart Money page.</p>
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why does it show "No portfolio changes detected"?</summary>

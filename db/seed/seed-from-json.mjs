@@ -17,6 +17,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql, isDbConfigured, upsertMany } from '../../scripts/lib/db.mjs';
+import { normalizeStockName } from '../../scripts/lib/stock-utils.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', '..', 'src', 'data');
@@ -258,23 +259,71 @@ async function seedHoldings() {
   }
 
   async function getOrCreateStock(holding) {
+    if (holding.isin) {
+      const byIsin = await sql`
+        SELECT id FROM stocks WHERE isin = ${holding.isin}
+        ORDER BY (sector_id IS NOT NULL) DESC, id ASC LIMIT 1
+      `;
+      if (byIsin.length > 0) {
+        stockCache[holding.isin] = byIsin[0].id;
+        return byIsin[0].id;
+      }
+    }
+
+    const normKey = normalizeStockName(holding.name);
+    if (normKey) {
+      const byName = await sql`
+        SELECT s.id FROM stocks s
+        WHERE TRIM(BOTH FROM REGEXP_REPLACE(
+          TRIM(BOTH FROM REGEXP_REPLACE(
+            REGEXP_REPLACE(
+              REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                  LOWER(TRIM(s.name)),
+                  '\\s+\\d{2}/\\d{2}/\\d{4}\\s*$', '', 'g'
+                ),
+                '\\mlimited\\M', 'ltd', 'gi'
+              ),
+              '\\mltd\\M', 'ltd', 'gi'
+            ),
+            '[^a-z0-9]+', ' ', 'g'
+          )),
+          '\\s*\\mltd\\M\\s*$', '', 'g'
+        )) = ${normKey}
+        ORDER BY (s.isin IS NOT NULL) DESC, (s.sector_id IS NOT NULL) DESC, s.id ASC
+        LIMIT 1
+      `;
+      if (byName.length > 0) {
+        const id = byName[0].id;
+        stockCache[normKey] = id;
+        if (holding.isin) stockCache[holding.isin] = id;
+        return id;
+      }
+    }
+
     const key = holding.isin || slugify(holding.name);
     if (stockCache[key]) return stockCache[key];
 
     const slug = slugify(holding.name);
-    const sectorId = await getOrCreateSector(holding.sector);
+    let sectorName = String(holding.sector || '').trim();
+    if (sectorName && /^\d+$/.test(sectorName)) sectorName = '';
+    if (sectorName && /^\[?(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)/i.test(sectorName)) {
+      sectorName = '';
+    }
+    const sectorId = sectorName ? await getOrCreateSector(sectorName) : null;
 
     try {
       await sql`
         INSERT INTO stocks (isin, name, slug, sector_id) 
         VALUES (${holding.isin || null}, ${holding.name}, ${slug}, ${sectorId})
         ON CONFLICT (slug) DO UPDATE SET
-          isin = COALESCE(EXCLUDED.isin, stocks.isin),
+          isin = COALESCE(stocks.isin, EXCLUDED.isin),
           sector_id = COALESCE(EXCLUDED.sector_id, stocks.sector_id)
       `;
       const result = await sql`SELECT id FROM stocks WHERE slug = ${slug}`;
       if (result.length > 0) {
         stockCache[key] = result[0].id;
+        if (holding.isin) stockCache[holding.isin] = result[0].id;
         return result[0].id;
       }
     } catch (err) {}

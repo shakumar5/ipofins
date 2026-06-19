@@ -92,6 +92,7 @@ async function computeHoldingsChanges(month) {
     FULL OUTER JOIN fund_holdings prev 
       ON curr.fund_id = prev.fund_id 
       AND curr.stock_id = prev.stock_id 
+      AND curr.month = ${month}::DATE
       AND prev.month = ${prevMonth}::DATE
     WHERE curr.month = ${month}::DATE
       OR (prev.month = ${prevMonth}::DATE AND curr.stock_id IS NULL)

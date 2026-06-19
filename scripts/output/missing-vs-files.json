@@ -1,0 +1,1150 @@
+{
+  "likelyInFolder": 84,
+  "noFileHint": 13,
+  "results": [
+    {
+      "fund": "Kotak Contra Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "HDFC Dividend Yield Fund - Growth Option Direct Plan",
+      "amc": "HDFC",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Monthly HDFC Childrens Fund - 31 May 2026.xlsx",
+        "Monthly HDFC Defence Fund - 31 May 2026.xlsx",
+        "Monthly HDFC Developed World Overseas Equity Passive FOF - 31 May 2026.xlsx",
+        "Monthly HDFC ELSS Tax saver - 31 May 2026.xlsx",
+        "Monthly HDFC Flexi Cap Fund - 30 April 2026.xlsx"
+      ],
+      "amcFileCount": 38,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "360 ONE ELSS Tax Saver Nifty 50 Index Fund - Direct Plan",
+      "amc": "360 ONE",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-March-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-May-2026.xlsx"
+      ],
+      "amcFileCount": 0,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "BANDHAN ELSS Tax Saver Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "BANK OF INDIA ELSS Tax Saver -Direct Plan",
+      "amc": "Bank of India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "PGIM INDIA ELSS TAX SAVER FUND May 2026.xlsx",
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "CANARA ROBECO ELSS TAX SAVER - DIRECT PLAN",
+      "amc": "Canara Robeco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-March-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-May-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI ELSS Tax Saver Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-March-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-May-2026.xlsx"
+      ],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Mirae Asset ELSS Tax Saver Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-March-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-May-2026.xlsx"
+      ],
+      "amcFileCount": 0,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Navi ELSS Tax Saver Fund- Direct Plan",
+      "amc": "Navi",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-March-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-May-2026.xlsx"
+      ],
+      "amcFileCount": 6,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Samco ELSS Tax Saver Fund - Direct Plan",
+      "amc": "Samco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-March-2026.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-May-2026.xlsx"
+      ],
+      "amcFileCount": 9,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union ELSS Tax Saver Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-31-05-2026.xlsx",
+        "elss-tax-saver9721fc07eee8616aaa28ff00007d74af.xlsx",
+        "elss-tax-savercaabfc07eee8616aaa28ff00007d74af.xlsx",
+        "ET-–-Canara-Robeco-ELSS-Tax-Saver-–-April-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "BANDHAN Flexi Cap Fund-Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "CANARA ROBECO FLEXICAP FUND - DIRECT PLAN",
+      "amc": "Canara Robeco",
+      "reason": "name_norm_match_not_linked",
+      "bestFiles": [
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-May-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-April-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-March-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Flexi Cap Fund- Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "SBI Flexicap Fund - DIRECT PLAN",
+      "amc": "SBI",
+      "reason": "name_norm_match_not_linked",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Union Flexi Cap Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Flexi-Cap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Flexi-Cap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Large-Midcap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Largecap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Largecap-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bandhan Focused Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Canara Robeco Focused Fund - Direct Plan",
+      "amc": "Canara Robeco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "FE-–-Canara-Robeco-Focused-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-May-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-April-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Focused Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Focused Fund- Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Focused Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Focused-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Focused-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "BANDHAN Large Cap Fund-Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Groww Largecap Fund (formerly known as Indiabulls Blue Chip Fund) - Direct Plan",
+      "amc": "Groww",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund) - Direct Plan",
+      "amc": "ICICI Prudential",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "ICICI Prudential Large & Mid Cap Fund.xlsx",
+        "ICICI Prudential Large Cap Fund.xlsx",
+        "ICICI Prudential Nifty LargeMidcap 250 Index Fund.xlsx",
+        "ICICI Prudential Large & Mid Cap Fund.xlsx",
+        "ICICI Prudential Large Cap Fund.xlsx"
+      ],
+      "amcFileCount": 427,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Large Cap Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Mirae Asset Large Cap Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Sundaram Large Cap Fund (Formerly Known as Sundaram Blue Chip Fund)Direct Plan",
+      "amc": "Sundaram",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Union Largecap Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Largecap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Largecap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Large & Midcap Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Mid Cap Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Invesco India Midcap Fund - Direct Plan",
+      "amc": "Invesco India",
+      "reason": "name_norm_match_not_linked",
+      "bestFiles": [
+        "invesco-india-midcap-fund_may_2026_equity.xlsx",
+        "invesco-india-contra-fund_may_2026_equity.xlsx",
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "invesco-india-flexi-cap-fund_may_2026_equity.xlsx",
+        "invesco-india-focused-fund_may_2026_equity.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Midcap Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Mirae Asset Large & Midcap Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Sundaram Large and Midcap Fund Direct Plan",
+      "amc": "Sundaram",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Union Large & Midcap Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Large-Midcap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Largecap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Largecap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Midcap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Midcap-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Midcap Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Large-Midcap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Midcap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Midcap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bank of India Multi Cap Fund Direct Plan",
+      "amc": "Bank of India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-multicap-fund_may_2026_equity.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & PSU Debt Fund.xlsx",
+        "ICICI Prudential Nifty Bank ETF.xlsx",
+        "ICICI Prudential Nifty Bank Index Fund.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Multi Cap Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Multicap Fund-Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Mirae Asset Multicap Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Union Multicap Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Multicap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Multicap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Aditya Birla Sun Life Banking and Financial Services Fund - Direct Plan",
+      "amc": "Aditya Birla Sun Life",
+      "reason": "name_norm_match_not_linked",
+      "bestFiles": [
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx"
+      ],
+      "amcFileCount": 0,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "BANDHAN FINANCIAL SERVICES FUND - DIRECT PLAN",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "BANDHAN Infrastructure Fund-Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bandhan Business Cycle Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bandhan Healthcare Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bandhan Innovation Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bandhan Multi-Factor Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "CANARA ROBECO CONSUMPTION FUND - DIRECT PLAN",
+      "amc": "Canara Robeco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-May-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-April-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-March-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "CANARA ROBECO INFRASTRUCTURE FUND - DIRECT PLAN",
+      "amc": "Canara Robeco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-May-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-April-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-March-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Canara Robeco Banking and Financials Services Fund - Direct Plan",
+      "amc": "Canara Robeco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-May-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-April-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-March-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Canara Robeco Manufacturing Fund - Direct Plan",
+      "amc": "Canara Robeco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-April-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-March-2026.xlsx",
+        "DV-–-Canara-Robeco-Flexi-cap-Fund-–-May-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-April-2026.xlsx",
+        "EQ-–-Canara-Robeco-Large-and-Mid-Cap-Fund-–-March-2026.xlsx"
+      ],
+      "amcFileCount": 27,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Groww Banking & Financial Services Fund - Direct Plan",
+      "amc": "Groww",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx"
+      ],
+      "amcFileCount": 0,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "HDFC INNOVATION FUND - DIRECT PLAN",
+      "amc": "HDFC",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Monthly HDFC Childrens Fund - 31 May 2026.xlsx",
+        "Monthly HDFC Defence Fund - 31 May 2026.xlsx",
+        "Monthly HDFC Developed World Overseas Equity Passive FOF - 31 May 2026.xlsx",
+        "Monthly HDFC ELSS Tax saver - 31 May 2026.xlsx",
+        "Monthly HDFC Flexi Cap Fund - 30 April 2026.xlsx"
+      ],
+      "amcFileCount": 38,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Helios Financial Services Fund - Direct Plan",
+      "amc": "Helios",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Helios-Flexi-Cap-Fund-Monthly-Portfolio-as-on-30th-April-2026.xlsx",
+        "Helios-Flexi-Cap-Fund-Monthly-Portfolio-as-on-31st-March-2026.xlsx",
+        "Helios-Flexi-Cap-Fund-Monthly-Portfolio-as-on-31st-May-2026.xlsx",
+        "Helios-Large-Mid-Cap-Fund-Monthly-Portfolio-as-on-30th-April-2026.xlsx",
+        "Helios-Large-Mid-Cap-Fund-Monthly-Portfolio-as-on-31st-March-2026.xlsx"
+      ],
+      "amcFileCount": 14,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ICICI Prudential Exports & Services Fund - Direct Plan",
+      "amc": "ICICI Prudential",
+      "reason": "name_norm_match_not_linked",
+      "bestFiles": [
+        "ICICI Prudential Exports and Services Fund.xlsx",
+        "ICICI Prudential Exports and Services Fund.xlsx",
+        "ICICI Prudential Exports and Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential CRISIL-IBX Financial Services 3-6 Months Debt Index Fund.xlsx"
+      ],
+      "amcFileCount": 427,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Banking and Financial Services Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx"
+      ],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Bharat Consumption Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Business Cycle Fund- Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Pharma and Healthcare Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Invesco India Business Cycle Fund - Direct Plan",
+      "amc": "Invesco India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-contra-fund_may_2026_equity.xlsx",
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "invesco-india-flexi-cap-fund_may_2026_equity.xlsx",
+        "invesco-india-focused-fund_may_2026_equity.xlsx",
+        "invesco-india-infrastructure-fund_may_2026_equity.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Invesco India Consumption Fund - Direct Plan",
+      "amc": "Invesco India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-contra-fund_may_2026_equity.xlsx",
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "invesco-india-flexi-cap-fund_may_2026_equity.xlsx",
+        "invesco-india-focused-fund_may_2026_equity.xlsx",
+        "invesco-india-infrastructure-fund_may_2026_equity.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Invesco India ESG Integration Strategy Fund - Direct Plan",
+      "amc": "Invesco India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-contra-fund_may_2026_equity.xlsx",
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "invesco-india-flexi-cap-fund_may_2026_equity.xlsx",
+        "invesco-india-focused-fund_may_2026_equity.xlsx",
+        "invesco-india-infrastructure-fund_may_2026_equity.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Invesco India Financial Services Fund - Direct Plan",
+      "amc": "Invesco India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-contra-fund_may_2026_equity.xlsx",
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "invesco-india-flexi-cap-fund_may_2026_equity.xlsx",
+        "invesco-india-focused-fund_may_2026_equity.xlsx",
+        "invesco-india-infrastructure-fund_may_2026_equity.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Invesco India Manufacturing Fund - Direct Plan",
+      "amc": "Invesco India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "invesco-india-contra-fund_may_2026_equity.xlsx",
+        "invesco-india-elss-tax-saver-fund_may_2026_equity.xlsx",
+        "invesco-india-flexi-cap-fund_may_2026_equity.xlsx",
+        "invesco-india-focused-fund_may_2026_equity.xlsx",
+        "invesco-india-infrastructure-fund_may_2026_equity.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Active Momentum Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Banking & Financial Services Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Business Cycle - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Consumption Fund - Direct plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak ESG Exclusionary Strategy Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx",
+        "ICICI Prudential ESG Exclusionary Strategy Fund.xlsx",
+        "ICICI Prudential ESG Exclusionary Strategy Fund_.xlsx",
+        "ICICI Prudential ESG Exclusionary Strategy Fund.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Healthcare Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Infrastructure & Economic Reform Fund- Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak MNC Fund-Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Pioneer Fund- Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Quant Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Rural Opportunities Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Special Opportunities Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Kotak Technology Fund - Direct Plan",
+      "amc": "Kotak",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "KotakGlobalEmergingMarketsOverseasEquityOmniFOFUnderlyingTop10PortfolioMay2026.xlsx"
+      ],
+      "amcFileCount": 1,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "LIC MF Banking and Financial Services Fund-Direct Plan",
+      "amc": "LIC",
+      "reason": "name_norm_match_not_linked",
+      "bestFiles": [
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx"
+      ],
+      "amcFileCount": 3,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Mirae Asset Great Consumer Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Mirae Asset Infrastructure Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Nippon India MNC Fund- Direct Plan",
+      "amc": "Nippon India",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "QUANTUM ESG BEST IN CLASS STRATEGY FUND - DIRECT PLAN",
+      "amc": "Other",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Samco Active Momentum Fund - Direct Plan",
+      "amc": "Samco",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "IN_MF_MONTHLY_PORTFOLIO_May_2026_SamcoLargeCapFund_1781074088.xlsx",
+        "IN_MF_MONTHLY_PORTFOLIO_May_2026_SamcoLargeMidCapFund_1781074084.xlsx",
+        "IN_MF_MONTHLY_PORTFOLIO_May_2026_SamcoMid_CapFund_1781074090.xlsx",
+        "IN_MF_MONTHLY_PORTFOLIO_May_2026_SamcoMultiAssetAllocationFund_1781074093.xlsx",
+        "IN_MF_MONTHLY_PORTFOLIO_May_2026_SamcoMultiCapFund_1781074096.xlsx"
+      ],
+      "amcFileCount": 9,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Taurus Banking & Financial Services Fund - Direct Plan",
+      "amc": "Taurus",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "ICICI Prudential Banking & Financial Services Fund.xlsx",
+        "Taurus_Elss_Tax_Saver_Fund_Monthly_Portfolio_Report_Performance_May_2026.xlsx",
+        "Taurus_Ethical_Fund_Monthly_Portfolio_Report_Performance_May_2026.xlsx"
+      ],
+      "amcFileCount": 9,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Active Momentum Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Equity-Savings-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Business Cycle Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Equity-Savings-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Consumption Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Equity-Savings-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Innovation & Opportunities Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Innovation-Opportunities-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Small Cap Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Mirae Asset Small Cap Fund - Direct Plan",
+      "amc": "Mirae Asset",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "Union Small Cap Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Small-Cap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Small-Cap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Flexi-Cap-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Flexi-Cap-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Large-Midcap-Fund-31-05-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Bandhan Value Fund - Direct Plan",
+      "amc": "Bandhan",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "Bandhan Large and Mid Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 March 2026.xlsx",
+        "Bandhan Large and Mid Cap Fund 31 May 2026.xlsx",
+        "Bandhan Large Cap Fund 30 April 2026.xlsx",
+        "Bandhan Large Cap Fund 31 March 2026.xlsx"
+      ],
+      "amcFileCount": 12,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Groww Value Fund (formerly known as Indiabulls Value Fund) - Direct Plan",
+      "amc": "Groww",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 0,
+      "verdict": "NO_FILE_FOUND"
+    },
+    {
+      "fund": "ICICI Prudential Value Fund (erstwhile Value Discovery Fund) - Direct Plan",
+      "amc": "ICICI Prudential",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [
+        "ICICI Prudential Nifty200 Value 30 ETF.xlsx",
+        "ICICI Prudential Nifty200 Value 30 Index Fund.xlsx",
+        "ICICI Prudential Nifty50 Value 20 ETF.xlsx",
+        "ICICI Prudential Nifty50 Value 20 Index Fund.xlsx",
+        "ICICI Prudential Value Fund.xlsx"
+      ],
+      "amcFileCount": 427,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "ITI Value Fund - Direct Plan",
+      "amc": "ITI",
+      "reason": "amc_has_other_funds_only",
+      "bestFiles": [],
+      "amcFileCount": 22,
+      "verdict": "LIKELY_IN_FOLDER"
+    },
+    {
+      "fund": "Union Value Fund - Direct Plan",
+      "amc": "Union",
+      "reason": "amc_no_holdings_in_db",
+      "bestFiles": [
+        "Monthly-Portfolio-Report-Union-Value-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Value-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Active-Momentum-Fund-31-05-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-Dynamic-Bond-Fund-30-04-2026.xlsx",
+        "Monthly-Portfolio-Report-Union-ELSS-Tax-Saver-Fund-30-04-2026.xlsx"
+      ],
+      "amcFileCount": 24,
+      "verdict": "LIKELY_IN_FOLDER"
+    }
+  ]
+}

@@ -51,6 +51,8 @@ export async function GET() {
     { t: 'Best Mutual Funds', u: '/mutual-funds/best', y: 'Fund', m: 'Top rated funds', k: 'best mutual fund top rated' },
     { t: 'All Mutual Funds', u: '/mutual-funds/all', y: 'Fund', m: 'Compare all funds', k: 'all mutual funds compare list' },
     { t: 'Holdings Changes', u: '/mutual-funds/mutual-fund-holdings-changes', y: 'Fund', m: 'Portfolio tracking', k: 'holdings changes portfolio buy sell fund manager' },
+    { t: 'Portfolio Overlap Checker', u: '/mutual-funds/portfolio-overlap-checker', y: 'Fund', m: 'Compare fund overlap', k: 'portfolio overlap checker common holdings duplicate exposure' },
+    { t: 'Fund Overlap', u: '/mutual-funds/fund-overlap', y: 'Fund', m: 'Pairwise fund overlap', k: 'fund overlap pairwise portfolio concentration duplicate stocks' },
     { t: 'Compare Brokers', u: '/broker/compare', y: 'Broker', m: 'Side by side', k: 'compare broker best cheapest' },
     { t: 'SIP Calculator', u: '/tools/sip-calculator', y: 'Tool', m: 'Monthly investment', k: 'sip calculator monthly investment returns' },
     { t: 'Lumpsum Calculator', u: '/tools/lumpsum-calculator', y: 'Tool', m: 'One-time investment', k: 'lumpsum calculator one time investment' },

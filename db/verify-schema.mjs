@@ -44,5 +44,34 @@ if (missing.length) {
   process.exit(1);
 }
 
-const [ipoCount] = await sql`SELECT COUNT(*)::int AS c FROM ipos`;
-console.log(`\n✅ Schema OK — ${ipoCount?.c ?? 0} IPOs in database\n`);
+const [counts] = await sql`
+  SELECT
+    (SELECT COUNT(*)::int FROM ipos) AS ipos,
+    (SELECT COUNT(*)::int FROM funds) AS funds,
+    (SELECT COUNT(*)::int FROM fund_navs) AS fund_navs,
+    (SELECT COUNT(*)::int FROM fund_holdings) AS fund_holdings,
+    (SELECT COUNT(*)::int FROM amcs) AS amcs,
+    (SELECT COUNT(*)::int FROM stocks) AS stocks
+`;
+
+console.log('\nRow counts:');
+console.log(`  IPOs:           ${counts.ipos}`);
+console.log(`  AMCs:           ${counts.amcs}`);
+console.log(`  Funds:          ${counts.funds}`);
+console.log(`  Fund NAVs:      ${counts.fund_navs}`);
+console.log(`  Fund holdings:  ${counts.fund_holdings}`);
+console.log(`  Stocks:         ${counts.stocks}`);
+
+const warnings = [];
+if (counts.funds < 100) warnings.push('funds table looks empty (expected ~1,900)');
+if (counts.fund_navs < 100) warnings.push('fund_navs table looks empty (run pipeline:nav or 0-Predeploy.bat)');
+if (counts.fund_holdings < 1000) warnings.push('fund_holdings looks empty (run monthly holdings pipeline)');
+
+if (warnings.length) {
+  console.warn('\n⚠️  Data warnings:');
+  for (const w of warnings) console.warn(`  - ${w}`);
+  console.warn('\nIf this is CI/Vercel, check DATABASE_URL matches your populated local Neon URL.');
+  console.warn('GitHub: Settings → Secrets → DATABASE_URL\n');
+}
+
+console.log(`\n✅ Schema OK\n`);

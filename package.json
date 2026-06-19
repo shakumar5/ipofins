@@ -2,9 +2,10 @@
   "name": "ipofins",
   "type": "module",
   "version": "1.0.0",
-  "description": "IPOfins - Financial intelligence platform for IPO analytics, mutual fund tracking, and investment tools",
+  "description": "IPOFins - Financial intelligence platform for IPO analytics, mutual fund tracking, and investment tools",
   "scripts": {
     "dev": "astro dev",
+    "dev:sync": "node --use-system-ca scripts/export-client-data.mjs && astro dev",
     "start": "astro dev",
     "pipeline:ipo": "node --use-system-ca scripts/pipeline/00-ipo-broker-sync.mjs",
     "pipeline:daily": "node --use-system-ca scripts/pipeline/01-daily-nav-ipo.mjs",
@@ -15,7 +16,7 @@
     "fetch-data": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-mf": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-gmp-sub": "echo 'DEPRECATED: use npm run pipeline:subscription' && exit 1",
-    "build": "node db/verify-schema.mjs && npx astro build",
+    "build": "node db/verify-schema.mjs && node --use-system-ca scripts/export-client-data.mjs && npx astro build",
     "check": "astro check",
     "preview": "astro preview",
     "astro": "astro",
@@ -29,11 +30,13 @@
     "db:compute-all": "node --use-system-ca db/compute/compute-signals.mjs && node --use-system-ca db/compute/compute-overlaps.mjs",
     "db:refresh-holdings": "node --use-system-ca scripts/pipeline/03-monthly-mf-holdings.mjs",
     "db:status": "node --use-system-ca db/check-full-counts.mjs",
-    "db:verify": "node db/verify-schema.mjs",
+    "db:fix-holdings-canonical": "node --use-system-ca db/seed/reassign-holdings-canonical.mjs",
+    "db:dedupe-stocks": "node --use-system-ca db/seed/dedupe-stocks-canonical.mjs",
     "audit:db": "node scripts/audit-db-health.mjs",
     "audit:nav-mapping": "node --use-system-ca scripts/audit-nav-mapping.mjs",
     "report:amcs": "node scripts/report-missing-amcs.mjs",
     "report:holdings": "node scripts/report-holdings-by-amc.mjs",
+    "export:client-data": "node --use-system-ca scripts/export-client-data.mjs",
     "og:generate": "node scripts/generate-og-images.mjs"
   },
   "dependencies": {
@@ -45,7 +48,8 @@
     "astro": "^6.4.4",
     "pg": "^8.21.0",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "web-vitals": "^5.3.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.20",

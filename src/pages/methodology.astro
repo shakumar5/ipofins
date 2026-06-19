@@ -4,16 +4,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: 'Data Methodology - IPOfins',
+  name: 'Data Methodology - IPOFins',
   description:
-    'How IPOfins sources, processes, and publishes IPO, mutual fund, and market data for Indian investors.',
+    'How IPOFins sources, processes, and publishes IPO, mutual fund, and market data for Indian investors.',
   url: 'https://ipofins.com/methodology',
 };
 ---
 
 <BaseLayout
-  title="Data Methodology — How IPOfins Sources & Processes Data"
-  description="Learn how IPOfins collects IPO, mutual fund NAV, and monthly holdings data from SEBI, AMFI, NSE, and BSE disclosures."
+  title="Data Methodology — How IPOFins Sources & Processes Data"
+  description="Learn how IPOFins collects IPO, mutual fund NAV, and monthly holdings data from SEBI, AMFI, NSE, and BSE disclosures."
   jsonLd={jsonLd}
 >
   <section class="container-narrow py-16">
@@ -25,7 +25,7 @@ const jsonLd = {
         How We Source Data
       </h1>
       <p class="mt-4 text-lg text-surface-600 dark:text-surface-300 leading-relaxed">
-        IPOfins is built on publicly available regulatory and exchange disclosures. We do not repackage
+        IPOFins is built on publicly available regulatory and exchange disclosures. We do not repackage
         unofficial indicators such as grey market premium (GMP). Our goal is to make official data
         easier to search, compare, and understand.
       </p>
@@ -55,16 +55,16 @@ const jsonLd = {
           <h2 class="text-xl font-bold text-surface-900 dark:text-white">Monthly Holdings &amp; Changes</h2>
           <p class="mt-3">
             Mutual fund portfolio holdings are parsed from monthly AMC disclosure files published on
-            fund house websites, as mandated by SEBI. IPOfins normalizes fund names across AMCs,
+            fund house websites, as mandated by SEBI. IPOFins normalizes fund names across AMCs,
             deduplicates overlapping files, and computes month-over-month additions, removals, and
             weight changes. Coverage grows as new AMC files are processed each month.
           </p>
         </div>
 
         <div>
-          <h2 class="text-xl font-bold text-surface-900 dark:text-white">IPOfins Score</h2>
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">IPOFins Score</h2>
           <p class="mt-3">
-            Where shown, the IPOfins Score is a quantitative rating based on available financials,
+            Where shown, the IPOFins Score is a quantitative rating based on available financials,
             valuation context, sector data, and issue structure. It is a research aid—not a buy or
             sell recommendation. Scores are only displayed when sufficient data is available.
           </p>

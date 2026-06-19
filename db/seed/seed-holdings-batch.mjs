@@ -14,7 +14,9 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { buildFundMatcher, slugify } from '../../scripts/lib/fund-match.mjs';
-import { bulkUpsertFundHoldings, closePgPool } from '../../scripts/lib/pg-bulk.mjs';
+import { buildStockIdResolver } from '../../scripts/lib/stock-utils.mjs';
+import { unpackMonthHoldings } from '../../scripts/lib/holdings-month.mjs';
+import { bulkUpsertFundHoldings, bulkUpsertFundPortfolioStats, closePgPool } from '../../scripts/lib/pg-bulk.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -83,25 +85,28 @@ async function main() {
   const amcRows = await sql`SELECT id, name, slug FROM amcs`;
   const resolveFundId = buildFundMatcher(fundRows, amcRows);
 
-  const stockRows = await sql`SELECT id, slug FROM stocks`;
-  const stockIdMap = Object.fromEntries(stockRows.map((r) => [r.slug, r.id]));
+  const stockRows = await sql`SELECT id, slug, name, isin FROM stocks`;
+  const resolveStockId = buildStockIdResolver(stockRows, slugify);
 
   console.log(`  Funds: ${fundRows.length}, Stocks: ${stockRows.length}`);
 
   if (fullReload) {
     await sql`DELETE FROM holdings_changes`;
     await sql`DELETE FROM fund_holdings`;
+    await sql`DELETE FROM fund_portfolio_stats`;
     console.log('  Cleared all holdings');
   } else {
     for (const d of targetDates) {
       await sql`DELETE FROM holdings_changes WHERE month = ${d}::DATE`;
       await sql`DELETE FROM fund_holdings WHERE month = ${d}::DATE`;
+      await sql`DELETE FROM fund_portfolio_stats WHERE month = ${d}::DATE`;
     }
     console.log(`  Cleared ${targetDates.size} month(s) for refresh`);
   }
 
   console.log('\n  📋 Building rows...');
   const allRows = [];
+  const statsRows = [];
   let matchedFunds = 0;
   let unmatchedFunds = 0;
 
@@ -117,11 +122,17 @@ async function main() {
       const monthDate = monthToDate(monthStr);
       if (!monthDate || !targetDates.has(monthDate)) continue;
 
-      const holdings = fundData[monthStr];
-      if (!Array.isArray(holdings)) continue;
+      const { stocks: holdings, totalStocks } = unpackMonthHoldings(fundData[monthStr]);
+      if (!holdings.length) continue;
+
+      statsRows.push({
+        fund_id: fundId,
+        month: monthDate,
+        total_stocks: totalStocks,
+      });
 
       for (const h of holdings) {
-        const stockId = stockIdMap[slugify(h.name)];
+        const stockId = resolveStockId(h);
         if (!stockId) continue;
         allRows.push({
           fund_id: fundId,
@@ -151,20 +162,36 @@ async function main() {
     console.log(`  Deduped: ${allRows.length - dedupedRows.length} duplicate rows`);
   }
 
-  if (dedupedRows.length === 0) {
+  if (dedupedRows.length === 0 && statsRows.length === 0) {
     console.log('  Nothing to insert.');
     return;
   }
 
+  const statsSeen = new Set();
+  const dedupedStats = [];
+  for (const row of statsRows) {
+    const key = `${row.fund_id}|${row.month}`;
+    if (statsSeen.has(key)) continue;
+    statsSeen.add(key);
+    dedupedStats.push(row);
+  }
+
   const t1 = Date.now();
   console.log('\n  ⚡ Bulk inserting via Postgres UNNEST...');
-  const inserted = await bulkUpsertFundHoldings(dedupedRows, 3000);
+  let inserted = 0;
+  if (dedupedRows.length > 0) {
+    inserted = await bulkUpsertFundHoldings(dedupedRows, 3000);
+  }
+  let statsInserted = 0;
+  if (dedupedStats.length > 0) {
+    statsInserted = await bulkUpsertFundPortfolioStats(dedupedStats, 2000);
+  }
   await closePgPool();
 
   const t2 = Date.now();
   const [r] = await sql`SELECT COUNT(*)::int AS cnt FROM fund_holdings`;
 
-  console.log(`\n  ✅ Inserted: ${inserted} holdings in ${((t2 - t1) / 1000).toFixed(1)}s`);
+  console.log(`\n  ✅ Inserted: ${inserted} holdings, ${statsInserted} portfolio stats in ${((t2 - t1) / 1000).toFixed(1)}s`);
   console.log(`  DB total: ${r.cnt} holdings`);
   console.log(`  Total time: ${((t2 - t0) / 1000).toFixed(1)}s`);
   console.log('═══════════════════════════════════════════════════════════\n');

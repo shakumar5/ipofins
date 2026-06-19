@@ -1,34 +1,12 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import FundTable from '../../../components/funds/FundTable.tsx';
-import { getAllFunds } from '../../../lib/data/funds';
-import { getFundSlugsWithHoldings } from '../../../lib/data/holdings';
+import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
+import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
+import { getMfHubBuildData } from '../../../lib/mf-hub-build';
+import { mfTabConfig } from '../../../lib/mf-section-config';
 
-const fundsData = await getAllFunds();
-const holdingSlugs = await getFundSlugsWithHoldings();
-
-const categories = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'].filter(c => fundsData.some(f => f.category === c));
-
-// Only pass fields the React component actually needs (reduces hydration payload from 437KB to ~120KB)
-const fundsForTable = fundsData.map(f => ({
-  name: f.name,
-  slug: f.slug,
-  category: f.category,
-  nav: f.nav,
-  returns1y: f.returns1y,
-  returns3y: f.returns3y,
-  returns5y: f.returns5y,
-  rating: f.rating,
-  aum: f.aum,
-  riskLevel: f.riskLevel,
-}));
-
-// Derive latest update date from data
-const latestUpdate = fundsData.reduce((latest, f) => {
-  if (f.lastUpdated && f.lastUpdated > latest) return f.lastUpdated;
-  return latest;
-}, '');
-const dataDate = latestUpdate ? new Date(latestUpdate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+const hub = await getMfHubBuildData();
+const cfg = mfTabConfig('all');
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -47,7 +25,7 @@ const faqJsonLd = {
       "name": "How do I compare mutual funds by returns?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Use the table to sort funds by 1-year, 3-year, or 5-year returns. Click on any column header to sort. Filter by category (Large Cap, Mid Cap, Small Cap, etc.) for fair comparison within the same category."
+        "text": "Use the table above to sort funds by 1-year, 3-year, or 5-year returns. Click on any column header to sort. You can also filter by category (Large Cap, Mid Cap, Small Cap, etc.) using the category tabs. Always compare funds within the same category for a fair comparison."
       }
     },
     {
@@ -55,7 +33,7 @@ const faqJsonLd = {
       "name": "What do 1Y, 3Y, and 5Y returns mean?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "1Y is the absolute return over the past 1 year. 3Y and 5Y are CAGR (Compound Annual Growth Rate) over 3 and 5 years respectively. CAGR accounts for compounding and is a better measure for long-term performance comparison."
+        "text": "1Y is the absolute return over the past 1 year. 3Y and 5Y are CAGR (Compound Annual Growth Rate) over 3 and 5 years respectively. CAGR gives a smoothed annual return that accounts for compounding, making it a better measure for comparing long-term performance."
       }
     },
     {
@@ -63,7 +41,7 @@ const faqJsonLd = {
       "name": "What categories of mutual funds are available?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Categories include: Large Cap (stable, lower risk), Mid Cap (growth potential, moderate risk), Small Cap (high growth, high risk), Flexi Cap (flexible allocation), ELSS (tax-saving with 3-year lock-in), and Hybrid (mix of equity and debt)."
+        "text": "We track: Large Cap (stable, lower risk), Mid Cap (growth potential, moderate risk), Small Cap (high growth, high risk), Flexi Cap (flexible allocation), ELSS (tax-saving with 3-year lock-in), and Hybrid (mix of equity and debt for balanced returns)."
       }
     },
     {
@@ -71,14 +49,14 @@ const faqJsonLd = {
       "name": "Where does the mutual fund data come from?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "All NAV and return data is sourced from AMFI (Association of Mutual Funds in India). Returns are calculated from historical NAV data. We show only Direct-Growth plans for optimal investor returns."
+        "text": "All NAV and return data is sourced from AMFI (Association of Mutual Funds in India), the official industry body. Returns are calculated from historical NAV data. We show only Direct-Growth plans to help investors get the best possible returns."
       }
     }
   ]
 };
 ---
 
-<BaseLayout title="List of All Mutual Funds in India 2026 - Compare & Filter | IPOfins" description="Complete list of all mutual funds in India 2026. Compare returns, NAV, ratings across Large Cap, Mid Cap, Small Cap, ELSS, Flexi Cap categories. Sort by 1Y/3Y/5Y performance." jsonLd={jsonLd}>
+<BaseLayout title={cfg.title} description={cfg.description} jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
@@ -90,27 +68,23 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">List of All Mutual Funds in India 2026</h1>
-    <p class="mt-1 text-sm text-surface-500">{fundsData.length} funds • Filter by category • Sort by returns • Direct-Growth plans only</p>
-    <span class="data-freshness mt-2">🟢 Data as of {dataDate} • Source: AMFI India</span>
-
-    <!-- Main Tabs -->
-    <div class="mt-4 flex gap-2">
-      <a href="/mutual-funds/best" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Best Funds</a>
-      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">All Funds</span>
-      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
-    </div>
+    <MfSectionHeader
+      active="all"
+      heading={cfg.heading}
+      subtitle={`${hub.totalFunds} equity Direct-Growth funds · Portfolio data for ${hub.holdingsCount} funds · Sort by returns`}
+      freshness={`🟢 Data as of ${hub.dataDate} • Source: AMFI India`}
+    />
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:load funds={fundsForTable} categories={categories} holdingSlugs={Array.from(holdingSlugs)} defaultCategory="All" basePath="/mutual-funds/all" />
+    <FundTableLoader client:idle table="all" basePath="/mutual-funds/all" />
   </section>
 
   <!-- How to Use Section -->
   <section class="container-narrow py-8">
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How to Use This Page</h2>
     <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
-      <p>This page lists all mutual funds tracked on IPOfins with their latest NAV data sourced directly from AMFI India. You can use the interactive table above to filter funds by category, sort by different return periods, and search for specific fund names. This makes it easy to compare performance across funds within the same category.</p>
+      <p>This page lists all mutual funds tracked on IPOFins with their latest NAV data sourced directly from AMFI India. You can use the interactive table above to filter funds by category, sort by different return periods, and search for specific fund names. This makes it easy to compare performance across funds within the same category.</p>
       <p>Start by selecting a category tab (Large Cap, Mid Cap, Small Cap, etc.) to narrow down funds relevant to your investment goal. Then sort by 3-year or 5-year CAGR to identify consistent performers. Click on any fund name to view detailed information including top holdings, SIP projections, and risk metrics. Funds with holdings data available are marked — this lets you see exactly what stocks the fund owns.</p>
       <p>For new investors, we recommend comparing at least 3-5 funds within your chosen category before making a decision. Look beyond just returns — consider AUM (larger AUMs indicate investor confidence), expense ratio, and fund manager tenure. A fund with slightly lower returns but consistent performance across market cycles is often a better choice than one with spectacular recent returns driven by a single sector bet. All data shown is for Direct-Growth plans which offer the lowest expense ratio.</p>
     </div>

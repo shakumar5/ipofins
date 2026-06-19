@@ -450,9 +450,9 @@ details[open] > *:not(summary) {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Smooth page transitions (for view transitions API) */
+/* View Transitions disabled — caused full-page swap feel on filter/url changes */
 @view-transition {
-  navigation: auto;
+  navigation: none;
 }
 
 /* Content visibility for below-fold sections (improves render perf) */

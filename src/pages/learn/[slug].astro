@@ -20,8 +20,8 @@ const jsonLd = {
   "headline": article.title,
   "description": article.excerpt,
   "url": `https://ipofins.com/learn/${article.slug}`,
-  "author": { "@type": "Organization", "name": "ipofins" },
-  "publisher": { "@type": "Organization", "name": "ipofins" },
+  "author": { "@type": "Organization", "name": "IPOFins" },
+  "publisher": { "@type": "Organization", "name": "IPOFins" },
   "breadcrumb": {
     "@type": "BreadcrumbList",
     "itemListElement": [
@@ -33,7 +33,7 @@ const jsonLd = {
 };
 ---
 
-<BaseLayout title={`${article.title} - ipofins`} description={article.excerpt} jsonLd={jsonLd}>
+<BaseLayout title={`${article.title} - IPOFins`} description={article.excerpt} jsonLd={jsonLd}>
   <!-- Breadcrumb -->
   <nav class="container-narrow pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

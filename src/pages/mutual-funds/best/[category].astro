@@ -1,60 +1,25 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import FundTable from '../../../components/funds/FundTable.tsx';
+import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
+import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getAllFunds } from '../../../lib/data/funds';
-import { getFundSlugsWithHoldings } from '../../../lib/data/holdings';
-
-const fundsData = await getAllFunds();
-const holdingSlugs = await getFundSlugsWithHoldings();
-
-function catToSlug(cat: string): string {
-  return cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
-}
-
-// Best fund selection logic
-const CATEGORIES = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-const categories = CATEGORIES.filter(c => fundsData.some((f: any) => f.category === c));
-const top5ByCat = new Set<string>();
-for (const cat of categories) {
-  fundsData.filter((f: any) => f.category === cat).sort((a: any, b: any) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach((f: any) => top5ByCat.add(f.slug));
-}
-const fiveStarFunds = new Set(fundsData.filter((f: any) => f.rating === 5).map((f: any) => f.slug));
-const top10By1Y = new Set([...fundsData].sort((a: any, b: any) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map((f: any) => f.slug));
-const bestFunds = fundsData.filter((f: any) => {
-  let score = 0;
-  if (top5ByCat.has(f.slug)) score++;
-  if (fiveStarFunds.has(f.slug)) score++;
-  if (top10By1Y.has(f.slug)) score++;
-  return score >= 2;
-});
+import { selectBestFunds } from '../../../lib/best-funds';
+import { catToSlug } from '../../../lib/fund-category-slug';
 
 export async function getStaticPaths() {
   const fundsData = await getAllFunds();
-  const cats = ['Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Contra', 'Dividend Yield'];
-  const avail = cats.filter(c => fundsData.some(f => f.category === c));
-  const t5 = new Set<string>();
-  for (const cat of avail) {
-    fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).forEach(f => t5.add(f.slug));
-  }
-  const f5 = new Set(fundsData.filter(f => f.rating === 5).map(f => f.slug));
-  const t10 = new Set([...fundsData].sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0)).slice(0, 10).map(f => f.slug));
-  const bf = fundsData.filter(f => { let s = 0; if (t5.has(f.slug)) s++; if (f5.has(f.slug)) s++; if (t10.has(f.slug)) s++; return s >= 2; });
-  const available = avail.filter(c => bf.some(f => f.category === c));
-  return available.map(cat => ({
-    params: { category: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds' },
+  const bestFunds = selectBestFunds(fundsData);
+  const available = [...new Set(bestFunds.map((f) => f.category))];
+  return available.map((cat) => ({
+    params: { category: catToSlug(cat) },
     props: { categoryName: cat },
   }));
 }
 
 const { categoryName } = Astro.props;
-
-const bestFundsForTable = bestFunds.map(f => ({
-  name: f.name, slug: f.slug, category: f.category, nav: f.nav,
-  returns1y: f.returns1y, returns3y: f.returns3y, returns5y: f.returns5y,
-  rating: f.rating, aum: f.aum, riskLevel: f.riskLevel,
-}));
-
-const categoryCount = bestFunds.filter((f: any) => f.category === categoryName).length;
+const fundsData = await getAllFunds();
+const bestFunds = selectBestFunds(fundsData);
+const categoryCount = bestFunds.filter((f) => f.category === categoryName).length;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -66,7 +31,7 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title={`Best ${categoryName} Mutual Funds 2026 - Top Rated | IPOfins`}
+  title={`Best ${categoryName} Mutual Funds 2026 - Top Rated | IPOFins`}
   description={`${categoryCount} best ${categoryName} mutual funds in India 2026. Top performers with highest returns and ratings. Direct-Growth plans only.`}
   jsonLd={jsonLd}
 >
@@ -86,14 +51,15 @@ const jsonLd = {
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Best {categoryName} Mutual Funds 2026</h1>
     <p class="mt-1 text-sm text-surface-500">{categoryCount} top-rated {categoryName} funds • Sorted by performance</p>
 
-    <div class="mt-4 flex gap-2">
-      <span class="px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg">Best Funds</span>
-      <a href="/mutual-funds/all" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">All Funds</a>
-      <a href="/mutual-funds/mutual-fund-holdings-changes" class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">Holdings Changes</a>
-    </div>
+    <MfSectionTabs active="best" />
   </section>
 
   <section class="container-wide py-4">
-    <FundTable client:load funds={bestFundsForTable} categories={categories} holdingSlugs={Array.from(holdingSlugs)} defaultCategory={categoryName} basePath="/mutual-funds/best" />
+    <FundTableLoader
+      client:idle
+      table="best"
+      basePath="/mutual-funds/best"
+      defaultCategory={categoryName}
+    />
   </section>
 </BaseLayout>

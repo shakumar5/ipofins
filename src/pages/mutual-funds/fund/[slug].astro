@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getFundsWithHoldings, getRelatedFunds } from '../../../lib/data/funds';
-import { getFundHoldings, getFundOverlaps } from '../../../lib/data/holdings';
+import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
 
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
@@ -63,6 +63,7 @@ const faqJsonLd = {
 
 // Get holdings for this fund (latest month)
 const fundHoldingsRows = (await getFundHoldings(fund.slug)) as Array<Record<string, unknown>>;
+const portfolioStockCount = await getFundPortfolioStockCount(fund.slug);
 const fundOverlaps = (await getFundOverlaps(fund.slug, 5)) as Array<Record<string, unknown>>;
 const latestMonth = fundHoldingsRows[0]?.month
   ? new Date(String(fundHoldingsRows[0].month)).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
@@ -157,7 +158,9 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 section-accent">Top Holdings</h2>
     {holdings.length > 0 ? (
       <div>
-        <p class="text-xs text-surface-500 mb-4">Top stocks held by this fund as of {latestMonth} (Source: AMC monthly disclosure)</p>
+        <p class="text-xs text-surface-500 mb-4">
+          Top {holdings.length}{portfolioStockCount && portfolioStockCount > holdings.length ? ` of ${portfolioStockCount}` : ''} stocks held by this fund as of {latestMonth} (Source: AMC monthly disclosure)
+        </p>
         <div class="card overflow-hidden">
           <div class="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-surface-500 uppercase border-b border-surface-200 dark:border-surface-700">
             <div class="col-span-1">#</div>

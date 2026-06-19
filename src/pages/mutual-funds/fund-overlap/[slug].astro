@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holdings';
+import { getFundsWithOverlaps, getFundOverlaps, getFundHoldingsMeta } from '../../../lib/data/holdings';
 import { getAllFunds } from '../../../lib/data/funds';
 
 export async function getStaticPaths() {
@@ -17,6 +17,7 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const { fundName } = Astro.props;
 const overlaps = (await getFundOverlaps(slug!, 15)) as Array<Record<string, unknown>>;
+const { slugs: holdingSlugs } = await getFundHoldingsMeta();
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -27,7 +28,7 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title={`${fundName} Overlap - Similar Mutual Funds | IPOfins`}
+  title={`${fundName} Overlap - Similar Mutual Funds | IPOFins`}
   description={`See which mutual funds overlap most with ${fundName}. Compare shared stock holdings and overlap percentage.`}
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
@@ -44,7 +45,7 @@ const jsonLd = {
 
   <section class="container-wide pt-8 pb-4">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{fundName}</h1>
-    <p class="mt-1 text-sm text-surface-500">Funds with the highest portfolio overlap (shared stocks by weight).</p>
+    <p class="mt-1 text-sm text-surface-500">Other funds with portfolio holdings that share the most stocks (by weight).</p>
   </section>
 
   <section class="container-wide pb-12">
@@ -59,18 +60,24 @@ const jsonLd = {
             </tr>
           </thead>
           <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
-            {overlaps.map((row) => (
+            {overlaps.map((row) => {
+              const rowSlug = String(row.slug);
+              const hasDetailPage = holdingSlugs.has(rowSlug);
+              return (
               <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30">
                 <td class="px-4 py-3">
-                  <a href={`/mutual-funds/fund-overlap/${row.slug}`} class="font-medium text-primary-600 hover:underline">{row.name}</a>
-                  <span class="text-xs text-surface-400 block">
-                    <a href={`/mutual-funds/fund/${row.slug}-holdings`} class="hover:underline">View holdings →</a>
-                  </span>
+                  <a href={`/mutual-funds/fund-overlap/${rowSlug}`} class="font-medium text-primary-600 hover:underline">{row.name}</a>
+                  {hasDetailPage && (
+                    <span class="text-xs text-surface-400 block">
+                      <a href={`/mutual-funds/fund/${rowSlug}-holdings`} class="hover:underline">View holdings →</a>
+                    </span>
+                  )}
                 </td>
                 <td class="px-4 py-3 text-right font-bold">{row.overlap_pct != null ? `${Number(row.overlap_pct).toFixed(1)}%` : '—'}</td>
                 <td class="px-4 py-3 text-right">{row.common_stocks != null ? String(row.common_stocks) : '—'}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -1,7 +1,10 @@
 ---
+import { BRAND_NAME } from '../lib/brand';
+
 const navLinks = [
   { label: 'IPOs', href: '/ipo' },
   { label: 'Mutual Funds', href: '/mutual-funds' },
+  { label: 'Smart Money', href: '/mutual-funds/smart-money' },
   { label: 'Brokers', href: '/broker' },
   { label: 'Tools', href: '/tools' },
   { label: 'Blogs', href: '/blogs' },
@@ -18,7 +21,7 @@ const navLinks = [
           <span class="text-white font-bold text-sm">F</span>
         </div>
         <span class="text-lg font-extrabold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors tracking-tight">
-          ipofins
+          {BRAND_NAME}
         </span>
       </a>
 

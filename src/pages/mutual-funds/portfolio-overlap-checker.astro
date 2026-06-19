@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import MfSectionHeader from '../../components/funds/MfSectionHeader.astro';
+import PortfolioOverlapChecker from '../../components/funds/PortfolioOverlapChecker.tsx';
+import { mfTabConfig } from '../../lib/mf-section-config';
+
+const cfg = mfTabConfig('overlap-checker');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Portfolio Overlap Checker',
+  description: 'Compare mutual fund portfolio overlap across 2 to 4 funds. See overlap percentage and common stock holdings.',
+  url: 'https://ipofins.com/mutual-funds/portfolio-overlap-checker',
+};
+---
+
+<BaseLayout
+  title={cfg.title}
+  description={cfg.description}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Portfolio Overlap Checker</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <MfSectionHeader
+      active="overlap-checker"
+      heading={cfg.heading}
+      subtitle={cfg.subtitle}
+    />
+  </section>
+
+  <section class="container-wide pb-12">
+    <PortfolioOverlapChecker client:idle />
+  </section>
+
+  <section class="container-narrow pb-12">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How overlap is calculated</h2>
+    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
+      <p>
+        For each stock held by <strong>all</strong> selected funds, we take the smallest portfolio weight (% of NAV) among those funds and add it up. That total is the overlap percentage — the same method used for pairwise fund overlap on IPOFins.
+      </p>
+      <p>
+        Example: if Fund A holds HDFC Bank at 8% and Fund B at 6%, that stock contributes 6% to the two-fund overlap. Common holdings lists every stock name in that intersection.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

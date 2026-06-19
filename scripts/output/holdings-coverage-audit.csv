@@ -1,0 +1,367 @@
+status,reason,slug,name,category,scheme_code,amc_id,amc_name,holder_slug,holder_rows,in_parsed_json
+OK,holdings_linked,invesco-india-contra-fund-direct-plan,Invesco India Contra Fund - Direct Plan,Contra,120348,2,Invesco India,invesco-india-contra-fund-direct-plan,,yes
+OK,holdings_linked,kotak-contra-fund-direct-plan,Kotak Contra Fund - Direct Plan,Contra,119769,1,Kotak,kotak-contra-fund-direct-plan,,yes
+OK,holdings_linked,sbi-contra-fund-direct-plan,SBI CONTRA FUND - DIRECT PLAN,Contra,119835,3,SBI,sbi-contra-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-dividend-yield-fund-growth-direct-plan,Aditya Birla Sun Life Dividend Yield Fund - Growth - Direct Plan,Dividend Yield,119507,7,Aditya Birla Sun Life,aditya-birla-sun-life-dividend-yield-fund-growth-direct-plan,,yes
+MISSING,amc_has_other_funds_only,hdfc-dividend-yield-fund-growth-option-direct-plan,HDFC Dividend Yield Fund - Growth Option Direct Plan,Dividend Yield,148609,9,HDFC,hdfc-defence-fund; hdfc-elss-tax-saver-growth-option-direct-plan; hdfc-flexi-cap-fund-growth-option-direct-plan,,no
+MISSING,amc_has_other_funds_only,360-one-elss-tax-saver-nifty-50-index-fund-direct-plan,360 ONE ELSS Tax Saver Nifty 50 Index Fund - Direct Plan,ELSS,151165,34,360 ONE,360-one-quant-fund; 360-one-focused-fund-direct-plan; 360-one-flexicap-fund-direct-plan,,no
+OK,holdings_linked,aditya-birla-sun-life-elss-tax-saver-fund-growth-direct-plan,Aditya Birla Sun Life ELSS Tax Saver Fund,ELSS,119544,7,Aditya Birla Sun Life,aditya-birla-sun-life-elss-tax-saver-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-elss-tax-saver-fund-direct-plan,Axis ELSS Tax Saver Fund - Direct Plan,ELSS,120503,29,Axis,axis-elss-tax-saver-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,bandhan-elss-tax-saver-fund-direct-plan,BANDHAN ELSS Tax Saver Fund - Direct Plan,ELSS,118473,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan; bandhan-midcap-fund; bandhan-multicap-fund,,no
+OK,holdings_linked,bank-of-india-elss-tax-saver-direct-plan,BANK OF INDIA ELSS Tax Saver -Direct Plan,ELSS,119351,21,Bank of India,bank-of-india-elss-tax-saver-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-elss-tax-saver-fund-direct-plan,BARODA BNP PARIBAS ELSS Tax Saver Fund - Direct Plan,ELSS,150159,12,Baroda BNP,baroda-bnp-paribas-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-elss-tax-saver-direct-plan,CANARA ROBECO ELSS TAX SAVER - DIRECT PLAN,ELSS,118285,24,Canara Robeco,canara-robeco-elss-tax-saver-direct-plan,,yes
+OK,holdings_linked,dsp-elss-tax-saver-fund-direct-plan,DSP ELSS Tax Saver Fund - Direct Plan,ELSS,119242,19,DSP,dsp-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-elss-tax-saver-fund-direct-plan,Edelweiss ELSS Tax Saver Fund - Direct Plan,ELSS,118620,22,Edelweiss,edelweiss-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,hdfc-elss-tax-saver-growth-option-direct-plan,HDFC ELSS Tax saver,ELSS,119060,9,HDFC,hdfc-elss-tax-saver-growth-option-direct-plan,,yes
+OK,holdings_linked,icici-prudential-elss-tax-saver-fund-direct-plan,ICICI Prudential ELSS Tax Saver Fund - Direct Plan,ELSS,120592,5,ICICI Prudential,icici-prudential-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,iti-elss-tax-saver-fund-direct-plan,ITI ELSS Tax Saver Fund - Direct Plan,ELSS,147541,14,ITI,iti-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-elss-tax-saver-fund-direct-plan,Invesco India ELSS Tax Saver Fund - Direct Plan,ELSS,120416,2,Invesco India,invesco-india-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-elss-tax-saver-direct-plan,LIC MF ELSS Tax Saver-Direct Plan,ELSS,120270,4,LIC,lic-mf-elss-tax-saver-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-elss-tax-saver-fund-direct-plan,Mahindra Manulife ELSS Tax Saver Fund - Direct Plan,ELSS,139781,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mirae-asset-elss-tax-saver-fund-direct-plan,Mirae Asset ELSS Tax Saver Fund - Direct Plan,ELSS,135781,23,Mirae Asset,mirae-asset-flexi-cap-fund-direct-plan; mirae-asset-focused-fund; mirae-asset-large-cap-fund-direct-plan,,no
+OK,holdings_linked,motilal-oswal-elss-tax-saver-fund-direct-plan,Motilal Oswal ELSS Tax Saver Fund - Direct Plan,ELSS,133386,13,Motilal Oswal,motilal-oswal-elss-tax-saver-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,navi-elss-tax-saver-fund-direct-plan,Navi ELSS Tax Saver Fund- Direct Plan,ELSS,135654,74,Navi,navi-flexi-cap-fund-direct-plan; navi-large-midcap-fund-direct-plan; navi-mutual-fund,,no
+OK,holdings_linked,pgim-india-elss-tax-saver-fund-direct-plan,PGIM India ELSS Tax Saver Fund - Direct Plan,ELSS,135601,30,PGIM India,pgim-india-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,sbi-elss-tax-saver-fund-direct-plan,SBI ELSS Tax Saver FUND - DIRECT PLAN,ELSS,119723,3,SBI,sbi-elss-tax-saver-fund-direct-plan,,yes
+MISSING,amc_no_holdings_in_db,samco-elss-tax-saver-fund-direct-plan,Samco ELSS Tax Saver Fund - Direct Plan,ELSS,150838,31,Samco,,,no
+OK,holdings_linked,tata-elss-fund-growth-direct-plan,Tata ELSS Fund,ELSS,132756,6,Tata,tata-elss-fund-growth-direct-plan,,yes
+OK,holdings_linked,taurus-elss-tax-saver-fund-direct-plan,Taurus ELSS Tax Saver Fund - Direct Plan,ELSS,118866,86,Taurus,taurus-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,uti-elss-tax-saver-fund-direct-plan,UTI ELSS Tax Saver Fund - Direct Plan,ELSS,120715,8,UTI,uti-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,union-elss-tax-saver-fund-direct-plan,Union ELSS Tax Saver Fund - Direct Plan,ELSS,119307,26,Union,union-elss-tax-saver-fund-direct-plan,,yes
+OK,holdings_linked,quant-elss-tax-saver-fund-growth-option-direct-plan,quant ELSS Tax Saver Fund,ELSS,120847,15,Quant,quant-elss-tax-saver-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,360-one-flexicap-fund-direct-plan,360 ONE FLEXICAP FUND-DIRECT PLAN,Flexi Cap,151796,34,360 ONE,360-one-flexicap-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-flexi-cap-fund-growth-direct-plan,Aditya Birla Sun Life Flexi Cap Fund,Flexi Cap,120564,7,Aditya Birla Sun Life,aditya-birla-sun-life-flexi-cap-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-flexi-cap-fund-direct-plan,Axis Flexi Cap Fund - Direct Plan,Flexi Cap,141925,29,Axis,axis-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,bandhan-flexi-cap-fund-direct-plan,BANDHAN Flexi Cap Fund-Direct Plan,Flexi Cap,118424,25,Bandhan,bandhan-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,bank-of-india-flexi-cap-fund-direct-plan,BANK OF INDIA Flexi Cap Fund Direct Plan,Flexi Cap,148404,21,Bank of India,bank-of-india-flexi-cap-fund,,yes
+OK,holdings_linked,bajaj-finserv-flexi-cap-fund-direct-plan,Bajaj Finserv Flexi Cap Fund-Direct Plan,Flexi Cap,151895,35,Bajaj Finserv,bajaj-finserv-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-flexi-cap-fund-direct-plan,Baroda BNP Paribas Flexi Cap Fund - Direct Plan,Flexi Cap,150387,12,Baroda BNP,baroda-bnp-paribas-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-flexicap-fund-direct-plan,CANARA ROBECO FLEXICAP FUND - DIRECT PLAN,Flexi Cap,118275,24,Canara Robeco,canara-robeco-flexicap-fund-direct-plan,,yes
+OK,holdings_linked,dsp-flexi-cap-fund-direct-plan,DSP Flexi Cap Fund - Direct Plan,Flexi Cap,119076,19,DSP,dsp-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-flexi-cap-fund-direct-plan,Edelweiss Flexi Cap Fund - Direct Plan,Flexi Cap,140353,22,Edelweiss,edelweiss-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,hdfc-flexi-cap-fund-growth-option-direct-plan,HDFC Flexi Cap Fund,Flexi Cap,118955,9,HDFC,hdfc-flexi-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,helios-flexi-cap-fund-direct-plan,Helios Flexi Cap Fund - Direct Plan,Flexi Cap,152135,36,Helios,helios-flexi-cap-fund-direct-plan,,no
+OK,holdings_linked,icici-prudential-flexicap-fund-direct-plan,ICICI Prudential Flexicap Fund - Direct Plan,Flexi Cap,148990,5,ICICI Prudential,icici-prudential-flexicap-fund-direct-plan,,yes
+OK,holdings_linked,iti-flexi-cap-fund-direct-plan,ITI Flexi Cap Fund- Direct Plan,Flexi Cap,151379,14,ITI,iti-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-flexi-cap-fund-direct-plan,Invesco India Flexi Cap Fund - Direct Plan,Flexi Cap,149763,2,Invesco India,invesco-india-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,jioblackrock-flexi-cap-fund-direct-plan,JioBlackRock Flexi Cap Fund - Direct Plan,Flexi Cap,153859,67,Jio BlackRock,jioblackrock-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-flexi-cap-fund-direct-plan,LIC MF Flexi Cap Fund-Direct Plan,Flexi Cap,120264,4,LIC,lic-mf-flexi-cap-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-flexi-cap-fund-direct-plan,Mahindra Manulife Flexi Cap Fund - Direct Plan,Flexi Cap,149104,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+OK,holdings_linked,mirae-asset-flexi-cap-fund-direct-plan,Mirae Asset Flexi Cap Fund - Direct Plan,Flexi Cap,151412,23,Mirae Asset,mirae-asset-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,motilal-oswal-flexi-cap-fund-direct-plan,Motilal Oswal Flexi cap Fund Direct Plan,Flexi Cap,129046,13,Motilal Oswal,motilal-oswal-flexi-cap-fund,,yes
+OK,holdings_linked,nj-flexi-cap-fund-direct-plan,NJ Flexi Cap Fund - Direct Plan,Flexi Cap,151917,32,NJ,nj-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,navi-flexi-cap-fund-direct-plan,Navi Flexi Cap Fund - Direct Plan,Flexi Cap,143793,74,Navi,navi-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,nippon-india-flexi-cap-fund-direct-plan,Nippon India Flexi Cap Fund - Direct Plan,Flexi Cap,149094,20,Nippon India,nippon-india-flexi-cap-fund-direct-plan,,no
+OK,holdings_linked,pgim-india-flexi-cap-fund-direct-plan,PGIM India Flexi Cap Fund - Direct Plan,Flexi Cap,133839,30,PGIM India,pgim-india-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,parag-parikh-flexi-cap-fund-direct-plan,Parag Parikh Flexi Cap Fund - Direct Plan,Flexi Cap,122639,27,Parag Parikh,parag-parikh-flexi-cap-fund-direct-plan,,no
+OK,holdings_linked,sbi-flexicap-fund-direct-plan,SBI Flexicap Fund - DIRECT PLAN,Flexi Cap,119718,3,SBI,sbi-flexicap-fund-direct-plan,,yes
+MISSING,amc_no_holdings_in_db,samco-flexi-cap-fund-direct-plan,Samco Flexi Cap Fund - Direct Plan,Flexi Cap,149450,31,Samco,,,no
+OK,holdings_linked,trustmf-flexi-cap-fund-direct-plan,TRUSTMF Flexi Cap Fund-Direct Plan,Flexi Cap,152584,87,Trust,trustmf-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,tata-flexi-cap-fund-direct-plan,Tata Flexi Cap Fund-Direct Plan,Flexi Cap,144546,6,Tata,tata-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,taurus-flexi-cap-fund-direct-plan,Taurus Flexi Cap Fund - Direct Plan,Flexi Cap,118883,86,Taurus,taurus-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,union-flexi-cap-fund-direct-plan,Union Flexi Cap Fund - Direct Plan,Flexi Cap,119292,26,Union,union-flexi-cap-fund-direct-plan,,yes
+OK,holdings_linked,whiteoak-capital-flexi-cap-fund-direct-plan,WhiteOak Capital Flexi Cap Fund Direct Plan,Flexi Cap,150346,16,WhiteOak Capital,whiteoak-capital-flexi-cap-fund,,yes
+OK,holdings_linked,quant-flexi-cap-fund-growth-option-direct-plan,quant Flexi Cap Fund,Flexi Cap,120843,15,Quant,quant-flexi-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,360-one-focused-fund-direct-plan,360 ONE Focused Fund-Direct Plan,Focused,131580,34,360 ONE,360-one-focused-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-focused-fund-growth-direct-plan,Aditya Birla Sun Life Focused Fund,Focused,119564,7,Aditya Birla Sun Life,aditya-birla-sun-life-focused-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-focused-fund-direct-plan,Axis Focused Fund - Direct Plan,Focused,120468,29,Axis,axis-focused-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-focused-fund-direct-plan,BARODA BNP PARIBAS Focused Fund - Direct Plan,Focused,150264,12,Baroda BNP,baroda-bnp-paribas-focused-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,bandhan-focused-fund-direct-plan,Bandhan Focused Fund - Direct Plan,Focused,118421,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan; bandhan-midcap-fund; bandhan-multicap-fund,,no
+OK,holdings_linked,canara-robeco-focused-fund-direct-plan,Canara Robeco Focused Fund - Direct Plan,Focused,148883,24,Canara Robeco,canara-robeco-focused-fund-direct-plan,,yes
+OK,holdings_linked,dsp-focused-fund-direct-plan,DSP Focused Fund - Direct Plan,Focused,119096,19,DSP,dsp-focused-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-focused-fund-direct-plan,Edelweiss Focused Fund - Direct Plan,Focused,150376,22,Edelweiss,edelweiss-focused-fund-direct-plan,,yes
+OK,holdings_linked,hdfc-focused-fund-growth-option-direct-plan,HDFC Focused Fund,Focused,118950,9,HDFC,hdfc-focused-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,icici-prudential-focused-equity-fund-direct-plan,ICICI Prudential Focused Equity Fund - Direct Plan,Focused,120722,5,ICICI Prudential,icici-prudential-focused-equity-fund-direct-plan,,yes
+OK,holdings_linked,iti-focused-fund-direct-plan,ITI Focused Fund - Direct Plan,Focused,151777,14,ITI,iti-focused-fund-direct-plan,,no
+OK,holdings_linked,invesco-india-focused-fund-direct-plan,Invesco India Focused Fund - Direct Plan,Focused,148481,2,Invesco India,invesco-india-focused-fund-direct-plan,,yes
+OK,holdings_linked,kotak-focused-fund-direct-plan,Kotak Focused Fund- Direct Plan,Focused,147473,1,Kotak,kotak-focused-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-focused-fund-direct-plan,LIC MF Focused Fund-Direct Plan,Focused,152010,4,LIC,lic-mf-focused-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-focused-fund-direct-plan,Mahindra Manulife Focused Fund - Direct Plan,Focused,148567,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+OK,holdings_linked,sbi-focused-fund-direct-plan,SBI FOCUSED FUND - DIRECT PLAN,Focused,119727,3,SBI,sbi-focused-fund-direct-plan,,yes
+OK,holdings_linked,tata-focused-fund-direct-plan,Tata Focused Fund-Direct Plan,Focused,147757,6,Tata,tata-focused-fund-direct-plan,,yes
+OK,holdings_linked,uti-focused-fund-direct-plan,UTI Focused Fund - Direct Plan,Focused,149091,8,UTI,uti-focused-fund-direct-plan,,yes
+OK,holdings_linked,union-focused-fund-direct-plan,Union Focused Fund - Direct Plan,Focused,147492,26,Union,union-focused-fund-direct-plan,,yes
+OK,holdings_linked,quant-focused-fund-growth-option-direct-plan,quant Focused Fund,Focused,120834,15,Quant,quant-focused-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-large-cap-fund-growth-direct-plan,Aditya Birla Sun Life Large Cap Fund,Large Cap,119528,7,Aditya Birla Sun Life,aditya-birla-sun-life-large-cap-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-large-cap-fund-direct-plan,Axis Large Cap Fund - Direct Plan,Large Cap,120465,29,Axis,axis-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,bajaj-finserv-large-cap-fund-direct-plan,BAJAJ FINSERV LARGE CAP FUND - DIRECT PLAN,Large Cap,152783,35,Bajaj Finserv,bajaj-finserv-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,bandhan-large-cap-fund-direct-plan,BANDHAN Large Cap Fund-Direct Plan,Large Cap,118479,25,Bandhan,bandhan-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-large-cap-fund-direct-plan,BARODA BNP PARIBAS LARGE CAP Fund - Direct Plan,Large Cap,150187,12,Baroda BNP,baroda-bnp-paribas-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-large-cap-fund-direct-plan,CANARA ROBECO LARGE CAP FUND - DIRECT PLAN,Large Cap,118269,24,Canara Robeco,canara-robeco-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,dsp-large-cap-fund-direct-plan,DSP Large Cap Fund - Direct Plan,Large Cap,119250,19,DSP,dsp-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-large-cap-fund-direct-plan,Edelweiss Large Cap Fund - Direct Plan,Large Cap,118617,22,Edelweiss,edelweiss-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,groww-largecap-fund-formerly-known-as-indiabulls-blue-chip-fund-direct-plan,Groww Largecap Fund (formerly known as Indiabulls Blue Chip Fund) - Direct Plan,Large Cap,119133,37,Groww,groww-largecap-fund-formerly-known-as-indiabulls-blue-chip-fund-direct-plan,,no
+OK,holdings_linked,hdfc-large-cap-fund-growth-option-direct-plan,HDFC Large Cap Fund,Large Cap,119018,9,HDFC,hdfc-large-cap-fund-growth-option-direct-plan,,yes
+MISSING,amc_has_other_funds_only,icici-prudential-large-cap-fund-erstwhile-bluechip-fund-direct-plan,ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund) - Direct Plan,Large Cap,120586,5,ICICI Prudential,icici-prudential-dividend-yield-equity-fund; icici-prudential-elss-tax-saver-fund-direct-plan; icici-prudential-focused-equity-fund-direct-plan,,no
+OK,holdings_linked,iti-large-cap-fund-direct-plan,ITI Large Cap Fund - Direct Plan,Large Cap,148353,14,ITI,iti-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-largecap-fund-direct-plan,Invesco India Largecap Fund - Direct Plan,Large Cap,120392,2,Invesco India,invesco-india-largecap-fund-direct-plan,,yes
+OK,holdings_linked,jioblackrock-large-cap-fund-direct-plan,JioBlackRock Large Cap Fund - Direct Plan,Large Cap,154307,67,Jio BlackRock,jioblackrock-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-large-cap-fund-direct-plan,LIC MF Large Cap Fund-Direct Plan,Large Cap,120267,4,LIC,lic-mf-large-cap-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-large-cap-fund-direct-plan,Mahindra Manulife Large Cap Fund - Direct Plan,Large Cap,146549,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+OK,holdings_linked,mirae-asset-large-cap-fund-direct-plan,Mirae Asset Large Cap Fund - Direct Plan,Large Cap,118825,23,Mirae Asset,mirae-asset-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,pgim-india-large-cap-fund-direct-plan,PGIM India Large Cap Fund - Direct Plan,Large Cap,138312,30,PGIM India,pgim-india-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,parag-parikh-large-cap-fund-direct-plan,Parag Parikh Large Cap Fund - Direct Plan,Large Cap,154155,27,Parag Parikh,parag-parikh-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,sbi-large-cap-fund-direct-plan,SBI Large Cap FUND-DIRECT PLAN,Large Cap,119598,3,SBI,sbi-large-cap-fund-direct-plan,,yes
+MISSING,amc_no_holdings_in_db,samco-large-cap-fund-direct-plan,Samco Large Cap Fund - Direct Plan,Large Cap,153239,31,Samco,,,yes
+MISSING,amc_has_other_funds_only,sundaram-large-cap-fund-formerly-known-as-sundaram-blue-chip-fund-direct-plan,Sundaram Large Cap Fund (Formerly Known as Sundaram Blue Chip Fund)Direct Plan,Large Cap,148507,11,Sundaram,sundaram-dividend-yield-fund; sundaram-elss-tax-saver-fund; sundaram-flexi-cap-fund,,no
+OK,holdings_linked,taurus-large-cap-fund-direct-plan,Taurus Large Cap Fund - Direct Plan,Large Cap,118870,86,Taurus,taurus-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,uti-large-cap-fund-direct-plan,UTI Large Cap Fund - Direct Plan,Large Cap,120656,8,UTI,uti-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,union-largecap-fund-direct-plan,Union Largecap Fund - Direct Plan,Large Cap,141248,26,Union,union-largecap-fund-direct-plan,,yes
+OK,holdings_linked,quant-large-cap-fund-growth-option-direct-plan,quant Large Cap Fund,Large Cap,150440,15,Quant,quant-large-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-large-mid-cap-fund-growth-direct-plan,Aditya Birla Sun Life Large & Mid Cap Fund,Mid Cap,119436,7,Aditya Birla Sun Life,aditya-birla-sun-life-large-mid-cap-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-large-mid-cap-fund-direct-plan,Axis Large & Mid Cap Fund - Direct Plan,Mid Cap,145110,29,Axis,axis-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,axis-midcap-fund-direct-plan,Axis Midcap Fund - Direct Plan,Mid Cap,120505,29,Axis,axis-midcap-fund-direct-plan,,yes
+OK,holdings_linked,bank-of-india-large-mid-cap-fund-direct-plan,BANK OF INDIA Large & Mid Cap Fund Direct Plan,Mid Cap,119350,21,Bank of India,bank-of-india-large-mid-cap-fund,,yes
+OK,holdings_linked,baroda-bnp-paribas-mid-cap-fund-direct-plan,BARODA BNP PARIBAS Mid Cap Fund - Direct Plan,Mid Cap,150212,12,Baroda BNP,baroda-bnp-paribas-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,bajaj-finserv-large-and-mid-cap-fund-direct-plan,Bajaj Finserv Large and Mid Cap Fund- Direct Plan,Mid Cap,152408,35,Bajaj Finserv,bajaj-finserv-large-and-mid-cap-fund-direct-plan,,no
+OK,holdings_linked,bandhan-large-mid-cap-fund-direct-plan,Bandhan Large & Mid Cap Fund - Direct Plan,Mid Cap,118419,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-large-and-mid-cap-fund-direct-plan,Baroda BNP Paribas Large and Mid Cap Fund- Direct Plan,Mid Cap,148474,12,Baroda BNP,baroda-bnp-paribas-large-and-mid-cap-fund-direct-plan,,no
+OK,holdings_linked,canara-robeco-large-and-mid-cap-fund-direct-plan,CANARA ROBECO LARGE AND MID CAP FUND - DIRECT PLAN,Mid Cap,118278,24,Canara Robeco,canara-robeco-large-and-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-mid-cap-fund-direct-plan,Canara Robeco Mid Cap Fund- Direct Plan,Mid Cap,150817,24,Canara Robeco,canara-robeco-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,dsp-large-mid-cap-fund-direct-plan,DSP Large & Mid Cap Fund - Direct Plan,Mid Cap,119218,19,DSP,dsp-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,dsp-midcap-fund-direct-plan,DSP Midcap Fund - Direct Plan,Mid Cap,119071,19,DSP,dsp-midcap-fund-direct-plan,,no
+OK,holdings_linked,edelweiss-large-mid-cap-fund-direct-plan,Edelweiss Large & Mid Cap Fund - Direct Plan,Mid Cap,140175,22,Edelweiss,edelweiss-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-mid-cap-fund-direct-plan,Edelweiss Mid Cap Fund - Direct Plan,Mid Cap,140228,22,Edelweiss,edelweiss-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,hdfc-large-and-mid-cap-fund-growth-option-direct-plan,HDFC Large and Mid Cap Fund,Mid Cap,130498,9,HDFC,hdfc-large-and-mid-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,hdfc-mid-cap-fund-growth-option-direct-plan,HDFC Mid Cap Fund,Mid Cap,118989,9,HDFC,hdfc-mid-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,helios-large-mid-cap-fund-direct-plan,Helios Large & Mid Cap Fund - Direct Plan,Mid Cap,152941,36,Helios,helios-large-mid-cap-fund-direct-plan,,no
+OK,holdings_linked,helios-mid-cap-fund-direct-plan,Helios Mid Cap Fund - Direct Plan,Mid Cap,153326,36,Helios,helios-mid-cap-fund-direct-plan,,no
+OK,holdings_linked,icici-prudential-large-mid-cap-fund-direct-plan,ICICI Prudential Large & Mid Cap Fund - Direct Plan,Mid Cap,120596,5,ICICI Prudential,icici-prudential-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-midcap-fund-direct-plan,ICICI Prudential MidCap Fund - Direct Plan,Mid Cap,120381,5,ICICI Prudential,icici-prudential-midcap-fund-direct-plan,,yes
+OK,holdings_linked,iti-large-midcap-fund-direct-plan,ITI Large & Midcap Fund - Direct Plan,Mid Cap,152821,14,ITI,iti-large-midcap-fund-direct-plan,,no
+OK,holdings_linked,iti-mid-cap-fund-direct-plan,ITI Mid Cap Fund - Direct Plan,Mid Cap,148733,14,ITI,iti-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-large-mid-cap-fund-direct-plan,Invesco India Large & Mid Cap Fund - Direct Plan,Mid Cap,120357,2,Invesco India,invesco-india-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-midcap-fund-direct-plan,Invesco India Midcap Fund - Direct Plan,Mid Cap,120403,2,Invesco India,invesco-india-midcap-fund-direct-plan,,yes
+OK,holdings_linked,kotak-midcap-fund-direct-plan,Kotak Midcap Fund - Direct Plan,Mid Cap,119775,1,Kotak,kotak-midcap-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-large-mid-cap-fund-direct-plan,LIC MF Large & Mid Cap Fund-Direct Plan,Mid Cap,133710,4,LIC,lic-mf-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-mid-cap-fund-direct-plan,LIC MF Mid Cap Fund-Direct Plan,Mid Cap,152002,4,LIC,lic-mf-mid-cap-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-large-mid-cap-fund-direct-plan,Mahindra Manulife Large & Mid Cap Fund - Direct Plan,Mid Cap,147840,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-mid-cap-fund-direct-plan,Mahindra Manulife Mid Cap Fund - Direct Plan,Mid Cap,142110,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mirae-asset-large-midcap-fund-direct-plan,Mirae Asset Large & Midcap Fund - Direct Plan,Mid Cap,118834,23,Mirae Asset,mirae-asset-flexi-cap-fund-direct-plan; mirae-asset-focused-fund; mirae-asset-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,motilal-oswal-midcap-fund-direct-plan,Motilal Oswal Midcap Fund-Direct Plan,Mid Cap,127042,13,Motilal Oswal,motilal-oswal-midcap-fund-direct-plan,,yes
+OK,holdings_linked,navi-large-midcap-fund-direct-plan,Navi Large & Midcap Fund- Direct Plan,Mid Cap,135677,74,Navi,navi-large-midcap-fund-direct-plan,,yes
+OK,holdings_linked,pgim-india-large-and-midcap-fund-direct-plan,PGIM India Large and Midcap Fund - Direct Plan,Mid Cap,152382,30,PGIM India,pgim-india-large-and-midcap-fund-direct-plan,,yes
+OK,holdings_linked,pgim-india-midcap-fund-direct-plan,PGIM India Midcap Fund - Direct Plan,Mid Cap,125307,30,PGIM India,pgim-india-midcap-fund-direct-plan,,yes
+OK,holdings_linked,sbi-large-midcap-fund-direct-plan,SBI LARGE & MIDCAP FUND -DIRECT PLAN,Mid Cap,119721,3,SBI,sbi-large-midcap-fund-direct-plan,,no
+OK,holdings_linked,sbi-midcap-fund-direct-plan,SBI MIDCAP FUND - DIRECT PLAN,Mid Cap,119716,3,SBI,sbi-midcap-fund-direct-plan,,yes
+MISSING,amc_no_holdings_in_db,samco-large-mid-cap-fund-direct-plan,Samco Large & Mid Cap Fund - Direct Plan,Mid Cap,153534,31,Samco,,,yes
+MISSING,amc_has_other_funds_only,sundaram-large-and-midcap-fund-direct-plan,Sundaram Large and Midcap Fund Direct Plan,Mid Cap,119566,11,Sundaram,sundaram-dividend-yield-fund; sundaram-elss-tax-saver-fund; sundaram-flexi-cap-fund,,no
+OK,holdings_linked,sundaram-mid-cap-fund-direct-plan,Sundaram Mid Cap Fund Direct Plan,Mid Cap,119581,11,Sundaram,sundaram-mid-cap-fund,,yes
+OK,holdings_linked,tata-large-mid-cap-fund-direct-plan,Tata Large & MId Cap Fund -Direct Plan,Mid Cap,119202,6,Tata,tata-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,tata-mid-cap-fund-direct-plan,Tata Mid Cap Fund - Direct Plan,Mid Cap,119178,6,Tata,tata-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,taurus-mid-cap-fund-direct-plan,Taurus Mid Cap Fund - Direct Plan,Mid Cap,118872,86,Taurus,taurus-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,uti-large-mid-cap-fund-direct-plan,UTI Large & Mid Cap Fund - Direct Plan,Mid Cap,120665,8,UTI,uti-large-mid-cap-fund-direct-plan,,yes
+OK,holdings_linked,union-large-midcap-fund-direct-plan,Union Large & Midcap Fund - Direct Plan,Mid Cap,147750,26,Union,union-large-midcap-fund-direct-plan,,yes
+OK,holdings_linked,union-midcap-fund-direct-plan,Union Midcap Fund - Direct Plan,Mid Cap,148073,26,Union,union-midcap-fund-direct-plan,,yes
+OK,holdings_linked,quant-large-mid-cap-fund-growth-option-direct-plan,quant Large & Mid Cap Fund,Mid Cap,120826,15,Quant,quant-large-mid-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,quant-mid-cap-fund-growth-option-direct-plan,quant Mid Cap Fund,Mid Cap,120841,15,Quant,quant-mid-cap-fund-growth-option-direct-plan,,yes
+MISSING,amc_has_other_funds_only,bank-of-india-multi-cap-fund-direct-plan,Bank of India Multi Cap Fund Direct Plan,Multi Cap,151443,21,Bank of India,bank-of-india-flexi-cap-fund; bank-of-india-large-mid-cap-fund; bank-of-india-large-cap-fund,,yes
+OK,holdings_linked,baroda-bnp-paribas-multi-cap-fund-direct-plan,Baroda BNP Paribas MULTI CAP FUND - Direct Plan,Multi Cap,119354,12,Baroda BNP,baroda-bnp-paribas-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-multi-cap-fund-direct-plan,Canara Robeco Multi Cap Fund - Direct Plan,Multi Cap,151824,24,Canara Robeco,canara-robeco-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-multi-cap-fund-direct-plan,Edelweiss Multi Cap Fund - Direct Plan,Multi Cap,152094,22,Edelweiss,edelweiss-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,hdfc-multi-cap-fund-growth-option-direct-plan,HDFC Multi Cap Fund,Multi Cap,149368,9,HDFC,hdfc-multi-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,icici-prudential-multicap-fund-direct-plan,ICICI Prudential Multicap Fund - Direct Plan,Multi Cap,120599,5,ICICI Prudential,icici-prudential-multicap-fund-direct-plan,,yes
+OK,holdings_linked,iti-multi-cap-fund-direct-plan,ITI Multi Cap Fund - Direct Plan,Multi Cap,147183,14,ITI,iti-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-multicap-fund-direct-plan,Invesco India Multicap Fund - Direct Plan,Multi Cap,120413,2,Invesco India,invesco-india-multicap-fund-direct-plan,,yes
+OK,holdings_linked,kotak-multicap-fund-direct-plan,Kotak Multicap Fund-Direct Plan,Multi Cap,149185,1,Kotak,kotak-multicap-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-multi-cap-fund-direct-plan,LIC MF Multi Cap Fund-Direct Plan,Multi Cap,150659,4,LIC,lic-mf-multi-cap-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-multi-cap-fund-direct-plan,Mahindra Manulife Multi Cap Fund - Direct Plan,Multi Cap,141226,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mirae-asset-multicap-fund-direct-plan,Mirae Asset Multicap Fund - Direct Plan,Multi Cap,151810,23,Mirae Asset,mirae-asset-flexi-cap-fund-direct-plan; mirae-asset-focused-fund; mirae-asset-large-cap-fund-direct-plan,,yes
+OK,holdings_linked,pgim-india-multi-cap-fund-direct-plan,PGIM India Multi Cap Fund - Direct Plan,Multi Cap,152815,30,PGIM India,pgim-india-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,sbi-multicap-fund-direct-plan,SBI Multicap Fund- Direct Plan,Multi Cap,149882,3,SBI,sbi-multicap-fund-direct-plan,,yes
+MISSING,amc_no_holdings_in_db,samco-multi-cap-fund-direct-plan,Samco Multi Cap Fund - Direct Plan,Multi Cap,152847,31,Samco,,,yes
+OK,holdings_linked,trustmf-multi-cap-fund-direct-plan,TRUSTMF MULTI CAP FUND -DIRECT PLAN,Multi Cap,153644,87,Trust,trustmf-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,tata-multicap-fund-direct-plan,Tata Multicap Fund - Direct Plan,Multi Cap,151232,6,Tata,tata-multicap-fund-direct-plan,,yes
+OK,holdings_linked,uti-multi-cap-fund-direct-plan,UTI Multi Cap Fund - Direct Plan,Multi Cap,153515,8,UTI,uti-multi-cap-fund-direct-plan,,yes
+OK,holdings_linked,union-multicap-fund-direct-plan,Union Multicap Fund - Direct Plan,Multi Cap,150858,26,Union,union-multicap-fund-direct-plan,,yes
+OK,holdings_linked,quant-multi-cap-fund-growth-option-direct-plan,quant Multi Cap Fund,Multi Cap,120823,15,Quant,quant-multi-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-banking-and-financial-services-fund-direct-plan,Aditya Birla Sun Life Banking and Financial Services Fund - Direct Plan,Sectoral,125597,7,Aditya Birla Sun Life,aditya-birla-sun-life-banking-and-financial-services-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-esg-integration-strategy-fund-direct-plan,Aditya Birla Sun Life ESG Integration Strategy Fund-Direct Plan,Sectoral,148637,7,Aditya Birla Sun Life,aditya-birla-sun-life-esg-integration-strategy-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-manufacturing-equity-fund-direct-plan,Aditya Birla Sun Life Manufacturing Equity Fund - Direct Plan,Sectoral,133516,7,Aditya Birla Sun Life,aditya-birla-sun-life-manufacturing-equity-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-psu-equity-fund-direct-plan,Aditya Birla Sun Life PSU Equity Fund-Direct Plan,Sectoral,147844,7,Aditya Birla Sun Life,aditya-birla-sun-life-psu-equity-fund-direct-plan,,yes
+OK,holdings_linked,axis-business-cycles-fund-direct-plan,Axis Business Cycles Fund - Direct Plan,Sectoral,151368,29,Axis,axis-business-cycles-fund-direct-plan,,yes
+OK,holdings_linked,axis-consumption-fund-direct-plan,Axis Consumption Fund Direct Plan,Sectoral,152805,29,Axis,axis-consumption-fund,,yes
+OK,holdings_linked,axis-esg-integration-strategy-fund-direct-plan,Axis ESG Integration Strategy Fund - Direct Plan,Sectoral,147928,29,Axis,axis-esg-integration-strategy-fund-direct-plan,,yes
+OK,holdings_linked,axis-india-manufacturing-fund-direct-plan,Axis India Manufacturing Fund - Direct Plan,Sectoral,152202,29,Axis,axis-india-manufacturing-fund-direct-plan,,yes
+OK,holdings_linked,axis-innovation-fund-direct-plan,Axis Innovation Fund - Direct Plan,Sectoral,148634,29,Axis,axis-innovation-fund-direct-plan,,yes
+OK,holdings_linked,axis-momentum-fund-direct-plan,Axis Momentum Fund - Direct Plan,Sectoral,153083,29,Axis,axis-momentum-fund-direct-plan,,yes
+OK,holdings_linked,axis-quant-fund-direct-plan,Axis Quant Fund - Direct Plan,Sectoral,148993,29,Axis,axis-quant-fund-direct-plan,,yes
+OK,holdings_linked,axis-services-opportunities-fund-direct-plan,Axis Services Opportunities Fund - Direct Plan,Sectoral,153624,29,Axis,axis-services-opportunities-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,bandhan-financial-services-fund-direct-plan,BANDHAN FINANCIAL SERVICES FUND - DIRECT PLAN,Sectoral,151816,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan; bandhan-midcap-fund; bandhan-multicap-fund,,no
+MISSING,amc_has_other_funds_only,bandhan-infrastructure-fund-direct-plan,BANDHAN Infrastructure Fund-Direct Plan,Sectoral,118469,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan; bandhan-midcap-fund; bandhan-multicap-fund,,no
+OK,holdings_linked,bank-of-india-manufacturing-infrastructure-fund-direct-plan,BANK OF INDIA Manufacturing & Infrastructure Fund-Direct Plan,Sectoral,119364,21,Bank of India,bank-of-india-manufacturing-infrastructure-fund-direct-plan,,no
+OK,holdings_linked,baroda-bnp-paribas-india-consumption-fund-direct-plan,BARODA BNP PARIBAS India Consumption Fund - Direct Plan,Sectoral,150266,12,Baroda BNP,baroda-bnp-paribas-india-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,bandhan-business-cycle-fund-direct-plan,Bandhan Business Cycle Fund - Direct Plan,Sectoral,152878,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan; bandhan-midcap-fund; bandhan-multicap-fund,,no
+MISSING,amc_has_other_funds_only,bandhan-healthcare-fund-direct-plan,Bandhan Healthcare Fund - Direct Plan,Sectoral,153972,25,Bandhan,bandhan-large-mid-cap-fund-direct-plan; bandhan-midcap-fund; bandhan-multicap-fund,,no
+OK,holdings_linked,bandhan-innovation-fund-direct-plan,Bandhan Innovation Fund - Direct Plan,Sectoral,152607,25,Bandhan,bandhan-innovation-fund-direct-plan,,yes
+OK,holdings_linked,bandhan-multi-factor-fund-direct-plan,Bandhan Multi-Factor Fund - Direct Plan,Sectoral,153722,25,Bandhan,bandhan-multi-factor-fund-direct-plan,,yes
+OK,holdings_linked,bank-of-india-banking-financial-services-fund-direct-plan,Bank of India Banking & Financial Services Fund - Direct Plan,Sectoral,154093,21,Bank of India,bank-of-india-banking-financial-services-fund-direct-plan,,yes
+OK,holdings_linked,bank-of-india-business-cycle-fund-direct-plan,Bank of India Business Cycle Fund - Direct Plan,Sectoral,152789,21,Bank of India,bank-of-india-business-cycle-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-business-cycle-fund-direct-plan,Baroda BNP Paribas Business Cycle Fund - Direct Plan,Sectoral,149141,12,Baroda BNP,baroda-bnp-paribas-business-cycle-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-energy-opportunities-fund-direct-plan,Baroda BNP Paribas Energy Opportunities Fund - Direct Plan,Sectoral,153225,12,Baroda BNP,baroda-bnp-paribas-energy-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-innovation-fund-direct-plan,Baroda BNP Paribas Innovation Fund Direct plan,Sectoral,152470,12,Baroda BNP,baroda-bnp-paribas-innovation-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-manufacturing-fund-direct-plan,Baroda BNP Paribas Manufacturing Fund - Direct Plan,Sectoral,152697,12,Baroda BNP,baroda-bnp-paribas-manufacturing-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,canara-robeco-consumption-fund-direct-plan,CANARA ROBECO CONSUMPTION FUND - DIRECT PLAN,Sectoral,118273,24,Canara Robeco,canara-robeco-elss-tax-saver-direct-plan; canara-robeco-large-and-mid-cap-fund-direct-plan; canara-robeco-large-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,canara-robeco-infrastructure-fund-direct-plan,CANARA ROBECO INFRASTRUCTURE FUND - DIRECT PLAN,Sectoral,118267,24,Canara Robeco,canara-robeco-elss-tax-saver-direct-plan; canara-robeco-large-and-mid-cap-fund-direct-plan; canara-robeco-large-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,canara-robeco-banking-and-financials-services-fund-direct-plan,Canara Robeco Banking and Financials Services Fund - Direct Plan,Sectoral,154250,24,Canara Robeco,canara-robeco-elss-tax-saver-direct-plan; canara-robeco-large-and-mid-cap-fund-direct-plan; canara-robeco-large-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,canara-robeco-manufacturing-fund-direct-plan,Canara Robeco Manufacturing Fund - Direct Plan,Sectoral,152450,24,Canara Robeco,canara-robeco-elss-tax-saver-direct-plan; canara-robeco-large-and-mid-cap-fund-direct-plan; canara-robeco-large-cap-fund-direct-plan,,no
+OK,holdings_linked,dsp-healthcare-fund-direct-plan,DSP Healthcare Fund - Direct Plan,Sectoral,145454,19,DSP,dsp-healthcare-fund-direct-plan,,yes
+OK,holdings_linked,dsp-india-t-i-g-e-r-fund-direct-plan,DSP India T.I.G.E.R. Fund - Direct Plan,Sectoral,119247,19,DSP,dsp-india-t-i-g-e-r-fund-direct-plan,,no
+OK,holdings_linked,dsp-natural-resources-and-new-energy-fund-direct-plan,DSP Natural Resources and New Energy Fund - Direct Plan,Sectoral,119028,19,DSP,dsp-natural-resources-and-new-energy-fund-direct-plan,,no
+OK,holdings_linked,dsp-quant-fund-direct-plan,DSP Quant Fund - Direct Plan,Sectoral,147306,19,DSP,dsp-quant-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-business-cycle-fund-direct-plan,Edelweiss Business Cycle Fund - Direct Plan,Sectoral,152710,22,Edelweiss,edelweiss-business-cycle-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-financial-services-fund-direct-plan,Edelweiss Financial Services Fund - Direct Plan,Sectoral,154108,22,Edelweiss,edelweiss-financial-services-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-technology-fund-direct-plan,Edelweiss Technology Fund - Direct Plan,Sectoral,152437,22,Edelweiss,edelweiss-technology-fund-direct-plan,,yes
+OK,holdings_linked,groww-banking-financial-services-fund-direct-plan,Groww Banking & Financial Services Fund - Direct Plan,Sectoral,152254,37,Groww,groww-banking-financial-services-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,hdfc-innovation-fund-direct-plan,HDFC INNOVATION FUND - DIRECT PLAN,Sectoral,153620,9,HDFC,hdfc-defence-fund; hdfc-elss-tax-saver-growth-option-direct-plan; hdfc-flexi-cap-fund-growth-option-direct-plan,,no
+MISSING,amc_has_other_funds_only,helios-financial-services-fund-direct-plan,Helios Financial Services Fund - Direct Plan,Sectoral,152679,36,Helios,helios-flexi-cap-fund-direct-plan; helios-large-mid-cap-fund-direct-plan; helios-mid-cap-fund-direct-plan,,no
+OK,holdings_linked,icici-prudential-energy-opportunities-fund-direct-plan,ICICI PRUDENTIAL ENERGY OPPORTUNITIES FUND - Direct Plan,Sectoral,152728,5,ICICI Prudential,icici-prudential-energy-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-transportation-and-logistics-fund-direct-plan,ICICI PRUDENTIAL TRANSPORTATION AND LOGISTICS FUND - Direct Plan,Sectoral,150685,5,ICICI Prudential,icici-prudential-transportation-and-logistics-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-active-momentum-fund-direct-plan,ICICI Prudential Active Momentum Fund - Direct Plan,Sectoral,153684,5,ICICI Prudential,icici-prudential-active-momentum-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-banking-and-financial-services-fund-direct-plan,ICICI Prudential Banking and Financial Services Fund - Direct Plan,Sectoral,120244,5,ICICI Prudential,icici-prudential-banking-and-financial-services-fund-direct-plan,,no
+OK,holdings_linked,icici-prudential-bharat-consumption-fund-direct-plan,ICICI Prudential Bharat Consumption Fund - Direct Plan,Sectoral,146951,5,ICICI Prudential,icici-prudential-bharat-consumption-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-commodities-fund-direct-plan,ICICI Prudential Commodities Fund - Direct Plan,Sectoral,147662,5,ICICI Prudential,icici-prudential-commodities-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-conglomerate-fund-direct-plan,ICICI Prudential Conglomerate Fund - Direct Plan,Sectoral,153867,5,ICICI Prudential,icici-prudential-conglomerate-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-esg-exclusionary-strategy-fund-direct-plan,ICICI Prudential ESG Exclusionary Strategy Fund - Direct Plan,Sectoral,148516,5,ICICI Prudential,icici-prudential-esg-exclusionary-strategy-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-equity-minimum-variance-fund-direct-plan,ICICI Prudential Equity Minimum Variance Fund - Direct Plan,Sectoral,153070,5,ICICI Prudential,icici-prudential-equity-minimum-variance-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-exports-services-fund-direct-plan,ICICI Prudential Exports & Services Fund - Direct Plan,Sectoral,120688,5,ICICI Prudential,icici-prudential-exports-services-fund-direct-plan,,no
+OK,holdings_linked,icici-prudential-fmcg-fund-direct-plan,ICICI Prudential FMCG Fund - Direct Plan,Sectoral,120587,5,ICICI Prudential,icici-prudential-fmcg-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-infrastructure-fund-direct-plan,ICICI Prudential Infrastructure Fund - Direct Plan,Sectoral,120621,5,ICICI Prudential,icici-prudential-infrastructure-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-innovation-fund-direct-plan,ICICI Prudential Innovation Fund - Direct Plan,Sectoral,151580,5,ICICI Prudential,icici-prudential-innovation-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-mnc-fund-direct-plan,ICICI Prudential MNC Fund - Direct Plan,Sectoral,147346,5,ICICI Prudential,icici-prudential-mnc-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-psu-equity-fund-direct-plan,ICICI Prudential PSU Equity Fund - Direct Plan,Sectoral,150539,5,ICICI Prudential,icici-prudential-psu-equity-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-quality-fund-direct-plan,ICICI Prudential Quality Fund - Direct Plan,Sectoral,153458,5,ICICI Prudential,icici-prudential-quality-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-rural-opportunities-fund-direct-plan,ICICI Prudential Rural Opportunities Fund - Direct Plan,Sectoral,153184,5,ICICI Prudential,icici-prudential-rural-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-technology-fund-direct-plan,ICICI Prudential Technology Fund - Direct Plan,Sectoral,120594,5,ICICI Prudential,icici-prudential-technology-fund-direct-plan,,yes
+OK,holdings_linked,icici-prudential-us-bluechip-equity-fund-direct-plan,ICICI Prudential US Bluechip Equity Fund - Direct Plan,Sectoral,120186,5,ICICI Prudential,icici-prudential-us-bluechip-equity-fund-direct-plan,,yes
+OK,holdings_linked,iti-banking-and-financial-services-fund-direct-plan,ITI Banking and Financial Services Fund - Direct Plan,Sectoral,149321,14,ITI,iti-banking-and-financial-services-fund-direct-plan,,yes
+OK,holdings_linked,iti-bharat-consumption-fund-direct-plan,ITI Bharat Consumption Fund - Direct Plan,Sectoral,153260,14,ITI,iti-bharat-consumption-fund-direct-plan,,yes
+OK,holdings_linked,iti-business-cycle-fund-direct-plan,ITI Business Cycle Fund- Direct Plan,Sectoral,154157,14,ITI,iti-business-cycle-fund-direct-plan,,yes
+OK,holdings_linked,iti-pharma-and-healthcare-fund-direct-plan,ITI Pharma and Healthcare Fund - Direct Plan,Sectoral,149268,14,ITI,iti-pharma-and-healthcare-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,invesco-india-business-cycle-fund-direct-plan,Invesco India Business Cycle Fund - Direct Plan,Sectoral,153291,2,Invesco India,invesco-india-contra-fund-direct-plan; invesco-india-elss-tax-saver-fund-direct-plan; invesco-india-flexi-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,invesco-india-consumption-fund-direct-plan,Invesco India Consumption Fund - Direct Plan,Sectoral,153900,2,Invesco India,invesco-india-contra-fund-direct-plan; invesco-india-elss-tax-saver-fund-direct-plan; invesco-india-flexi-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,invesco-india-esg-integration-strategy-fund-direct-plan,Invesco India ESG Integration Strategy Fund - Direct Plan,Sectoral,148751,2,Invesco India,invesco-india-contra-fund-direct-plan; invesco-india-elss-tax-saver-fund-direct-plan; invesco-india-flexi-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,invesco-india-financial-services-fund-direct-plan,Invesco India Financial Services Fund - Direct Plan,Sectoral,120385,2,Invesco India,invesco-india-contra-fund-direct-plan; invesco-india-elss-tax-saver-fund-direct-plan; invesco-india-flexi-cap-fund-direct-plan,,no
+OK,holdings_linked,invesco-india-infrastructure-fund-direct-plan,Invesco India Infrastructure Fund - Direct Plan,Sectoral,120405,2,Invesco India,invesco-india-infrastructure-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,invesco-india-manufacturing-fund-direct-plan,Invesco India Manufacturing Fund - Direct Plan,Sectoral,152756,2,Invesco India,invesco-india-contra-fund-direct-plan; invesco-india-elss-tax-saver-fund-direct-plan; invesco-india-flexi-cap-fund-direct-plan,,no
+OK,holdings_linked,invesco-india-psu-equity-fund-direct-plan,Invesco India PSU Equity Fund - Direct Plan,Sectoral,120395,2,Invesco India,invesco-india-psu-equity-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-technology-fund-direct-plan,Invesco India Technology Fund - Direct Plan,Sectoral,152863,2,Invesco India,invesco-india-technology-fund-direct-plan,,yes
+OK,holdings_linked,jioblackrock-sector-rotation-fund-direct-plan,JioBlackRock Sector Rotation Fund - Direct Plan,Sectoral,154082,67,Jio BlackRock,jioblackrock-sector-rotation-fund-direct-plan,,yes
+OK,holdings_linked,kotak-active-momentum-fund-direct-plan,Kotak Active Momentum Fund - Direct Plan,Sectoral,153753,1,Kotak,kotak-active-momentum-fund-direct-plan,,yes
+OK,holdings_linked,kotak-banking-financial-services-fund-direct-plan,Kotak Banking & Financial Services Fund - Direct Plan,Sectoral,151384,1,Kotak,kotak-banking-financial-services-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,kotak-business-cycle-direct-plan,Kotak Business Cycle - Direct Plan,Sectoral,150624,1,Kotak,kotak-contra-fund-direct-plan; kotak-elss-tax-saver-fund; kotak-large-midcap-fund,,no
+OK,holdings_linked,kotak-consumption-fund-direct-plan,Kotak Consumption Fund - Direct plan,Sectoral,152169,1,Kotak,kotak-consumption-fund-direct-plan,,yes
+OK,holdings_linked,kotak-esg-exclusionary-strategy-fund-direct-plan,Kotak ESG Exclusionary Strategy Fund - Direct Plan,Sectoral,148606,1,Kotak,kotak-esg-exclusionary-strategy-fund-direct-plan,,yes
+OK,holdings_linked,kotak-healthcare-fund-direct-plan,Kotak Healthcare Fund - Direct Plan,Sectoral,152214,1,Kotak,kotak-healthcare-fund-direct-plan,,yes
+OK,holdings_linked,kotak-infrastructure-economic-reform-fund-direct-plan,Kotak Infrastructure & Economic Reform Fund- Direct Plan,Sectoral,133801,1,Kotak,kotak-infrastructure-economic-reform-fund-direct-plan,,no
+OK,holdings_linked,kotak-mnc-fund-direct-plan,Kotak MNC Fund-Direct Plan,Sectoral,152910,1,Kotak,kotak-mnc-fund-direct-plan,,yes
+OK,holdings_linked,kotak-pioneer-fund-direct-plan,Kotak Pioneer Fund- Direct Plan,Sectoral,147727,1,Kotak,kotak-pioneer-fund-direct-plan,,yes
+OK,holdings_linked,kotak-quant-fund-direct-plan,Kotak Quant Fund - Direct Plan,Sectoral,151881,1,Kotak,kotak-quant-fund-direct-plan,,yes
+OK,holdings_linked,kotak-rural-opportunities-fund-direct-plan,Kotak Rural Opportunities Fund - Direct Plan,Sectoral,153970,1,Kotak,kotak-rural-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,kotak-special-opportunities-fund-direct-plan,Kotak Special Opportunities Fund - Direct Plan,Sectoral,152702,1,Kotak,kotak-special-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,kotak-technology-fund-direct-plan,Kotak Technology Fund - Direct Plan,Sectoral,152462,1,Kotak,kotak-technology-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-banking-and-financial-services-fund-direct-plan,LIC MF Banking and Financial Services Fund-Direct Plan,Sectoral,134017,4,LIC,lic-mf-banking-and-financial-services-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-consumption-fund-direct-plan,LIC MF Consumption Fund-Direct Plan,Sectoral,153948,4,LIC,lic-mf-consumption-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-healthcare-fund-direct-plan,LIC MF Healthcare Fund-Direct Plan,Sectoral,152024,4,LIC,lic-mf-healthcare-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-infrastructure-fund-direct-plan,LIC MF Infrastructure Fund-Direct Plan,Sectoral,120351,4,LIC,lic-mf-infrastructure-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-manufacturing-fund-direct-plan,LIC MF Manufacturing Fund-Direct Plan,Sectoral,152920,4,LIC,lic-mf-manufacturing-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-technology-fund-direct-plan,LIC MF Technology Fund-Direct Plan,Sectoral,154244,4,LIC,lic-mf-technology-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-business-cycle-fund-direct-plan,Mahindra Manulife Business Cycle Fund - Direct Plan,Sectoral,152045,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+OK,holdings_linked,mahindra-manulife-consumption-fund-direct-plan,Mahindra Manulife Consumption Fund - Direct Plan,Sectoral,145356,28,Mahindra Manulife,mahindra-manulife-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-manufacturing-fund-direct-plan,Mahindra Manulife Manufacturing Fund - Direct Plan,Sectoral,152672,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mirae-asset-great-consumer-fund-direct-plan,Mirae Asset Great Consumer Fund - Direct Plan,Sectoral,118837,23,Mirae Asset,mirae-asset-flexi-cap-fund-direct-plan; mirae-asset-focused-fund; mirae-asset-large-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,mirae-asset-infrastructure-fund-direct-plan,Mirae Asset Infrastructure Fund - Direct Plan,Sectoral,153983,23,Mirae Asset,mirae-asset-flexi-cap-fund-direct-plan; mirae-asset-focused-fund; mirae-asset-large-cap-fund-direct-plan,,no
+OK,holdings_linked,motilal-oswal-business-cycle-fund-direct-plan,Motilal Oswal Business Cycle Fund - Direct Plan,Sectoral,152796,13,Motilal Oswal,motilal-oswal-business-cycle-fund-direct-plan,,yes
+OK,holdings_linked,motilal-oswal-digital-india-fund-direct-plan,Motilal Oswal Digital India Fund - Direct Plan,Sectoral,152964,13,Motilal Oswal,motilal-oswal-digital-india-fund-direct-plan,,yes
+OK,holdings_linked,motilal-oswal-innovation-opportunities-fund-direct-plan,Motilal Oswal Innovation Opportunities Fund - Direct Plan,Sectoral,153258,13,Motilal Oswal,motilal-oswal-innovation-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,motilal-oswal-manufacturing-fund-direct-plan,Motilal Oswal Manufacturing Fund - Direct Plan,Sectoral,152760,13,Motilal Oswal,motilal-oswal-manufacturing-fund-direct-plan,,yes
+OK,holdings_linked,motilal-oswal-services-fund-direct-plan,Motilal Oswal Services Fund - Direct Plan,Sectoral,153558,13,Motilal Oswal,motilal-oswal-services-fund,,yes
+OK,holdings_linked,nippon-india-active-momentum-fund-direct-plan,Nippon India Active Momentum Fund-Direct Plan,Sectoral,153274,20,Nippon India,nippon-india-active-momentum-fund-direct-plan,,no
+OK,holdings_linked,nippon-india-innovation-fund-direct-plan,Nippon India Innovation Fund-Direct Plan,Sectoral,152033,20,Nippon India,nippon-india-innovation-fund-direct-plan,,yes
+OK,holdings_linked,nippon-india-japan-equity-fund-direct-plan,Nippon India Japan Equity Fund- Direct Plan,Sectoral,130861,20,Nippon India,nippon-india-japan-equity-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,nippon-india-mnc-fund-direct-plan,Nippon India MNC Fund- Direct Plan,Sectoral,153693,20,Nippon India,nippon-india-elss-tax-saver-fund-direct-plan-growth-plan; nippon-india-flexi-cap-fund-direct-plan; nippon-india-vision-large-mid-cap-fund-direct-plan-growth-plan,,no
+OK,holdings_linked,nippon-india-taiwan-equity-fund-direct-plan,Nippon India Taiwan Equity Fund- Direct Plan,Sectoral,149329,20,Nippon India,nippon-india-taiwan-equity-fund-direct-plan,,yes
+OK,holdings_linked,nippon-india-us-equity-opportunities-fund-direct-plan,Nippon India US Equity Opportunities Fund- Direct Plan,Sectoral,134923,20,Nippon India,nippon-india-us-equity-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,pgim-india-healthcare-fund-direct-plan,PGIM India Healthcare Fund - Direct Plan,Sectoral,153039,30,PGIM India,pgim-india-healthcare-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,quantum-esg-best-in-class-strategy-fund-direct-plan,QUANTUM ESG BEST IN CLASS STRATEGY FUND - DIRECT PLAN,Sectoral,147372,18,Other,uti-transportation-and-logistics-fund; kotak-small-cap-fund; edel-ny-lmcap250-pl-8-13-yr-gs-70-30-idx,,no
+OK,holdings_linked,sbi-automotive-opportunities-fund-direct-plan,SBI Automotive Opportunities Fund - Direct Plan,Sectoral,152657,3,SBI,sbi-automotive-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,sbi-banking-financial-services-fund-direct-plan,SBI BANKING & FINANCIAL SERVICES FUND - DIRECT PLAN,Sectoral,133859,3,SBI,sbi-banking-financial-services-fund-direct-plan,,no
+OK,holdings_linked,sbi-comma-fund-direct-plan,SBI COMMA Fund - DIRECT PLAN,Sectoral,119705,3,SBI,sbi-comma-fund-direct-plan,,yes
+OK,holdings_linked,sbi-consumption-opportunities-fund-direct-plan,SBI CONSUMPTION OPPORTUNITIES FUND - DIRECT PLAN,Sectoral,120575,3,SBI,sbi-consumption-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,sbi-esg-exclusionary-strategy-fund-direct-plan,SBI ESG Exclusionary Strategy Fund - Direct Plan,Sectoral,119709,3,SBI,sbi-esg-exclusionary-strategy-fund-direct-plan,,yes
+OK,holdings_linked,sbi-energy-opportunities-fund-direct-plan,SBI Energy Opportunities Fund - Direct Plan,Sectoral,152417,3,SBI,sbi-energy-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,sbi-equity-minimum-variance-fund-direct-plan,SBI Equity Minimum Variance Fund - Direct Plan,Sectoral,146643,3,SBI,sbi-equity-minimum-variance-fund-direct-plan,,yes
+OK,holdings_linked,sbi-healthcare-opportunities-fund-direct-plan,SBI HEALTHCARE OPPORTUNITIES FUND - DIRECT PLAN,Sectoral,119783,3,SBI,sbi-healthcare-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,sbi-infrastructure-fund-direct-plan,SBI INFRASTRUCTURE FUND -  DIRECT PLAN,Sectoral,119700,3,SBI,sbi-infrastructure-fund-direct-plan,,yes
+OK,holdings_linked,sbi-innovative-opportunities-fund-direct-plan,SBI Innovative Opportunities Fund - Direct Plan,Sectoral,152776,3,SBI,sbi-innovative-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,sbi-mnc-fund-direct-plan,SBI MNC FUND - DIRECT PLAN,Sectoral,119711,3,SBI,sbi-mnc-fund-direct-plan,,yes
+OK,holdings_linked,sbi-psu-fund-direct-plan,SBI PSU Fund - DIRECT PLAN,Sectoral,119732,3,SBI,sbi-psu-fund-direct-plan,,yes
+OK,holdings_linked,sbi-quality-fund-direct-plan,SBI Quality Fund - Direct Plan,Sectoral,154177,3,SBI,sbi-quality-fund-direct-plan,,yes
+OK,holdings_linked,sbi-quant-fund-direct-plan,SBI Quant Fund- Direct Plan,Sectoral,153154,3,SBI,sbi-quant-fund-direct-plan,,yes
+OK,holdings_linked,sbi-technology-opportunities-fund-direct-plan,SBI TECHNOLOGY OPPORTUNITIES FUND - DIRECT PLAN,Sectoral,120578,3,SBI,sbi-technology-opportunities-fund-direct-plan,,yes
+MISSING,amc_no_holdings_in_db,samco-active-momentum-fund-direct-plan,Samco Active Momentum Fund - Direct Plan,Sectoral,151753,31,Samco,,,no
+MISSING,amc_no_holdings_in_db,samco-special-opportunities-fund-direct-plan,Samco Special Opportunities Fund - Direct Plan,Sectoral,152586,31,Samco,,,yes
+OK,holdings_linked,sundaram-financial-services-opportunities-fund-direct-plan,Sundaram Financial Services Opportunities Fund Direct Plan,Sectoral,119597,11,Sundaram,sundaram-financial-services-opportunities-fund,,yes
+OK,holdings_linked,sundaram-infrastructure-advantage-fund-direct-plan,Sundaram Infrastructure Advantage Fund Direct Plan,Sectoral,129212,11,Sundaram,sundaram-infrastructure-advantage-fund,,yes
+OK,holdings_linked,sundaram-services-fund-direct-plan,Sundaram Services Fund Direct Plan,Sectoral,144835,11,Sundaram,sundaram-services-fund,,yes
+OK,holdings_linked,tata-banking-and-financial-services-fund-direct-plan,Tata Banking And Financial Services Fund-Direct Plan,Sectoral,135793,6,Tata,tata-banking-and-financial-services-fund-direct-plan,,no
+OK,holdings_linked,tata-business-cycle-fund-direct-plan,Tata Business Cycle Fund-Direct Plan,Sectoral,149071,6,Tata,tata-business-cycle-fund-direct-plan,,yes
+OK,holdings_linked,tata-digital-india-fund-direct-plan,Tata Digital India Fund-Direct Plan,Sectoral,135800,6,Tata,tata-digital-india-fund-direct-plan,,yes
+OK,holdings_linked,tata-ethical-fund-direct-plan,Tata Ethical Fund -Direct Plan,Sectoral,119172,6,Tata,tata-ethical-fund-direct-plan,,yes
+OK,holdings_linked,tata-housing-opportunities-fund-direct-plan,Tata Housing Opportunities Fund - Direct Plan,Sectoral,150532,6,Tata,tata-housing-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,tata-india-consumer-fund-direct-plan,Tata India Consumer Fund-Direct Plan,Sectoral,135805,6,Tata,tata-india-consumer-fund-direct-plan,,yes
+OK,holdings_linked,tata-india-pharma-healthcare-fund-direct-plan,Tata India Pharma & Healthcare Fund-Direct Plan,Sectoral,135810,6,Tata,tata-india-pharma-healthcare-fund-direct-plan,,yes
+OK,holdings_linked,tata-infrastructure-fund-direct-plan,Tata Infrastructure Fund -Direct Plan,Sectoral,119243,6,Tata,tata-infrastructure-fund-direct-plan,,yes
+OK,holdings_linked,tata-resources-energy-fund-direct-plan,Tata Resources & Energy Fund-Direct Plan,Sectoral,135813,6,Tata,tata-resources-energy-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,taurus-banking-financial-services-fund-direct-plan,Taurus Banking & Financial Services Fund - Direct Plan,Sectoral,118868,86,Taurus,taurus-flexi-cap-fund-direct-plan; taurus-mid-cap-fund-direct-plan; taurus-elss-tax-saver-fund-direct-plan,,no
+OK,holdings_linked,taurus-ethical-fund-direct-plan,Taurus Ethical Fund - Direct Plan,Sectoral,118876,86,Taurus,taurus-ethical-fund-direct-plan,,yes
+OK,holdings_linked,taurus-infrastructure-fund-direct-plan,Taurus Infrastructure Fund - Direct Plan,Sectoral,118879,86,Taurus,taurus-infrastructure-fund-direct-plan,,yes
+OK,holdings_linked,uti-banking-and-financial-services-fund-direct-plan,UTI Banking and Financial Services Fund - Direct Plan,Sectoral,120733,8,UTI,uti-banking-and-financial-services-fund-direct-plan,,yes
+OK,holdings_linked,uti-healthcare-fund-direct-plan,UTI Healthcare Fund - Direct Plan,Sectoral,120782,8,UTI,uti-healthcare-fund-direct-plan,,yes
+OK,holdings_linked,uti-india-consumer-fund-direct-plan,UTI India Consumer Fund - Direct Plan,Sectoral,120780,8,UTI,uti-india-consumer-fund-direct-plan,,yes
+OK,holdings_linked,uti-innovation-fund-direct-plan,UTI Innovation Fund - Direct Plan,Sectoral,152087,8,UTI,uti-innovation-fund-direct-plan,,yes
+OK,holdings_linked,uti-quant-fund-direct-plan,UTI Quant Fund - Direct Plan,Sectoral,153204,8,UTI,uti-quant-fund-direct-plan,,yes
+OK,holdings_linked,union-active-momentum-fund-direct-plan,Union Active Momentum Fund - Direct Plan,Sectoral,153109,26,Union,union-active-momentum-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,union-business-cycle-fund-direct-plan,Union Business Cycle Fund - Direct Plan,Sectoral,152409,26,Union,union-elss-tax-saver-fund-direct-plan; union-flexi-cap-fund-direct-plan; union-small-cap-fund-direct-plan,,no
+MISSING,amc_has_other_funds_only,union-consumption-fund-direct-plan,Union Consumption Fund - Direct Plan,Sectoral,154020,26,Union,union-elss-tax-saver-fund-direct-plan; union-flexi-cap-fund-direct-plan; union-small-cap-fund-direct-plan,,no
+OK,holdings_linked,union-innovation-opportunities-fund-direct-plan,Union Innovation & Opportunities Fund - Direct Plan,Sectoral,151905,26,Union,union-innovation-opportunities-fund-direct-plan,,yes
+OK,holdings_linked,abakkus-small-cap-fund-direct-plan,Abakkus Small Cap Fund - Direct Plan,Small Cap,154215,47,Abakkus,abakkus-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-small-cap-fund-growth-direct-plan,Aditya Birla Sun Life Small Cap Fund,Small Cap,119556,7,Aditya Birla Sun Life,aditya-birla-sun-life-small-cap-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-small-cap-fund-direct-plan,Axis Small Cap Fund - Direct Plan,Small Cap,125354,29,Axis,axis-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-small-cap-fund-direct-plan,Baroda BNP Paribas Small Cap Fund - Direct Plan,Small Cap,152128,12,Baroda BNP,baroda-bnp-paribas-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-small-cap-fund-direct-plan,CANARA ROBECO SMALL CAP FUND - DIRECT PLAN,Small Cap,146130,24,Canara Robeco,canara-robeco-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,dsp-small-cap-fund-direct-plan,DSP Small Cap Fund - Direct Plan,Small Cap,119212,19,DSP,dsp-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,edelweiss-small-cap-fund-direct-plan,Edelweiss Small Cap Fund - Direct Plan,Small Cap,146196,22,Edelweiss,edelweiss-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,hdfc-small-cap-fund-growth-option-direct-plan,HDFC Small Cap Fund,Small Cap,130503,9,HDFC,hdfc-small-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,helios-small-cap-fund-direct-plan,Helios Small Cap Fund - Direct Plan,Small Cap,153912,36,Helios,helios-small-cap-fund-direct-plan,,no
+OK,holdings_linked,icici-prudential-smallcap-fund-direct-plan,ICICI Prudential Smallcap Fund - Direct Plan,Small Cap,120591,5,ICICI Prudential,icici-prudential-smallcap-fund-direct-plan,,yes
+OK,holdings_linked,iti-small-cap-fund-direct-plan,ITI Small Cap Fund - Direct Plan,Small Cap,147919,14,ITI,iti-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,invesco-india-smallcap-fund-direct-plan,Invesco India Smallcap Fund - Direct Plan,Small Cap,145137,2,Invesco India,invesco-india-smallcap-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-small-cap-fund-direct-plan,LIC MF Small Cap Fund-Direct Plan,Small Cap,152004,4,LIC,lic-mf-small-cap-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-small-cap-fund-direct-plan,Mahindra Manulife Small Cap Fund - Direct Plan,Small Cap,150915,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+OK,holdings_linked,mirae-asset-small-cap-fund-direct-plan,Mirae Asset Small Cap Fund - Direct Plan,Small Cap,153196,23,Mirae Asset,mirae-asset-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,pgim-india-small-cap-fund-direct-plan,PGIM India Small Cap Fund - Direct Plan,Small Cap,149019,30,PGIM India,pgim-india-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,sbi-small-cap-fund-direct-plan,SBI Small Cap Fund - Direct Plan,Small Cap,125497,3,SBI,sbi-small-cap-fund-direct-plan,,no
+OK,holdings_linked,sundaram-small-cap-fund-direct-plan,Sundaram Small Cap Fund Direct Plan,Small Cap,119589,11,Sundaram,sundaram-small-cap-fund,,yes
+OK,holdings_linked,trustmf-small-cap-fund-direct-plan,TRUSTMF SMALL CAP FUND -DIRECT PLAN,Small Cap,152939,87,Trust,trustmf-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,tata-small-cap-fund-direct-plan,Tata Small Cap Fund-Direct Plan,Small Cap,145206,6,Tata,tata-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,uti-small-cap-fund-direct-plan,UTI Small Cap Fund - Direct Plan,Small Cap,148618,8,UTI,uti-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,union-small-cap-fund-direct-plan,Union Small Cap Fund - Direct Plan,Small Cap,129649,26,Union,union-small-cap-fund-direct-plan,,yes
+OK,holdings_linked,quant-small-cap-fund-growth-option-direct-plan,quant Small Cap Fund,Small Cap,120828,15,Quant,quant-small-cap-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,aditya-birla-sun-life-value-fund-growth-direct-plan,Aditya Birla Sun Life Value Fund,Value,119659,7,Aditya Birla Sun Life,aditya-birla-sun-life-value-fund-growth-direct-plan,,yes
+OK,holdings_linked,axis-value-fund-direct-plan,Axis Value Fund - Direct Plan,Value,149166,29,Axis,axis-value-fund-direct-plan,,yes
+OK,holdings_linked,bandhan-value-fund-direct-plan,Bandhan Value Fund - Direct Plan,Value,118481,25,Bandhan,bandhan-value-fund-direct-plan,,yes
+OK,holdings_linked,baroda-bnp-paribas-value-fund-direct-plan,Baroda BNP Paribas Value Fund - Direct Plan,Value,151755,12,Baroda BNP,baroda-bnp-paribas-value-fund-direct-plan,,yes
+OK,holdings_linked,canara-robeco-value-fund-direct-plan,Canara Robeco Value Fund - Direct Plan,Value,149085,24,Canara Robeco,canara-robeco-value-fund-direct-plan,,yes
+OK,holdings_linked,dsp-value-fund-direct-plan,DSP Value Fund - Direct Plan,Value,148595,19,DSP,dsp-value-fund-direct-plan,,yes
+OK,holdings_linked,groww-value-fund-formerly-known-as-indiabulls-value-fund-direct-plan,Groww Value Fund (formerly known as Indiabulls Value Fund) - Direct Plan,Value,135341,37,Groww,groww-value-fund-formerly-known-as-indiabulls-value-fund-direct-plan,,no
+OK,holdings_linked,hdfc-value-fund-growth-option-direct-plan,HDFC Value Fund,Value,118935,9,HDFC,hdfc-value-fund-growth-option-direct-plan,,yes
+MISSING,amc_has_other_funds_only,icici-prudential-value-fund-erstwhile-value-discovery-fund-direct-plan,ICICI Prudential Value Fund (erstwhile Value Discovery Fund) - Direct Plan,Value,120323,5,ICICI Prudential,icici-prudential-dividend-yield-equity-fund; icici-prudential-elss-tax-saver-fund-direct-plan; icici-prudential-focused-equity-fund-direct-plan,,no
+OK,holdings_linked,iti-value-fund-direct-plan,ITI Value Fund - Direct Plan,Value,148972,14,ITI,iti-value-fund-direct-plan,,yes
+OK,holdings_linked,lic-mf-value-fund-direct-plan,LIC MF Value Fund-Direct Plan,Value,152018,4,LIC,lic-mf-value-fund-direct-plan,,yes
+MISSING,amc_has_other_funds_only,mahindra-manulife-value-fund-direct-plan,Mahindra Manulife Value Fund - Direct Plan,Value,153303,28,Mahindra Manulife,mahindra-manulife-innovation-opportunities-fund; mahindra-manulife-consumption-fund-direct-plan,,yes
+OK,holdings_linked,quant-value-fund-growth-option-direct-plan,Quant Value Fund,Value,149335,15,Quant,quant-value-fund-growth-option-direct-plan,,yes
+OK,holdings_linked,sundaram-value-fund-direct-plan,Sundaram Value Fund Direct Plan,Value,119549,11,Sundaram,sundaram-value-fund,,yes
+OK,holdings_linked,uti-value-fund-direct-plan,UTI Value Fund - Direct Plan,Value,120751,8,UTI,uti-value-fund-direct-plan,,yes
+OK,holdings_linked,union-value-fund-direct-plan,Union Value Fund - Direct Plan,Value,145473,26,Union,union-value-fund-direct-plan,,yes
