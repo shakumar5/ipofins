@@ -21,6 +21,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "predeploy": "node --use-system-ca scripts/pipeline/sync-nav-only.mjs && node db/verify-schema.mjs",
+    "db:verify": "node db/verify-schema.mjs",
     "db:seed": "node --use-system-ca db/seed/seed-from-json.mjs",
     "db:seed-holdings": "node --use-system-ca db/seed/seed-holdings-batch.mjs",
     "db:seed-holdings:full": "node --use-system-ca db/seed/seed-holdings-batch.mjs --full",
