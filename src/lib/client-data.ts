@@ -21,6 +21,10 @@ export function monthFileSlug(month: string): string {
   return month.toLowerCase().replace(/\s+/g, '-');
 }
 
+export function categoryFileSlug(category: string): string {
+  return category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 export function monthDataUrl(basePath: string, month: string): string {
   return `${basePath}/${monthFileSlug(month)}.json`;
 }

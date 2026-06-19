@@ -3,11 +3,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
-import { monthFileSlug } from '../../../../lib/client-data';
-
-function categoryFileSlug(category: string): string {
-  return category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
+import { monthFileSlug, categoryFileSlug } from '../../../../lib/client-data';
 
 export function getStaticPaths() {
   const dataDir = join(process.cwd(), 'public', 'data');

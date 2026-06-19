@@ -1,4 +1,4 @@
-import { fetchJsonCached, monthFileSlug } from './client-data';
+import { fetchJsonCached, monthFileSlug, categoryFileSlug } from './client-data';
 import type { SmartMoneyTrackerData } from './data/holdings';
 import type { SmartMoneySignalsData, SmartMoneySignalRow } from './smart-money-signals';
 
@@ -36,10 +36,6 @@ interface TrackerMonthFile {
 
 let signalsIndexPromise: Promise<SignalsIndex> | null = null;
 let trackerIndexPromise: Promise<TrackerIndex> | null = null;
-
-function categoryFileSlug(category: string): string {
-  return category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
 
 function signalCategoryUrl(month: string, category: string): string {
   return `${SIGNALS_BASE}/${monthFileSlug(month)}--${categoryFileSlug(category)}.json`;
