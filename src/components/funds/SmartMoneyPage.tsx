@@ -21,7 +21,7 @@ import {
   seedSignalsJsonCache,
 } from '../../lib/smart-money-signals-bootstrap';
 import type { TrackerIndexDisk } from '../../lib/smart-money-tracker-server';
-import type { SignalsIndexDisk } from '../../lib/smart-money-signals-server';
+import type { SignalsIndexDisk } from '../../lib/smart-money-signals-meta';
 import {
   getSmartMoneyPageMeta,
   parseSmartMoneyTabFromPathname,

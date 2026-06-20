@@ -5,7 +5,7 @@ import {
   signalCategoryPublicUrl,
   type SignalsIndexDisk,
   type SmartMoneySignalsBootstrap,
-} from './smart-money-signals-server';
+} from './smart-money-signals-meta';
 
 export const SMART_MONEY_SIGNALS_INDEX_BOOTSTRAP_ID = 'smart-money-signals-index-bootstrap';
 export const SMART_MONEY_SIGNALS_DATA_BOOTSTRAP_ID = 'smart-money-signals-data-bootstrap';

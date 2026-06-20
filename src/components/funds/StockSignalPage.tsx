@@ -8,7 +8,7 @@ import {
   resolveSignalsIndexBootstrap,
   seedSignalsJsonCache,
 } from '../../lib/smart-money-signals-bootstrap';
-import type { SignalsIndexDisk } from '../../lib/smart-money-signals-server';
+import type { SignalsIndexDisk } from '../../lib/smart-money-signals-meta';
 import { loadSignalsIndex, loadSignalsMonth } from '../../lib/smart-money-client';
 
 interface Props {

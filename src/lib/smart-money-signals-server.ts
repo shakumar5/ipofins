@@ -1,7 +1,11 @@
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { categoryFileSlug, monthFileSlug } from './client-data';
+import {
+  signalCategoryFileName,
+  type SignalsIndexDisk,
+  type SmartMoneySignalsBootstrap,
+} from './smart-money-signals-meta';
 import {
   dedupeSignalsByStock,
   signalMarketCapFilterOptions,
@@ -9,24 +13,13 @@ import {
   type SmartMoneySignalsData,
 } from './smart-money-signals';
 
-export const SIGNALS_INDEX_PUBLIC_PATH = '/data/smart-money-signals-index.json';
-export const SIGNALS_CATEGORY_PUBLIC_BASE = '/data/smart-money-signals';
-
-export interface SignalsIndexDisk {
-  months: string[];
-  categories: string[];
-  layout?: 'by-category' | 'monolith';
-  scoringModel?: 'conviction-v2' | 'stock-cap-v2' | 'fund-scheme-v1';
-  exportedAt?: string;
-}
-
-export function signalCategoryFileName(month: string, category: string): string {
-  return `${monthFileSlug(month)}--${categoryFileSlug(category)}.json`;
-}
-
-export function signalCategoryPublicUrl(month: string, category: string): string {
-  return `${SIGNALS_CATEGORY_PUBLIC_BASE}/${signalCategoryFileName(month, category)}`;
-}
+export type { SignalsIndexDisk, SmartMoneySignalsBootstrap } from './smart-money-signals-meta';
+export {
+  SIGNALS_CATEGORY_PUBLIC_BASE,
+  SIGNALS_INDEX_PUBLIC_PATH,
+  signalCategoryFileName,
+  signalCategoryPublicUrl,
+} from './smart-money-signals-meta';
 
 export function readSignalsIndexFromDisk(cwd = process.cwd()): SignalsIndexDisk | null {
   const indexPath = join(cwd, 'public', 'data', 'smart-money-signals-index.json');
@@ -87,12 +80,6 @@ export function loadSignalsMonthFromDisk(
     categories,
     rows,
   };
-}
-
-export interface SmartMoneySignalsBootstrap {
-  index: SignalsIndexDisk;
-  initialMonth: string;
-  data: SmartMoneySignalsData | null;
 }
 
 /** Load signals index + latest month rows from disk at build time (no Neon). */
