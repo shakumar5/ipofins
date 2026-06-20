@@ -50,6 +50,3 @@ public/data/**
 # Sitemaps — regenerated during export / build
 public/sitemap-*.xml
 public/sitemap-overlap-staging-*.xml
-
-# OG PNGs — rasterized from public/og-*.svg during build
-public/og-*.png

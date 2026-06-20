@@ -2,10 +2,11 @@
 import IPOLayout from '../../layouts/IPOLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import AIInsightBox from '../../components/AIInsightBox.astro';
-import RiskBadge from '../../components/RiskBadge.astro';
+import IpoRiskScore from '../../components/IpoRiskScore.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../lib/affiliate-links';
 import { withCorrectStatuses } from '../../utils/ipo-status';
+import { buildShouldApplyFaqAnswer } from '../../lib/ipo-apply-faq';
 import type { IPORecord } from '../../types/ipo';
 
 export async function getStaticPaths() {
@@ -31,6 +32,7 @@ const statusConfig = {
   withdrawn: { label: 'Withdrawn', class: 'bg-surface-100 text-surface-500 dark:bg-surface-700 dark:text-surface-400' },
 };
 const statusInfo = statusConfig[ipo.status as keyof typeof statusConfig] || statusConfig['upcoming'];
+const shouldApplyAnswer = buildShouldApplyFaqAnswer(ipo, ipo.gmp);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -73,7 +75,7 @@ const jsonLd = {
             <p class="text-xs text-surface-500 mt-1" title="Quantitative score based on financials, valuation, and sector data">IPOFins Score</p>
           </div>
         )}
-        <RiskBadge score={ipo.riskScore} size="lg" />
+        <IpoRiskScore ipo={ipo} size="lg" />
       </div>
     </div>
   </section>
@@ -450,11 +452,7 @@ const jsonLd = {
       </details>
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Should I apply for {ipo.name} IPO?</summary>
-        {ipo.aiScore && ipo.aiSummary ? (
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPOFins Score: {ipo.aiScore}/10. {ipo.aiSummary} Always do your own research before investing.</p>
-        ) : (
-          <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Review the IPO's fundamentals, financials, and market conditions carefully. Always do your own research before investing.</p>
-        )}
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">{shouldApplyAnswer}</p>
       </details>
       {ipo.founders && (
         <details class="card-compact group">

@@ -1,7 +1,7 @@
 /**
  * Build smart-money JSON exports (mirrors src/lib/data/holdings.ts aggregation).
  */
-import { isDebtInstrument, isValidEquitySector } from './stock-utils.mjs';
+import { isDebtInstrument, isValidEquitySector, filterTrackerSectorOptions } from './stock-utils.mjs';
 
 const TRACKER_CATEGORIES = [
   'All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others',
@@ -185,7 +185,7 @@ function aggregateChanges(rows) {
   return {
     months: monthList,
     categories: [...TRACKER_CATEGORIES],
-    sectors: ['All', ...[...sectorsSet].sort()],
+    sectors: filterTrackerSectorOptions(['All', ...[...sectorsSet].sort()]),
     byMonth,
     dataSource: 'holdings_changes',
   };

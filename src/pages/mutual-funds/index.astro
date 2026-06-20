@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { BRAND_NAME, withBrandSuffix } from '../../lib/brand';
 import { getAllFunds, getHoldingsStats } from '../../lib/data/funds';
 import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
 import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
@@ -38,7 +39,7 @@ const faqJsonLd = {
 };
 ---
 
-<BaseLayout title="Mutual Funds India 2026 - Best & All Funds | IPOFins" description="Compare India's best mutual funds. Large cap, mid cap, small cap, ELSS, hybrid. Sorted by returns with ratings." jsonLd={jsonLd}>
+<BaseLayout title={withBrandSuffix('Mutual Funds India 2026 - Best & All Funds')} description="Compare India's best mutual funds. Large cap, mid cap, small cap, ELSS, hybrid. Sorted by returns with ratings." ogImage="/og-fund.png" jsonLd={jsonLd}>
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
@@ -242,7 +243,7 @@ const faqJsonLd = {
 
   <!-- Cross-section Links -->
   <section class="container-wide py-8">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on {BRAND_NAME}</h2>
     <div class="nav-btn-group">
       <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>
       <a href={sm.mostBought} class="btn-secondary px-6 py-3">Most Bought Stocks</a>

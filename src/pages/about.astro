@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { BRAND_DOMAIN, BRAND_NAME, BRAND_URL } from '../lib/brand';
 import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
 
 const sm = loadSmartMoneyTrackerLinks();
@@ -7,22 +8,22 @@ const sm = loadSmartMoneyTrackerLinks();
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'AboutPage',
-  name: 'About IPOFins',
+  name: `About ${BRAND_NAME}`,
   description:
-    'IPOFins is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors.',
-  url: 'https://ipofins.com/about',
+    `${BRAND_NAME} is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors.`,
+  url: `${BRAND_URL}/about`,
 };
 ---
 
 <BaseLayout
-  title="About IPOFins — Financial Intelligence for Indian Investors"
-  description="IPOFins is a financial intelligence platform for IPO analytics, mutual fund portfolio tracking, investment tools, and market insights. Learn about our mission and founder."
+  title={`About ${BRAND_NAME} — Financial Intelligence for Indian Investors`}
+  description={`${BRAND_NAME} is a financial intelligence platform for IPO analytics, mutual fund portfolio tracking, investment tools, and market insights. Learn about our mission and founder.`}
   jsonLd={jsonLd}
 >
   <section class="container-narrow py-16">
     <div class="max-w-3xl mx-auto">
       <p class="text-sm font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
-        About IPOFins
+        About {BRAND_NAME}
       </p>
       <h1 class="mt-2 text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
         Helping Investors Make Smarter Decisions with Data
@@ -30,10 +31,10 @@ const jsonLd = {
 
       <div class="mt-8 space-y-6 text-surface-600 dark:text-surface-300 leading-relaxed">
         <p class="text-lg text-surface-700 dark:text-surface-200">
-          IPOFins is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights. Founded by Shailesh Kumar, a technology leader with 16 years of experience across DP World, Myntra, Intuit, Paytm, and SAP Ariba, IPOFins aims to help investors make smarter decisions through data-driven research and transparent analytics.
+          {BRAND_NAME} is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights. Founded by Shailesh Kumar, a technology leader with 16 years of experience across DP World, Myntra, Intuit, Paytm, and SAP Ariba, {BRAND_NAME} aims to help investors make smarter decisions through data-driven research and transparent analytics.
         </p>
         <p>
-          Whether you're tracking IPOs, analyzing mutual fund portfolio changes, comparing brokers, or using investment calculators, IPOFins provides reliable information in a simple and user-friendly format—grounded in publicly available market data and quantitative analysis.
+          Whether you're tracking IPOs, analyzing mutual fund portfolio changes, comparing brokers, or using investment calculators, {BRAND_NAME} provides reliable information in a simple and user-friendly format—grounded in publicly available market data and quantitative analysis.
         </p>
 
         <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-4">Our Mission</h2>
@@ -109,14 +110,14 @@ const jsonLd = {
         <p>
           His experience spans technology leadership, data platforms, automation, analytics, and
           building scalable software systems. That background in large-scale data platforms is what
-          powers IPOFins&apos; holdings pipeline and analytics.
+          powers {BRAND_NAME}&apos; holdings pipeline and analytics.
         </p>
         <p>
-          As an active market participant and long-term investor, Shailesh founded IPOFins to bridge
+          As an active market participant and long-term investor, Shailesh founded {BRAND_NAME} to bridge
           the gap between complex financial data and practical investor insights.
         </p>
         <p>
-          The vision behind IPOFins is to create a platform where investors can access high-quality
+          The vision behind {BRAND_NAME} is to create a platform where investors can access high-quality
           financial information, powerful analytics, and clear, actionable market insights without
           unnecessary complexity.
         </p>
@@ -152,7 +153,7 @@ const jsonLd = {
 
         <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">Important Disclaimer</h2>
         <p class="text-sm text-surface-500 dark:text-surface-400">
-          IPOFins is an educational and informational platform.
+          {BRAND_NAME} is an educational and informational platform.
         </p>
         <p class="text-sm text-surface-500 dark:text-surface-400">
           We are not registered with SEBI as an Investment Advisor, Research Analyst, or Portfolio
@@ -177,7 +178,7 @@ const jsonLd = {
           </li>
           <li>
             <span class="font-medium text-surface-900 dark:text-white">Website:</span>{' '}
-            <a href="https://ipofins.com" class="text-primary-600 dark:text-primary-400 hover:underline">ipofins.com</a>
+            <a href={BRAND_URL} class="text-primary-600 dark:text-primary-400 hover:underline">{BRAND_DOMAIN}</a>
           </li>
         </ul>
       </div>

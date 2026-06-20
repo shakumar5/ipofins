@@ -1,4 +1,5 @@
 import type { PageMeta } from './page-meta';
+import { withBrandSuffix } from './brand';
 import { parseTrackerFromPathname } from './smart-money-tracker-meta';
 
 export type SmartMoneyTab = 'tracker' | 'signals' | 'stock-signal' | 'sectors';
@@ -42,7 +43,7 @@ export function getSmartMoneyPageMeta(tab: SmartMoneyTab): PageMeta {
   switch (tab) {
     case 'signals':
       return {
-        title: 'Smart Money Signal 2026 - Institutional Conviction Scores | IPOFins',
+        title: withBrandSuffix('Smart Money Signal 2026 - Institutional Conviction Scores'),
         description:
           'Ranked stocks scored 0–100 from aggregated mutual fund activity. One row per stock, percentile-ranked vs peers in the same market-cap bucket.',
         path,
@@ -52,7 +53,7 @@ export function getSmartMoneyPageMeta(tab: SmartMoneyTab): PageMeta {
       };
     case 'stock-signal':
       return {
-        title: 'Stock Signal 2026 - Mutual Fund Institutional Activity | IPOFins',
+        title: withBrandSuffix('Stock Signal 2026 - Mutual Fund Institutional Activity'),
         description:
           'Pick any stock and see conviction score, funds holding, increases, reductions, fresh entries and exits across mutual funds.',
         path,
@@ -62,7 +63,7 @@ export function getSmartMoneyPageMeta(tab: SmartMoneyTab): PageMeta {
       };
     case 'sectors':
       return {
-        title: 'Sector Intelligence 2026 - Mutual Fund Sector Rotation | IPOFins',
+        title: withBrandSuffix('Sector Intelligence 2026 - Mutual Fund Sector Rotation'),
         description:
           'Track mutual fund sector rotation across Banking, IT, Pharma, Capital Markets and more. Month-on-month AUM change and conviction trends.',
         path,
@@ -72,7 +73,7 @@ export function getSmartMoneyPageMeta(tab: SmartMoneyTab): PageMeta {
       };
     default:
       return {
-        title: 'Smart Money Tracker 2026 - Fund Buying, Selling & Sector Rotation | IPOFins',
+        title: withBrandSuffix('Smart Money Tracker 2026 - Fund Buying, Selling & Sector Rotation'),
         description:
           'See which stocks mutual funds are buying and selling. Most bought, most sold, fresh entries and complete exits from AMC monthly disclosures.',
         path,

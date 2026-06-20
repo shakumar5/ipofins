@@ -5,6 +5,7 @@ import Footer from '../components/Footer.astro';
 import SearchOverlay from '../components/SearchOverlay.astro';
 import DeferredAnalytics from '../components/DeferredAnalytics.astro';
 import { BRAND_NAME, BRAND_URL, BRAND_TWITTER_HANDLE, BRAND_TWITTER_URL } from '../lib/brand';
+import { OG_DEFAULT_IMAGE, resolveOgImageUrl } from '../lib/og-images';
 
 interface Props {
   title: string;
@@ -18,7 +19,7 @@ interface Props {
 const {
   title,
   description = `${BRAND_NAME} - Free IPO tracker, mutual fund comparison, SIP & EMI calculators. Track live IPOs, subscription status for Indian investors.`,
-  ogImage = '/og-default.png',
+  ogImage = OG_DEFAULT_IMAGE,
   canonicalUrl,
   jsonLd,
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
@@ -26,6 +27,7 @@ const {
 
 const siteUrl = BRAND_URL;
 const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
+const socialImage = resolveOgImageUrl(ogImage);
 
 // Site-wide Organization schema for brand authority
 const organizationSchema = {
@@ -58,7 +60,7 @@ const organizationSchema = {
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={`${siteUrl}${ogImage}`} />
+    <meta property="og:image" content={`${siteUrl}${socialImage}`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={`${BRAND_NAME} — IPO analytics and mutual fund intelligence for Indian investors`} />
@@ -70,7 +72,7 @@ const organizationSchema = {
     <meta name="twitter:site" content={`@${BRAND_TWITTER_HANDLE}`} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
+    <meta name="twitter:image" content={`${siteUrl}${socialImage}`} />
 
     <!-- Additional SEO -->
     <meta name="robots" content={robots} />

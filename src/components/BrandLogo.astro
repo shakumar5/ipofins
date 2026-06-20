@@ -1,0 +1,18 @@
+---
+import { BRAND_NAME } from '../lib/brand';
+
+interface Props {
+  /** Footer / compact contexts */
+  compact?: boolean;
+  class?: string;
+}
+
+const { compact = false, class: className = '' } = Astro.props;
+const textClass = compact
+  ? 'text-sm font-extrabold tracking-tight'
+  : 'text-lg font-extrabold tracking-tight';
+---
+
+<span class={`${textClass} text-surface-900 dark:text-white ${className}`.trim()}>
+  {BRAND_NAME}
+</span>

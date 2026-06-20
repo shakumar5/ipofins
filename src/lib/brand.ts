@@ -8,3 +8,9 @@ export const BRAND_URL = `https://${BRAND_DOMAIN}`;
 export const BRAND_EMAIL = `info@${BRAND_DOMAIN}`;
 export const BRAND_TWITTER_HANDLE = 'ipofins';
 export const BRAND_TWITTER_URL = `https://x.com/${BRAND_TWITTER_HANDLE}`;
+
+/** Standard `<title>` suffix — e.g. `SIP Calculator | IPOFins`. */
+export function withBrandSuffix(title: string): string {
+  if (title.includes(BRAND_NAME)) return title;
+  return `${title} | ${BRAND_NAME}`;
+}

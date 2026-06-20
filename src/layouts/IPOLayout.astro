@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { OG_IPO_IMAGE } from '../lib/og-images';
 
 interface Props {
   title: string;
@@ -10,7 +11,7 @@ interface Props {
   activeTab: string;
 }
 
-const { title, description, ogImage = '/og-ipo.png', canonicalUrl, jsonLd, activeTab } = Astro.props;
+const { title, description, ogImage = OG_IPO_IMAGE, canonicalUrl, jsonLd, activeTab } = Astro.props;
 
 const tabs = [
   { key: 'all', label: 'All', href: '/ipo' },

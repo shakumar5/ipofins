@@ -1,0 +1,34 @@
+---
+import RiskBadge from './RiskBadge.astro';
+import { buildIpoRiskFactors } from '../lib/ipo-risk-factors';
+import type { IPORecord } from '../types/ipo';
+
+interface Props {
+  ipo: IPORecord;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { ipo, size = 'lg' } = Astro.props;
+const { tierLabel, factors } = buildIpoRiskFactors(ipo);
+const factorId = `ipo-risk-factors-${ipo.slug}`;
+---
+
+<div class="text-left max-w-[16rem] sm:max-w-xs">
+  <div aria-describedby={factorId}>
+    <RiskBadge score={ipo.riskScore} size={size} />
+  </div>
+  <p class="mt-2 text-[11px] font-semibold text-surface-700 dark:text-surface-200">
+    {tierLabel} because:
+  </p>
+  <ul id={factorId} class="mt-1 space-y-1">
+    {factors.map((factor) => (
+      <li class="text-[11px] text-surface-500 dark:text-surface-400 leading-snug flex gap-1.5">
+        <span class="text-surface-400 dark:text-surface-500 shrink-0" aria-hidden="true">•</span>
+        <span>{factor}</span>
+      </li>
+    ))}
+  </ul>
+  <p class="mt-1.5 text-[10px] text-surface-400 dark:text-surface-500">
+    IPOFins risk score from DRHP, financials &amp; subscription
+  </p>
+</div>

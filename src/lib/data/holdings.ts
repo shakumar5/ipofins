@@ -9,6 +9,7 @@ import {
 } from '../holdings-compare-server';
 import {
   computeTrackerStockWeights,
+  filterTrackerSectorOptions,
   isDebtHolding,
   isEquityFundCategory,
   isValidEquitySector,
@@ -534,7 +535,7 @@ function aggregateChanges(rows: RawChangeRow[]): SmartMoneyTrackerData {
   return {
     months: monthList,
     categories: [...TRACKER_CATEGORIES],
-    sectors: ['All', ...[...sectorsSet].sort()],
+    sectors: filterTrackerSectorOptions(['All', ...[...sectorsSet].sort()]),
     byMonth,
     dataSource: 'holdings_changes',
   };

@@ -57,7 +57,17 @@
     _sr = document.getElementById('search-results');
     var _sc = document.getElementById('search-close');
     var _sb = document.getElementById('search-trigger');
+    var _msb = document.getElementById('mobile-search-trigger');
     if (_sb) _sb.addEventListener('click', openSearch);
+    if (_msb) _msb.addEventListener('click', function() {
+      var mobileMenu = document.getElementById('mobile-menu');
+      var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.add('hidden');
+        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      }
+      openSearch();
+    });
     if (_sc) _sc.addEventListener('click', closeSearch);
     if (_so) _so.addEventListener('click', function(e) { if (e.target === _so) closeSearch(); });
     if (_sin) _sin.addEventListener('input', function(e) {

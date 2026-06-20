@@ -1,4 +1,5 @@
 import type { PageMeta } from './page-meta';
+import { withBrandSuffix } from './brand';
 import { getSmartMoneyPageMeta } from './smart-money-meta';
 
 export const STOCK_SIGNAL_BASE = '/mutual-funds/smart-money/stock-signal';
@@ -19,7 +20,7 @@ export function getStockSignalPageMeta(stockName?: string, stockSlug?: string): 
   if (stockName && stockSlug) {
     const path = stockSignalPath(stockSlug);
     return {
-      title: `${stockName} Stock Signal 2026 - Mutual Fund Institutional Activity | IPOFins`,
+      title: withBrandSuffix(`${stockName} Stock Signal 2026 - Mutual Fund Institutional Activity`),
       description: `How mutual funds are buying or selling ${stockName}: conviction score, funds holding, increases, reductions, fresh entries and complete exits from AMC disclosures.`,
       path,
       heading: stockName,

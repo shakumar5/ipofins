@@ -3,6 +3,8 @@ import type { SmartMoneyStockRow, SmartMoneyTrackerData } from '../../lib/data/h
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import {
   computeTrackerStockWeights,
+  filterTrackerSectorOptions,
+  isValidEquitySector,
   WEIGHT_CHANGE_THRESHOLD,
 } from '../../lib/holdings-utils';
 import {
@@ -154,6 +156,12 @@ export default function SmartMoneyTracker({
     syncTrackerUrl(next, month);
   };
 
+  const sectorOptions = useMemo(() => filterTrackerSectorOptions(data.sectors), [data.sectors]);
+
+  useEffect(() => {
+    if (sector !== 'All' && !sectorOptions.includes(sector)) setSector('All');
+  }, [sector, sectorOptions]);
+
   const monthInfo = data.months.find((m) => m.label === month);
 
   const rows = useMemo(() => {
@@ -284,7 +292,7 @@ export default function SmartMoneyTracker({
             value={sector}
             onChange={(e) => { setSector(e.target.value); setExpanded(null); setShowAllRows(false); }}
           >
-            {data.sectors.map((s) => (
+            {sectorOptions.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </FilterSelect>

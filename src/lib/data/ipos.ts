@@ -47,6 +47,7 @@ function mapIPORow(row: IPORow): IPORecord {
     drhpUrl: row.drhp_url ? String(row.drhp_url) : undefined,
     subscription: row.total_times != null ? Number(row.total_times) : null,
     subscriptionDetails: sub,
+    gmp: row.gmp != null ? Number(row.gmp) : null,
     listingPrice: row.listing_price != null ? Number(row.listing_price) : null,
     riskScore: row.risk_score != null ? Number(row.risk_score) : 5,
     aiScore: null,
@@ -64,12 +65,16 @@ async function queryIPOs(whereClause?: { slug: string }) {
       SELECT
         i.*,
         s.total_times, s.retail_times, s.nii_times, s.qib_times,
+        g.gmp,
         p.listing_price, p.listing_gain_pct
       FROM ipos i
       LEFT JOIN LATERAL (
         SELECT total_times, retail_times, nii_times, qib_times
         FROM ipo_subscriptions WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
       ) s ON true
+      LEFT JOIN LATERAL (
+        SELECT gmp FROM ipo_gmp_history WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
+      ) g ON true
       LEFT JOIN ipo_performance p ON p.ipo_id = i.id
       WHERE i.slug = ${whereClause.slug}
       LIMIT 1
@@ -81,12 +86,16 @@ async function queryIPOs(whereClause?: { slug: string }) {
     SELECT
       i.*,
       s.total_times, s.retail_times, s.nii_times, s.qib_times,
+      g.gmp,
       p.listing_price, p.listing_gain_pct
     FROM ipos i
     LEFT JOIN LATERAL (
       SELECT total_times, retail_times, nii_times, qib_times
       FROM ipo_subscriptions WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
     ) s ON true
+    LEFT JOIN LATERAL (
+      SELECT gmp FROM ipo_gmp_history WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
+    ) g ON true
     LEFT JOIN ipo_performance p ON p.ipo_id = i.id
     ORDER BY
       CASE i.status

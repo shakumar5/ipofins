@@ -1,5 +1,6 @@
 ---
 import { BRAND_NAME } from '../lib/brand';
+import BrandLogo from './BrandLogo.astro';
 import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
 
 const sm = loadSmartMoneyTrackerLinks();
@@ -118,9 +119,7 @@ const footerSections = [
 
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 bg-gradient-to-br from-primary-500 to-primary-700 rounded-md flex items-center justify-center">
-            <span class="text-white font-bold text-xs">F</span>
-          </div>
+          <BrandLogo compact />
           <span class="text-sm text-surface-500 dark:text-surface-400">
             © 2026 {BRAND_NAME}. All rights reserved.
           </span>

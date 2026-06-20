@@ -88,6 +88,9 @@ export interface IPORecord {
   subscriptionDetails?: SubscriptionDetails;
   subscriptionUpdatedAt?: string;
 
+  /** Latest unofficial grey market premium (₹/share) when sourced — not exchange-verified */
+  gmp?: number | null;
+
   // ── Listing (Zerodha + Groww fallback) ──────────────────────
   listingPrice?: number | null;
 

@@ -1,3 +1,5 @@
+import { withBrandSuffix } from './brand';
+
 export type MfSectionTab =
   | 'best'
   | 'all'
@@ -18,7 +20,7 @@ export const MF_SECTION_TABS: {
     id: 'best',
     label: 'Best Funds',
     path: '/mutual-funds/best',
-    title: 'Best Mutual Funds India 2026 - Top Rated & Highest Returns | IPOFins',
+    title: withBrandSuffix('Best Mutual Funds India 2026 - Top Rated & Highest Returns'),
     description:
       'List of best mutual funds in India 2026. Curated top-performing, 5-star rated funds across Large Cap, Mid Cap, Small Cap, ELSS. Direct-Growth plans only.',
     heading: 'Best Mutual Funds to Invest in 2026 - Top Rated Collection',
@@ -28,7 +30,7 @@ export const MF_SECTION_TABS: {
     id: 'all',
     label: 'All Funds',
     path: '/mutual-funds/all',
-    title: 'List of All Mutual Funds in India 2026 - Compare Returns & NAV | IPOFins',
+    title: withBrandSuffix('List of All Mutual Funds in India 2026 - Compare Returns & NAV'),
     description:
       'Complete list of all mutual funds in India 2026 with 1Y, 3Y, 5Y returns, NAV, and ratings. Compare Large Cap, Mid Cap, Small Cap, ELSS funds.',
     heading: 'List of All Mutual Funds in India 2026',
@@ -38,7 +40,7 @@ export const MF_SECTION_TABS: {
     id: 'holdings-changes',
     label: 'Holdings Changes',
     path: '/mutual-funds/mutual-fund-holdings-changes',
-    title: 'Mutual Fund Holdings Changes 2026 - Track Additions & Removals | IPOFins',
+    title: withBrandSuffix('Mutual Fund Holdings Changes 2026 - Track Additions & Removals'),
     description:
       'Compare mutual fund portfolio holdings month-on-month. See which stocks top funds are buying and selling. Data from AMC monthly disclosures.',
     heading: 'Mutual Fund Holdings Changes',
@@ -48,7 +50,7 @@ export const MF_SECTION_TABS: {
     id: 'overlap-checker',
     label: 'Portfolio Overlap Checker',
     path: '/mutual-funds/portfolio-overlap-checker',
-    title: 'Portfolio Overlap Checker - Compare Mutual Fund Holdings | IPOFins',
+    title: withBrandSuffix('Portfolio Overlap Checker - Compare Mutual Fund Holdings'),
     description:
       'Check portfolio overlap between 2 to 4 mutual funds. See overlap percentage and common stock holdings to avoid duplicate exposure.',
     heading: 'Portfolio Overlap Checker',
@@ -58,7 +60,7 @@ export const MF_SECTION_TABS: {
     id: 'fund-overlap',
     label: 'Fund Overlap',
     path: '/mutual-funds/fund-overlap',
-    title: 'Fund Overlap 2026 - Pairwise Mutual Fund Portfolio Overlap | IPOFins',
+    title: withBrandSuffix('Fund Overlap 2026 - Pairwise Mutual Fund Portfolio Overlap'),
     description:
       'Check how much two mutual funds overlap in stock holdings. Browse funds with portfolio data and compare pairwise overlap to avoid concentration risk.',
     heading: 'Fund Overlap',
