@@ -22,7 +22,6 @@ import {
   TRACKER_VIEW_OPTIONS,
   type TrackerViewType,
 } from '../../lib/smart-money-tracker-meta';
-import SmartMoneySubNav from './SmartMoneySubNav';
 
 import {
   loadSignalsIndex,
@@ -310,12 +309,8 @@ export default function SmartMoneyPage({
     </div>
   );
 
-  const subNavActive = tab === 'stock-signal' ? 'stock-signal-hub' : tab;
-
   return (
     <div>
-      <SmartMoneySubNav active={subNavActive} />
-
       {tab === 'tracker' && (
         trackerError ? (
           errorPanel(trackerError, retryTracker)

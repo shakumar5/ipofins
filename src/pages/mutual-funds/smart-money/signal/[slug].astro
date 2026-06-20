@@ -2,6 +2,7 @@
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
 import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
+import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
 import { BRAND_URL } from '../../../../lib/brand';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
 import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
@@ -72,6 +73,7 @@ const jsonLd = isPlaceholder
     <p class="mt-1 text-sm text-surface-500" data-page-subtitle>
       {isPlaceholder ? 'Conviction score breakdown' : pageMeta.subtitle}
     </p>
+    {!isPlaceholder && <SmartMoneySubNav active="signals" />}
   </section>
 
   <section class="container-wide py-4 pb-12">

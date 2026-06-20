@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useLayoutEffect, useRef, useDeferredValue, useTransition } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   loadHoldingsCompareAmc,
   loadHoldingsCompareIndex,
@@ -78,7 +78,6 @@ export default function HoldingsCompare({
   const [month2, setMonth2] = useState(bootMonths?.month2 || initialMonth2 || '');
   const [resultsLimit, setResultsLimit] = useState(RESULTS_PAGE);
   const [retryKey, setRetryKey] = useState(0);
-  const [, startTransition] = useTransition();
 
   useLayoutEffect(() => {
     const boot = resolveHoldingsCompareIndex(initialIndex);
@@ -126,11 +125,6 @@ export default function HoldingsCompare({
     })();
     return () => { cancelled = true; };
   }, [resolvedIndex, initialMonth1, initialMonth2, retryKey]);
-
-  const deferredMonth1 = useDeferredValue(month1);
-  const deferredMonth2 = useDeferredValue(month2);
-  const deferredFund = useDeferredValue(selectedFund);
-  const deferredCategory = useDeferredValue(selectedCategory);
 
   useEffect(() => {
     if (!meta || !selectedAMC) {
@@ -210,7 +204,7 @@ export default function HoldingsCompare({
   const [comparing, setComparing] = useState(false);
 
   useEffect(() => {
-    if (!amcHoldings || !selectedAMC || !deferredMonth1 || !deferredMonth2 || deferredMonth1 === deferredMonth2) {
+    if (!amcHoldings || !selectedAMC || !month1 || !month2 || month1 === month2) {
       setComparison(null);
       setComparing(false);
       return;
@@ -226,16 +220,15 @@ export default function HoldingsCompare({
         const result = await compareAmcHoldingsAsync(
           amcHoldings,
           {
-            month1: deferredMonth1,
-            month2: deferredMonth2,
-            selectedFund: deferredFund,
-            selectedCategory: deferredCategory,
+            month1,
+            month2,
+            selectedFund,
+            selectedCategory,
           },
           () => cancelled || gen !== compareGen.current,
         );
         if (cancelled || gen !== compareGen.current) return;
-        if (result === null) return;
-        setComparison(result);
+        setComparison(result ?? []);
       } catch (err) {
         if (!cancelled && gen === compareGen.current) {
           setComparison(null);
@@ -249,17 +242,15 @@ export default function HoldingsCompare({
     return () => {
       cancelled = true;
     };
-  }, [amcHoldings, selectedAMC, deferredMonth1, deferredMonth2, deferredFund, deferredCategory]);
+  }, [amcHoldings, selectedAMC, month1, month2, selectedFund, selectedCategory]);
 
   const visibleComparison = comparison?.slice(0, resultsLimit) ?? null;
-  const computingFilters = comparing || month1 !== deferredMonth1 || month2 !== deferredMonth2
-    || selectedFund !== deferredFund || selectedCategory !== deferredCategory;
 
   const setAmc = (value: string) => setSelectedAMC(value);
   const setFund = (value: string) => setSelectedFund(value);
-  const setCategory = (value: string) => startTransition(() => { setSelectedCategory(value); setResultsLimit(RESULTS_PAGE); });
-  const setM1 = (value: string) => startTransition(() => { setMonth1(value); setResultsLimit(RESULTS_PAGE); });
-  const setM2 = (value: string) => startTransition(() => { setMonth2(value); setResultsLimit(RESULTS_PAGE); });
+  const setCategory = (value: string) => { setSelectedCategory(value); setResultsLimit(RESULTS_PAGE); };
+  const setM1 = (value: string) => { setMonth1(value); setResultsLimit(RESULTS_PAGE); };
+  const setM2 = (value: string) => { setMonth2(value); setResultsLimit(RESULTS_PAGE); };
 
   const retryLoad = () => {
     resetHoldingsCompareIndexCache();
@@ -305,17 +296,13 @@ export default function HoldingsCompare({
         </div>
       )}
 
-      {(amcLoading || (selectedAMC && !amcHoldings && !amcLoadError)) && (
+      {amcLoading && selectedAMC && (
         <div className="text-center py-8 text-surface-500 dark:text-surface-400">
-          <p className="text-sm">
-            {amcLoading || !selectedAMC
-              ? `Loading ${selectedAMC || 'AMC'} portfolio data…`
-              : 'Preparing comparison…'}
-          </p>
+          <p className="text-sm">Loading {selectedAMC} portfolio data…</p>
         </div>
       )}
 
-      {computingFilters && selectedAMC && amcHoldings && !amcLoading && (
+      {comparing && selectedAMC && amcHoldings && !amcLoading && (
         <p className="text-center text-xs text-surface-400 py-2">Updating comparison…</p>
       )}
 
@@ -460,8 +447,14 @@ export default function HoldingsCompare({
         </div>
       )}
 
+      {selectedAMC && amcHoldings && !amcLoading && comparing && !visibleComparison?.length && (
+        <div className="text-center py-12 text-surface-500 dark:text-surface-400">
+          <p className="text-sm">Computing holdings changes…</p>
+        </div>
+      )}
+
       {/* Results */}
-      {selectedAMC && amcHoldings && !amcLoading && !computingFilters && comparison && comparison.length === 0 && (
+      {selectedAMC && amcHoldings && !amcLoading && comparison && comparison.length === 0 && !comparing && (
         <div className="text-center py-12 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 rounded-xl">
           <div className="w-12 h-12 mx-auto bg-surface-100 dark:bg-surface-700 rounded-full flex items-center justify-center mb-3">
             <svg className="w-6 h-6 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -477,7 +470,7 @@ export default function HoldingsCompare({
         </div>
       )}
 
-      {visibleComparison && visibleComparison.length > 0 && !amcLoading && !computingFilters && (
+      {visibleComparison && visibleComparison.length > 0 && !amcLoading && (
         <div className="space-y-6">
           {visibleComparison.map((fund, idx) => (
             <div key={idx} className="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">

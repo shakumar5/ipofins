@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import SmartMoneySubNav from './SmartMoneySubNav';
 import StockSignalView from './StockSignalView';
 
 import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
@@ -25,7 +24,6 @@ function scheduleAfterPaint(task: () => void): () => void {
 }
 
 export default function StockSignalPage({ initialStockSlug = null }: Props) {
-  const [, startTransition] = useTransition();
   const loadStarted = useRef(false);
   const [retry, setRetry] = useState(0);
   const [data, setData] = useState<SmartMoneySignalsData | null>(null);
@@ -40,13 +38,13 @@ export default function StockSignalPage({ initialStockSlug = null }: Props) {
       const month = index.months[0] || '';
       if (!month) throw new Error('No signal months available');
       const chunk = await loadSignalsMonth(month, 'All');
-      startTransition(() => setData(chunk));
+      setData(chunk);
     } catch (err) {
       setError((err as Error).message || 'Failed to load stock signal data');
     } finally {
       setLoading(false);
     }
-  }, [startTransition]);
+  }, []);
 
   useEffect(() => {
     if (data || loadStarted.current) return;
@@ -72,8 +70,6 @@ export default function StockSignalPage({ initialStockSlug = null }: Props) {
 
   return (
     <div>
-      <SmartMoneySubNav active="stock-signal-hub" />
-
       {error ? (
         <div className="text-center py-12 text-red-600 dark:text-red-400">
           <p className="text-sm">{error}</p>

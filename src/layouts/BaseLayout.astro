@@ -143,18 +143,31 @@ const organizationSchema = {
             try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
           });
         };
-        if (localStorage.getItem('cookie-consent') === 'accepted') {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(function() {
-              if (window.__startWebVitals) window.__startWebVitals();
-              window.loadThirdPartyScripts();
-            });
+        window.scheduleThirdPartyAfterHydration = function() {
+          if (window.__thirdPartyScheduled) return;
+          window.__thirdPartyScheduled = true;
+          var run = function() {
+            if (window.__thirdPartyLoaded) return;
+            window.__thirdPartyLoaded = true;
+            if (window.__startWebVitals) window.__startWebVitals();
+            if (window.loadThirdPartyScripts) window.loadThirdPartyScripts();
+          };
+          var afterHydration = function() {
+            if ('requestIdleCallback' in window) {
+              requestIdleCallback(function() { setTimeout(run, 1500); }, { timeout: 6000 });
+            } else {
+              setTimeout(run, 4000);
+            }
+          };
+          var delay = function() { setTimeout(afterHydration, 2500); };
+          if (document.readyState === 'complete') {
+            delay();
           } else {
-            setTimeout(function() {
-              if (window.__startWebVitals) window.__startWebVitals();
-              window.loadThirdPartyScripts();
-            }, 2000);
+            window.addEventListener('load', delay, { once: true });
           }
+        };
+        if (localStorage.getItem('cookie-consent') === 'accepted') {
+          window.scheduleThirdPartyAfterHydration();
         }
       })();
     </script>
@@ -205,11 +218,12 @@ const organizationSchema = {
         }
       })();
       function acceptCookies() {
-        localStorage.setItem('cookie-consent', 'accepted');
-        var el = document.getElementById('cookie-consent');
-        el.classList.add('translate-y-full');
-        if (window.__startWebVitals) window.__startWebVitals();
-        if (window.loadThirdPartyScripts) window.loadThirdPartyScripts();
+        try {
+          localStorage.setItem('cookie-consent', 'accepted');
+          var el = document.getElementById('cookie-consent');
+          if (el) el.classList.add('translate-y-full');
+          if (window.scheduleThirdPartyAfterHydration) window.scheduleThirdPartyAfterHydration();
+        } catch (e) {}
       }
       function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
     </script>

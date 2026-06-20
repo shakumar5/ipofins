@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import StockSignalPage from '../../../../components/funds/StockSignalPage.tsx';
-import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
+import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
 import { getStockSignalPageMeta } from '../../../../lib/stock-signal-meta';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
 import { BRAND_URL } from '../../../../lib/brand';
@@ -41,6 +41,7 @@ const jsonLd = {
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{pageMeta.heading}</h1>
     <p class="mt-1 text-sm text-surface-500">{pageMeta.subtitle}</p>
     <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
+    <SmartMoneySubNav active="stock-signal-hub" />
   </section>
 
   <section class="container-wide pb-12">
