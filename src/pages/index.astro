@@ -158,14 +158,14 @@ const faqJsonLd = {
             </a>
           </div>
 
-          <div class="mt-6 flex flex-wrap gap-2">
-            <a href={sm.mostBought} class="home-quick-link">Most Bought Stocks</a>
-            <a href={sm.stockSignal} class="home-quick-link">Stock Signal</a>
-            <a href="/mutual-funds/portfolio-overlap-checker" class="home-quick-link">Portfolio Overlap</a>
-            <a href="/mutual-funds/best" class="home-quick-link">Best Funds</a>
-            <a href="/broker/compare" class="home-quick-link">Compare Brokers</a>
-            <a href="/learn" class="home-quick-link">Learn</a>
-            <a href="/blogs" class="home-quick-link">Guides & FAQs</a>
+          <div class="mt-6 nav-btn-group">
+            <a href={sm.mostBought} class="btn-secondary px-6 py-3">Most Bought Stocks</a>
+            <a href={sm.stockSignal} class="btn-secondary px-6 py-3">Stock Signal</a>
+            <a href="/mutual-funds/portfolio-overlap-checker" class="btn-secondary px-6 py-3">Portfolio Overlap</a>
+            <a href="/mutual-funds/best" class="btn-secondary px-6 py-3">Best Funds</a>
+            <a href="/broker/compare" class="btn-secondary px-6 py-3">Compare Brokers</a>
+            <a href="/learn" class="btn-secondary px-6 py-3">Learn</a>
+            <a href="/blogs" class="btn-secondary px-6 py-3">Guides & FAQs</a>
           </div>
 
           <p class="mt-5 text-xs text-surface-500 dark:text-surface-400">
@@ -293,11 +293,11 @@ const faqJsonLd = {
   <!-- IPO quick links — SEO internal linking -->
   <section class="container-wide py-6">
     <h2 class="text-sm font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">IPO Hub</h2>
-    <div class="flex flex-wrap gap-2">
+    <div class="nav-btn-group">
       {ipoQuickLinks.map(link => (
-        <a href={link.href} class="home-quick-link">{link.label}</a>
+        <a href={link.href} class="btn-secondary px-6 py-3">{link.label}</a>
       ))}
-      <a href="/ipo" class="home-quick-link font-semibold text-primary-600 dark:text-primary-400">All IPOs →</a>
+      <a href="/ipo" class="btn-primary px-6 py-3">All IPOs →</a>
     </div>
   </section>
 

@@ -198,6 +198,27 @@ html.dark {
   color: var(--color-warning-600);
 }
 
+.nav-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.nav-btn-group .btn-primary,
+.nav-btn-group .btn-secondary {
+  padding: 0.75rem 1.5rem;
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+button.btn-primary,
+button.btn-secondary {
+  border: none;
+  cursor: pointer;
+}
+
 .btn-primary {
   display: inline-flex;
   align-items: center;

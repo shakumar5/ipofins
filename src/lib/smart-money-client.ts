@@ -1,7 +1,7 @@
 import { fetchJsonCached, monthFileSlug, categoryFileSlug } from './client-data';
 import type { SmartMoneyTrackerData } from './data/holdings';
 import type { SmartMoneySignalsData, SmartMoneySignalRow } from './smart-money-signals';
-import { dedupeSignalsByStock } from './smart-money-signals';
+import { dedupeSignalsByStock, signalMarketCapFilterOptions } from './smart-money-signals';
 
 const SIGNALS_INDEX = '/data/smart-money-signals-index.json';
 const SIGNALS_BASE = '/data/smart-money-signals';
@@ -47,9 +47,11 @@ function signalMonthUrl(month: string): string {
   return `${SIGNALS_BASE}/${monthFileSlug(month)}.json`;
 }
 
-function signalCategoriesWithAll(categories: string[]): string[] {
-  const rest = categories.filter((c) => c !== 'All');
-  return ['All', ...rest];
+function signalCategoriesWithAll(
+  categories: string[],
+  scoringModel?: SignalsIndex['scoringModel'],
+): string[] {
+  return signalMarketCapFilterOptions(categories, scoringModel);
 }
 
 async function loadSignalsCategoryRows(
@@ -102,7 +104,7 @@ export async function loadSignalsMonth(
   category = 'All',
 ): Promise<SmartMoneySignalsData> {
   const index = await loadSignalsIndex();
-  const categories = signalCategoriesWithAll(index.categories);
+  const categories = signalCategoriesWithAll(index.categories, index.scoringModel);
 
   if (category === 'All') {
     const rows = await loadSignalsAllCategories(month, index);

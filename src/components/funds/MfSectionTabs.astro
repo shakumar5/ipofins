@@ -1,31 +1,33 @@
 ---
 interface Props {
-  active: 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap' | 'smart-money';
+  active: 'hub' | 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap' | 'smart-money';
 }
 
 const { active } = Astro.props;
 
 const tabs = [
-  { id: 'best', label: 'Best Funds', href: '/mutual-funds/best' },
-  { id: 'all', label: 'All Funds', href: '/mutual-funds/all' },
-  { id: 'holdings-changes', label: 'Holdings Changes', href: '/mutual-funds/mutual-fund-holdings-changes' },
-  { id: 'overlap-checker', label: 'Portfolio Overlap Checker', href: '/mutual-funds/portfolio-overlap-checker' },
-  { id: 'fund-overlap', label: 'Fund Overlap', href: '/mutual-funds/fund-overlap' },
-  { id: 'smart-money', label: 'Smart Money', href: '/mutual-funds/smart-money' },
+  { id: 'best', label: '🏆 Best Mutual Funds', href: '/mutual-funds/best' },
+  { id: 'all', label: '📊 All Mutual Funds', href: '/mutual-funds/all' },
+  { id: 'holdings-changes', label: '📋 Holdings Changes', href: '/mutual-funds/mutual-fund-holdings-changes' },
+  { id: 'overlap-checker', label: '🔗 Portfolio Overlap', href: '/mutual-funds/portfolio-overlap-checker' },
+  { id: 'fund-overlap', label: '📊 Fund Overlap', href: '/mutual-funds/fund-overlap' },
+  { id: 'smart-money', label: '💡 Smart Money Tracker', href: '/mutual-funds/smart-money' },
 ] as const;
-
-const tabClass = (key: Props['active']) =>
-  key === active
-    ? 'px-4 py-2 text-sm font-medium bg-primary-600 text-white rounded-lg'
-    : 'px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors';
 ---
 
-<div class="mt-4 flex flex-wrap gap-2">
-  {tabs.map((tab) => (
-    tab.id === active ? (
-      <span class={tabClass(tab.id)}>{tab.label}</span>
-    ) : (
-      <a href={tab.href} class={tabClass(tab.id)}>{tab.label}</a>
-    )
-  ))}
-</div>
+<nav class="nav-btn-group mt-6" aria-label="Mutual funds sections">
+  {tabs.map((tab) => {
+    if (active === 'hub') {
+      const cls = tab.id === 'best' ? 'btn-primary px-6 py-3' : 'btn-secondary px-6 py-3';
+      return <a href={tab.href} class={cls}>{tab.label}</a>;
+    }
+    if (tab.id === active) {
+      return (
+        <span class="btn-primary px-6 py-3 cursor-default" aria-current="page">
+          {tab.label}
+        </span>
+      );
+    }
+    return <a href={tab.href} class="btn-secondary px-6 py-3">{tab.label}</a>;
+  })}
+</nav>

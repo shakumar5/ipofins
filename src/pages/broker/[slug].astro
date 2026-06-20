@@ -193,9 +193,14 @@ const faqJsonLd = {
       <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">
         {broker.accountOpening} account opening • {broker.tradingFee} per trade
       </p>
-      <a href={broker.affiliateUrl} class="btn-primary px-8 py-3" rel="nofollow sponsored">
-        Open Account →
-      </a>
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <a href={broker.affiliateUrl} class="btn-primary px-8 py-3" rel="nofollow sponsored">
+          Open Account →
+        </a>
+        <a href={`/broker/compare?broker=${broker.slug}`} class="btn-secondary px-8 py-3">
+          Compare Broker
+        </a>
+      </div>
       <p class="text-xs text-surface-400 dark:text-surface-500 mt-3">
         Affiliate link. We may earn a commission at no extra cost to you.
       </p>
@@ -232,13 +237,13 @@ const faqJsonLd = {
   <!-- Related Links -->
   <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Pages</h2>
-    <div class="flex flex-wrap gap-3">
-      <a href="/broker" class="btn-secondary">📊 All Brokers</a>
-      <a href="/broker/compare" class="btn-secondary">⚖️ Compare Brokers</a>
-      <a href="/ipo" class="btn-secondary">🚀 Upcoming IPOs</a>
-      <a href="/tools/ipo-profit-calculator" class="btn-secondary">💰 IPO Profit Calculator</a>
-      <a href="/mutual-funds/best" class="btn-secondary">🏆 Best Mutual Funds</a>
-      <a href="/learn/best-stock-broker-2026" class="btn-secondary">📖 Broker Selection Guide</a>
+    <div class="nav-btn-group">
+      <a href="/broker" class="btn-secondary px-6 py-3">📊 All Brokers</a>
+      <a href="/broker/compare" class="btn-secondary px-6 py-3">⚖️ Compare Brokers</a>
+      <a href="/ipo" class="btn-secondary px-6 py-3">🚀 Upcoming IPOs</a>
+      <a href="/tools/ipo-profit-calculator" class="btn-secondary px-6 py-3">💰 IPO Profit Calculator</a>
+      <a href="/mutual-funds/best" class="btn-secondary px-6 py-3">🏆 Best Mutual Funds</a>
+      <a href="/learn/best-stock-broker-2026" class="btn-secondary px-6 py-3">📖 Broker Selection Guide</a>
     </div>
   </section>
 

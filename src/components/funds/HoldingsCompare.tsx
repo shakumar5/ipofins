@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useDeferredValue, useTransition } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef, useDeferredValue, useTransition } from 'react';
 import {
   loadHoldingsCompareAmc,
   loadHoldingsCompareIndex,
@@ -64,10 +64,13 @@ export default function HoldingsCompare({
   const bootMonths = resolvedIndex ? defaultMonths(resolvedIndex, initialMonth1, initialMonth2) : null;
   const [meta, setMeta] = useState<HoldingsMeta | null>(() => (resolvedIndex ? metaFromIndex(resolvedIndex) : null));
   const [amcHoldings, setAmcHoldings] = useState<Record<string, FundHoldings> | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [indexLoadError, setIndexLoadError] = useState<string | null>(null);
+  const [amcLoadError, setAmcLoadError] = useState<string | null>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
   const [metaLoading, setMetaLoading] = useState(!resolvedIndex);
   const [amcLoading, setAmcLoading] = useState(false);
+  const amcLoadGen = useRef(0);
+  const compareGen = useRef(0);
   const [selectedAMC, setSelectedAMC] = useState(initialAmc);
   const [selectedFund, setSelectedFund] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -77,12 +80,23 @@ export default function HoldingsCompare({
   const [retryKey, setRetryKey] = useState(0);
   const [, startTransition] = useTransition();
 
+  useLayoutEffect(() => {
+    const boot = resolveHoldingsCompareIndex(initialIndex);
+    if (!boot) return;
+    setMeta((prev) => prev ?? metaFromIndex(boot));
+    setMetaLoading(false);
+    setIndexLoadError(null);
+    const months = defaultMonths(boot, initialMonth1, initialMonth2);
+    setMonth1((m) => m || months.month1);
+    setMonth2((m) => m || months.month2);
+  }, [initialIndex, initialMonth1, initialMonth2]);
+
   useEffect(() => {
     if (resolvedIndex) return;
 
     let cancelled = false;
     setMetaLoading(true);
-    setLoadError(null);
+    setIndexLoadError(null);
     (async () => {
       try {
         const index = await loadHoldingsCompareIndex(retryKey > 0);
@@ -105,7 +119,7 @@ export default function HoldingsCompare({
         }
         throw new Error('Holdings index missing — run npm run export:client-data');
       } catch (err) {
-        if (!cancelled) setLoadError((err as Error).message || 'Failed to load data');
+        if (!cancelled) setIndexLoadError((err as Error).message || 'Failed to load data');
       } finally {
         if (!cancelled) setMetaLoading(false);
       }
@@ -122,6 +136,7 @@ export default function HoldingsCompare({
     if (!meta || !selectedAMC) {
       setAmcHoldings(null);
       setAmcLoading(false);
+      setAmcLoadError(null);
       return;
     }
 
@@ -129,19 +144,20 @@ export default function HoldingsCompare({
     if (!slug) {
       setAmcHoldings(null);
       setAmcLoading(false);
-      setLoadError(`No holdings data found for "${selectedAMC}"`);
+      setAmcLoadError(`No holdings data found for "${selectedAMC}"`);
       return;
     }
 
     let cancelled = false;
+    const gen = ++amcLoadGen.current;
     setAmcLoading(true);
-    setLoadError(null);
+    setAmcLoadError(null);
     setCompareError(null);
     setAmcHoldings(null);
     setResultsLimit(RESULTS_PAGE);
     loadHoldingsCompareAmc(slug)
       .then((holdings) => {
-        if (cancelled) return;
+        if (cancelled || gen !== amcLoadGen.current) return;
         const fundNames = Object.values(holdings).map((f) => f.name).sort();
         startTransition(() => {
           setAmcHoldings(holdings as Record<string, FundHoldings>);
@@ -149,13 +165,15 @@ export default function HoldingsCompare({
         });
       })
       .catch((err: Error) => {
-        if (!cancelled) setLoadError(err.message || 'Failed to load AMC data');
+        if (!cancelled && gen === amcLoadGen.current) {
+          setAmcLoadError(err.message || 'Failed to load AMC data');
+        }
       })
       .finally(() => {
-        setAmcLoading(false);
+        if (!cancelled && gen === amcLoadGen.current) setAmcLoading(false);
       });
     return () => { cancelled = true; };
-  }, [meta, selectedAMC]);
+  }, [meta, selectedAMC, retryKey]);
 
   const data = meta;
   const amcList = useMemo(() => (data ? Object.keys(data.amcs).sort() : []), [data]);
@@ -194,15 +212,15 @@ export default function HoldingsCompare({
   const [comparing, setComparing] = useState(false);
 
   useEffect(() => {
-    if (!amcHoldings || !selectedAMC || !deferredMonth1 || !deferredMonth2) {
+    if (!amcHoldings || !selectedAMC || !deferredMonth1 || !deferredMonth2 || deferredMonth1 === deferredMonth2) {
       setComparison(null);
       setComparing(false);
       return;
     }
 
     let cancelled = false;
+    const gen = ++compareGen.current;
     setComparing(true);
-    setComparison(null);
     setCompareError(null);
 
     (async () => {
@@ -215,25 +233,24 @@ export default function HoldingsCompare({
             selectedFund: deferredFund,
             selectedCategory: deferredCategory,
           },
-          () => cancelled,
+          () => cancelled || gen !== compareGen.current,
         );
-        if (cancelled) return;
+        if (cancelled || gen !== compareGen.current) return;
         startTransition(() => {
-          setComparison(result);
+          setComparison(result ?? []);
         });
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled && gen === compareGen.current) {
           setComparison(null);
           setCompareError((err as Error).message || 'Failed to compare holdings');
         }
       } finally {
-        if (!cancelled) setComparing(false);
+        if (!cancelled && gen === compareGen.current) setComparing(false);
       }
     })();
 
     return () => {
       cancelled = true;
-      setComparing(false);
     };
   }, [amcHoldings, selectedAMC, deferredMonth1, deferredMonth2, deferredFund, deferredCategory]);
 
@@ -262,17 +279,18 @@ export default function HoldingsCompare({
     }
     setAmcHoldings(null);
     setComparison(null);
-    setLoadError(null);
+    setIndexLoadError(null);
+    setAmcLoadError(null);
     setCompareError(null);
     setRetryKey((k) => k + 1);
   };
 
   return (
     <div>
-      {loadError && (
+      {indexLoadError && (
         <div className="text-center py-12 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl mb-6">
-          <p className="text-sm font-medium">Could not load holdings data</p>
-          <p className="text-xs mt-1 opacity-80">{loadError}</p>
+          <p className="text-sm font-medium">Could not load holdings index</p>
+          <p className="text-xs mt-1 opacity-80">{indexLoadError}</p>
           <p className="text-xs mt-2 opacity-70">Data is loaded from /data/holdings-compare/ — run npm run build or npm run dev:sync if missing.</p>
           <button
             type="button"
@@ -284,7 +302,7 @@ export default function HoldingsCompare({
         </div>
       )}
 
-      {!data && !loadError && metaLoading && (
+      {!data && !indexLoadError && metaLoading && (
         <div className="text-center py-12 text-surface-500 dark:text-surface-400">
           <p className="text-sm">Loading holdings data…</p>
         </div>
@@ -298,6 +316,20 @@ export default function HoldingsCompare({
 
       {computingFilters && selectedAMC && !amcLoading && (
         <p className="text-center text-xs text-surface-400 py-2">Updating comparison…</p>
+      )}
+
+      {amcLoadError && selectedAMC && !amcLoading && (
+        <div className="text-center py-8 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl mb-6">
+          <p className="text-sm font-medium">Could not load {selectedAMC} portfolio data</p>
+          <p className="text-xs mt-1 opacity-80">{amcLoadError}</p>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="mt-3 px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
       )}
 
       {data && (

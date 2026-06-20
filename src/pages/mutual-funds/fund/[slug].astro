@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getFundsWithHoldings, getRelatedFunds } from '../../../lib/data/funds';
 import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
@@ -97,16 +98,7 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
 
   <!-- Header -->
   <section class="container-wide pt-6 pb-4">
-    <div class="flex gap-3 mb-3">
-      <a href="/mutual-funds/best" class="text-sm text-primary-600 hover:underline inline-flex items-center gap-1">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Best Funds
-      </a>
-      <span class="text-surface-300">|</span>
-      <a href="/mutual-funds/all" class="text-sm text-primary-600 hover:underline inline-flex items-center gap-1">
-        All Funds
-      </a>
-    </div>
+    <MfSectionTabs active="all" />
 
     <div class="mt-3 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
       <div>
@@ -324,11 +316,11 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
 
   <!-- Bottom Navigation -->
   <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
-    <div class="flex flex-wrap gap-3">
-      <a href="/mutual-funds/best" class="btn-secondary">🏆 Best Mutual Funds</a>
-      <a href="/mutual-funds/all" class="btn-secondary">📊 All Mutual Funds</a>
-      <a href="/mutual-funds/mutual-fund-holdings-changes" class="btn-secondary">📋 Holdings Changes</a>
-      <a href="/tools/sip-calculator" class="btn-secondary">📈 SIP Calculator</a>
+    <div class="nav-btn-group">
+      <a href="/mutual-funds/best" class="btn-secondary px-6 py-3">🏆 Best Mutual Funds</a>
+      <a href="/mutual-funds/all" class="btn-secondary px-6 py-3">📊 All Mutual Funds</a>
+      <a href="/mutual-funds/mutual-fund-holdings-changes" class="btn-secondary px-6 py-3">📋 Holdings Changes</a>
+      <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">📈 SIP Calculator</a>
     </div>
   </section>
 </BaseLayout>

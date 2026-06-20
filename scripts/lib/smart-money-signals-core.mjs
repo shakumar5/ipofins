@@ -37,6 +37,56 @@ export function normalizeStockCapCategory(raw) {
   return 'Unknown';
 }
 
+/** Fund scheme activity → stock cap vote weights when DB market_cap_category is empty. */
+const FUND_CATEGORY_STOCK_CAP_VOTES = {
+  'Large Cap': ['Large Cap'],
+  'Large & Mid Cap': ['Large Cap', 'Mid Cap'],
+  'Mid Cap': ['Mid Cap'],
+  'Small Cap': ['Small Cap'],
+  'Multi Cap': ['Large Cap', 'Mid Cap', 'Small Cap'],
+  'Flexi Cap': ['Large Cap', 'Mid Cap', 'Small Cap'],
+  'Value': ['Large Cap', 'Mid Cap'],
+  'Focused': ['Large Cap', 'Mid Cap', 'Small Cap'],
+  'ELSS': ['Large Cap', 'Mid Cap'],
+  'Sectoral/Thematic': ['Mid Cap', 'Small Cap'],
+  'Sectoral': ['Mid Cap', 'Small Cap'],
+  'Contra': ['Large Cap', 'Mid Cap'],
+  'Dividend Yield': ['Large Cap'],
+  'Index': ['Large Cap'],
+};
+
+const STOCK_CAP_PRIORITY = ['Large Cap', 'Mid Cap', 'Small Cap', 'Micro Cap'];
+
+/** Infer stock cap from which fund categories traded the stock (fallback when DB cap is missing). */
+export function inferStockCapFromFundVotes(votes) {
+  const totals = {};
+  for (const [fundCat, count] of Object.entries(votes || {})) {
+    const targets = FUND_CATEGORY_STOCK_CAP_VOTES[fundCat];
+    if (!targets?.length) continue;
+    const share = Number(count) / targets.length;
+    for (const cap of targets) {
+      totals[cap] = (totals[cap] || 0) + share;
+    }
+  }
+  let best = 'Unknown';
+  let bestScore = 0;
+  for (const cap of STOCK_CAP_PRIORITY) {
+    const score = totals[cap] || 0;
+    if (score > bestScore) {
+      bestScore = score;
+      best = cap;
+    }
+  }
+  return best;
+}
+
+export function resolveStockCapCategory(dbCap, fundVotes) {
+  const normalized = normalizeStockCapCategory(dbCap);
+  if (normalized !== 'Unknown') return normalized;
+  const inferred = inferStockCapFromFundVotes(fundVotes);
+  return inferred !== 'Unknown' ? inferred : 'Unknown';
+}
+
 export function consecutiveAggregatedNetWeightTrend(sortedMonths, groupKey, byKey) {
   let count = 0;
   for (let i = sortedMonths.length - 1; i >= 0; i--) {

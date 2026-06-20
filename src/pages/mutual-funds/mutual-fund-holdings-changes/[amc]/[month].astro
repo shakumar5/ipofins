@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import HoldingsCompare from '../../../../components/funds/HoldingsCompare.tsx';
-import { getBuildMonths } from '../../../../lib/data/holdings';
 import { loadHoldingsPageBootstrap } from '../../../../lib/holdings-page-static';
 import { monthSlug, monthDisplay } from '../../../../utils/month-slug';
 
@@ -14,7 +13,7 @@ export async function getStaticPaths() {
     slug: a.slug,
     fundCount: a.fundCount,
   }));
-  const months = await getBuildMonths(4);
+  const months = [...bootstrap.index.months].reverse();
   const paths: { params: { amc: string; month: string }; props: Record<string, string> }[] = [];
 
   for (const amc of amcs) {

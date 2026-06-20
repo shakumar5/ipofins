@@ -16,14 +16,32 @@ interface Broker {
 
 interface Props {
   brokers: Broker[];
+  focusBroker?: string;
 }
 
-export default function BrokerCompare({ brokers }: Props) {
-  const [selected, setSelected] = useState<string[]>([
+function buildInitialSelected(brokers: Broker[], focusBroker?: string): string[] {
+  const defaultSelection = [
     brokers[0]?.slug || '',
     brokers[1]?.slug || '',
     brokers[2]?.slug || '',
-  ]);
+  ];
+
+  if (!focusBroker || !brokers.some((b) => b.slug === focusBroker)) {
+    return defaultSelection;
+  }
+
+  const others = brokers.filter((b) => b.slug !== focusBroker);
+  return [
+    focusBroker,
+    others[0]?.slug || brokers[0]?.slug || '',
+    others[1]?.slug || brokers[1]?.slug || '',
+  ];
+}
+
+export default function BrokerCompare({ brokers, focusBroker }: Props) {
+  const [selected, setSelected] = useState<string[]>(() =>
+    buildInitialSelected(brokers, focusBroker)
+  );
 
   const handleChange = (index: number, value: string) => {
     const updated = [...selected];

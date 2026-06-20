@@ -341,15 +341,11 @@ export default function SmartMoneyPage({
   );
 
   const tabClass = (active: boolean) =>
-    `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-      active
-        ? 'bg-primary-600 text-white'
-        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700'
-    }`;
+    active ? 'btn-primary px-6 py-3' : 'btn-secondary px-6 py-3';
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="nav-btn-group mb-6">
         <button type="button" onClick={() => applyTab('tracker')} className={tabClass(tab === 'tracker')}>
           Smart Money Tracker
         </button>
@@ -365,13 +361,13 @@ export default function SmartMoneyPage({
       </div>
 
       {trackerLinks && (
-        <div className="mb-6 flex flex-wrap gap-2 text-xs">
-          <a href={trackerLinks.mostBought} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Most Bought</a>
-          <a href={trackerLinks.mostSold} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Most Sold</a>
-          <a href={trackerLinks.freshEntries} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Fresh Entries</a>
-          <a href={trackerLinks.completeExits} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Complete Exits</a>
-          <a href={trackerLinks.holdingsChanges} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Holdings Changes</a>
-          <span className="text-surface-400 self-center">({trackerLinks.latestMonth})</span>
+        <div className="mb-6 nav-btn-group text-xs">
+          <a href={trackerLinks.mostBought} className="btn-secondary px-6 py-3">Most Bought</a>
+          <a href={trackerLinks.mostSold} className="btn-secondary px-6 py-3">Most Sold</a>
+          <a href={trackerLinks.freshEntries} className="btn-secondary px-6 py-3">Fresh Entries</a>
+          <a href={trackerLinks.completeExits} className="btn-secondary px-6 py-3">Complete Exits</a>
+          <a href={trackerLinks.holdingsChanges} className="btn-secondary px-6 py-3">Holdings Changes</a>
+          <span className="self-center text-surface-400 text-xs px-1">({trackerLinks.latestMonth})</span>
         </div>
       )}
 

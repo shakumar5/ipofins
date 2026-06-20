@@ -49,6 +49,62 @@ export function normalizeStockCapCategory(raw: string | null | undefined): Stock
   return 'Unknown';
 }
 
+const FUND_CATEGORY_STOCK_CAP_VOTES: Record<string, StockCapCategory[]> = {
+  'Large Cap': ['Large Cap'],
+  'Large & Mid Cap': ['Large Cap', 'Mid Cap'],
+  'Mid Cap': ['Mid Cap'],
+  'Small Cap': ['Small Cap'],
+  'Multi Cap': ['Large Cap', 'Mid Cap', 'Small Cap'],
+  'Flexi Cap': ['Large Cap', 'Mid Cap', 'Small Cap'],
+  Value: ['Large Cap', 'Mid Cap'],
+  Focused: ['Large Cap', 'Mid Cap', 'Small Cap'],
+  ELSS: ['Large Cap', 'Mid Cap'],
+  'Sectoral/Thematic': ['Mid Cap', 'Small Cap'],
+  Sectoral: ['Mid Cap', 'Small Cap'],
+  Contra: ['Large Cap', 'Mid Cap'],
+  'Dividend Yield': ['Large Cap'],
+  Index: ['Large Cap'],
+};
+
+const STOCK_CAP_PRIORITY: StockCapCategory[] = ['Large Cap', 'Mid Cap', 'Small Cap', 'Micro Cap'];
+
+export function inferStockCapFromFundVotes(votes: Record<string, number> | undefined): StockCapCategory {
+  const totals: Partial<Record<StockCapCategory, number>> = {};
+  for (const [fundCat, count] of Object.entries(votes || {})) {
+    const targets = FUND_CATEGORY_STOCK_CAP_VOTES[fundCat];
+    if (!targets?.length) continue;
+    const share = Number(count) / targets.length;
+    for (const cap of targets) {
+      totals[cap] = (totals[cap] || 0) + share;
+    }
+  }
+  let best: StockCapCategory = 'Unknown';
+  let bestScore = 0;
+  for (const cap of STOCK_CAP_PRIORITY) {
+    const score = totals[cap] || 0;
+    if (score > bestScore) {
+      bestScore = score;
+      best = cap;
+    }
+  }
+  return best;
+}
+
+export function signalMarketCapFilterOptions(
+  categories: string[],
+  scoringModel?: 'stock-cap-v2' | 'fund-scheme-v1',
+): string[] {
+  const useStockCapBuckets =
+    scoringModel === 'stock-cap-v2' || !isLegacyFundSchemeSignals(categories);
+  if (!useStockCapBuckets) {
+    const rest = categories.filter((c) => c !== 'All');
+    return ['All', ...rest];
+  }
+  const caps = STOCK_CAP_CATEGORIES.filter((c) => c !== 'Unknown');
+  const showUnknown = categories.includes('Unknown');
+  return ['All', ...caps, ...(showUnknown ? ['Unknown'] : [])];
+}
+
 /** Mutual fund scheme types — not a stock's market-cap classification. */
 const FUND_SCHEME_ONLY = new Set([
   'Large & Mid Cap',

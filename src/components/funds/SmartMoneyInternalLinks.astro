@@ -55,15 +55,15 @@ const tabLinks = [
     {monthNote && (
       <p class="text-xs text-surface-500 dark:text-surface-400">Latest month: <strong>{sm.latestMonth}</strong></p>
     )}
-    <div class="flex flex-wrap gap-2">
+    <div class="nav-btn-group">
       {showHub && (
-        <a href={sm.hub} class="btn-secondary text-xs px-3 py-1.5">Smart Money Hub</a>
+        <a href={sm.hub} class="btn-secondary px-6 py-3">Smart Money Hub</a>
       )}
       {trackerLinks.map((link) => (
-        <a href={link.href} class="btn-secondary text-xs px-3 py-1.5">{link.label}</a>
+        <a href={link.href} class="btn-secondary px-6 py-3">{link.label}</a>
       ))}
       {showTabs && tabLinks.map((link) => (
-        <a href={link.href} class="btn-secondary text-xs px-3 py-1.5">{link.label}</a>
+        <a href={link.href} class="btn-secondary px-6 py-3">{link.label}</a>
       ))}
     </div>
   </div>

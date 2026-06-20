@@ -3,6 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import BrokerCompare from '../../components/BrokerCompare.tsx';
 import brokersData from '../../data/brokers.json';
 
+const focusBroker = Astro.url.searchParams.get('broker') || Astro.url.searchParams.get('b') || '';
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
@@ -48,7 +50,7 @@ const jsonLd = {
 
   <!-- Interactive Comparison Tool -->
   <section class="container-wide py-6">
-    <BrokerCompare client:load brokers={brokersData} />
+    <BrokerCompare client:load brokers={brokersData} focusBroker={focusBroker} />
   </section>
 
   <!-- AI Recommendation -->
@@ -150,15 +152,15 @@ const jsonLd = {
   <!-- Cross-section Links -->
   <section class="container-wide py-8 border-t border-surface-200 dark:border-surface-700">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
-    <div class="flex flex-wrap gap-3">
-      <a href="/broker" class="btn-secondary">All Broker Reviews</a>
-      <a href="/learn/best-stock-broker-2026" class="btn-secondary">How to Choose a Broker</a>
-      <a href="/learn/how-to-open-demat-account" class="btn-secondary">Open Demat Account</a>
-      <a href="/ipo" class="btn-secondary">Live IPOs</a>
-      <a href="/ipo/subscription-status" class="btn-secondary">IPO Subscription</a>
-      <a href="/mutual-funds" class="btn-secondary">Mutual Funds</a>
-      <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
-      <a href="/tools/ipo-profit-calculator" class="btn-secondary">IPO Profit Calculator</a>
+    <div class="nav-btn-group">
+      <a href="/broker" class="btn-secondary px-6 py-3">All Broker Reviews</a>
+      <a href="/learn/best-stock-broker-2026" class="btn-secondary px-6 py-3">How to Choose a Broker</a>
+      <a href="/learn/how-to-open-demat-account" class="btn-secondary px-6 py-3">Open Demat Account</a>
+      <a href="/ipo" class="btn-secondary px-6 py-3">Live IPOs</a>
+      <a href="/ipo/subscription-status" class="btn-secondary px-6 py-3">IPO Subscription</a>
+      <a href="/mutual-funds" class="btn-secondary px-6 py-3">Mutual Funds</a>
+      <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>
+      <a href="/tools/ipo-profit-calculator" class="btn-secondary px-6 py-3">IPO Profit Calculator</a>
     </div>
   </section>
 </BaseLayout>

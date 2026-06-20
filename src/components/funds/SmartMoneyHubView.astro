@@ -4,6 +4,7 @@ import type { PageMeta } from '../../lib/page-meta';
 import type { SmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
 import SmartMoneyPage from './SmartMoneyPage.tsx';
 import SmartMoneyInternalLinks from './SmartMoneyInternalLinks.astro';
+import MfSectionTabs from './MfSectionTabs.astro';
 import type { TrackerViewType } from '../../lib/smart-money-tracker-meta';
 
 interface TrackerInit {
@@ -35,6 +36,7 @@ const { pageMeta, parsed, parsedTab, sm } = Astro.props;
   <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading || 'Smart Money Tracker'}</h1>
   <p class="mt-1 text-sm text-surface-500" data-page-subtitle>{pageMeta.subtitle || 'Track institutional conviction — what fund managers are buying, selling, and rotating at the stock and sector level.'}</p>
   <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
+  <MfSectionTabs active="smart-money" />
 </section>
 
 <section class="container-wide pb-12">

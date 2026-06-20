@@ -15,20 +15,18 @@ const TABS: { id: ActiveTab; label: string; href: string }[] = [
 ];
 
 export default function SmartMoneySubNav({ active }: Props) {
-  const tabClass = (isActive: boolean) =>
-    `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-      isActive
-        ? 'bg-primary-600 text-white'
-        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700'
-    }`;
-
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
+    <nav className="nav-btn-group mb-6" aria-label="Smart Money sections">
       {TABS.map((tab) => (
-        <a key={tab.id} href={tab.href} className={tabClass(active === tab.id)}>
+        <a
+          key={tab.id}
+          href={tab.href}
+          className={active === tab.id ? 'btn-primary px-6 py-3' : 'btn-secondary px-6 py-3'}
+          aria-current={active === tab.id ? 'page' : undefined}
+        >
           {tab.label}
         </a>
       ))}
-    </div>
+    </nav>
   );
 }

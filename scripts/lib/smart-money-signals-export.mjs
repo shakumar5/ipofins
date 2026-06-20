@@ -8,6 +8,7 @@ import {
   buildSignalRowFromMetrics,
   computeCategoryMaxes,
   consecutiveAggregatedNetWeightTrend,
+  inferStockCapFromFundVotes,
   normalizeStockCapCategory,
   STOCK_CAP_CATEGORIES,
 } from './smart-money-signals-core.mjs';
@@ -129,11 +130,9 @@ export async function buildSmartMoneySignalsExport(sql) {
     if (!isValidEquitySector(row.sector)) continue;
 
     const month = row.monthLabel;
-    const stockCap = normalizeStockCapCategory(row.stockCapCategory);
     const groupKey = stockGroupKey(row.isin, row.stockName);
     const key = `${groupKey}|${month}`;
     monthsSet.add(month);
-    capsPresent.add(stockCap);
 
     if (!byKey.has(key)) {
       byKey.set(key, {
@@ -141,7 +140,7 @@ export async function buildSmartMoneySignalsExport(sql) {
         stockName: row.stockName,
         stockSlug: row.stockSlug,
         sector: row.sector || 'Unknown',
-        category: stockCap,
+        category: 'Unknown',
         month,
         increasedCount: 0,
         decreasedCount: 0,
@@ -150,6 +149,7 @@ export async function buildSmartMoneySignalsExport(sql) {
         netWeightChangePct: 0,
         amcIdsAll: new Set(),
         amcIdsBuying: new Set(),
+        fundCapVotes: {},
       });
     }
 
@@ -158,8 +158,14 @@ export async function buildSmartMoneySignalsExport(sql) {
       m.stockName = row.stockName;
       m.stockSlug = row.stockSlug;
     }
-    if (m.category === 'Unknown' && stockCap !== 'Unknown') {
-      m.category = stockCap;
+
+    const dbCap = normalizeStockCapCategory(row.stockCapCategory);
+    if (dbCap !== 'Unknown') {
+      m.category = dbCap;
+    }
+
+    if (row.fundCategory) {
+      m.fundCapVotes[row.fundCategory] = (m.fundCapVotes[row.fundCategory] || 0) + 1;
     }
 
     const type = row.changeType;
@@ -189,6 +195,11 @@ export async function buildSmartMoneySignalsExport(sql) {
     ) {
       continue;
     }
+
+    if (raw.category === 'Unknown') {
+      raw.category = inferStockCapFromFundVotes(raw.fundCapVotes);
+    }
+    capsPresent.add(raw.category);
 
     const trend = consecutiveAggregatedNetWeightTrend(sortedMonths, raw.stockGroupKey, byKey);
 
@@ -235,10 +246,10 @@ export async function buildSmartMoneySignalsExport(sql) {
     return b.convictionScore - a.convictionScore;
   });
 
-  const categories = STOCK_CAP_CATEGORIES.filter((c) => capsPresent.has(c));
-  for (const cap of capsPresent) {
-    if (!categories.includes(cap)) categories.push(cap);
-  }
+  const categories = STOCK_CAP_CATEGORIES.filter(
+    (c) => c !== 'Unknown' && capsPresent.has(c),
+  );
+  if (capsPresent.has('Unknown')) categories.push('Unknown');
 
   return {
     months: [...sortedMonths].reverse(),
