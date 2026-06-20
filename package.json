@@ -2,6 +2,9 @@
   "name": "ipofins",
   "type": "module",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22 <25"
+  },
   "description": "IPOFins - Financial intelligence platform for IPO analytics, mutual fund tracking, and investment tools",
   "scripts": {
     "dev": "astro dev",

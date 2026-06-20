@@ -22,7 +22,7 @@ import {
   TRACKER_VIEW_OPTIONS,
   type TrackerViewType,
 } from '../../lib/smart-money-tracker-meta';
-import type { SmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import SmartMoneySubNav from './SmartMoneySubNav';
 
 import {
   loadSignalsIndex,
@@ -38,7 +38,6 @@ const BASE_PATH = TRACKER_BASE_PATH;
 interface SmartMoneyPageProps {
   initialTracker?: { view: TrackerViewType; monthLabel: string } | null;
   initialTab?: SmartMoneyTab | null;
-  trackerLinks?: SmartMoneyTrackerLinks | null;
 }
 
 type Tab = SmartMoneyTab;
@@ -52,7 +51,6 @@ const LEGACY_HASH_TAB: Record<string, Tab> = {
 export default function SmartMoneyPage({
   initialTracker = null,
   initialTab = null,
-  trackerLinks = null,
 }: SmartMoneyPageProps) {
   const [tab, setTab] = useState<Tab>(() => {
     if (initialTracker) return 'tracker';
@@ -83,34 +81,6 @@ export default function SmartMoneyPage({
   const [sectorData, setSectorData] = useState<SectorIntelligenceData | null>(null);
   const [sectorLoading, setSectorLoading] = useState(false);
   const [sectorError, setSectorError] = useState<string | null>(null);
-
-  const applyTab = useCallback((next: Tab, push = true) => {
-    if (next === 'stock-signal') {
-      window.location.href = trackerLinks?.stockSignal ?? smartMoneyTabPath('stock-signal');
-      return;
-    }
-    setTab(next);
-    if (typeof window === 'undefined') return;
-    let target = smartMoneyTabPath(next);
-    if (next === 'tracker') {
-      const parsed = parseTrackerFromPathname(window.location.pathname);
-      if (parsed) target = trackerPathFromViewMonth(parsed.view, parsed.monthLabel);
-    }
-    const current = `${window.location.pathname}${window.location.search}`;
-    if (push && current !== target) {
-      window.history.pushState({ smTab: next }, '', target);
-    }
-    if (next === 'tracker') {
-      const parsed = parseTrackerFromPathname(target);
-      if (parsed) {
-        applyClientPageMeta(getSmartMoneyTrackerPageMeta(parsed.view, parsed.monthLabel));
-      } else {
-        applyClientPageMeta(getSmartMoneyPageMeta('tracker'));
-      }
-    } else {
-      applyClientPageMeta(getSmartMoneyPageMeta(next));
-    }
-  }, [trackerLinks]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -340,36 +310,11 @@ export default function SmartMoneyPage({
     </div>
   );
 
-  const tabClass = (active: boolean) =>
-    active ? 'btn-primary px-6 py-3' : 'btn-secondary px-6 py-3';
+  const subNavActive = tab === 'stock-signal' ? 'stock-signal-hub' : tab;
 
   return (
     <div>
-      <div className="nav-btn-group mb-6">
-        <button type="button" onClick={() => applyTab('tracker')} className={tabClass(tab === 'tracker')}>
-          Smart Money Tracker
-        </button>
-        <button type="button" onClick={() => applyTab('signals')} className={tabClass(tab === 'signals')}>
-          Smart Money Signal
-        </button>
-        <button type="button" onClick={() => applyTab('stock-signal')} className={tabClass(tab === 'stock-signal')}>
-          Stock Signal
-        </button>
-        <button type="button" onClick={() => applyTab('sectors')} className={tabClass(tab === 'sectors')}>
-          Sector Intelligence
-        </button>
-      </div>
-
-      {trackerLinks && (
-        <div className="mb-6 nav-btn-group text-xs">
-          <a href={trackerLinks.mostBought} className="btn-secondary px-6 py-3">Most Bought</a>
-          <a href={trackerLinks.mostSold} className="btn-secondary px-6 py-3">Most Sold</a>
-          <a href={trackerLinks.freshEntries} className="btn-secondary px-6 py-3">Fresh Entries</a>
-          <a href={trackerLinks.completeExits} className="btn-secondary px-6 py-3">Complete Exits</a>
-          <a href={trackerLinks.holdingsChanges} className="btn-secondary px-6 py-3">Holdings Changes</a>
-          <span className="self-center text-surface-400 text-xs px-1">({trackerLinks.latestMonth})</span>
-        </div>
-      )}
+      <SmartMoneySubNav active={subNavActive} />
 
       {tab === 'tracker' && (
         trackerError ? (

@@ -44,7 +44,6 @@ const { pageMeta, parsed, parsedTab, sm } = Astro.props;
     client:load
     initialTracker={parsed ? { view: parsed.view, monthLabel: parsed.monthLabel } : null}
     initialTab={parsedTab}
-    trackerLinks={sm}
   >
     <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading Smart Money…</div>
   </SmartMoneyPage>
@@ -176,6 +175,6 @@ const { pageMeta, parsed, parsedTab, sm } = Astro.props;
 
 <section class="container-wide pb-12 border-t border-surface-200 dark:border-surface-700 pt-8">
   <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Explore Smart Money Tracker Views</h2>
-  <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">Deep links for {sm.latestMonth} — updated automatically when new disclosure months are added.</p>
-  <SmartMoneyInternalLinks showTabs />
+  <p class="text-sm text-surface-500 dark:text-surface-400 mb-2">Deep links for {sm.latestMonth} — updated automatically when new disclosure months are added.</p>
+  <SmartMoneyInternalLinks variant="inline" showHub={false} showTabs={false} />
 </section>
