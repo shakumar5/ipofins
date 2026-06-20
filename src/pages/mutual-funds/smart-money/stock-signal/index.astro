@@ -4,10 +4,23 @@ import StockSignalPage from '../../../../components/funds/StockSignalPage.tsx';
 import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
 import { getStockSignalPageMeta } from '../../../../lib/stock-signal-meta';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import { loadSmartMoneySignalsBootstrap } from '../../../../lib/smart-money-signals-server';
+import {
+  SMART_MONEY_SIGNALS_DATA_BOOTSTRAP_ID,
+  SMART_MONEY_SIGNALS_INDEX_BOOTSTRAP_ID,
+} from '../../../../lib/smart-money-signals-bootstrap';
 import { BRAND_URL } from '../../../../lib/brand';
 
 const pageMeta = getStockSignalPageMeta();
 const sm = loadSmartMoneyTrackerLinks();
+const signalsBootstrap = loadSmartMoneySignalsBootstrap();
+
+const signalsIndexJson = signalsBootstrap
+  ? JSON.stringify(signalsBootstrap.index).replace(/</g, '\\u003c')
+  : null;
+const signalsDataJson = signalsBootstrap?.data
+  ? JSON.stringify(signalsBootstrap.data).replace(/</g, '\\u003c')
+  : null;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -45,7 +58,28 @@ const jsonLd = {
   </section>
 
   <section class="container-wide pb-12">
-    <StockSignalPage client:load>
+    {signalsIndexJson && (
+      <div
+        id={SMART_MONEY_SIGNALS_INDEX_BOOTSTRAP_ID}
+        data-json={signalsIndexJson}
+        hidden
+        aria-hidden="true"
+      />
+    )}
+    {signalsDataJson && (
+      <div
+        id={SMART_MONEY_SIGNALS_DATA_BOOTSTRAP_ID}
+        data-json={signalsDataJson}
+        hidden
+        aria-hidden="true"
+      />
+    )}
+    <StockSignalPage
+      client:load
+      initialSignalsIndex={signalsBootstrap?.index ?? null}
+      initialSignalsMonth={signalsBootstrap?.initialMonth ?? null}
+      initialSignalsData={signalsBootstrap?.data ?? null}
+    >
       <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading Stock Signal…</div>
     </StockSignalPage>
   </section>

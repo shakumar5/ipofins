@@ -69,19 +69,20 @@ function bucketUrls(allLocs) {
 }
 
 function writePortfolioOverlapSitemap(overlapUrls) {
-  const outPath = join(DIST, 'sitemap-portfolio-overlap.xml');
   const chunks = chunkUrls(overlapUrls, SITEMAP_URL_LIMIT);
 
   if (chunks.length === 1) {
-    const count = writeUrlsetSync(writeFileSync, outPath, chunks[0], {
+    const name = 'sitemap-portfolio-overlap.xml';
+    const count = writeUrlsetSync(writeFileSync, join(DIST, name), chunks[0], {
       lastmod: LASTMOD,
       changefreq: 'monthly',
       priority: '0.6',
     });
-    console.log(`  ✓ sitemap-portfolio-overlap.xml (${count} URLs)`);
-    return;
+    console.log(`  ✓ ${name} (${count} URLs)`);
+    return [name];
   }
 
+  // Google allows only one index level: sitemap-index → urlset (no nested sitemapindex).
   const childNames = [];
   chunks.forEach((chunk, idx) => {
     const name = `sitemap-portfolio-overlap-${idx}.xml`;
@@ -93,9 +94,30 @@ function writePortfolioOverlapSitemap(overlapUrls) {
     childNames.push(name);
     console.log(`  ✓ ${name} (${chunk.length} URLs)`);
   });
+  console.log(`  ✓ portfolio overlap → ${childNames.length} urlsets (listed in sitemap-index.xml)`);
+  return childNames;
+}
 
-  writeSitemapIndexSync(writeFileSync, outPath, childNames, LASTMOD);
-  console.log(`  ✓ sitemap-portfolio-overlap.xml (index → ${childNames.length} parts)`);
+/** Replace overlap placeholder with one or more urlset filenames (never a nested index). */
+function buildSitemapIndexEntries(overlapEntries) {
+  const entries = [];
+  for (const name of CANONICAL_SITEMAP_INDEX) {
+    if (name === 'sitemap-portfolio-overlap.xml') {
+      entries.push(...overlapEntries);
+      continue;
+    }
+    entries.push(name);
+  }
+  return entries;
+}
+
+function removeStaleOverlapSitemaps(activeNames) {
+  if (!existsSync(DIST)) return;
+  const active = new Set(activeNames);
+  for (const name of readdirSync(DIST)) {
+    if (!/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name)) continue;
+    if (!active.has(name)) unlinkSync(join(DIST, name));
+  }
 }
 
 function writeBucketSitemaps(buckets) {
@@ -159,10 +181,12 @@ function main() {
 
   const buckets = bucketUrls(allLocs);
   writeBucketSitemaps(buckets);
-  writePortfolioOverlapSitemap(buckets.get('sitemap-portfolio-overlap.xml') || overlapUrls);
+  const overlapEntries = writePortfolioOverlapSitemap(buckets.get('sitemap-portfolio-overlap.xml') || overlapUrls);
+  removeStaleOverlapSitemaps(overlapEntries);
 
-  writeSitemapIndexSync(writeFileSync, join(DIST, 'sitemap-index.xml'), CANONICAL_SITEMAP_INDEX, LASTMOD);
-  console.log(`  ✓ sitemap-index.xml (${CANONICAL_SITEMAP_INDEX.length} child sitemaps, lastmod ${LASTMOD})`);
+  const indexEntries = buildSitemapIndexEntries(overlapEntries);
+  writeSitemapIndexSync(writeFileSync, join(DIST, 'sitemap-index.xml'), indexEntries, LASTMOD);
+  console.log(`  ✓ sitemap-index.xml (${indexEntries.length} child sitemaps, lastmod ${LASTMOD})`);
 
   removeLegacyFiles();
 }

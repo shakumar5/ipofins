@@ -12,7 +12,7 @@ interface SignalsIndex {
   months: string[];
   categories: string[];
   layout?: 'by-category' | 'monolith';
-  scoringModel?: 'stock-cap-v2' | 'fund-scheme-v1';
+  scoringModel?: 'conviction-v2' | 'stock-cap-v2' | 'fund-scheme-v1';
 }
 
 interface SignalsMonthFile {
@@ -75,7 +75,7 @@ async function loadSignalsAllCategories(
     index.categories.map((cat) => loadSignalsCategoryRows(month, cat, index)),
   );
   const merged = chunks.flat();
-  if (index.scoringModel === 'stock-cap-v2') return merged;
+  if (index.scoringModel === 'conviction-v2' || index.scoringModel === 'stock-cap-v2') return merged;
   return dedupeSignalsByStock(merged);
 }
 

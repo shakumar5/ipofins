@@ -2,10 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
 import { buildInterpretation, dedupeSignalsByStock, stockCapDisplayLabel, stockSignalMetaLine } from '../../lib/smart-money-signals';
+import { stockMatchesSearchQuery } from '../../lib/stock-search-match';
 import {
   parseStockSignalSlugFromPathname,
   stockSignalPath,
 } from '../../lib/stock-signal-meta';
+
+import ConvictionScoreBreakdown from './ConvictionScoreBreakdown';
 
 const MIN_SEARCH_LEN = 2;
 const SUGGESTION_LIMIT = 8;
@@ -92,11 +95,13 @@ function StockDetail({ row }: { row: SmartMoneySignalRow }) {
         {row.interpretation || buildInterpretation(row.stockName, row.signal)}
       </p>
 
+      <ConvictionScoreBreakdown row={row} />
+
       <a
         href={detailUrl}
         className="inline-flex mt-4 text-sm font-medium text-primary-600 hover:underline"
       >
-        View full score breakdown →
+        Open full signal page →
       </a>
     </div>
   );
@@ -176,7 +181,9 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
   const suggestions = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (q.length < MIN_SEARCH_LEN) return [];
-    const matched = monthRows.filter((r) => r.stockName.toLowerCase().includes(q));
+    const matched = monthRows.filter((r) =>
+      stockMatchesSearchQuery(r.stockName, r.stockSlug, q, r.nseSymbol),
+    );
     return dedupeSignalsByStock(matched)
       .sort((a, b) => b.convictionScore - a.convictionScore)
       .slice(0, SUGGESTION_LIMIT);

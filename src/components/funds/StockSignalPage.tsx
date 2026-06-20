@@ -3,10 +3,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import StockSignalView from './StockSignalView';
 
 import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
+import {
+  resolveSignalsDataBootstrap,
+  resolveSignalsIndexBootstrap,
+  seedSignalsJsonCache,
+} from '../../lib/smart-money-signals-bootstrap';
+import type { SignalsIndexDisk } from '../../lib/smart-money-signals-server';
 import { loadSignalsIndex, loadSignalsMonth } from '../../lib/smart-money-client';
 
 interface Props {
   initialStockSlug?: string | null;
+  initialSignalsIndex?: SignalsIndexDisk | null;
+  initialSignalsMonth?: string | null;
+  initialSignalsData?: SmartMoneySignalsData | null;
 }
 
 function scheduleAfterPaint(task: () => void): () => void {
@@ -23,12 +32,29 @@ function scheduleAfterPaint(task: () => void): () => void {
   return () => window.clearTimeout(t);
 }
 
-export default function StockSignalPage({ initialStockSlug = null }: Props) {
+export default function StockSignalPage({
+  initialStockSlug = null,
+  initialSignalsIndex = null,
+  initialSignalsMonth = null,
+  initialSignalsData = null,
+}: Props) {
   const loadStarted = useRef(false);
   const [retry, setRetry] = useState(0);
-  const [data, setData] = useState<SmartMoneySignalsData | null>(null);
+  const [data, setData] = useState<SmartMoneySignalsData | null>(() =>
+    resolveSignalsDataBootstrap(initialSignalsData),
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const index = resolveSignalsIndexBootstrap(initialSignalsIndex);
+    if (!index) return;
+    seedSignalsJsonCache({
+      index,
+      initialMonth: initialSignalsMonth || index.months[0] || '',
+      data: resolveSignalsDataBootstrap(initialSignalsData),
+    });
+  }, [initialSignalsIndex, initialSignalsMonth, initialSignalsData]);
 
   const load = useCallback(async () => {
     setLoading(true);

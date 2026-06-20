@@ -4,6 +4,10 @@ import {
   parseTrackerFromPathname,
 } from './smart-money-tracker-meta';
 import {
+  loadSmartMoneySignalsBootstrap,
+  type SmartMoneySignalsBootstrap,
+} from './smart-money-signals-server';
+import {
   loadSmartMoneyTrackerBootstrap,
   type SmartMoneyTrackerBootstrap,
 } from './smart-money-tracker-server';
@@ -14,6 +18,7 @@ export interface SmartMoneyPageContext {
   parsedTab: ReturnType<typeof parseSmartMoneyTabFromPathname>;
   pageMeta: PageMeta;
   trackerBootstrap: SmartMoneyTrackerBootstrap | null;
+  signalsBootstrap: SmartMoneySignalsBootstrap | null;
 }
 
 /** Resolve SSR page meta for Smart Money hub, tracker deep links, and tab URLs. */
@@ -32,5 +37,10 @@ export function resolveSmartMoneyPage(pathname: string): SmartMoneyPageContext {
       ? null
       : loadSmartMoneyTrackerBootstrap(parsed?.monthLabel ?? null);
 
-  return { parsed, parsedTab, pageMeta, trackerBootstrap };
+  const signalsBootstrap =
+    parsedTab === 'signals' || parsedTab === 'stock-signal'
+      ? loadSmartMoneySignalsBootstrap()
+      : null;
+
+  return { parsed, parsedTab, pageMeta, trackerBootstrap, signalsBootstrap };
 }

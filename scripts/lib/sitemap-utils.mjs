@@ -96,7 +96,7 @@ export const CANONICAL_SITEMAP_INDEX = [
   'sitemap-funds.xml',
   'sitemap-stocks.xml',
   'sitemap-smart-money.xml',
-  'sitemap-portfolio-overlap.xml',
+  'sitemap-portfolio-overlap.xml', // placeholder — expanded to urlset(s) in reorganize-sitemaps.mjs
   'sitemap-tools.xml',
   'sitemap-blog.xml',
   'sitemap-learn.xml',

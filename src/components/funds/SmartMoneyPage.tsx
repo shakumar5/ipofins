@@ -15,7 +15,13 @@ import {
   resolveTrackerIndexBootstrap,
   TRACKER_INDEX_PUBLIC_PATH,
 } from '../../lib/smart-money-tracker-bootstrap';
+import {
+  resolveSignalsDataBootstrap,
+  resolveSignalsIndexBootstrap,
+  seedSignalsJsonCache,
+} from '../../lib/smart-money-signals-bootstrap';
 import type { TrackerIndexDisk } from '../../lib/smart-money-tracker-server';
+import type { SignalsIndexDisk } from '../../lib/smart-money-signals-server';
 import {
   getSmartMoneyPageMeta,
   parseSmartMoneyTabFromPathname,
@@ -48,6 +54,9 @@ interface SmartMoneyPageProps {
   initialTrackerIndex?: TrackerIndexDisk | null;
   initialTrackerMonth?: string | null;
   initialTrackerData?: SmartMoneyTrackerData | null;
+  initialSignalsIndex?: SignalsIndexDisk | null;
+  initialSignalsMonth?: string | null;
+  initialSignalsData?: SmartMoneySignalsData | null;
 }
 
 type Tab = SmartMoneyTab;
@@ -64,6 +73,9 @@ export default function SmartMoneyPage({
   initialTrackerIndex = null,
   initialTrackerMonth = null,
   initialTrackerData = null,
+  initialSignalsIndex = null,
+  initialSignalsMonth = null,
+  initialSignalsData = null,
 }: SmartMoneyPageProps) {
   const [tab, setTab] = useState<Tab>(() => {
     if (initialTracker) return 'tracker';
@@ -88,8 +100,13 @@ export default function SmartMoneyPage({
   const [trackerLoading, setTrackerLoading] = useState(false);
   const [trackerError, setTrackerError] = useState<string | null>(null);
 
-  const [signalsData, setSignalsData] = useState<SmartMoneySignalsData | null>(null);
-  const [signalsMonth, setSignalsMonth] = useState('');
+  const [signalsData, setSignalsData] = useState<SmartMoneySignalsData | null>(() =>
+    resolveSignalsDataBootstrap(initialSignalsData),
+  );
+  const [signalsMonth, setSignalsMonth] = useState(() => {
+    const bootstrap = resolveSignalsDataBootstrap(initialSignalsData);
+    return initialSignalsMonth || bootstrap?.months[0] || '';
+  });
   const [signalsLoading, setSignalsLoading] = useState(false);
   const [signalsError, setSignalsError] = useState<string | null>(null);
 
@@ -116,6 +133,20 @@ export default function SmartMoneyPage({
       complete_exit: bucket.complete_exit,
     });
   }, [initialTrackerIndex, initialTrackerData]);
+
+  useEffect(() => {
+    const index = resolveSignalsIndexBootstrap(initialSignalsIndex);
+    if (!index) return;
+    seedSignalsJsonCache(
+      index && (initialSignalsMonth || index.months[0])
+        ? {
+            index,
+            initialMonth: initialSignalsMonth || index.months[0] || '',
+            data: resolveSignalsDataBootstrap(initialSignalsData),
+          }
+        : null,
+    );
+  }, [initialSignalsIndex, initialSignalsMonth, initialSignalsData]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
