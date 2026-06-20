@@ -455,11 +455,7 @@ details[open] > *:not(summary) {
   navigation: none;
 }
 
-/* Content visibility for below-fold sections (improves render perf) */
-.content-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 500px;
-}
+/* Content visibility — avoid on above-the-fold or short pages; can leave sections unpainted when the main thread is busy. */
 
 /* Interactive table rows */
 .interactive-row {

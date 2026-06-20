@@ -3,12 +3,24 @@
 const MAX_CACHE_ENTRIES = 5;
 const jsonCache = new Map<string, unknown>();
 
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+    setTimeout(resolve, 0);
+  });
+}
+
 export async function fetchJsonCached<T>(url: string): Promise<T> {
   const cached = jsonCache.get(url);
   if (cached) return cached as T;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = (await res.json()) as T;
+  const text = await res.text();
+  await yieldToMain();
+  const data = JSON.parse(text) as T;
   if (jsonCache.size >= MAX_CACHE_ENTRIES) {
     const oldest = jsonCache.keys().next().value;
     if (oldest) jsonCache.delete(oldest);

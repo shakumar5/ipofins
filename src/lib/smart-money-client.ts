@@ -45,6 +45,11 @@ function signalMonthUrl(month: string): string {
   return `${SIGNALS_BASE}/${monthFileSlug(month)}.json`;
 }
 
+function resolveCategory(index: SignalsIndex, category: string): string {
+  if (category && category !== 'All') return category;
+  return index.categories[0] || 'Large Cap';
+}
+
 export async function loadSignalsIndex(): Promise<SignalsIndex> {
   if (!signalsIndexPromise) {
     signalsIndexPromise = fetchJsonCached<SignalsIndex>(SIGNALS_INDEX);
@@ -57,37 +62,47 @@ async function loadSignalsCategoryChunk(month: string, category: string): Promis
   return file.rows;
 }
 
+async function loadSignalsMonolithFiltered(
+  month: string,
+  category: string,
+): Promise<SmartMoneySignalRow[]> {
+  const file = await fetchJsonCached<SignalsMonthFile>(signalMonthUrl(month));
+  return file.rows.filter((r) => r.category === category);
+}
+
 export async function loadSignalsMonth(
   month: string,
-  category = 'All',
+  category = 'Large Cap',
 ): Promise<SmartMoneySignalsData> {
   const index = await loadSignalsIndex();
+  const targetCategory = resolveCategory(index, category);
 
   if (index.layout === 'by-category') {
-    const categories =
-      category === 'All' ? index.categories : index.categories.filter((c) => c === category);
-
-    const chunks = await Promise.all(
-      categories.map((cat) => loadSignalsCategoryChunk(month, cat)),
-    );
+    const rows = await loadSignalsCategoryChunk(month, targetCategory);
     return {
       months: index.months,
       categories: index.categories,
-      rows: chunks.flat(),
+      rows,
     };
   }
 
-  // Legacy monolithic month file
-  const file = await fetchJsonCached<SignalsMonthFile>(signalMonthUrl(month));
-  let rows = file.rows;
-  if (category !== 'All') {
-    rows = rows.filter((r) => r.category === category);
+  // Prefer per-category files even when index predates the split (partial deploys).
+  try {
+    const rows = await loadSignalsCategoryChunk(month, targetCategory);
+    return {
+      months: index.months,
+      categories: index.categories,
+      rows,
+    };
+  } catch {
+    // Fall back to legacy monolith — filtered to one category after full parse.
+    const rows = await loadSignalsMonolithFiltered(month, targetCategory);
+    return {
+      months: index.months,
+      categories: index.categories,
+      rows,
+    };
   }
-  return {
-    months: index.months,
-    categories: index.categories,
-    rows,
-  };
 }
 
 export async function loadTrackerIndex(): Promise<TrackerIndex> {
@@ -130,10 +145,17 @@ export async function findSignalRow(
       : index.categories;
 
   for (const cat of tryCategories) {
-    const rows =
-      index.layout === 'by-category'
-        ? await loadSignalsCategoryChunk(month, cat)
-        : (await loadSignalsMonth(month, cat)).rows;
+    let rows: SmartMoneySignalRow[];
+    try {
+      rows =
+        index.layout === 'by-category'
+          ? await loadSignalsCategoryChunk(month, cat)
+          : await loadSignalsCategoryChunk(month, cat).catch(() =>
+              loadSignalsMonolithFiltered(month, cat),
+            );
+    } catch {
+      continue;
+    }
     const matches = rows.filter((r) => r.stockSlug === stockSlug && r.month === month);
     if (!matches.length) continue;
     return (

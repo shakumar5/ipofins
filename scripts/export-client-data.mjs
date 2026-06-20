@@ -1,7 +1,7 @@
 /**
  * Export large client payloads to public/data/*.json (once per build/dev).
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql, isDbConfigured } from './lib/db.mjs';
@@ -221,6 +221,61 @@ function writeSignalsByCategory(signals) {
       const kb = (readFileSync(full).length / 1024).toFixed(0);
       console.log(`  ✓ ${rel} (${kb} KB, ${rows.length} rows)`);
     }
+    const legacy = join(dir, `${monthFileSlug(month)}.json`);
+    if (existsSync(legacy)) {
+      unlinkSync(legacy);
+      console.log(`  ✓ removed legacy monolith smart-money-signals/${monthFileSlug(month)}.json`);
+    }
+  }
+}
+
+/** Split committed monolith signal files when DB export is unavailable. */
+function splitMonolithSignalsOnDisk() {
+  const indexPath = join(OUT_DIR, 'smart-money-signals-index.json');
+  if (!existsSync(indexPath)) return;
+
+  const index = JSON.parse(readFileSync(indexPath, 'utf8'));
+  const dir = join(OUT_DIR, 'smart-money-signals');
+  if (!existsSync(dir)) return;
+
+  if (index.layout === 'by-category') {
+    for (const month of index.months || []) {
+      const legacy = join(dir, `${monthFileSlug(month)}.json`);
+      if (existsSync(legacy)) {
+        unlinkSync(legacy);
+        console.log(`  ✓ removed legacy monolith smart-money-signals/${monthFileSlug(month)}.json`);
+      }
+    }
+    return;
+  }
+
+  let splitAny = false;
+  for (const month of index.months || []) {
+    const monolithPath = join(dir, `${monthFileSlug(month)}.json`);
+    if (!existsSync(monolithPath)) continue;
+
+    const payload = JSON.parse(readFileSync(monolithPath, 'utf8'));
+    const rows = payload.rows || [];
+    for (const category of index.categories || []) {
+      const catRows = rows
+        .filter((r) => r.month === month && r.category === category)
+        .map(slimSignalRow);
+      const fileName = signalCategoryFileName(month, category);
+      const full = join(dir, fileName);
+      writeFileSync(full, JSON.stringify({ month, category, rows: catRows }));
+      const kb = (readFileSync(full).length / 1024).toFixed(0);
+      console.log(`  ✓ smart-money-signals/${fileName} (${kb} KB, ${catRows.length} rows)`);
+    }
+    unlinkSync(monolithPath);
+    console.log(`  ✓ split monolith → category files for ${month}`);
+    splitAny = true;
+  }
+
+  if (splitAny) {
+    writeJson('smart-money-signals-index.json', {
+      ...index,
+      layout: 'by-category',
+    });
   }
 }
 
@@ -304,7 +359,11 @@ async function main() {
     } catch (e) {
       console.warn('  ⚠ Smart money export skipped:', e.message);
     }
+  } else {
+    console.log('  ℹ DB not configured — checking for monolith signal files to split');
   }
+
+  splitMonolithSignalsOnDisk();
 
   console.log('');
 }

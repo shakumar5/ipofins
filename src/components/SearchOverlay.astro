@@ -41,6 +41,7 @@
   var _loadError = false;
   var _so, _sin, _sr, _lastFocus;
   var _debounce = null;
+  var _trapHandler = null;
 
   var catColors = {
     IPO: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -89,15 +90,18 @@
   }
 
   function trapFocus() {
+    if (!_so) return;
+    if (_trapHandler) _so.removeEventListener('keydown', _trapHandler);
     var focusables = _so.querySelectorAll('button, input, a[href]');
     if (!focusables.length) return;
     var first = focusables[0];
     var last = focusables[focusables.length - 1];
-    _so.addEventListener('keydown', function(e) {
+    _trapHandler = function(e) {
       if (e.key !== 'Tab') return;
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    });
+    };
+    _so.addEventListener('keydown', _trapHandler);
   }
 
   function openSearch() {

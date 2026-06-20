@@ -1,8 +1,14 @@
 /**
  * Real-user Core Web Vitals → GA4 + Plausible (after cookie consent).
- * @see https://web.dev/articles/vitals
+ * web-vitals is dynamically imported so it does not block first paint.
  */
-import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
+type Metric = {
+  name: string;
+  id: string;
+  value: number;
+  delta: number;
+  rating: string;
+};
 
 type GtagFn = (...args: unknown[]) => void;
 type PlausibleFn = (event: string, options?: { props?: Record<string, string | number> }) => void;
@@ -74,10 +80,11 @@ export function markAnalyticsReady(): void {
 }
 
 /** Register CWV listeners (idempotent). Only call after cookie consent. */
-export function initWebVitalsReporting(): void {
+export async function initWebVitalsReporting(): Promise<void> {
   if (started || typeof window === 'undefined') return;
   started = true;
 
+  const { onCLS, onINP, onLCP, onFCP, onTTFB } = await import('web-vitals');
   const report = (metric: Metric) => reportMetric(metric);
   onCLS(report);
   onINP(report);
@@ -88,7 +95,9 @@ export function initWebVitalsReporting(): void {
 
 /** Exposed on window for inline consent / analytics bootstrap scripts. */
 export function registerWebVitalsHooks(): void {
-  window.__startWebVitals = initWebVitalsReporting;
+  window.__startWebVitals = () => {
+    void initWebVitalsReporting();
+  };
   window.__markAnalyticsReady = markAnalyticsReady;
 }
 

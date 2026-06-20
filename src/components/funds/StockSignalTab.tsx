@@ -180,7 +180,6 @@ export default function StockSignalTab({ data, month: monthProp, onMonthChange, 
               }}
               className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             >
-              <option value="All">All</option>
               {data.categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}

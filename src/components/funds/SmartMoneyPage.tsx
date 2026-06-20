@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useTransition, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useTransition, useRef, lazy, Suspense } from 'react';
 
 const SmartMoneyTracker = lazy(() => import('./SmartMoneyTracker'));
 const SmartMoneySignalTable = lazy(() => import('./SmartMoneySignalTable'));
@@ -37,9 +37,26 @@ function tabFromHash(): Tab | null {
   return null;
 }
 
+function scheduleAfterPaint(task: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const w = window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+  if (w.requestIdleCallback) {
+    const id = w.requestIdleCallback(task, { timeout: 1200 });
+    return () => w.cancelIdleCallback?.(id);
+  }
+  const t = window.setTimeout(task, 0);
+  return () => window.clearTimeout(t);
+}
+
 export default function SmartMoneyPage() {
   const [tab, setTab] = useState<Tab>(() => tabFromHash() || 'tracker');
   const [, startTransition] = useTransition();
+  const trackerLoadStarted = useRef(false);
+  const signalsLoadStarted = useRef(false);
+  const sectorLoadStarted = useRef(false);
 
   const [trackerData, setTrackerData] = useState<SmartMoneyTrackerData | null>(null);
   const [trackerLoading, setTrackerLoading] = useState(false);
@@ -104,29 +121,32 @@ export default function SmartMoneyPage() {
   }, []);
 
   useEffect(() => {
-    if (tab !== 'tracker') return;
-    if (trackerData) return;
+    if (tab !== 'tracker' || trackerData || trackerError || trackerLoadStarted.current) return;
+    trackerLoadStarted.current = true;
     let cancelled = false;
-    (async () => {
-      setTrackerLoading(true);
-      try {
-        const index = await loadTrackerIndex();
-        const firstMonth = index.months[0]?.label;
-        if (!firstMonth) throw new Error('No tracker months available');
-        if (cancelled) return;
-        const chunk = await loadTrackerMonth(firstMonth);
-        if (cancelled) return;
-        startTransition(() => setTrackerData(chunk));
-      } catch (err) {
-        if (!cancelled) setTrackerError((err as Error).message || 'Failed to load tracker data');
-      } finally {
-        if (!cancelled) setTrackerLoading(false);
-      }
-    })();
+    const cancelSchedule = scheduleAfterPaint(() => {
+      (async () => {
+        setTrackerLoading(true);
+        try {
+          const index = await loadTrackerIndex();
+          const firstMonth = index.months[0]?.label;
+          if (!firstMonth) throw new Error('No tracker months available');
+          if (cancelled) return;
+          const chunk = await loadTrackerMonth(firstMonth);
+          if (cancelled) return;
+          startTransition(() => setTrackerData(chunk));
+        } catch (err) {
+          if (!cancelled) setTrackerError((err as Error).message || 'Failed to load tracker data');
+        } finally {
+          if (!cancelled) setTrackerLoading(false);
+        }
+      })();
+    });
     return () => {
       cancelled = true;
+      cancelSchedule();
     };
-  }, [tab, trackerData, startTransition]);
+  }, [tab, trackerData, trackerError, startTransition]);
 
   const loadSignalsForMonth = useCallback(async (month: string, category = 'Large Cap') => {
     setSignalsLoading(true);
@@ -147,38 +167,47 @@ export default function SmartMoneyPage() {
   useEffect(() => {
     if (tab !== 'signals' && tab !== 'stock-signal') return;
     if (signalsData && signalsMonth) return;
+    if (signalsError || signalsLoadStarted.current) return;
+    signalsLoadStarted.current = true;
     let cancelled = false;
-    (async () => {
-      setSignalsLoading(true);
-      try {
-        const index = await loadSignalsIndex();
-        const month = index.months[0] || '';
-        if (!month) throw new Error('No signal months available');
-        const data = await loadSignalsMonth(month, 'Large Cap');
-        if (cancelled) return;
-        startTransition(() => {
-          setSignalsData(data);
-          setSignalsMonth(month);
-        });
-      } catch (err) {
-        if (!cancelled) setSignalsError((err as Error).message || 'Failed to load signal data');
-      } finally {
-        if (!cancelled) setSignalsLoading(false);
-      }
-    })();
+    const cancelSchedule = scheduleAfterPaint(() => {
+      (async () => {
+        setSignalsLoading(true);
+        try {
+          const index = await loadSignalsIndex();
+          const month = index.months[0] || '';
+          if (!month) throw new Error('No signal months available');
+          const data = await loadSignalsMonth(month, 'Large Cap');
+          if (cancelled) return;
+          startTransition(() => {
+            setSignalsData(data);
+            setSignalsMonth(month);
+          });
+        } catch (err) {
+          if (!cancelled) setSignalsError((err as Error).message || 'Failed to load signal data');
+        } finally {
+          if (!cancelled) setSignalsLoading(false);
+        }
+      })();
+    });
     return () => {
       cancelled = true;
+      cancelSchedule();
     };
-  }, [tab, signalsData, signalsMonth, startTransition]);
+  }, [tab, signalsData, signalsMonth, signalsError, startTransition]);
 
   useEffect(() => {
-    if (tab !== 'sectors' || sectorData || sectorLoading) return;
+    if (tab !== 'sectors' || sectorData || sectorError || sectorLoadStarted.current) return;
+    sectorLoadStarted.current = true;
     setSectorLoading(true);
-    fetchJsonCached<SectorIntelligenceData>(SECTOR_URL)
-      .then((data) => startTransition(() => setSectorData(data)))
-      .catch((err: Error) => setSectorError(err.message || 'Failed to load sector intelligence'))
-      .finally(() => setSectorLoading(false));
-  }, [tab, sectorData, sectorLoading]);
+    const cancelSchedule = scheduleAfterPaint(() => {
+      fetchJsonCached<SectorIntelligenceData>(SECTOR_URL)
+        .then((data) => startTransition(() => setSectorData(data)))
+        .catch((err: Error) => setSectorError(err.message || 'Failed to load sector intelligence'))
+        .finally(() => setSectorLoading(false));
+    });
+    return cancelSchedule;
+  }, [tab, sectorData, sectorError, startTransition]);
 
   const tabClass = (active: boolean) =>
     `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
