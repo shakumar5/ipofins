@@ -47,10 +47,17 @@ export function loadHoldingsCompareIndex(force = false): Promise<HoldingsCompare
 export async function loadHoldingsCompareAmc(
   amcSlug: string,
 ): Promise<Record<string, HoldingsCompareFund>> {
-  const data = await fetchJsonCached<{ holdings: Record<string, HoldingsCompareFund> }>(
-    `${AMC_BASE}/${amcSlug}.json`,
-  );
-  return data.holdings;
+  const url = `${AMC_BASE}/${amcSlug}.json`;
+  try {
+    const data = await fetchJsonCached<{ holdings: Record<string, HoldingsCompareFund> }>(url);
+    if (!data?.holdings || Object.keys(data.holdings).length === 0) {
+      throw new Error(`No holdings found for AMC "${amcSlug}"`);
+    }
+    return data.holdings;
+  } catch (err) {
+    const msg = (err as Error).message || 'Unknown error';
+    throw new Error(`Failed to load ${url} (${msg})`);
+  }
 }
 
 /** Fallback when split files are not exported yet. */

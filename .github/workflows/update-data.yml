@@ -48,7 +48,18 @@ jobs:
           npm i -g vercel@latest
           mkdir -p .vercel/output/static
           cp -r dist/* .vercel/output/static/
-          echo '{"version":3,"routes":[{"handle":"filesystem"}]}' > .vercel/output/config.json
+          cat > .vercel/output/config.json <<'EOF'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/mutual-funds/portfolio-overlap-checker/([^/]+-vs-[^/]+)/?",
+                "dest": "/mutual-funds/portfolio-overlap-checker/index.html"
+              },
+              { "handle": "filesystem" }
+            ]
+          }
+          EOF
           vercel deploy --prebuilt --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

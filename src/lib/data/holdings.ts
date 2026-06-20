@@ -38,6 +38,15 @@ export interface HoldingsChangeRow {
 }
 
 export async function getAMCsWithHoldings(): Promise<AMCInfo[]> {
+  const index = readHoldingsCompareIndexFromDisk();
+  if (index?.amcs?.length) {
+    return index.amcs.map((a) => ({
+      name: a.name,
+      slug: a.slug,
+      fundCount: a.fundCount,
+    }));
+  }
+
   try {
     const sql = requireDb();
     const rows = await sql`
@@ -56,13 +65,7 @@ export async function getAMCsWithHoldings(): Promise<AMCInfo[]> {
       fundCount: Number(r.fund_count),
     }));
   } catch {
-    const index = readHoldingsCompareIndexFromDisk();
-    if (!index?.amcs?.length) throw new Error('Holdings AMC list unavailable — run npm run export:client-data');
-    return index.amcs.map((a) => ({
-      name: a.name,
-      slug: a.slug,
-      fundCount: a.fundCount,
-    }));
+    throw new Error('Holdings AMC list unavailable — run npm run export:client-data');
   }
 }
 
@@ -90,6 +93,9 @@ export async function getBuildMonths(maxMonths = 4): Promise<string[]> {
 }
 
 export async function getAvailableMonths(): Promise<string[]> {
+  const index = readHoldingsCompareIndexFromDisk();
+  if (index?.months?.length) return monthsFromIndex(index);
+
   try {
     const sql = requireDb();
     const rows = await sql`
@@ -100,9 +106,7 @@ export async function getAvailableMonths(): Promise<string[]> {
     `;
     return (rows as Record<string, unknown>[]).map((r) => String(r.month_label).trim());
   } catch {
-    const index = readHoldingsCompareIndexFromDisk();
-    if (!index?.months?.length) throw new Error('Holdings months unavailable — run npm run export:client-data');
-    return monthsFromIndex(index);
+    throw new Error('Holdings months unavailable — run npm run export:client-data');
   }
 }
 

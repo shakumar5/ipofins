@@ -275,6 +275,9 @@ export async function getHoldingsStats(): Promise<{
   fundsCovered: number;
   latestMonth: string;
 }> {
+  const index = readHoldingsCompareIndexFromDisk();
+  if (index?.amcs?.length) return holdingsStatsFromIndex(index);
+
   try {
     const sql = requireDb();
     const rows = (await sql`
@@ -293,8 +296,6 @@ export async function getHoldingsStats(): Promise<{
       latestMonth: String(row?.latest_month ?? '').trim(),
     };
   } catch {
-    const index = readHoldingsCompareIndexFromDisk();
-    if (!index) throw new Error('Holdings stats unavailable — run npm run export:client-data');
-    return holdingsStatsFromIndex(index);
+    throw new Error('Holdings stats unavailable — run npm run export:client-data');
   }
 }

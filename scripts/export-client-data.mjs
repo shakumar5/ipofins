@@ -176,7 +176,7 @@ function writePortfolioOverlapSitemaps(funds) {
       .map((loc) => `  <url><loc>${escapeXml(loc)}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`)
       .join('\n');
     writeFileSync(
-      join(OUT_DIR, name),
+      join(PUBLIC_DIR, name),
       `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
     );
     childNames.push(name);
@@ -187,7 +187,7 @@ function writePortfolioOverlapSitemaps(funds) {
     .map((name) => `  <sitemap><loc>${escapeXml(`https://ipofins.com/${name}`)}</loc></sitemap>`)
     .join('\n');
   writeFileSync(
-    join(OUT_DIR, 'sitemap-portfolio-overlap-index.xml'),
+    join(PUBLIC_DIR, 'sitemap-portfolio-overlap-index.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexBody}\n</sitemapindex>\n`,
   );
   console.log(`  ✓ sitemap-portfolio-overlap-index.xml (${urls.length} overlap URLs)`);

@@ -1,6 +1,8 @@
 /**
- * Post-build: clone portfolio overlap hub HTML with unique SSR meta per fund pair.
- * Runs after `astro build` — avoids 120k+ Astro page compilations.
+ * Optional post-build: clone portfolio overlap hub HTML with unique SSR meta per fund pair.
+ * NOT run in CI by default — creates ~120k files and slows Vercel deploy ~10×.
+ * Run manually: npm run build && npm run build:overlap-static-pages
+ * Production uses hub + rewrite + client meta instead (see vercel.json / CI config.json).
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { dirname, join } from 'path';

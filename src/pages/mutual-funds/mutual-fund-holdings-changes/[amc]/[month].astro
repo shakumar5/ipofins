@@ -1,15 +1,19 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import HoldingsCompare from '../../../../components/funds/HoldingsCompare.tsx';
-import {
-  getAMCsWithHoldings,
-  getAvailableMonths,
-  getBuildMonths,
-} from '../../../../lib/data/holdings';
+import { getBuildMonths } from '../../../../lib/data/holdings';
+import { loadHoldingsPageBootstrap } from '../../../../lib/holdings-page-static';
 import { monthSlug, monthDisplay } from '../../../../utils/month-slug';
 
 export async function getStaticPaths() {
-  const amcs = await getAMCsWithHoldings();
+  const bootstrap = loadHoldingsPageBootstrap();
+  if (!bootstrap) return [];
+
+  const amcs = bootstrap.index.amcs.map((a) => ({
+    name: a.name,
+    slug: a.slug,
+    fundCount: a.fundCount,
+  }));
   const months = await getBuildMonths(4);
   const paths: { params: { amc: string; month: string }; props: Record<string, string> }[] = [];
 
@@ -32,10 +36,12 @@ export async function getStaticPaths() {
 const { amcName, currentMonth, previousMonth } = Astro.props;
 const { amc: amcSlug, month: monthParam } = Astro.params;
 
-const [amcList, allMonths] = await Promise.all([
-  getAMCsWithHoldings(),
-  getAvailableMonths(),
-]);
+const bootstrap = loadHoldingsPageBootstrap();
+const amcList = bootstrap
+  ? bootstrap.index.amcs.map((a) => ({ name: a.name, slug: a.slug, fundCount: a.fundCount }))
+  : [];
+const allMonths = bootstrap?.monthsNewestFirst ?? [];
+const holdingsIndex = bootstrap?.index ?? null;
 
 const displayMonth = monthDisplay(monthParam || '');
 
@@ -85,6 +91,7 @@ const otherAmcs = amcList.filter((a) => a.name !== amcName).slice(0, 10);
       initialMonth2={currentMonth}
       monthQuickPick={allMonths.slice(1)}
       pageMode="amc"
+      initialIndex={holdingsIndex}
     >
       <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading holdings comparison…</div>
     </HoldingsCompare>

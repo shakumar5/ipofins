@@ -2,8 +2,6 @@ User-agent: *
 Allow: /
 
 Sitemap: https://ipofins.com/sitemap-index.xml
-Sitemap: https://ipofins.com/sitemap-portfolio-overlap-index.xml
-Sitemap: https://ipofins.com/sitemap-smart-money-tracker.xml
 
 # Block crawlers from non-content pages
 Disallow: /api/

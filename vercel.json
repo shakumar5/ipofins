@@ -10,6 +10,12 @@
     "enabled": false,
     "silent": true
   },
+  "rewrites": [
+    {
+      "source": "/mutual-funds/portfolio-overlap-checker/:comparison",
+      "destination": "/mutual-funds/portfolio-overlap-checker/index.html"
+    }
+  ],
   "redirects": [
     {
       "source": "/ipo/gmp-today",

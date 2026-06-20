@@ -49,7 +49,7 @@ public/data/**
 
 # Sitemaps — regenerated during export / build
 public/sitemap-smart-money-tracker.xml
-public/data/sitemap-portfolio-overlap*.xml
+public/sitemap-portfolio-overlap*.xml
 
 # OG PNGs — rasterized from public/og-*.svg during build
 public/og-*.png

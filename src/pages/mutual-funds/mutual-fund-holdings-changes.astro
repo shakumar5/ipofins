@@ -3,25 +3,31 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import MfSectionHeader from '../../components/funds/MfSectionHeader.astro';
 import HoldingsCompare from '../../components/funds/HoldingsCompare.tsx';
 import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
-import { getAMCsWithHoldings, getAvailableMonths } from '../../lib/data/holdings';
-import { getHoldingsStats } from '../../lib/data/funds';
+import { loadHoldingsPageBootstrap } from '../../lib/holdings-page-static';
 import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
 import { monthSlug } from '../../utils/month-slug';
 import { mfTabConfig } from '../../lib/mf-section-config';
 
 const cfg = mfTabConfig('holdings-changes');
 const sm = loadSmartMoneyTrackerLinks();
-const amcListData = await getAMCsWithHoldings();
-const { amcCount, fundsCovered: fundCount, latestMonth } = await getHoldingsStats();
-const monthsList = await getAvailableMonths();
+const bootstrap = loadHoldingsPageBootstrap();
+const amcListData = bootstrap ? bootstrap.index.amcs.map((a) => ({
+  name: a.name,
+  slug: a.slug,
+  fundCount: a.fundCount,
+})) : [];
+const amcCount = bootstrap?.stats.amcCount ?? 0;
+const fundCount = bootstrap?.stats.fundsCovered ?? 0;
+const latestMonthLabel = bootstrap?.stats.latestMonth ?? '';
+const monthsList = bootstrap?.monthsNewestFirst ?? [];
 
 function slugify(str: string): string {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 const amcList = amcListData.map((a) => a.name).sort();
-const latestMonthLabel = latestMonth || monthsList[monthsList.length - 1] || '';
 const latestMonthSlug = monthSlug(latestMonthLabel);
 const amcSlugByName = Object.fromEntries(amcListData.map((a) => [a.name, a.slug]));
+const holdingsIndex = bootstrap?.index ?? null;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -70,7 +76,12 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <HoldingsCompare client:load pageMode="hub">
+    {!bootstrap && (
+      <div class="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-200 mb-4">
+        Holdings data is not loaded locally. Run <code class="text-xs bg-white/60 dark:bg-black/20 px-1 rounded">npm run dev:sync</code> or <code class="text-xs bg-white/60 dark:bg-black/20 px-1 rounded">npm run build</code> to export JSON from the database.
+      </div>
+    )}
+    <HoldingsCompare client:load pageMode="hub" initialIndex={holdingsIndex}>
       <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading holdings comparison…</div>
     </HoldingsCompare>
   </section>

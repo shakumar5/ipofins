@@ -3,6 +3,7 @@ import {
   loadHoldingsCompareAmc,
   loadHoldingsCompareIndex,
   resetHoldingsCompareIndexCache,
+  type HoldingsCompareIndex,
 } from '../../lib/holdings-compare-client';
 import { compareAmcHoldingsAsync, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
 
@@ -19,10 +20,33 @@ interface Props {
   initialMonth2?: string;
   monthQuickPick?: string[];
   pageMode?: 'hub' | 'amc';
+  /** SSR/bootstrap — avoids client fetch for AMC list & months. */
+  initialIndex?: HoldingsCompareIndex | null;
+}
+
+function metaFromIndex(index: HoldingsCompareIndex): HoldingsMeta {
+  const amcs: Record<string, string[]> = {};
+  const amcSlugs: Record<string, string> = {};
+  const amcFundCounts: Record<string, number> = {};
+  for (const a of index.amcs) {
+    amcs[a.name] = [];
+    amcSlugs[a.name] = a.slug;
+    amcFundCounts[a.name] = a.fundCount;
+  }
+  return { months: index.months, amcs, amcSlugs, amcFundCounts };
 }
 
 const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
 const RESULTS_PAGE = 25;
+
+function defaultMonths(index: HoldingsCompareIndex, initialMonth1?: string, initialMonth2?: string) {
+  const older = index.months.length >= 2 ? index.months[index.months.length - 2] : index.months[0] || '';
+  const newer = index.months[index.months.length - 1] || index.months[0] || '';
+  return {
+    month1: initialMonth1 || older,
+    month2: initialMonth2 || newer,
+  };
+}
 
 export default function HoldingsCompare({
   initialAmc = '',
@@ -30,27 +54,26 @@ export default function HoldingsCompare({
   initialMonth2,
   monthQuickPick,
   pageMode = 'hub',
+  initialIndex = null,
 }: Props) {
-  const [meta, setMeta] = useState<HoldingsMeta | null>(null);
+  const bootMonths = initialIndex ? defaultMonths(initialIndex, initialMonth1, initialMonth2) : null;
+  const [meta, setMeta] = useState<HoldingsMeta | null>(() => (initialIndex ? metaFromIndex(initialIndex) : null));
   const [amcHoldings, setAmcHoldings] = useState<Record<string, FundHoldings> | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [metaLoading, setMetaLoading] = useState(true);
+  const [metaLoading, setMetaLoading] = useState(!initialIndex);
   const [amcLoading, setAmcLoading] = useState(false);
   const [selectedAMC, setSelectedAMC] = useState(initialAmc);
   const [selectedFund, setSelectedFund] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [month1, setMonth1] = useState(initialMonth1 || '');
-  const [month2, setMonth2] = useState(initialMonth2 || '');
+  const [month1, setMonth1] = useState(bootMonths?.month1 || initialMonth1 || '');
+  const [month2, setMonth2] = useState(bootMonths?.month2 || initialMonth2 || '');
   const [resultsLimit, setResultsLimit] = useState(RESULTS_PAGE);
   const [retryKey, setRetryKey] = useState(0);
   const [, startTransition] = useTransition();
 
-  const deferredMonth1 = useDeferredValue(month1);
-  const deferredMonth2 = useDeferredValue(month2);
-  const deferredFund = useDeferredValue(selectedFund);
-  const deferredCategory = useDeferredValue(selectedCategory);
-
   useEffect(() => {
+    if (initialIndex) return;
+
     let cancelled = false;
     setMetaLoading(true);
     setLoadError(null);
@@ -82,7 +105,12 @@ export default function HoldingsCompare({
       }
     })();
     return () => { cancelled = true; };
-  }, [initialMonth1, initialMonth2, retryKey]);
+  }, [initialIndex, initialMonth1, initialMonth2, retryKey]);
+
+  const deferredMonth1 = useDeferredValue(month1);
+  const deferredMonth2 = useDeferredValue(month2);
+  const deferredFund = useDeferredValue(selectedFund);
+  const deferredCategory = useDeferredValue(selectedCategory);
 
   useEffect(() => {
     if (!meta || !selectedAMC) {
@@ -181,10 +209,11 @@ export default function HoldingsCompare({
           setComparison(result);
           setComparing(false);
         });
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setComparison(null);
           setComparing(false);
+          setLoadError((err as Error).message || 'Failed to compare holdings');
         }
       }
     })();
@@ -219,7 +248,7 @@ export default function HoldingsCompare({
         <div className="text-center py-12 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl mb-6">
           <p className="text-sm font-medium">Could not load holdings data</p>
           <p className="text-xs mt-1 opacity-80">{loadError}</p>
-          <p className="text-xs mt-2 opacity-70">Run: npm run export:client-data</p>
+          <p className="text-xs mt-2 opacity-70">Data is loaded from /data/holdings-compare/ — run npm run build or npm run dev:sync if missing.</p>
           <button
             type="button"
             onClick={retryLoad}

@@ -4,7 +4,8 @@
  */
 
 import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 export interface HoldingsCompareIndexDisk {
   months: string[];
@@ -13,12 +14,17 @@ export interface HoldingsCompareIndexDisk {
 
 let diskCache: HoldingsCompareIndexDisk | null | undefined;
 
+function projectRoots(): string[] {
+  const fileRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+  return [fileRoot, process.cwd(), join(process.cwd(), 'finverseui')];
+}
+
 function indexFilePath(): string | null {
-  const candidates = [
-    join(process.cwd(), 'public', 'data', 'holdings-compare-index.json'),
-    join(process.cwd(), 'finverseui', 'public', 'data', 'holdings-compare-index.json'),
-  ];
-  return candidates.find((p) => existsSync(p)) ?? null;
+  for (const root of projectRoots()) {
+    const path = join(root, 'public', 'data', 'holdings-compare-index.json');
+    if (existsSync(path)) return path;
+  }
+  return null;
 }
 
 export function readHoldingsCompareIndexFromDisk(): HoldingsCompareIndexDisk | null {
