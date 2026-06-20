@@ -424,6 +424,42 @@ function migrateSignalsExportTiersOnDisk() {
   console.log('  ✓ smart-money-signals-index.json → dataTier list+detail+search');
 }
 
+/** Fail the build when Smart Money client JSON is missing or empty. */
+function verifySmartMoneyExports() {
+  const requiredFiles = [
+    'smart-money-tracker-index.json',
+    'smart-money-signals-index.json',
+    'sector-intelligence.json',
+  ];
+  const missing = requiredFiles.filter((name) => !existsSync(join(OUT_DIR, name)));
+  if (missing.length) {
+    throw new Error(
+      `Missing required Smart Money exports: ${missing.join(', ')}. Run npm run export:client-data with DATABASE_URL set.`,
+    );
+  }
+
+  const signalsDir = join(OUT_DIR, 'smart-money-signals');
+  const signalFiles = existsSync(signalsDir)
+    ? readdirSync(signalsDir).filter((name) => name.endsWith('.json'))
+    : [];
+  if (signalFiles.length === 0) {
+    throw new Error('smart-money-signals/ is empty — signals export failed or was skipped.');
+  }
+
+  const trackerDir = join(OUT_DIR, 'smart-money-tracker');
+  const trackerFiles = existsSync(trackerDir)
+    ? readdirSync(trackerDir).filter((name) => name.endsWith('.json'))
+    : [];
+  if (trackerFiles.length === 0) {
+    throw new Error('smart-money-tracker/ is empty — tracker export failed or was skipped.');
+  }
+
+  const sector = JSON.parse(readFileSync(join(OUT_DIR, 'sector-intelligence.json'), 'utf8'));
+  if (!Array.isArray(sector?.rows) || sector.rows.length === 0) {
+    throw new Error('sector-intelligence.json has no rows — sector export failed or was skipped.');
+  }
+}
+
 function reslimAllSignalListFiles(dir) {
   for (const name of readdirSync(dir)) {
     if (!name.endsWith('.json') || name.includes('--detail') || name.includes('--search')) continue;
@@ -503,43 +539,40 @@ async function main() {
   }
 
   if (isDbConfigured()) {
-    try {
-      const { tracker } = await buildSmartMoneyExports(sql);
-      writeSplitByMonth(
-        'smart-money-tracker',
-        'smart-money-tracker-index.json',
-        {
-          months: tracker.months,
-          categories: tracker.categories,
-          sectors: tracker.sectors,
-        },
-        tracker.months.map((m) => m.label),
-        (month) => {
-          const block = tracker.byMonth[month];
-          return {
-            month: block.month,
-            prevMonth: block.prevMonth,
-            increased: block.increased,
-            decreased: block.decreased,
-            fresh_entry: block.fresh_entry,
-            complete_exit: block.complete_exit,
-          };
-        },
-      );
-      const signals = await buildSmartMoneySignalsExport(sql);
-      writeSignalsByCategory(signals);
+    const { tracker } = await buildSmartMoneyExports(sql);
+    writeSplitByMonth(
+      'smart-money-tracker',
+      'smart-money-tracker-index.json',
+      {
+        months: tracker.months,
+        categories: tracker.categories,
+        sectors: tracker.sectors,
+      },
+      tracker.months.map((m) => m.label),
+      (month) => {
+        const block = tracker.byMonth[month];
+        return {
+          month: block.month,
+          prevMonth: block.prevMonth,
+          increased: block.increased,
+          decreased: block.decreased,
+          fresh_entry: block.fresh_entry,
+          complete_exit: block.complete_exit,
+        };
+      },
+    );
+    const signals = await buildSmartMoneySignalsExport(sql);
+    writeSignalsByCategory(signals);
 
-      const sectors = await buildSectorIntelligenceExport(sql);
-      writeJson('sector-intelligence.json', sectors);
-    } catch (e) {
-      console.warn('  ⚠ Smart money export skipped:', e.message);
-    }
+    const sectors = await buildSectorIntelligenceExport(sql);
+    writeJson('sector-intelligence.json', sectors);
   } else {
     console.log('  ℹ DB not configured — checking for monolith signal files to split');
   }
 
   splitMonolithSignalsOnDisk();
   migrateSignalsExportTiersOnDisk();
+  verifySmartMoneyExports();
 
   console.log('');
 }

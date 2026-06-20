@@ -1,4 +1,5 @@
 import { yieldToMain } from './client-data';
+import { WEIGHT_CHANGE_THRESHOLD } from './holdings-utils';
 
 export interface Holding {
   name: string;
@@ -86,8 +87,11 @@ function compareSingleFund(
     } else {
       const oldH = oldMap.get(key)!;
       const diff = h.pct - oldH.pct;
-      if (diff > 0.3) increased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
-      else if (diff < -0.3) decreased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
+      if (diff > WEIGHT_CHANGE_THRESHOLD) {
+        increased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
+      } else if (diff < -WEIGHT_CHANGE_THRESHOLD) {
+        decreased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
+      }
     }
   }
 
@@ -125,9 +129,15 @@ export function compareAmcHoldings(
     if (row) results.push(row);
   }
 
-  return results.sort(
-    (a, b) => b.additions.length + b.removals.length - (a.additions.length + a.removals.length),
-  );
+  return sortFundComparisons(results);
+}
+
+function totalChanges(fund: FundComparison): number {
+  return fund.additions.length + fund.removals.length + fund.increased.length + fund.decreased.length;
+}
+
+function sortFundComparisons(results: FundComparison[]): FundComparison[] {
+  return results.sort((a, b) => totalChanges(b) - totalChanges(a));
 }
 
 /** Yields to the main thread periodically so mobile browsers stay responsive. */
@@ -157,7 +167,5 @@ export async function compareAmcHoldingsAsync(
   }
 
   if (isCancelled?.()) return null;
-  return results.sort(
-    (a, b) => b.additions.length + b.removals.length - (a.additions.length + a.removals.length),
-  );
+  return sortFundComparisons(results);
 }

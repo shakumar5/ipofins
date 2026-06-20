@@ -12,7 +12,10 @@ import { assertSlimListRow } from './lib/signal-export-utils.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_DIR = join(ROOT, 'public', 'data', 'smart-money-signals');
 const INDEX_PATH = join(ROOT, 'public', 'data', 'smart-money-signals-index.json');
+const SECTOR_PATH = join(ROOT, 'public', 'data', 'sector-intelligence.json');
+const TRACKER_INDEX_PATH = join(ROOT, 'public', 'data', 'smart-money-tracker-index.json');
 const DIST_DIR = join(ROOT, 'dist');
+const DIST_DATA_DIR = join(DIST_DIR, 'data');
 
 const MAX_LIST_FILE_KB = 350;
 const FORBIDDEN_HTML = ['smart-money-signals-data-bootstrap', 'data-json="{"months"'];
@@ -30,6 +33,19 @@ if (!existsSync(INDEX_PATH)) {
   if (index.dataTier !== 'list+detail+search') {
     fail(`Index dataTier must be "list+detail+search" (got ${index.dataTier ?? 'missing'})`);
   }
+}
+
+if (!existsSync(SECTOR_PATH)) {
+  fail('Missing sector-intelligence.json — run export:client-data');
+} else {
+  const sector = JSON.parse(readFileSync(SECTOR_PATH, 'utf8'));
+  if (!Array.isArray(sector.rows) || sector.rows.length === 0) {
+    fail('sector-intelligence.json has no rows');
+  }
+}
+
+if (!existsSync(TRACKER_INDEX_PATH)) {
+  fail('Missing smart-money-tracker-index.json — run export:client-data');
 }
 
 if (existsSync(DATA_DIR)) {
@@ -54,6 +70,25 @@ if (existsSync(DATA_DIR)) {
 }
 
 if (existsSync(DIST_DIR)) {
+  const distRequired = [
+    'smart-money-signals-index.json',
+    'sector-intelligence.json',
+    'smart-money-tracker-index.json',
+  ];
+  if (existsSync(DIST_DATA_DIR)) {
+    for (const name of distRequired) {
+      if (!existsSync(join(DIST_DATA_DIR, name))) {
+        fail(`dist/data/${name} missing after build — public/data not copied to dist`);
+      }
+    }
+    const distSignalsDir = join(DIST_DATA_DIR, 'smart-money-signals');
+    if (!existsSync(distSignalsDir) || readdirSync(distSignalsDir).filter((n) => n.endsWith('.json')).length === 0) {
+      fail('dist/data/smart-money-signals/ missing or empty after build');
+    }
+  } else {
+    fail('dist/data/ missing after build');
+  }
+
   const smDir = join(DIST_DIR, 'mutual-funds', 'smart-money');
   if (existsSync(smDir)) {
     const sampleHtml = [];

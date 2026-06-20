@@ -6,7 +6,7 @@ import {
   type HoldingsCompareIndex,
 } from '../../lib/holdings-compare-client';
 import { resolveHoldingsCompareIndex } from '../../lib/holdings-compare-bootstrap';
-import { compareAmcHoldings, type FundHoldings } from '../../lib/holdings-compare-diff';
+import { compareAmcHoldingsAsync, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
 import FilterSelect from './FilterSelect';
 
 interface HoldingsMeta {
@@ -39,6 +39,10 @@ function metaFromIndex(index: HoldingsCompareIndex): HoldingsMeta {
 
 const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
 const RESULTS_PAGE = 25;
+
+function fmtPct(value: number): string {
+  return Number(value.toFixed(2)).toString();
+}
 
 function defaultMonths(index: HoldingsCompareIndex, initialMonth1?: string, initialMonth2?: string) {
   const older = index.months.length >= 2 ? index.months[index.months.length - 2] : index.months[0] || '';
@@ -82,6 +86,9 @@ export default function HoldingsCompare({
   const [month2, setMonth2] = useState(bootMonths?.month2 || initialMonth2 || '');
   const [resultsLimit, setResultsLimit] = useState(RESULTS_PAGE);
   const [retryKey, setRetryKey] = useState(0);
+  const [comparison, setComparison] = useState<FundComparison[] | null>(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const compareRequestId = useRef(0);
 
   useEffect(() => {
     if (!bootIndex) return;
@@ -192,14 +199,34 @@ export default function HoldingsCompare({
 
   const fundCountForAmc = fundsForAMC.length || (data?.amcFundCounts[selectedAMC] ?? 0);
 
-  const comparison = useMemo(() => {
-    if (!amcHoldings || !selectedAMC || !month1 || !month2 || month1 === month2) return null;
-    return compareAmcHoldings(amcHoldings, {
-      month1,
-      month2,
-      selectedFund,
-      selectedCategory,
-    }) ?? [];
+  useEffect(() => {
+    if (!amcHoldings || !selectedAMC || !month1 || !month2 || month1 === month2) {
+      setComparison(null);
+      setCompareLoading(false);
+      return;
+    }
+
+    const requestId = ++compareRequestId.current;
+    setCompareLoading(true);
+    setComparison(null);
+    setResultsLimit(RESULTS_PAGE);
+
+    compareAmcHoldingsAsync(
+      amcHoldings,
+      { month1, month2, selectedFund, selectedCategory },
+      () => requestId !== compareRequestId.current,
+    )
+      .then((result) => {
+        if (requestId !== compareRequestId.current) return;
+        setComparison(result ?? []);
+      })
+      .catch(() => {
+        if (requestId !== compareRequestId.current) return;
+        setComparison([]);
+      })
+      .finally(() => {
+        if (requestId === compareRequestId.current) setCompareLoading(false);
+      });
   }, [amcHoldings, selectedAMC, month1, month2, selectedFund, selectedCategory]);
 
   const visibleComparison = comparison?.slice(0, resultsLimit) ?? null;
@@ -220,6 +247,7 @@ export default function HoldingsCompare({
       setMetaLoading(true);
     }
     setAmcHoldings(null);
+    setComparison(null);
     setIndexLoadError(null);
     setAmcLoadError(null);
     setRetryKey((k) => k + 1);
@@ -374,17 +402,23 @@ export default function HoldingsCompare({
         </div>
       )}
 
-      {selectedAMC && amcHoldings && !amcLoading && comparison && comparison.length === 0 && (
+      {selectedAMC && amcHoldings && !amcLoading && compareLoading && (
+        <div className="text-center py-8 text-surface-500 dark:text-surface-400">
+          <p className="text-sm">Computing portfolio changes for {selectedAMC}…</p>
+        </div>
+      )}
+
+      {selectedAMC && amcHoldings && !amcLoading && !compareLoading && comparison && comparison.length === 0 && (
         <div className="text-center py-12 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 rounded-xl" data-holdings-empty>
           <p className="text-sm font-medium">No portfolio changes detected</p>
           <p className="text-xs mt-1 text-surface-400">Between {month1} → {month2} for {selectedAMC}.</p>
         </div>
       )}
 
-      {visibleComparison && visibleComparison.length > 0 && !amcLoading && (
+      {visibleComparison && visibleComparison.length > 0 && !amcLoading && !compareLoading && (
         <div className="space-y-6">
-          {visibleComparison.map((fund, idx) => (
-            <div key={idx} className="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">
+          {visibleComparison.map((fund) => (
+            <div key={fund.fundName} className="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">
               <div className="px-4 py-3 bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-600">
                 <h3 className="font-semibold text-surface-900 dark:text-white text-sm">{fund.fundName}</h3>
                 <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
@@ -393,7 +427,7 @@ export default function HoldingsCompare({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-surface-200 dark:divide-surface-600">
-                <div className="p-4">
+                <div className="p-4 md:border-b md:border-surface-200 dark:md:border-surface-600">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 bg-green-500 rounded-full" />
                     <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase">New Additions</span>
@@ -402,17 +436,17 @@ export default function HoldingsCompare({
                     <p className="text-xs text-surface-400 italic">No new stocks added</p>
                   ) : (
                     <div className="space-y-2">
-                      {fund.additions.map((h, i) => (
-                        <div key={i} className="flex justify-between text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                      {fund.additions.map((h) => (
+                        <div key={`add-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
                           <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
-                          <span className="text-green-600 font-semibold">+{h.pct}%</span>
+                          <span className="text-green-600 font-semibold shrink-0">+{fmtPct(h.pct)}%</span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <div className="p-4">
+                <div className="p-4 md:border-b md:border-surface-200 dark:md:border-surface-600">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 bg-red-500 rounded-full" />
                     <span className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase">Removed</span>
@@ -421,10 +455,52 @@ export default function HoldingsCompare({
                     <p className="text-xs text-surface-400 italic">No stocks removed</p>
                   ) : (
                     <div className="space-y-2">
-                      {fund.removals.map((h, i) => (
-                        <div key={i} className="flex justify-between text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                      {fund.removals.map((h) => (
+                        <div key={`rem-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
                           <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
-                          <span className="text-red-500 font-semibold">{h.pct}% → 0%</span>
+                          <span className="text-red-500 font-semibold shrink-0">{fmtPct(h.pct)}% → 0%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase">Increased</span>
+                  </div>
+                  {fund.increased.length === 0 ? (
+                    <p className="text-xs text-surface-400 italic">No weight increases</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {fund.increased.map((h) => (
+                        <div key={`inc-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                          <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-semibold shrink-0">
+                            {fmtPct(h.oldPct)}% → {fmtPct(h.newPct)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full" />
+                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase">Decreased</span>
+                  </div>
+                  {fund.decreased.length === 0 ? (
+                    <p className="text-xs text-surface-400 italic">No weight decreases</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {fund.decreased.map((h) => (
+                        <div key={`dec-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
+                          <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-semibold shrink-0">
+                            {fmtPct(h.oldPct)}% → {fmtPct(h.newPct)}%
+                          </span>
                         </div>
                       ))}
                     </div>
