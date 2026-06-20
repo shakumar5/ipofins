@@ -201,8 +201,8 @@ export interface SmartMoneySignalRow {
   institutionalConfidence: string;
   confidenceStars: number;
   consecutivePositiveMonths: number;
-  factorScores: SignalFactorScores;
-  factorBreakdown: {
+  factorScores?: SignalFactorScores;
+  factorBreakdown?: {
     netFundActivity: FactorBreakdown;
     freshEntry: FactorBreakdown;
     exitPenalty: FactorBreakdown;
@@ -212,7 +212,7 @@ export interface SmartMoneySignalRow {
   };
   convictionV2?: ConvictionV2Meta;
   fundActivity?: FundActivityLists;
-  interpretation: string;
+  interpretation?: string;
   fundsHolding: number;
   topFundHolders: string[];
   /** NSE trading symbol when available (e.g. TCS, INFY). */
@@ -424,4 +424,11 @@ export function stockSignalMetaLine(row: SmartMoneySignalRow): string {
   if (cap) parts.push(cap);
   parts.push(row.month);
   return parts.join(' · ');
+}
+
+/** Drop bulky fields from table/search payloads; detail pages load full rows per category. */
+export function stripSignalRowForList(row: SmartMoneySignalRow): SmartMoneySignalRow {
+  if (!row.fundActivity) return row;
+  const { fundActivity: _fa, ...lite } = row;
+  return lite;
 }

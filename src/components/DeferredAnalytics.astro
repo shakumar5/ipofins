@@ -1,10 +1,16 @@
 ---
-/** Loads Vercel Analytics + web-vitals reporting after idle — not on the LCP critical path. */
+/** Loads Vercel Analytics + web-vitals hook registration after idle — not on the LCP critical path. */
 ---
 
 <script>
-  import { inject } from '@vercel/analytics';
-  import '../lib/web-vitals-report';
+  function bootDeferredAnalytics() {
+    void import('@vercel/analytics').then(({ inject }) => inject());
+    void import('../lib/web-vitals-report');
+  }
 
-  inject();
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(bootDeferredAnalytics, { timeout: 4000 });
+  } else {
+    setTimeout(bootDeferredAnalytics, 2000);
+  }
 </script>

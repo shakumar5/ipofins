@@ -1,7 +1,18 @@
 import { fetchJsonCached, monthFileSlug, categoryFileSlug } from './client-data';
 import type { SmartMoneyTrackerData } from './data/holdings';
-import type { SmartMoneySignalsData, SmartMoneySignalRow } from './smart-money-signals';
-import { dedupeSignalsByStock, signalMarketCapFilterOptions } from './smart-money-signals';
+import type {
+  FundActivityLists,
+  SignalFactorScores,
+  SmartMoneySignalsData,
+  SmartMoneySignalRow,
+} from './smart-money-signals';
+import { buildInterpretation, dedupeSignalsByStock, signalMarketCapFilterOptions } from './smart-money-signals';
+import {
+  signalCategoryDetailPublicUrl,
+  signalSearchPublicUrl,
+  type SignalSearchEntry,
+  type SignalsSearchIndexFile,
+} from './smart-money-signals-meta';
 
 const SIGNALS_INDEX = '/data/smart-money-signals-index.json';
 const SIGNALS_BASE = '/data/smart-money-signals';
@@ -13,12 +24,21 @@ interface SignalsIndex {
   categories: string[];
   layout?: 'by-category' | 'monolith';
   scoringModel?: 'conviction-v2' | 'stock-cap-v2' | 'fund-scheme-v1';
+  dataTier?: 'list+detail+search' | 'by-category' | 'monolith';
 }
 
 interface SignalsMonthFile {
   month: string;
   category?: string;
   rows: SmartMoneySignalRow[];
+}
+
+export interface SmartMoneySignalDetailOverlay {
+  stockSlug: string;
+  factorScores?: SignalFactorScores;
+  factorBreakdown?: SmartMoneySignalRow['factorBreakdown'];
+  fundActivity?: FundActivityLists;
+  interpretation?: string;
 }
 
 interface TrackerIndex {
@@ -38,6 +58,7 @@ interface TrackerMonthFile {
 
 let signalsIndexPromise: Promise<SignalsIndex> | null = null;
 let trackerIndexPromise: Promise<TrackerIndex> | null = null;
+const detailOverlayCache = new Map<string, Promise<Map<string, SmartMoneySignalDetailOverlay>>>();
 
 function signalCategoryUrl(month: string, category: string): string {
   return `${SIGNALS_BASE}/${monthFileSlug(month)}--${categoryFileSlug(category)}.json`;
@@ -52,6 +73,45 @@ function signalCategoriesWithAll(
   scoringModel?: SignalsIndex['scoringModel'],
 ): string[] {
   return signalMarketCapFilterOptions(categories, scoringModel);
+}
+
+function mergeSignalWithDetail(
+  list: SmartMoneySignalRow,
+  detail?: SmartMoneySignalDetailOverlay | null,
+): SmartMoneySignalRow {
+  if (!detail) return list;
+  return {
+    ...list,
+    ...(detail.factorScores ? { factorScores: detail.factorScores } : {}),
+    ...(detail.factorBreakdown ? { factorBreakdown: detail.factorBreakdown } : {}),
+    ...(detail.fundActivity ? { fundActivity: detail.fundActivity } : {}),
+    interpretation:
+      detail.interpretation ||
+      list.interpretation ||
+      buildInterpretation(list.stockName, list.signal),
+  };
+}
+
+async function loadDetailOverlayMap(
+  month: string,
+  category: string,
+): Promise<Map<string, SmartMoneySignalDetailOverlay>> {
+  const key = `${month}::${category}`;
+  let pending = detailOverlayCache.get(key);
+  if (!pending) {
+    pending = (async () => {
+      try {
+        const file = await fetchJsonCached<{ rows: SmartMoneySignalDetailOverlay[] }>(
+          signalCategoryDetailPublicUrl(month, category),
+        );
+        return new Map(file.rows.map((row) => [row.stockSlug, row]));
+      } catch {
+        return new Map();
+      }
+    })();
+    detailOverlayCache.set(key, pending);
+  }
+  return pending;
 }
 
 async function loadSignalsCategoryRows(
@@ -86,6 +146,27 @@ export async function loadSignalsIndex(): Promise<SignalsIndex> {
   return signalsIndexPromise;
 }
 
+export async function loadSignalsSearchIndex(month: string): Promise<SignalSearchEntry[]> {
+  try {
+    const file = await fetchJsonCached<SignalsSearchIndexFile>(signalSearchPublicUrl(month));
+    return file.stocks;
+  } catch {
+    const index = await loadSignalsIndex();
+    const rows = await loadSignalsAllCategories(month, index);
+    return dedupeSignalsByStock(rows)
+      .sort((a, b) => b.convictionScore - a.convictionScore)
+      .map((row) => ({
+        stockSlug: row.stockSlug,
+        stockName: row.stockName,
+        sector: row.sector,
+        category: row.category,
+        convictionScore: row.convictionScore,
+        signal: row.signal,
+        ...(row.nseSymbol ? { nseSymbol: row.nseSymbol } : {}),
+      }));
+  }
+}
+
 async function loadSignalsCategoryChunk(month: string, category: string): Promise<SmartMoneySignalRow[]> {
   const file = await fetchJsonCached<SignalsMonthFile>(signalCategoryUrl(month, category));
   return file.rows;
@@ -113,6 +194,18 @@ export async function loadSignalsMonth(
 
   const rows = await loadSignalsCategoryRows(month, category, index);
   return { months: index.months, categories, rows };
+}
+
+export async function loadSignalRowWithDetail(
+  stockSlug: string,
+  month: string,
+  category: string,
+): Promise<SmartMoneySignalRow | null> {
+  const rows = await loadSignalsCategoryRows(month, category, await loadSignalsIndex());
+  const listRow = rows.find((r) => r.stockSlug === stockSlug);
+  if (!listRow) return null;
+  const overlays = await loadDetailOverlayMap(month, category);
+  return mergeSignalWithDetail(listRow, overlays.get(stockSlug));
 }
 
 export async function loadTrackerIndex(): Promise<TrackerIndex> {
@@ -185,9 +278,13 @@ export async function findSignalRow(
   const matches = await findSignalRowsForStock(stockSlug, month);
   if (!matches.length) return null;
 
-  if (category && category !== 'All') {
-    return matches.find((r) => r.category === category) ?? matches[0] ?? null;
-  }
+  const picked =
+    category && category !== 'All'
+      ? matches.find((r) => r.category === category) ?? matches[0] ?? null
+      : matches[0] ?? null;
 
-  return matches[0] ?? null;
+  if (!picked) return null;
+
+  const overlays = await loadDetailOverlayMap(month, picked.category);
+  return mergeSignalWithDetail(picked, overlays.get(stockSlug));
 }

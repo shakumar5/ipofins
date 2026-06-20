@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
-import { buildInterpretation, dedupeSignalsByStock, stockCapDisplayLabel, stockSignalMetaLine } from '../../lib/smart-money-signals';
+import type { SmartMoneySignalRow } from '../../lib/smart-money-signals';
+import { buildInterpretation, stockSignalMetaLine } from '../../lib/smart-money-signals';
+import { loadSignalRowWithDetail } from '../../lib/smart-money-client';
+import type { SignalSearchEntry } from '../../lib/smart-money-signals-meta';
 import { stockMatchesSearchQuery } from '../../lib/stock-search-match';
 import {
   parseStockSignalSlugFromPathname,
@@ -14,7 +16,9 @@ const MIN_SEARCH_LEN = 2;
 const SUGGESTION_LIMIT = 8;
 
 interface Props {
-  data: SmartMoneySignalsData;
+  month: string;
+  months: string[];
+  searchStocks: SignalSearchEntry[];
   initialStockSlug?: string | null;
   loading?: boolean;
 }
@@ -27,7 +31,7 @@ function Stars({ count }: { count: number }) {
   );
 }
 
-function StockDetail({ row }: { row: SmartMoneySignalRow }) {
+function StockDetail({ row, detailLoading }: { row: SmartMoneySignalRow; detailLoading?: boolean }) {
   const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(row.month)}&category=${encodeURIComponent(row.category)}`;
 
   return (
@@ -95,7 +99,11 @@ function StockDetail({ row }: { row: SmartMoneySignalRow }) {
         {row.interpretation || buildInterpretation(row.stockName, row.signal)}
       </p>
 
-      <ConvictionScoreBreakdown row={row} />
+      {detailLoading ? (
+        <p className="text-xs text-surface-500 mt-4">Loading score breakdown…</p>
+      ) : (
+        <ConvictionScoreBreakdown row={row} />
+      )}
 
       <a
         href={detailUrl}
@@ -136,22 +144,16 @@ function Metric({
   );
 }
 
-function rowForSlug(rows: SmartMoneySignalRow[], slug: string): SmartMoneySignalRow | null {
-  const matches = rows.filter((r) => r.stockSlug === slug);
-  if (!matches.length) return null;
-  if (matches.length === 1) return matches[0];
-  return dedupeSignalsByStock(matches)[0] ?? null;
-}
-
-export default function StockSignalView({ data, initialStockSlug = null, loading }: Props) {
-  const month = data.months[0] || '';
+export default function StockSignalView({
+  month,
+  searchStocks,
+  initialStockSlug = null,
+  loading,
+}: Props) {
   const [search, setSearch] = useState('');
   const [activeSlug, setActiveSlug] = useState<string | null>(initialStockSlug);
-
-  const monthRows = useMemo(
-    () => data.rows.filter((r) => r.month === month),
-    [data.rows, month],
-  );
+  const [selectedRow, setSelectedRow] = useState<SmartMoneySignalRow | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const navigateToSlug = useCallback((slug: string, replace = false) => {
     const path = stockSignalPath(slug);
@@ -178,26 +180,47 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
     }
   }, [initialStockSlug, activeSlug]);
 
+  useEffect(() => {
+    if (!activeSlug || !month) {
+      setSelectedRow(null);
+      return;
+    }
+
+    const entry = searchStocks.find((s) => s.stockSlug === activeSlug);
+    if (!entry) {
+      setSelectedRow(null);
+      return;
+    }
+
+    let cancelled = false;
+    setDetailLoading(true);
+    loadSignalRowWithDetail(activeSlug, month, entry.category)
+      .then((row) => {
+        if (!cancelled) setSelectedRow(row);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSlug, month, searchStocks]);
+
   const suggestions = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (q.length < MIN_SEARCH_LEN) return [];
-    const matched = monthRows.filter((r) =>
-      stockMatchesSearchQuery(r.stockName, r.stockSlug, q, r.nseSymbol),
-    );
-    return dedupeSignalsByStock(matched)
+    return searchStocks
+      .filter((s) => stockMatchesSearchQuery(s.stockName, s.stockSlug, q, s.nseSymbol))
       .sort((a, b) => b.convictionScore - a.convictionScore)
       .slice(0, SUGGESTION_LIMIT);
-  }, [monthRows, search]);
-
-  const selectedRow = useMemo(
-    () => (activeSlug ? rowForSlug(monthRows, activeSlug) : null),
-    [monthRows, activeSlug],
-  );
+  }, [searchStocks, search]);
 
   const searchQuery = search.trim();
   const showIdle = !activeSlug && searchQuery.length < MIN_SEARCH_LEN;
   const showNoSearchResults = !activeSlug && searchQuery.length >= MIN_SEARCH_LEN && suggestions.length === 0;
-  const showNotInMf = Boolean(activeSlug && !selectedRow && !loading);
+  const inSearchIndex = activeSlug ? searchStocks.some((s) => s.stockSlug === activeSlug) : false;
+  const showNotInMf = Boolean(activeSlug && !inSearchIndex && !loading && !detailLoading);
 
   return (
     <div>
@@ -217,16 +240,16 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
           />
           {suggestions.length > 0 && (
             <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg border border-surface-200 dark:border-surface-600 bg-white dark:bg-surface-900 shadow-lg divide-y divide-surface-100 dark:divide-surface-700">
-              {suggestions.map((row) => (
-                <li key={row.stockSlug}>
+              {suggestions.map((entry) => (
+                <li key={entry.stockSlug}>
                   <button
                     type="button"
-                    onClick={() => navigateToSlug(row.stockSlug)}
+                    onClick={() => navigateToSlug(entry.stockSlug)}
                     className="w-full text-left px-3 py-2.5 hover:bg-surface-50 dark:hover:bg-surface-800/60"
                   >
-                    <span className="text-sm font-medium text-surface-900 dark:text-white">{row.stockName}</span>
-                    <span className="text-xs text-surface-500 ml-2">{row.sector}</span>
-                    <span className="float-right text-sm font-semibold text-primary-600 tabular-nums">{row.convictionScore}</span>
+                    <span className="text-sm font-medium text-surface-900 dark:text-white">{entry.stockName}</span>
+                    <span className="text-xs text-surface-500 ml-2">{entry.sector}</span>
+                    <span className="float-right text-sm font-semibold text-primary-600 tabular-nums">{entry.convictionScore}</span>
                   </button>
                 </li>
               ))}
@@ -270,7 +293,7 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
         </div>
       )}
 
-      {selectedRow && <StockDetail row={selectedRow} />}
+      {selectedRow && <StockDetail row={selectedRow} detailLoading={detailLoading} />}
     </div>
   );
 }

@@ -109,10 +109,10 @@ for (const [path, label] of pagePaths) {
   }
   pass(`PAGE_${label}`, `${p.status} ${p.ms}ms`);
   const html = p.body;
-  if (html.includes('id="smart-money-signals-data-bootstrap"')) {
-    pass(`BOOTSTRAP_${label}`, 'signals bootstrap embedded');
+  if (html.includes('id="smart-money-signals-data-bootstrap"') || html.includes('id="smart-money-signals-index-bootstrap"')) {
+    fail(`BOOTSTRAP_${label}`, 'signals data embedded in HTML — must fetch JSON client-side');
   } else if (label === 'signals' || label === 'stock-signal hub' || label === 'TCS stock signal') {
-    warn(`BOOTSTRAP_${label}`, 'no signals bootstrap in HTML — may rely on client fetch');
+    pass(`BOOTSTRAP_${label}`, 'no inline signals bootstrap (client fetch only)');
   }
   if (html.includes('ConvictionScoreBreakdown') || html.includes('score breakdown')) {
     pass(`UI_V2_${label}`, 'v2 breakdown UI marker found');

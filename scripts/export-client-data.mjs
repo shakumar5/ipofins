@@ -8,7 +8,15 @@ import { sql, isDbConfigured } from './lib/db.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
 import { buildSectorIntelligenceExport } from './lib/sector-intelligence-export.mjs';
-import { slimSignalRow, signalCategoryFileName } from './lib/signal-export-utils.mjs';
+import {
+  assertSlimListRow,
+  detailSignalRow,
+  searchIndexEntry,
+  signalCategoryDetailFileName,
+  signalCategoryFileName,
+  signalSearchFileName,
+  slimSignalRow,
+} from './lib/signal-export-utils.mjs';
 import { unpackMonthHoldings } from './lib/holdings-month.mjs';
 import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs';
 import {
@@ -238,7 +246,7 @@ function writeSplitByMonth(subdir, indexName, indexPayload, months, monthPayload
   }
 }
 
-/** One JSON file per month × category — keeps client payloads small. */
+/** One JSON file per month × category — list tier (slim) + detail tier + search index. */
 function writeSignalsByCategory(signals) {
   const dir = join(OUT_DIR, 'smart-money-signals');
   mkdirSync(dir, { recursive: true });
@@ -247,21 +255,57 @@ function writeSignalsByCategory(signals) {
     categories: signals.categories,
     layout: 'by-category',
     scoringModel: 'conviction-v2',
+    dataTier: 'list+detail+search',
     exportedAt: new Date().toISOString(),
   });
 
   for (const month of signals.months) {
+    const searchBySlug = new Map();
+
     for (const category of signals.categories) {
-      const rows = signals.rows
-        .filter((r) => r.month === month && r.category === category)
-        .map(slimSignalRow);
-      const fileName = signalCategoryFileName(month, category);
-      const rel = join('smart-money-signals', fileName);
-      const full = join(OUT_DIR, rel);
-      writeFileSync(full, JSON.stringify({ month, category, rows }));
-      const kb = (readFileSync(full).length / 1024).toFixed(0);
-      console.log(`  ✓ ${rel} (${kb} KB, ${rows.length} rows)`);
+      const fullRows = signals.rows.filter((r) => r.month === month && r.category === category);
+      const listRows = fullRows.map(slimSignalRow);
+      for (const row of listRows) {
+        assertSlimListRow(row, `${month}/${category}`);
+      }
+
+      const listName = signalCategoryFileName(month, category);
+      const listRel = join('smart-money-signals', listName);
+      writeFileSync(join(OUT_DIR, listRel), JSON.stringify({ month, category, rows: listRows }));
+      console.log(
+        `  ✓ ${listRel} (${(readFileSync(join(OUT_DIR, listRel)).length / 1024).toFixed(0)} KB, ${listRows.length} rows)`,
+      );
+
+      const detailRows = fullRows.map(detailSignalRow).filter(Boolean);
+      if (detailRows.length) {
+        const detailName = signalCategoryDetailFileName(month, category);
+        const detailRel = join('smart-money-signals', detailName);
+        writeFileSync(join(OUT_DIR, detailRel), JSON.stringify({ month, category, rows: detailRows }));
+        console.log(
+          `  ✓ ${detailRel} (${(readFileSync(join(OUT_DIR, detailRel)).length / 1024).toFixed(0)} KB)`,
+        );
+      }
+
+      for (const row of listRows) {
+        const entry = searchIndexEntry(row);
+        const prev = searchBySlug.get(row.stockSlug);
+        if (!prev || entry.convictionScore > prev.convictionScore) {
+          searchBySlug.set(row.stockSlug, entry);
+        }
+      }
     }
+
+    const searchName = signalSearchFileName(month);
+    const searchRel = join('smart-money-signals', searchName);
+    const searchPayload = {
+      month,
+      stocks: [...searchBySlug.values()].sort((a, b) => b.convictionScore - a.convictionScore),
+    };
+    writeFileSync(join(OUT_DIR, searchRel), JSON.stringify(searchPayload));
+    console.log(
+      `  ✓ ${searchRel} (${(readFileSync(join(OUT_DIR, searchRel)).length / 1024).toFixed(0)} KB, ${searchPayload.stocks.length} stocks)`,
+    );
+
     const legacy = join(dir, `${monthFileSlug(month)}.json`);
     if (existsSync(legacy)) {
       unlinkSync(legacy);
@@ -319,6 +363,81 @@ function splitMonolithSignalsOnDisk() {
       scoringModel: 'conviction-v2',
       exportedAt: index.exportedAt || new Date().toISOString(),
     });
+  }
+}
+
+/** Ensure search index + dataTier when list files exist but DB export was skipped. */
+function migrateSignalsExportTiersOnDisk() {
+  const indexPath = join(OUT_DIR, 'smart-money-signals-index.json');
+  if (!existsSync(indexPath)) return;
+
+  const index = JSON.parse(readFileSync(indexPath, 'utf8'));
+  if (index.dataTier === 'list+detail+search') {
+    // Still re-slim any legacy list files (e.g. interpretation left in old exports).
+    const dir = join(OUT_DIR, 'smart-money-signals');
+    if (existsSync(dir)) reslimAllSignalListFiles(dir);
+    return;
+  }
+
+  const dir = join(OUT_DIR, 'smart-money-signals');
+  if (!existsSync(dir)) return;
+
+  reslimAllSignalListFiles(dir);
+
+  for (const month of index.months || []) {
+    const searchBySlug = new Map();
+
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith('.json') || name.includes('--detail') || name.includes('--search')) continue;
+      if (!name.startsWith(`${monthFileSlug(month)}--`)) continue;
+
+      const payload = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+      for (const row of payload.rows || []) {
+        const entry = searchIndexEntry(row);
+        const prev = searchBySlug.get(row.stockSlug);
+        if (!prev || entry.convictionScore > prev.convictionScore) {
+          searchBySlug.set(row.stockSlug, entry);
+        }
+      }
+    }
+
+    if (!searchBySlug.size) continue;
+
+    const searchName = signalSearchFileName(month);
+    const searchRel = join('smart-money-signals', searchName);
+    const searchPayload = {
+      month,
+      stocks: [...searchBySlug.values()].sort((a, b) => b.convictionScore - a.convictionScore),
+    };
+    writeFileSync(join(OUT_DIR, searchRel), JSON.stringify(searchPayload));
+    console.log(
+      `  ✓ migrated ${searchRel} (${(readFileSync(join(OUT_DIR, searchRel)).length / 1024).toFixed(0)} KB, ${searchPayload.stocks.length} stocks)`,
+    );
+  }
+
+  writeJson('smart-money-signals-index.json', {
+    ...index,
+    layout: index.layout || 'by-category',
+    dataTier: 'list+detail+search',
+    exportedAt: index.exportedAt || new Date().toISOString(),
+  });
+  console.log('  ✓ smart-money-signals-index.json → dataTier list+detail+search');
+}
+
+function reslimAllSignalListFiles(dir) {
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith('.json') || name.includes('--detail') || name.includes('--search')) continue;
+
+    const listPath = join(dir, name);
+    const payload = JSON.parse(readFileSync(listPath, 'utf8'));
+    const listRows = (payload.rows || []).map(slimSignalRow);
+    for (const row of listRows) {
+      assertSlimListRow(row, name);
+    }
+    writeFileSync(
+      listPath,
+      JSON.stringify({ month: payload.month, category: payload.category, rows: listRows }),
+    );
   }
 }
 
@@ -420,6 +539,7 @@ async function main() {
   }
 
   splitMonolithSignalsOnDisk();
+  migrateSignalsExportTiersOnDisk();
 
   console.log('');
 }

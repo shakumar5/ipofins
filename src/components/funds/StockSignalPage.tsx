@@ -2,20 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import StockSignalView from './StockSignalView';
 
-import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
-import {
-  resolveSignalsDataBootstrap,
-  resolveSignalsIndexBootstrap,
-  seedSignalsJsonCache,
-} from '../../lib/smart-money-signals-bootstrap';
-import type { SignalsIndexDisk } from '../../lib/smart-money-signals-meta';
-import { loadSignalsIndex, loadSignalsMonth } from '../../lib/smart-money-client';
+import type { SignalSearchEntry } from '../../lib/smart-money-signals-meta';
+import { loadSignalsIndex, loadSignalsSearchIndex } from '../../lib/smart-money-client';
 
 interface Props {
   initialStockSlug?: string | null;
-  initialSignalsIndex?: SignalsIndexDisk | null;
-  initialSignalsMonth?: string | null;
-  initialSignalsData?: SmartMoneySignalsData | null;
+}
+
+export interface StockSignalPageData {
+  months: string[];
+  month: string;
+  searchStocks: SignalSearchEntry[];
 }
 
 function scheduleAfterPaint(task: () => void): () => void {
@@ -32,29 +29,12 @@ function scheduleAfterPaint(task: () => void): () => void {
   return () => window.clearTimeout(t);
 }
 
-export default function StockSignalPage({
-  initialStockSlug = null,
-  initialSignalsIndex = null,
-  initialSignalsMonth = null,
-  initialSignalsData = null,
-}: Props) {
+export default function StockSignalPage({ initialStockSlug = null }: Props) {
   const loadStarted = useRef(false);
   const [retry, setRetry] = useState(0);
-  const [data, setData] = useState<SmartMoneySignalsData | null>(() =>
-    resolveSignalsDataBootstrap(initialSignalsData),
-  );
+  const [data, setData] = useState<StockSignalPageData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const index = resolveSignalsIndexBootstrap(initialSignalsIndex);
-    if (!index) return;
-    seedSignalsJsonCache({
-      index,
-      initialMonth: initialSignalsMonth || index.months[0] || '',
-      data: resolveSignalsDataBootstrap(initialSignalsData),
-    });
-  }, [initialSignalsIndex, initialSignalsMonth, initialSignalsData]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,8 +43,8 @@ export default function StockSignalPage({
       const index = await loadSignalsIndex();
       const month = index.months[0] || '';
       if (!month) throw new Error('No signal months available');
-      const chunk = await loadSignalsMonth(month, 'All');
-      setData(chunk);
+      const searchStocks = await loadSignalsSearchIndex(month);
+      setData({ months: index.months, month, searchStocks });
     } catch (err) {
       setError((err as Error).message || 'Failed to load stock signal data');
     } finally {
@@ -112,7 +92,13 @@ export default function StockSignalPage({
           <p className="text-sm">Loading stock signal data…</p>
         </div>
       ) : data ? (
-        <StockSignalView data={data} initialStockSlug={initialStockSlug} loading={loading} />
+        <StockSignalView
+          month={data.month}
+          months={data.months}
+          searchStocks={data.searchStocks}
+          initialStockSlug={initialStockSlug}
+          loading={loading}
+        />
       ) : null}
     </div>
   );

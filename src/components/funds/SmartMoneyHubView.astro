@@ -7,9 +7,7 @@ import SmartMoneyInternalLinks from './SmartMoneyInternalLinks.astro';
 import SmartMoneySubNav from './SmartMoneySubNav.astro';
 import type { TrackerViewType } from '../../lib/smart-money-tracker-meta';
 import type { SmartMoneyTrackerBootstrap } from '../../lib/smart-money-tracker-server';
-import type { SmartMoneySignalsBootstrap } from '../../lib/smart-money-signals-meta';
 import { SMART_MONEY_TRACKER_DATA_BOOTSTRAP_ID, SMART_MONEY_TRACKER_INDEX_BOOTSTRAP_ID } from '../../lib/smart-money-tracker-bootstrap';
-import { SMART_MONEY_SIGNALS_DATA_BOOTSTRAP_ID, SMART_MONEY_SIGNALS_INDEX_BOOTSTRAP_ID } from '../../lib/smart-money-signals-bootstrap';
 
 interface TrackerInit {
   view: TrackerViewType;
@@ -22,10 +20,9 @@ interface Props {
   parsedTab: SmartMoneyTab | null;
   sm: SmartMoneyTrackerLinks;
   trackerBootstrap?: SmartMoneyTrackerBootstrap | null;
-  signalsBootstrap?: SmartMoneySignalsBootstrap | null;
 }
 
-const { pageMeta, parsed, parsedTab, sm, trackerBootstrap = null, signalsBootstrap = null } = Astro.props;
+const { pageMeta, parsed, parsedTab, sm, trackerBootstrap = null } = Astro.props;
 
 const smNavActive =
   parsedTab === 'signals' ? 'signals'
@@ -38,14 +35,6 @@ const trackerIndexJson = trackerBootstrap
 
 const trackerDataJson = trackerBootstrap?.data
   ? JSON.stringify(trackerBootstrap.data).replace(/</g, '\\u003c')
-  : null;
-
-const signalsIndexJson = signalsBootstrap
-  ? JSON.stringify(signalsBootstrap.index).replace(/</g, '\\u003c')
-  : null;
-
-const signalsDataJson = signalsBootstrap?.data
-  ? JSON.stringify(signalsBootstrap.data).replace(/</g, '\\u003c')
   : null;
 
 const skeletonRows = Array.from({ length: 12 });
@@ -86,22 +75,6 @@ const islandDirective = parsedTab === 'signals' || parsedTab === 'sectors' ? 'lo
       aria-hidden="true"
     />
   )}
-  {signalsIndexJson && (
-    <div
-      id={SMART_MONEY_SIGNALS_INDEX_BOOTSTRAP_ID}
-      data-json={signalsIndexJson}
-      hidden
-      aria-hidden="true"
-    />
-  )}
-  {signalsDataJson && (
-    <div
-      id={SMART_MONEY_SIGNALS_DATA_BOOTSTRAP_ID}
-      data-json={signalsDataJson}
-      hidden
-      aria-hidden="true"
-    />
-  )}
   <div class="smart-money-app-shell">
     {islandDirective === 'load' ? (
     <SmartMoneyPage
@@ -111,9 +84,6 @@ const islandDirective = parsedTab === 'signals' || parsedTab === 'sectors' ? 'lo
       initialTrackerIndex={trackerBootstrap?.index ?? null}
       initialTrackerMonth={trackerBootstrap?.initialMonth ?? null}
       initialTrackerData={trackerBootstrap?.data ?? null}
-      initialSignalsIndex={signalsBootstrap?.index ?? null}
-      initialSignalsMonth={signalsBootstrap?.initialMonth ?? null}
-      initialSignalsData={signalsBootstrap?.data ?? null}
     >
       <div slot="fallback" class="animate-pulse" aria-busy="true" aria-label="Loading Smart Money">
       <div class="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">
@@ -168,9 +138,6 @@ const islandDirective = parsedTab === 'signals' || parsedTab === 'sectors' ? 'lo
       initialTrackerIndex={trackerBootstrap?.index ?? null}
       initialTrackerMonth={trackerBootstrap?.initialMonth ?? null}
       initialTrackerData={trackerBootstrap?.data ?? null}
-      initialSignalsIndex={signalsBootstrap?.index ?? null}
-      initialSignalsMonth={signalsBootstrap?.initialMonth ?? null}
-      initialSignalsData={signalsBootstrap?.data ?? null}
     >
       <div slot="fallback" class="animate-pulse" aria-busy="true" aria-label="Loading Smart Money">
       <div class="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">

@@ -5,6 +5,7 @@ import {
   signalCategoryFileName,
   type SignalsIndexDisk,
   type SmartMoneySignalsBootstrap,
+  type SmartMoneySignalsIndexBootstrap,
 } from './smart-money-signals-meta';
 import {
   dedupeSignalsByStock,
@@ -13,12 +14,13 @@ import {
   type SmartMoneySignalsData,
 } from './smart-money-signals';
 
-export type { SignalsIndexDisk, SmartMoneySignalsBootstrap } from './smart-money-signals-meta';
+export type { SignalsIndexDisk, SmartMoneySignalsBootstrap, SmartMoneySignalsIndexBootstrap } from './smart-money-signals-meta';
 export {
   SIGNALS_CATEGORY_PUBLIC_BASE,
   SIGNALS_INDEX_PUBLIC_PATH,
   signalCategoryFileName,
   signalCategoryPublicUrl,
+  signalSearchPublicUrl,
 } from './smart-money-signals-meta';
 
 export function readSignalsIndexFromDisk(cwd = process.cwd()): SignalsIndexDisk | null {
@@ -82,17 +84,23 @@ export function loadSignalsMonthFromDisk(
   };
 }
 
-/** Load signals index + latest month rows from disk at build time (no Neon). */
-export function loadSmartMoneySignalsBootstrap(cwd = process.cwd()): SmartMoneySignalsBootstrap | null {
+/** Index only — safe to embed in HTML. Row data is fetched from /data/*.json client-side. */
+export function loadSmartMoneySignalsIndexBootstrap(
+  cwd = process.cwd(),
+): SmartMoneySignalsIndexBootstrap | null {
   const index = readSignalsIndexFromDisk(cwd);
   if (!index) return null;
-
   const initialMonth = index.months[0];
   if (!initialMonth) return null;
+  return { index, initialMonth };
+}
 
+/** @deprecated Loads all cap chunks at build time — use loadSmartMoneySignalsIndexBootstrap for pages. */
+export function loadSmartMoneySignalsBootstrap(cwd = process.cwd()): SmartMoneySignalsBootstrap | null {
+  const boot = loadSmartMoneySignalsIndexBootstrap(cwd);
+  if (!boot) return null;
   return {
-    index,
-    initialMonth,
-    data: loadSignalsMonthFromDisk(initialMonth, index, cwd),
+    ...boot,
+    data: loadSignalsMonthFromDisk(boot.initialMonth, boot.index, cwd),
   };
 }
