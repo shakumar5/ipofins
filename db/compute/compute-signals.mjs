@@ -78,8 +78,8 @@ async function computeHoldingsChanges(month) {
       CASE
         WHEN prev.stock_id IS NULL THEN 'fresh_entry'
         WHEN curr.stock_id IS NULL THEN 'complete_exit'
-        WHEN curr.quantity > prev.quantity THEN 'increased'
-        WHEN curr.quantity < prev.quantity THEN 'decreased'
+        WHEN (COALESCE(curr.pct_to_nav, 0) - COALESCE(prev.pct_to_nav, 0)) > 0.01 THEN 'increased'
+        WHEN (COALESCE(prev.pct_to_nav, 0) - COALESCE(curr.pct_to_nav, 0)) > 0.01 THEN 'decreased'
         ELSE 'unchanged'
       END,
       COALESCE(curr.quantity, 0) - COALESCE(prev.quantity, 0),

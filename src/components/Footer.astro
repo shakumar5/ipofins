@@ -1,5 +1,8 @@
 ---
 import { BRAND_NAME } from '../lib/brand';
+import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
+
+const sm = loadSmartMoneyTrackerLinks();
 
 const footerSections = [
   {
@@ -18,8 +21,25 @@ const footerSections = [
       { label: 'All Mutual Funds', href: '/mutual-funds/all' },
       { label: 'Best Funds', href: '/mutual-funds/best' },
       { label: 'Holdings Changes', href: '/mutual-funds/mutual-fund-holdings-changes' },
-      { label: 'Smart Money', href: '/mutual-funds/smart-money' },
+      { label: 'Smart Money Tracker', href: sm.hub },
+      { label: 'Most Bought Stocks', href: sm.mostBought },
+      { label: 'Most Sold Stocks', href: sm.mostSold },
+      { label: 'Fresh Entries', href: sm.freshEntries },
+      { label: 'Complete Exits', href: sm.completeExits },
+      { label: 'Smart Money Signal', href: sm.signals },
+      { label: 'Sector Intelligence', href: sm.sectorIntelligence },
       { label: 'Portfolio Overlap', href: '/mutual-funds/portfolio-overlap-checker' },
+      { label: 'Stock Signal', href: sm.stockSignal },
+    ],
+  },
+  {
+    title: 'Learn',
+    links: [
+      { label: 'Learn Hub', href: '/learn' },
+      { label: 'IPO Guides', href: '/blogs/ipo' },
+      { label: 'Mutual Fund Guides', href: '/blogs/mutual-funds' },
+      { label: 'Calculator FAQs', href: '/blogs/tools' },
+      { label: 'All Articles', href: '/learn' },
     ],
   },
   {
@@ -60,7 +80,7 @@ const footerSections = [
 <footer class="bg-surface-50 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-700 mt-20">
   <div class="container-wide py-12 lg:py-16">
     <!-- Top section -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-12">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
       {footerSections.map((section) => (
         <div>
           <h3 class="text-sm font-semibold text-surface-900 dark:text-white uppercase tracking-wider mb-4">

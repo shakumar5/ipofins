@@ -17,7 +17,7 @@
     "fetch-data": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-mf": "echo 'DEPRECATED: use npm run pipeline:daily' && exit 1",
     "fetch-gmp-sub": "echo 'DEPRECATED: use npm run pipeline:subscription' && exit 1",
-    "build": "node db/verify-schema.mjs && node scripts/node-with-ca.mjs scripts/export-client-data.mjs && npx astro build",
+    "build": "node db/verify-schema.mjs && node scripts/node-with-ca.mjs scripts/export-client-data.mjs && node scripts/generate-og-images.mjs && node scripts/regenerate-smart-money-sitemap.mjs && npx astro build && node scripts/generate-overlap-static-pages.mjs",
     "check": "astro check",
     "preview": "astro preview",
     "astro": "astro",

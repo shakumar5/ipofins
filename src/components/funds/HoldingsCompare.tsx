@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect, useDeferredValue, useTransition } from 'r
 import {
   loadHoldingsCompareAmc,
   loadHoldingsCompareIndex,
+  resetHoldingsCompareIndexCache,
 } from '../../lib/holdings-compare-client';
-import { compareAmcHoldings, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
+import { compareAmcHoldingsAsync, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
 
 interface HoldingsMeta {
   months: string[];
@@ -41,6 +42,7 @@ export default function HoldingsCompare({
   const [month1, setMonth1] = useState(initialMonth1 || '');
   const [month2, setMonth2] = useState(initialMonth2 || '');
   const [resultsLimit, setResultsLimit] = useState(RESULTS_PAGE);
+  const [retryKey, setRetryKey] = useState(0);
   const [, startTransition] = useTransition();
 
   const deferredMonth1 = useDeferredValue(month1);
@@ -50,9 +52,11 @@ export default function HoldingsCompare({
 
   useEffect(() => {
     let cancelled = false;
+    setMetaLoading(true);
+    setLoadError(null);
     (async () => {
       try {
-        const index = await loadHoldingsCompareIndex();
+        const index = await loadHoldingsCompareIndex(retryKey > 0);
         if (cancelled) return;
         if (index) {
           const amcs: Record<string, string[]> = {};
@@ -78,19 +82,27 @@ export default function HoldingsCompare({
       }
     })();
     return () => { cancelled = true; };
-  }, [initialMonth1, initialMonth2]);
+  }, [initialMonth1, initialMonth2, retryKey]);
 
   useEffect(() => {
     if (!meta || !selectedAMC) {
       setAmcHoldings(null);
+      setAmcLoading(false);
       return;
     }
 
     const slug = meta.amcSlugs[selectedAMC];
-    if (!slug) return;
+    if (!slug) {
+      setAmcHoldings(null);
+      setAmcLoading(false);
+      setLoadError(`No holdings data found for "${selectedAMC}"`);
+      return;
+    }
 
     let cancelled = false;
     setAmcLoading(true);
+    setLoadError(null);
+    setAmcHoldings(null);
     setResultsLimit(RESULTS_PAGE);
     loadHoldingsCompareAmc(slug)
       .then((holdings) => {
@@ -150,23 +162,35 @@ export default function HoldingsCompare({
 
     let cancelled = false;
     setComparing(true);
-    const timer = window.setTimeout(() => {
-      const result = compareAmcHoldings(amcHoldings, {
-        month1: deferredMonth1,
-        month2: deferredMonth2,
-        selectedFund: deferredFund,
-        selectedCategory: deferredCategory,
-      });
-      if (cancelled) return;
-      startTransition(() => {
-        setComparison(result);
-        setComparing(false);
-      });
-    }, 0);
+    setComparison(null);
+
+    (async () => {
+      try {
+        const result = await compareAmcHoldingsAsync(
+          amcHoldings,
+          {
+            month1: deferredMonth1,
+            month2: deferredMonth2,
+            selectedFund: deferredFund,
+            selectedCategory: deferredCategory,
+          },
+          () => cancelled,
+        );
+        if (cancelled) return;
+        startTransition(() => {
+          setComparison(result);
+          setComparing(false);
+        });
+      } catch {
+        if (!cancelled) {
+          setComparison(null);
+          setComparing(false);
+        }
+      }
+    })();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
     };
   }, [amcHoldings, selectedAMC, deferredMonth1, deferredMonth2, deferredFund, deferredCategory]);
 
@@ -180,6 +204,15 @@ export default function HoldingsCompare({
   const setM1 = (value: string) => startTransition(() => { setMonth1(value); setResultsLimit(RESULTS_PAGE); });
   const setM2 = (value: string) => startTransition(() => { setMonth2(value); setResultsLimit(RESULTS_PAGE); });
 
+  const retryLoad = () => {
+    resetHoldingsCompareIndexCache();
+    setMeta(null);
+    setAmcHoldings(null);
+    setComparison(null);
+    setLoadError(null);
+    setRetryKey((k) => k + 1);
+  };
+
   return (
     <div>
       {loadError && (
@@ -187,6 +220,13 @@ export default function HoldingsCompare({
           <p className="text-sm font-medium">Could not load holdings data</p>
           <p className="text-xs mt-1 opacity-80">{loadError}</p>
           <p className="text-xs mt-2 opacity-70">Run: npm run export:client-data</p>
+          <button
+            type="button"
+            onClick={retryLoad}
+            className="mt-3 px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -197,7 +237,7 @@ export default function HoldingsCompare({
       )}
 
       {amcLoading && selectedAMC && (
-        <div className="text-center py-8 text-surface-500 dark:text-surface-400">
+        <div className="text-center py-4 text-surface-500 dark:text-surface-400">
           <p className="text-sm">Loading {selectedAMC} portfolio data…</p>
         </div>
       )}
@@ -206,7 +246,7 @@ export default function HoldingsCompare({
         <p className="text-center text-xs text-surface-400 py-2">Updating comparison…</p>
       )}
 
-      {data && !amcLoading && (
+      {data && (
       <>
       {monthQuickPick && monthQuickPick.length > 0 && selectedAMC && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -327,7 +367,7 @@ export default function HoldingsCompare({
       )}
 
       {/* Results */}
-      {comparison && comparison.length === 0 && (
+      {selectedAMC && !amcLoading && !computingFilters && comparison && comparison.length === 0 && (
         <div className="text-center py-12 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 rounded-xl">
           <div className="w-12 h-12 mx-auto bg-surface-100 dark:bg-surface-700 rounded-full flex items-center justify-center mb-3">
             <svg className="w-6 h-6 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -343,7 +383,7 @@ export default function HoldingsCompare({
         </div>
       )}
 
-      {visibleComparison && visibleComparison.length > 0 && (
+      {visibleComparison && visibleComparison.length > 0 && !amcLoading && (
         <div className="space-y-6">
           {visibleComparison.map((fund, idx) => (
             <div key={idx} className="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">

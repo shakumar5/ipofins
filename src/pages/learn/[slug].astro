@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import AuthorByline from '../../components/AuthorByline.astro';
+import { BRAND_URL } from '../../lib/brand';
 import articlesData from '../../data/articles.json';
 
 export function getStaticPaths() {
@@ -14,14 +15,23 @@ export function getStaticPaths() {
 
 const { article } = Astro.props;
 
+const articleUrl = `${BRAND_URL}/learn/${article.slug}`;
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   "headline": article.title,
   "description": article.excerpt,
-  "url": `https://ipofins.com/learn/${article.slug}`,
+  "url": articleUrl,
+  "mainEntityOfPage": articleUrl,
+  "datePublished": "2026-01-01",
+  "dateModified": "2026-06-01",
   "author": { "@type": "Organization", "name": "IPOFins" },
-  "publisher": { "@type": "Organization", "name": "IPOFins" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "IPOFins",
+    "logo": { "@type": "ImageObject", "url": `${BRAND_URL}/favicon.svg` },
+  },
   "breadcrumb": {
     "@type": "BreadcrumbList",
     "itemListElement": [
@@ -33,7 +43,7 @@ const jsonLd = {
 };
 ---
 
-<BaseLayout title={`${article.title} - IPOFins`} description={article.excerpt} jsonLd={jsonLd}>
+<BaseLayout title={`${article.title} - IPOFins`} description={article.excerpt} canonicalUrl={articleUrl} jsonLd={jsonLd}>
   <!-- Breadcrumb -->
   <nav class="container-narrow pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

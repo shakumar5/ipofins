@@ -4,6 +4,11 @@
 
 import { requireDb } from '../db';
 import {
+  monthsFromIndex,
+  readHoldingsCompareIndexFromDisk,
+} from '../holdings-compare-server';
+import {
+  computeTrackerStockWeights,
   isDebtHolding,
   isEquityFundCategory,
   isValidEquitySector,
@@ -13,6 +18,7 @@ import {
   roundPct,
   stockGroupKey,
   TRACKER_CATEGORIES,
+  WEIGHT_CHANGE_THRESHOLD,
 } from '../holdings-utils';
 
 export interface AMCInfo {
@@ -32,22 +38,32 @@ export interface HoldingsChangeRow {
 }
 
 export async function getAMCsWithHoldings(): Promise<AMCInfo[]> {
-  const sql = requireDb();
-  const rows = await sql`
-    SELECT a.name, a.slug, COUNT(DISTINCT fh.fund_id)::int AS fund_count
-    FROM fund_holdings fh
-    JOIN funds f ON f.id = fh.fund_id
-    JOIN amcs a ON a.id = f.amc_id
-    WHERE fh.month = (SELECT MAX(month) FROM fund_holdings)
-    GROUP BY a.id, a.name, a.slug
-    HAVING COUNT(DISTINCT fh.fund_id) > 0
-    ORDER BY a.name
-  `;
-  return (rows as Record<string, unknown>[]).map((r) => ({
-    name: String(r.name),
-    slug: String(r.slug),
-    fundCount: Number(r.fund_count),
-  }));
+  try {
+    const sql = requireDb();
+    const rows = await sql`
+      SELECT a.name, a.slug, COUNT(DISTINCT fh.fund_id)::int AS fund_count
+      FROM fund_holdings fh
+      JOIN funds f ON f.id = fh.fund_id
+      JOIN amcs a ON a.id = f.amc_id
+      WHERE fh.month = (SELECT MAX(month) FROM fund_holdings)
+      GROUP BY a.id, a.name, a.slug
+      HAVING COUNT(DISTINCT fh.fund_id) > 0
+      ORDER BY a.name
+    `;
+    return (rows as Record<string, unknown>[]).map((r) => ({
+      name: String(r.name),
+      slug: String(r.slug),
+      fundCount: Number(r.fund_count),
+    }));
+  } catch {
+    const index = readHoldingsCompareIndexFromDisk();
+    if (!index?.amcs?.length) throw new Error('Holdings AMC list unavailable — run npm run export:client-data');
+    return index.amcs.map((a) => ({
+      name: a.name,
+      slug: a.slug,
+      fundCount: a.fundCount,
+    }));
+  }
 }
 
 export async function getAMCList(): Promise<AMCInfo[]> {
@@ -74,14 +90,20 @@ export async function getBuildMonths(maxMonths = 4): Promise<string[]> {
 }
 
 export async function getAvailableMonths(): Promise<string[]> {
-  const sql = requireDb();
-  const rows = await sql`
-    SELECT DISTINCT TO_CHAR(month, 'FMMonth YYYY') AS month_label, month
-    FROM holdings_changes
-    ORDER BY month DESC
-    LIMIT 12
-  `;
-  return (rows as Record<string, unknown>[]).map((r) => String(r.month_label).trim());
+  try {
+    const sql = requireDb();
+    const rows = await sql`
+      SELECT DISTINCT TO_CHAR(month, 'FMMonth YYYY') AS month_label, month
+      FROM holdings_changes
+      ORDER BY month DESC
+      LIMIT 12
+    `;
+    return (rows as Record<string, unknown>[]).map((r) => String(r.month_label).trim());
+  } catch {
+    const index = readHoldingsCompareIndexFromDisk();
+    if (!index?.months?.length) throw new Error('Holdings months unavailable — run npm run export:client-data');
+    return monthsFromIndex(index);
+  }
 }
 
 export async function getHoldingsChangesByAMCMonth(
@@ -234,6 +256,9 @@ export interface SmartMoneyStockRow {
   stockSlug: string;
   sector: string;
   fundCount: number;
+  /** Average portfolio weight change (% of NAV) across funds in this row. */
+  weightAvg: number;
+  /** Sum of portfolio weight changes across funds (Most Bought/Sold only). */
   weightTotal: number;
   funds: SmartMoneyFundChange[];
 }
@@ -340,8 +365,8 @@ async function loadRawHoldingsChanges(): Promise<{ rows: RawChangeRow[]; source:
         CASE
           WHEN prev.stock_id IS NULL THEN 'fresh_entry'
           WHEN curr.stock_id IS NULL THEN 'complete_exit'
-          WHEN curr.quantity > prev.quantity THEN 'increased'
-          WHEN curr.quantity < prev.quantity THEN 'decreased'
+          WHEN (COALESCE(curr.pct_to_nav, 0) - COALESCE(prev.pct_to_nav, 0)) > ${WEIGHT_CHANGE_THRESHOLD} THEN 'increased'
+          WHEN (COALESCE(prev.pct_to_nav, 0) - COALESCE(curr.pct_to_nav, 0)) > ${WEIGHT_CHANGE_THRESHOLD} THEN 'decreased'
           ELSE 'unchanged'
         END AS change_type,
         s.name AS stock_name,
@@ -458,30 +483,25 @@ function aggregateChanges(rows: RawChangeRow[]): SmartMoneyTrackerData {
         const allFunds = bucket.funds.sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
         const funds =
           changeType === 'increased'
-            ? allFunds.filter((f) => f.pctChange > 0)
+            ? allFunds.filter((f) => f.pctChange > WEIGHT_CHANGE_THRESHOLD)
             : changeType === 'decreased'
-              ? allFunds.filter((f) => f.pctChange < 0)
+              ? allFunds.filter((f) => f.pctChange < -WEIGHT_CHANGE_THRESHOLD)
               : allFunds;
         if (changeType === 'increased' || changeType === 'decreased') {
           if (funds.length === 0) continue;
         }
-        const weightTotal =
-          changeType === 'increased'
-            ? roundPct(funds.reduce((s, f) => s + f.pctChange, 0))
-            : changeType === 'decreased'
-              ? roundPct(funds.reduce((s, f) => s + (f.prevPct - f.newPct), 0))
-              : changeType === 'fresh_entry'
-                ? roundPct(funds.reduce((s, f) => s + f.newPct, 0) / funds.length)
-                : changeType === 'complete_exit'
-                  ? roundPct(funds.reduce((s, f) => s + f.prevPct, 0) / funds.length)
-                  : 0;
+        const weights = computeTrackerStockWeights(
+          funds,
+          changeType as 'increased' | 'decreased' | 'fresh_entry' | 'complete_exit',
+        );
 
         result.push({
           stockName: bucket.stockName,
           stockSlug: bucket.stockSlug,
           sector: bucket.sector,
           fundCount: funds.length,
-          weightTotal,
+          weightAvg: weights.weightAvg,
+          weightTotal: weights.weightTotal,
           funds,
         });
       }
@@ -821,7 +841,22 @@ export async function getAMCHoldingsComparison(
 export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Record<string, unknown>[]> {
   const sql = requireDb();
   const rows = await sql`
-    SELECT f2.name, f2.slug, fo.overlap_pct, fo.common_stocks
+    SELECT
+      f2.name,
+      f2.slug,
+      fo.overlap_pct,
+      fo.common_stocks,
+      (
+        SELECT COALESCE(array_agg(s.name ORDER BY s.name), ARRAY[]::text[])
+        FROM fund_holdings fh_a
+        JOIN fund_holdings fh_b
+          ON fh_a.stock_id = fh_b.stock_id
+          AND fh_a.month = fh_b.month
+        JOIN stocks s ON s.id = fh_a.stock_id
+        WHERE fh_a.fund_id = f1.id
+          AND fh_b.fund_id = f2.id
+          AND fh_a.month = fo.month
+      ) AS common_stock_names
     FROM fund_overlaps fo
     JOIN funds f1 ON f1.id = fo.fund_a_id OR f1.id = fo.fund_b_id
     JOIN funds f2 ON (f2.id = fo.fund_a_id OR f2.id = fo.fund_b_id) AND f2.id != f1.id

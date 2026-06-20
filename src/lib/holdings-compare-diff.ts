@@ -1,3 +1,5 @@
+import { yieldToMain } from './client-data';
+
 export interface Holding {
   name: string;
   isin: string;
@@ -10,6 +12,8 @@ export interface FundHoldings {
   amc: string;
   [month: string]: Holding[] | string;
 }
+
+const YIELD_EVERY_N_FUNDS = 6;
 
 export interface FundComparison {
   fundName: string;
@@ -50,6 +54,59 @@ function getFundCategory(name: string): string {
   return 'Others';
 }
 
+function compareSingleFund(
+  fund: FundHoldings,
+  month1: string,
+  month2: string,
+  selectedFund: string,
+  selectedCategory: string,
+): FundComparison | null {
+  if (/^(Industry|Market|Rating|Quantity|Value|ISIN|%)/i.test(fund.name)) return null;
+  if (/Fair Value|Rs\.?\s*in\s*Lacs/i.test(fund.name)) return null;
+
+  const fundCat = getFundCategory(fund.name);
+  if (selectedCategory !== 'All' && fundCat !== selectedCategory) return null;
+  if (selectedFund !== 'All' && fund.name !== selectedFund) return null;
+
+  const oldHoldings = ((fund[month1] as Holding[] | undefined) || []).filter((h) => !isDebtHolding(h));
+  const newHoldings = ((fund[month2] as Holding[] | undefined) || []).filter((h) => !isDebtHolding(h));
+  if (oldHoldings.length === 0 || newHoldings.length === 0) return null;
+
+  const oldMap = new Map(oldHoldings.map((h) => [h.isin || h.name, h]));
+  const newMap = new Map(newHoldings.map((h) => [h.isin || h.name, h]));
+
+  const additions: FundComparison['additions'] = [];
+  const removals: FundComparison['removals'] = [];
+  const increased: FundComparison['increased'] = [];
+  const decreased: FundComparison['decreased'] = [];
+
+  for (const [key, h] of newMap) {
+    if (!oldMap.has(key)) {
+      additions.push({ name: h.name, sector: h.sector, pct: h.pct });
+    } else {
+      const oldH = oldMap.get(key)!;
+      const diff = h.pct - oldH.pct;
+      if (diff > 0.3) increased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
+      else if (diff < -0.3) decreased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
+    }
+  }
+
+  for (const [key, h] of oldMap) {
+    if (!newMap.has(key)) removals.push({ name: h.name, sector: h.sector, pct: h.pct });
+  }
+
+  if (!additions.length && !removals.length && !increased.length && !decreased.length) return null;
+
+  return {
+    fundName: fund.name,
+    category: fundCat,
+    additions: additions.sort((a, b) => b.pct - a.pct),
+    removals: removals.sort((a, b) => b.pct - a.pct),
+    increased: increased.sort((a, b) => b.newPct - b.oldPct - (a.newPct - a.oldPct)),
+    decreased: decreased.sort((a, b) => a.newPct - a.oldPct - (b.newPct - b.oldPct)),
+  };
+}
+
 export function compareAmcHoldings(
   holdings: Record<string, FundHoldings>,
   opts: {
@@ -63,54 +120,43 @@ export function compareAmcHoldings(
   if (!month1 || !month2 || month1 === month2) return null;
 
   const results: FundComparison[] = [];
-
   for (const fund of Object.values(holdings)) {
-    if (/^(Industry|Market|Rating|Quantity|Value|ISIN|%)/i.test(fund.name)) continue;
-    if (/Fair Value|Rs\.?\s*in\s*Lacs/i.test(fund.name)) continue;
-
-    const fundCat = getFundCategory(fund.name);
-    if (selectedCategory !== 'All' && fundCat !== selectedCategory) continue;
-    if (selectedFund !== 'All' && fund.name !== selectedFund) continue;
-
-    const oldHoldings = ((fund[month1] as Holding[] | undefined) || []).filter((h) => !isDebtHolding(h));
-    const newHoldings = ((fund[month2] as Holding[] | undefined) || []).filter((h) => !isDebtHolding(h));
-    if (oldHoldings.length === 0 || newHoldings.length === 0) continue;
-
-    const oldMap = new Map(oldHoldings.map((h) => [h.isin || h.name, h]));
-    const newMap = new Map(newHoldings.map((h) => [h.isin || h.name, h]));
-
-    const additions: FundComparison['additions'] = [];
-    const removals: FundComparison['removals'] = [];
-    const increased: FundComparison['increased'] = [];
-    const decreased: FundComparison['decreased'] = [];
-
-    for (const [key, h] of newMap) {
-      if (!oldMap.has(key)) {
-        additions.push({ name: h.name, sector: h.sector, pct: h.pct });
-      } else {
-        const oldH = oldMap.get(key)!;
-        const diff = h.pct - oldH.pct;
-        if (diff > 0.3) increased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
-        else if (diff < -0.3) decreased.push({ name: h.name, sector: h.sector, oldPct: oldH.pct, newPct: h.pct });
-      }
-    }
-
-    for (const [key, h] of oldMap) {
-      if (!newMap.has(key)) removals.push({ name: h.name, sector: h.sector, pct: h.pct });
-    }
-
-    if (additions.length || removals.length || increased.length || decreased.length) {
-      results.push({
-        fundName: fund.name,
-        category: fundCat,
-        additions: additions.sort((a, b) => b.pct - a.pct),
-        removals: removals.sort((a, b) => b.pct - a.pct),
-        increased: increased.sort((a, b) => b.newPct - b.oldPct - (a.newPct - a.oldPct)),
-        decreased: decreased.sort((a, b) => a.newPct - a.oldPct - (b.newPct - b.oldPct)),
-      });
-    }
+    const row = compareSingleFund(fund, month1, month2, selectedFund, selectedCategory);
+    if (row) results.push(row);
   }
 
+  return results.sort(
+    (a, b) => b.additions.length + b.removals.length - (a.additions.length + a.removals.length),
+  );
+}
+
+/** Yields to the main thread periodically so mobile browsers stay responsive. */
+export async function compareAmcHoldingsAsync(
+  holdings: Record<string, FundHoldings>,
+  opts: {
+    month1: string;
+    month2: string;
+    selectedFund: string;
+    selectedCategory: string;
+  },
+  isCancelled?: () => boolean,
+): Promise<FundComparison[] | null> {
+  const { month1, month2, selectedFund, selectedCategory } = opts;
+  if (!month1 || !month2 || month1 === month2) return null;
+
+  const results: FundComparison[] = [];
+  const funds = Object.values(holdings);
+  let processed = 0;
+
+  for (const fund of funds) {
+    if (isCancelled?.()) return null;
+    const row = compareSingleFund(fund, month1, month2, selectedFund, selectedCategory);
+    if (row) results.push(row);
+    processed += 1;
+    if (processed % YIELD_EVERY_N_FUNDS === 0) await yieldToMain();
+  }
+
+  if (isCancelled?.()) return null;
   return results.sort(
     (a, b) => b.additions.length + b.removals.length - (a.additions.length + a.removals.length),
   );

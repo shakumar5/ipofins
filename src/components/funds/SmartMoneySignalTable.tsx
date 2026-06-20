@@ -18,7 +18,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
   const [monthLocal, setMonthLocal] = useState(data.months[0] || '');
   const month = monthProp ?? monthLocal;
 
-  const [category, setCategory] = useState(data.categories[0] || 'Large Cap');
+  const [category, setCategory] = useState('All');
 
   const [signalFilter, setSignalFilter] = useState<string>('All');
 
@@ -148,9 +148,20 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
         </p>
 
       ) : (
+        <>
+          <div className="md:hidden space-y-2">
+            {rows.slice(0, 100).map((row, idx) => (
+              <SignalCard
+                key={`${row.stockSlug}-${row.month}-${row.category}-m`}
+                row={row}
+                rank={idx + 1}
+                month={month}
+                category={category}
+              />
+            ))}
+          </div>
 
-        <div className="overflow-x-auto card p-0">
-
+          <div className="hidden md:block overflow-x-auto card p-0">
           <table className="w-full text-sm">
 
             <thead className="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
@@ -194,9 +205,8 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
             </tbody>
 
           </table>
-
         </div>
-
+        </>
       )}
 
 
@@ -214,6 +224,45 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 }
 
 
+
+function SignalCard({
+  row,
+  rank,
+  month,
+  category,
+}: {
+  row: SmartMoneySignalRow;
+  rank: number;
+  month: string;
+  category: string;
+}) {
+  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(category)}`;
+
+  return (
+    <div className="card p-3 border border-surface-200 dark:border-surface-700">
+      <div className="flex justify-between items-start gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-surface-400 tabular-nums">#{rank}</p>
+          <p className="text-sm font-semibold text-surface-900 dark:text-white">{row.stockName}</p>
+          <p className="text-xs text-surface-500 mt-0.5">{row.sector} · {row.category}</p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-lg font-bold text-primary-600 tabular-nums">{row.convictionScore}</p>
+          <p className="text-[10px] text-surface-400">Score</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between mt-3 gap-2">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-surface-700 dark:text-surface-300">
+          <span>{row.signalEmoji}</span>
+          <span>{row.signal}</span>
+        </span>
+        <a href={detailUrl} className="text-primary-600 hover:text-primary-700 font-medium text-sm flex-shrink-0">
+          View →
+        </a>
+      </div>
+    </div>
+  );
+}
 
 function SignalRow({
 

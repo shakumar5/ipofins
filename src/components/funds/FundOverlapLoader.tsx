@@ -8,8 +8,15 @@ interface FundOverlapItem {
   name: string;
 }
 
+export default function FundOverlapLoader() {
+  const [funds, setFunds] = useState<FundOverlapItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
+    setFunds(null);
+    setError(null);
     fetchJsonCached<FundOverlapItem[]>('/data/fund-overlap-index.json')
       .then((data) => {
         if (!cancelled) setFunds(data);
@@ -20,11 +27,20 @@ interface FundOverlapItem {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey]);
 
   if (error) {
     return (
-      <p className="py-12 text-center text-sm text-red-600 dark:text-red-400">{error}</p>
+      <div className="py-12 text-center">
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <button
+          type="button"
+          onClick={() => setRetryKey((k) => k + 1)}
+          className="mt-3 px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 

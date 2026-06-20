@@ -128,6 +128,46 @@ export function roundPct(value: number, digits = 2): number {
   return Math.round(value * factor) / factor;
 }
 
+/** Minimum portfolio weight move (percentage points) to count as bought/sold. */
+export const WEIGHT_CHANGE_THRESHOLD = 0.01;
+
+export type WeightChangeKind = 'increased' | 'decreased' | 'unchanged';
+
+export function classifyWeightChange(prevPct: number, newPct: number): WeightChangeKind {
+  const delta = newPct - prevPct;
+  if (delta > WEIGHT_CHANGE_THRESHOLD) return 'increased';
+  if (delta < -WEIGHT_CHANGE_THRESHOLD) return 'decreased';
+  return 'unchanged';
+}
+
+interface FundWeightChangeLike {
+  prevPct: number;
+  newPct: number;
+  pctChange: number;
+}
+
+export function computeTrackerStockWeights(
+  funds: FundWeightChangeLike[],
+  changeType: 'increased' | 'decreased' | 'fresh_entry' | 'complete_exit',
+): { weightAvg: number; weightTotal: number } {
+  if (funds.length === 0) return { weightAvg: 0, weightTotal: 0 };
+
+  if (changeType === 'increased') {
+    const sum = funds.reduce((s, f) => s + f.pctChange, 0);
+    return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+  }
+  if (changeType === 'decreased') {
+    const sum = funds.reduce((s, f) => s + (f.prevPct - f.newPct), 0);
+    return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+  }
+  if (changeType === 'fresh_entry') {
+    const sum = funds.reduce((s, f) => s + f.newPct, 0);
+    return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+  }
+  const sum = funds.reduce((s, f) => s + f.prevPct, 0);
+  return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+}
+
 /** Normalize fund slug to a comparable base (strip plan/growth suffixes). */
 export function fundBaseSlug(slug: string): string {
   return slug
@@ -135,4 +175,20 @@ export function fundBaseSlug(slug: string): string {
     .replace(/(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option|-income-distribution.*)?$/i, '')
     .replace(/-growth-option$/, '')
     .replace(/-growth$/, '');
+}
+
+/** Parse PostgreSQL text[] values returned by Neon into a string list. */
+export function parsePgTextArray(value: unknown): string[] {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  const raw = String(value).trim();
+  if (!raw || raw === '{}') return [];
+  if (raw.startsWith('{') && raw.endsWith('}')) {
+    return raw
+      .slice(1, -1)
+      .split(',')
+      .map((s) => s.trim().replace(/^"|"$/g, ''))
+      .filter(Boolean);
+  }
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
 }

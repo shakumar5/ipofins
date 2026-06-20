@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import StockSignalPage from '../../../../components/funds/StockSignalPage.tsx';
+import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
+import { getStockSignalPageMeta, stockSignalPath } from '../../../../lib/stock-signal-meta';
+import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
+import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import { BRAND_URL } from '../../../../lib/brand';
+
+export function getStaticPaths() {
+  const stocks = loadSmartMoneyStockSlugs();
+  if (!stocks.length) {
+    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder', stockName: 'Stock' } }];
+  }
+  return stocks.map(({ slug, stockName }) => ({
+    params: { slug },
+    props: { stockSlug: slug, stockName },
+  }));
+}
+
+const { stockSlug, stockName } = Astro.props;
+const isPlaceholder = stockSlug === '_placeholder';
+const pageMeta = isPlaceholder
+  ? getStockSignalPageMeta()
+  : getStockSignalPageMeta(stockName, stockSlug);
+const sm = loadSmartMoneyTrackerLinks();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: pageMeta.heading || stockName,
+  description: pageMeta.description,
+  url: `${BRAND_URL}${pageMeta.path}`,
+};
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={sm.hub} class="hover:text-primary-600 transition-colors">Smart Money</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={stockSignalPath()} class="hover:text-primary-600 transition-colors">Stock Signal</a></li>
+      {!isPlaceholder && (
+        <>
+          <li><span class="mx-1">/</span></li>
+          <li class="text-surface-900 dark:text-white font-medium">{stockName}</li>
+        </>
+      )}
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{pageMeta.heading}</h1>
+    <p class="mt-1 text-sm text-surface-500">{pageMeta.subtitle}</p>
+    <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
+  </section>
+
+  <section class="container-wide pb-12">
+    {isPlaceholder ? (
+      <div class="text-center py-12 text-surface-500 text-sm">
+        <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate stock signal pages.</p>
+        <a href={stockSignalPath()} class="text-primary-600 mt-2 inline-block">← Back to Stock Signal</a>
+      </div>
+    ) : (
+      <StockSignalPage client:load initialStockSlug={stockSlug}>
+        <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading Stock Signal…</div>
+      </StockSignalPage>
+    )}
+  </section>
+
+  {!isPlaceholder && (
+    <section class="container-wide pb-12">
+      <SmartMoneyInternalLinks monthNote={false} />
+    </section>
+  )}
+</BaseLayout>

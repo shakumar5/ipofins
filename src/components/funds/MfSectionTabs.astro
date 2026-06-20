@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active: 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap';
+  active: 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap' | 'smart-money';
 }
 
 const { active } = Astro.props;
@@ -11,6 +11,7 @@ const tabs = [
   { id: 'holdings-changes', label: 'Holdings Changes', href: '/mutual-funds/mutual-fund-holdings-changes' },
   { id: 'overlap-checker', label: 'Portfolio Overlap Checker', href: '/mutual-funds/portfolio-overlap-checker' },
   { id: 'fund-overlap', label: 'Fund Overlap', href: '/mutual-funds/fund-overlap' },
+  { id: 'smart-money', label: 'Smart Money', href: '/mutual-funds/smart-money' },
 ] as const;
 
 const tabClass = (key: Props['active']) =>

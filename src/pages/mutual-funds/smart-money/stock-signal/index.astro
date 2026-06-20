@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import StockSignalPage from '../../../../components/funds/StockSignalPage.tsx';
+import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
+import { getStockSignalPageMeta } from '../../../../lib/stock-signal-meta';
+import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import { BRAND_URL } from '../../../../lib/brand';
+
+const pageMeta = getStockSignalPageMeta();
+const sm = loadSmartMoneyTrackerLinks();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: pageMeta.heading || 'Stock Signal',
+  description: pageMeta.description,
+  url: `${BRAND_URL}${pageMeta.path}`,
+};
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={sm.hub} class="hover:text-primary-600 transition-colors">Smart Money</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{pageMeta.breadcrumbLabel}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{pageMeta.heading}</h1>
+    <p class="mt-1 text-sm text-surface-500">{pageMeta.subtitle}</p>
+    <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
+  </section>
+
+  <section class="container-wide pb-12">
+    <StockSignalPage client:load>
+      <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading Stock Signal…</div>
+    </StockSignalPage>
+  </section>
+
+  <section class="container-wide pb-12">
+    <SmartMoneyInternalLinks showTabs monthNote={false} />
+  </section>
+</BaseLayout>

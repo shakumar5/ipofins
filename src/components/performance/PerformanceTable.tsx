@@ -25,6 +25,8 @@ interface Props {
   year: string;
 }
 
+const IPO_PAGE_SIZE = 30;
+
 function pctReturn(issue?: number | null, price?: number | null): number | null {
   if (!issue || !price || issue <= 0) return null;
   return ((price - issue) / issue) * 100;
@@ -36,6 +38,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
     return ipoFilterFromSearch(window.location.search);
   });
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [visibleCount, setVisibleCount] = useState(IPO_PAGE_SIZE);
 
   const counts = useMemo(
     () => ({
@@ -95,6 +98,13 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
 
     return data;
   }, [allData, filter, sortOrder]);
+
+  useEffect(() => {
+    setVisibleCount(IPO_PAGE_SIZE);
+  }, [filter, sortOrder]);
+
+  const visibleRows = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMore = visibleCount < filtered.length;
 
   const stats = useMemo(() => {
     const total = filtered.length;
@@ -180,7 +190,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
 
       {/* Rows */}
       <div className="space-y-2">
-        {filtered.map((ipo, i) => {
+        {visibleRows.map((ipo, i) => {
           const listingReturn = pctReturn(ipo.issuePrice, ipo.listingPrice);
           const currentReturn = pctReturn(ipo.issuePrice, ipo.currentPrice);
           const slug = slugify(ipo.name);
@@ -245,6 +255,18 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
           );
         })}
       </div>
+
+      {hasMore && (
+        <div className="text-center mt-6">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((n) => n + IPO_PAGE_SIZE)}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Load more ({filtered.length - visibleCount} remaining)
+          </button>
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <p className="text-center text-gray-500 py-8">No data available for this filter.</p>

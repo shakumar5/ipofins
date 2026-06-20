@@ -1,7 +1,7 @@
 /**
  * Export large client payloads to public/data/*.json (once per build/dev).
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql, isDbConfigured } from './lib/db.mjs';
@@ -19,6 +19,7 @@ import { filterMutualFundsToCurated } from './lib/canonical-fund-filter.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'data');
+const PUBLIC_DIR = join(ROOT, 'public');
 
 const MONTH_ORDER = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -138,6 +139,122 @@ function buildPortfolioOverlapExport(holdings) {
 
   funds.sort((a, b) => a.name.localeCompare(b.name));
   return { month, funds, holdings: holdingsBySlug };
+}
+
+const PORTFOLIO_OVERLAP_SITEMAP_BASE = 'https://ipofins.com/mutual-funds/portfolio-overlap-checker';
+const SMART_MONEY_SITEMAP_BASE = 'https://ipofins.com/mutual-funds/smart-money';
+const STOCK_SIGNAL_SITEMAP_BASE = `${SMART_MONEY_SITEMAP_BASE}/stock-signal`;
+const SMART_MONEY_TRACKER_VIEW_SLUGS = [
+  'most-bought-stocks',
+  'most-sold-stocks',
+  'fresh-entries',
+  'complete-exits',
+];
+const SITEMAP_URLS_PER_FILE = 45_000;
+
+function writePortfolioOverlapSitemaps(funds) {
+  const slugs = funds.map((f) => f.slug).sort();
+  const urls = [PORTFOLIO_OVERLAP_SITEMAP_BASE];
+  for (let i = 0; i < slugs.length; i += 1) {
+    for (let j = i + 1; j < slugs.length; j += 1) {
+      urls.push(`${PORTFOLIO_OVERLAP_SITEMAP_BASE}/${slugs[i]}-vs-${slugs[j]}`);
+    }
+  }
+
+  const escapeXml = (v) =>
+    v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const chunks = [];
+  for (let i = 0; i < urls.length; i += SITEMAP_URLS_PER_FILE) {
+    chunks.push(urls.slice(i, i + SITEMAP_URLS_PER_FILE));
+  }
+
+  const childNames = [];
+  chunks.forEach((chunk, idx) => {
+    const name = `sitemap-portfolio-overlap-${idx}.xml`;
+    const body = chunk
+      .map((loc) => `  <url><loc>${escapeXml(loc)}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`)
+      .join('\n');
+    writeFileSync(
+      join(OUT_DIR, name),
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
+    );
+    childNames.push(name);
+    console.log(`  ✓ ${name} (${chunk.length} URLs)`);
+  });
+
+  const indexBody = childNames
+    .map((name) => `  <sitemap><loc>${escapeXml(`https://ipofins.com/${name}`)}</loc></sitemap>`)
+    .join('\n');
+  writeFileSync(
+    join(OUT_DIR, 'sitemap-portfolio-overlap-index.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexBody}\n</sitemapindex>\n`,
+  );
+  console.log(`  ✓ sitemap-portfolio-overlap-index.xml (${urls.length} overlap URLs)`);
+}
+
+function loadStockSlugsFromDisk() {
+  const signalsDir = join(OUT_DIR, 'smart-money-signals');
+  if (!existsSync(signalsDir)) return [];
+  const slugs = new Set();
+  for (const fileName of readdirSync(signalsDir)) {
+    if (!fileName.endsWith('.json')) continue;
+    const file = JSON.parse(readFileSync(join(signalsDir, fileName), 'utf8'));
+    for (const row of file.rows || []) {
+      if (row.stockSlug) slugs.add(row.stockSlug);
+    }
+  }
+  return [...slugs].sort();
+}
+
+function writeSmartMoneyTrackerSitemaps(monthLabels) {
+  const labels = (monthLabels || [])
+    .map((m) => (typeof m === 'string' ? m : m.label))
+    .filter(Boolean);
+  if (!labels.length) return;
+
+  const urls = [
+    SMART_MONEY_SITEMAP_BASE,
+    `${SMART_MONEY_SITEMAP_BASE}/smart-money-signal`,
+    `${SMART_MONEY_SITEMAP_BASE}/stock-signal`,
+    `${SMART_MONEY_SITEMAP_BASE}/sector-intelligence`,
+  ];
+  for (const month of labels) {
+    const mSlug = monthFileSlug(month);
+    for (const viewSlug of SMART_MONEY_TRACKER_VIEW_SLUGS) {
+      urls.push(`${SMART_MONEY_SITEMAP_BASE}/${viewSlug}-in-${mSlug}`);
+    }
+  }
+
+  for (const stockSlug of loadStockSlugsFromDisk()) {
+    urls.push(`${STOCK_SIGNAL_SITEMAP_BASE}/${stockSlug}`);
+    urls.push(`${SMART_MONEY_SITEMAP_BASE}/signal/${stockSlug}`);
+  }
+
+  const escapeXml = (v) =>
+    v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const body = urls
+    .map(
+      (loc) =>
+        `  <url><loc>${escapeXml(loc)}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>`,
+    )
+    .join('\n');
+  writeFileSync(
+    join(PUBLIC_DIR, 'sitemap-smart-money-tracker.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
+  );
+  const stockSignalCount = urls.filter((u) => u.startsWith(STOCK_SIGNAL_SITEMAP_BASE + '/')).length;
+  console.log(
+    `  ✓ sitemap-smart-money-tracker.xml (${urls.length} URLs, ${stockSignalCount} stock-signal pages)`,
+  );
+}
+
+function loadTrackerMonthLabelsFromDisk() {
+  const indexPath = join(OUT_DIR, 'smart-money-tracker-index.json');
+  if (!existsSync(indexPath)) return [];
+  const index = JSON.parse(readFileSync(indexPath, 'utf8'));
+  return (index.months || []).map((m) => m.label || m).filter(Boolean);
 }
 
 function loadHoldingsFromJson() {
@@ -304,6 +421,7 @@ async function main() {
   writeHoldingsCompareExports(holdings);
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
+  writePortfolioOverlapSitemaps(portfolioOverlap.funds);
   writeJson(
     'fund-overlap-index.json',
     portfolioOverlap.funds.map((f) => ({ slug: f.slug, name: f.name })),
@@ -346,7 +464,7 @@ async function main() {
 
   if (isDbConfigured()) {
     try {
-      const { tracker, conviction } = await buildSmartMoneyExports(sql);
+      const { tracker } = await buildSmartMoneyExports(sql);
       writeSplitByMonth(
         'smart-money-tracker',
         'smart-money-tracker-index.json',
@@ -368,8 +486,6 @@ async function main() {
           };
         },
       );
-      writeJson('smart-money-conviction.json', conviction);
-
       const signals = await buildSmartMoneySignalsExport(sql);
       writeSignalsByCategory(signals);
 
@@ -383,6 +499,7 @@ async function main() {
   }
 
   splitMonolithSignalsOnDisk();
+  writeSmartMoneyTrackerSitemaps(loadTrackerMonthLabelsFromDisk());
 
   console.log('');
 }

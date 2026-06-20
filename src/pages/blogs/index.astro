@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { BRAND_URL } from '../../lib/brand';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -27,7 +28,7 @@ const faqJsonLd = {
 };
 ---
 
-<BaseLayout title="Blogs - IPO, Mutual Fund & Finance Tools Guide | IPOFins" description="Complete guide to IPO investing, mutual funds, and finance tools. FAQs, how-tos, and strategies for Indian investors." jsonLd={jsonLd}>
+<BaseLayout title="Blogs - IPO, Mutual Fund & Finance Tools Guide | IPOFins" description="Complete guide to IPO investing, mutual funds, and finance tools. FAQs, how-tos, and strategies for Indian investors." canonicalUrl={`${BRAND_URL}/blogs`} jsonLd={jsonLd}>
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

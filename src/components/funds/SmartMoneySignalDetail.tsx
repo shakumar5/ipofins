@@ -3,10 +3,12 @@ import { buildInterpretation } from '../../lib/smart-money-signals';
 
 
 
+import { stockSignalPath } from '../../lib/stock-signal-meta';
+
 interface Props {
-
   row: SmartMoneySignalRow;
-
+  backHref?: string;
+  backLabel?: string;
 }
 
 
@@ -35,7 +37,7 @@ function Divider() {
 
 
 
-export default function SmartMoneySignalDetail({ row }: Props) {
+export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Props) {
 
   const b = row.factorBreakdown;
 
@@ -221,6 +223,15 @@ export default function SmartMoneySignalDetail({ row }: Props) {
 
         {row.category} · {row.month} · Source: AMC monthly portfolio disclosures · Not investment advice.
 
+      </p>
+
+      <p className="mt-4 text-center">
+        <a
+          href={backHref || stockSignalPath(row.stockSlug)}
+          className="text-sm font-medium text-primary-600 hover:underline"
+        >
+          {backLabel || '← Back to Stock Signal'}
+        </a>
       </p>
 
     </div>

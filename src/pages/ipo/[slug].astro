@@ -4,6 +4,7 @@ import AdUnit from '../../components/AdUnit.astro';
 import AIInsightBox from '../../components/AIInsightBox.astro';
 import RiskBadge from '../../components/RiskBadge.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
+import { ZERODHA_OPEN_ACCOUNT_URL } from '../../lib/affiliate-links';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import type { IPORecord } from '../../types/ipo';
 
@@ -421,12 +422,12 @@ const jsonLd = {
         <div class="flex gap-3">
           {ipo.status === 'listed' ? (
             <>
-              <a href="https://zerodha.com" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm">Trade on Zerodha</a>
+              <a href={ZERODHA_OPEN_ACCOUNT_URL} target="_blank" rel="noopener noreferrer nofollow sponsored" class="btn-primary text-sm">Trade on Zerodha</a>
               <a href="https://groww.in" target="_blank" rel="noopener noreferrer" class="btn-secondary text-sm">Trade on Groww</a>
             </>
           ) : (
             <>
-              <a href="https://zerodha.com/ipo" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm">Apply via Zerodha</a>
+              <a href={ZERODHA_OPEN_ACCOUNT_URL} target="_blank" rel="noopener noreferrer nofollow sponsored" class="btn-primary text-sm">Apply via Zerodha</a>
               <a href="https://groww.in/ipo" target="_blank" rel="noopener noreferrer" class="btn-secondary text-sm">Apply via Groww</a>
             </>
           )}

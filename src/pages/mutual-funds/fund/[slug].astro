@@ -2,6 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getFundsWithHoldings, getRelatedFunds } from '../../../lib/data/funds';
 import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
+import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
@@ -243,7 +244,7 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
         </div>
         <div class="flex gap-3">
           <a href="https://groww.in/mutual-funds" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm">Invest via Groww</a>
-          <a href="https://coin.zerodha.com" target="_blank" rel="noopener noreferrer" class="btn-secondary text-sm">Invest via Zerodha</a>
+          <a href={ZERODHA_OPEN_ACCOUNT_URL} target="_blank" rel="noopener noreferrer nofollow sponsored" class="btn-secondary text-sm">Invest via Zerodha</a>
         </div>
       </div>
     </div>

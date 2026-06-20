@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { BRAND_URL } from '../../lib/brand';
 import articlesData from '../../data/articles.json';
 
 const articles = articlesData.filter(article => article.content && article.content.trim().length > 0);
@@ -34,6 +35,7 @@ const faqJsonLd = {
 <BaseLayout
   title="Learn Investing - IPO, Mutual Funds & Trading Guides | IPOFins"
   description="Free educational guides on IPO investing, mutual funds, options trading, broker selection, and personal finance for Indian investors."
+  canonicalUrl={`${BRAND_URL}/learn`}
   jsonLd={jsonLd}
 >
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />

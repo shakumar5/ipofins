@@ -263,9 +263,103 @@ html.dark {
 }
 
 .section-subtitle {
-  color: #64748b;
+  font-size: 0.9375rem;
+  color: var(--color-surface-500);
   margin-top: 0.25rem;
-  font-size: 0.875rem;
+}
+
+.dark .section-subtitle {
+  color: var(--color-surface-400);
+}
+
+.home-hero-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .home-hero-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: center;
+    gap: 3rem;
+  }
+}
+
+.home-stat-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.home-quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-surface-600);
+  background: white;
+  border: 1px solid var(--color-surface-200);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.home-quick-link:hover {
+  color: var(--color-primary-700);
+  border-color: var(--color-primary-200);
+  background: var(--color-primary-50);
+}
+
+.dark .home-quick-link {
+  color: var(--color-surface-300);
+  background: var(--color-surface-800);
+  border-color: var(--color-surface-700);
+}
+
+.dark .home-quick-link:hover {
+  color: var(--color-primary-300);
+  border-color: var(--color-primary-800);
+  background: var(--color-primary-950);
+}
+
+.home-ipo-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .home-ipo-strip {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.home-ipo-pill {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-surface-200);
+  background: white;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.home-ipo-pill:hover {
+  border-color: var(--color-success-500);
+  box-shadow: 0 4px 12px -4px rgb(16 185 129 / 0.25);
+}
+
+.dark .home-ipo-pill {
+  background: var(--color-surface-800);
+  border-color: var(--color-surface-700);
 }
 
 .container-narrow {

@@ -2,6 +2,8 @@
 import IPOLayout from '../../../layouts/IPOLayout.astro';
 import PerformanceTable from '../../../components/performance/PerformanceTable.tsx';
 import { getAllIPOs } from '../../../lib/data/ipos';
+import { getIpoPerformancePageMeta } from '../../../lib/ipo-performance-meta';
+import { BRAND_URL } from '../../../lib/brand';
 import { withCorrectStatuses } from '../../../utils/ipo-status';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
@@ -37,13 +39,19 @@ const smeData = yearIPOs.filter(i => i.type === 'sme').map(ipo => ({
   listingGain: ipo.listingPrice && ipo.priceMax ? Number(((ipo.listingPrice - ipo.priceMax) / ipo.priceMax * 100).toFixed(1)) : null,
 }));
 const existingSlugs = iposData.map(ipo => ipo.slug);
+const perfCounts = {
+  all: yearIPOs.length,
+  mainboard: mainboardData.length,
+  sme: smeData.length,
+};
+const pageMeta = getIpoPerformancePageMeta(year, 'all', perfCounts);
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Dataset",
-  "name": `IPO Performance ${year}`,
-  "description": `IPO listing performance ${year}. Mainboard and SME IPO returns tracker.`,
-  "url": `https://ipofins.com/ipo/performance/${year}`,
+  "name": pageMeta.heading,
+  "description": pageMeta.description,
+  "url": `${BRAND_URL}${pageMeta.path}`,
 };
 
 const faqJsonLd = {
@@ -88,13 +96,14 @@ const faqJsonLd = {
 
 <IPOLayout
   activeTab="performance"
-  title={`IPO Performance ${year} - Listing Returns | IPOFins`}
-  description={`IPO performance ${year}: ${mainboardData.length} mainboard + ${smeData.length} SME IPOs. Track listing gains, sort by returns, view company details.`}
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
   jsonLd={jsonLd}
 >
   <section class="container-wide pt-6 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>IPO Performance {year}</h1>
-    <p class="mt-1 text-sm text-surface-500" data-page-subtitle>Listing day returns for all IPOs in {year}. Click any company for details.</p>
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading}</h1>
+    <p class="mt-1 text-sm text-surface-500" data-page-subtitle>{pageMeta.subtitle}</p>
 
     <!-- Year Selector -->
     <div class="mt-4 flex gap-2">

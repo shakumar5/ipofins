@@ -30,10 +30,15 @@ export interface HoldingsCompareData {
 
 let indexPromise: Promise<HoldingsCompareIndex | null> | null = null;
 
-export function loadHoldingsCompareIndex(): Promise<HoldingsCompareIndex | null> {
+export function resetHoldingsCompareIndexCache(): void {
+  indexPromise = null;
+}
+
+export function loadHoldingsCompareIndex(force = false): Promise<HoldingsCompareIndex | null> {
+  if (force) indexPromise = null;
   if (!indexPromise) {
-    indexPromise = fetch(INDEX_URL)
-      .then((r) => (r.ok ? (r.json() as Promise<HoldingsCompareIndex>) : null))
+    indexPromise = fetchJsonCached<HoldingsCompareIndex>(INDEX_URL)
+      .then((data) => data)
       .catch(() => null);
   }
   return indexPromise;

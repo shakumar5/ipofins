@@ -1,9 +1,17 @@
 import type { PageMeta } from './page-meta';
+import { parseTrackerFromPathname } from './smart-money-tracker-meta';
 
 export type SmartMoneyTab = 'tracker' | 'signals' | 'stock-signal' | 'sectors';
 
-const BASE_PATH = '/mutual-funds/smart-money';
+export const SMART_MONEY_BASE_PATH = '/mutual-funds/smart-money';
 
+const TAB_SLUGS: Record<Exclude<SmartMoneyTab, 'tracker'>, string> = {
+  signals: 'smart-money-signal',
+  'stock-signal': 'stock-signal',
+  sectors: 'sector-intelligence',
+};
+
+/** @deprecated Use smartMoneyTabPath() — legacy hash URLs redirect client-side. */
 export const SMART_MONEY_TAB_HASH: Record<SmartMoneyTab, string> = {
   tracker: '',
   signals: '#signals',
@@ -11,8 +19,26 @@ export const SMART_MONEY_TAB_HASH: Record<SmartMoneyTab, string> = {
   sectors: '#sector-intelligence',
 };
 
+export function smartMoneyTabPath(tab: SmartMoneyTab): string {
+  if (tab === 'tracker') return SMART_MONEY_BASE_PATH;
+  return `${SMART_MONEY_BASE_PATH}/${TAB_SLUGS[tab]}`;
+}
+
+export function parseSmartMoneyTabFromPathname(pathname: string): SmartMoneyTab | null {
+  if (!pathname.startsWith(SMART_MONEY_BASE_PATH)) return null;
+  if (parseTrackerFromPathname(pathname)) return 'tracker';
+
+  const rest = pathname.slice(SMART_MONEY_BASE_PATH.length).replace(/^\//, '');
+  if (!rest || rest.startsWith('signal/')) return null;
+
+  for (const [tab, slug] of Object.entries(TAB_SLUGS) as [Exclude<SmartMoneyTab, 'tracker'>, string][]) {
+    if (rest === slug) return tab;
+  }
+  return null;
+}
+
 export function getSmartMoneyPageMeta(tab: SmartMoneyTab): PageMeta {
-  const path = `${BASE_PATH}${SMART_MONEY_TAB_HASH[tab]}`;
+  const path = smartMoneyTabPath(tab);
   switch (tab) {
     case 'signals':
       return {

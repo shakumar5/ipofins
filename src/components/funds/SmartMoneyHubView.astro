@@ -1,0 +1,179 @@
+---
+import type { SmartMoneyTab } from '../../lib/smart-money-meta';
+import type { PageMeta } from '../../lib/page-meta';
+import type { SmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import SmartMoneyPage from './SmartMoneyPage.tsx';
+import SmartMoneyInternalLinks from './SmartMoneyInternalLinks.astro';
+import type { TrackerViewType } from '../../lib/smart-money-tracker-meta';
+
+interface TrackerInit {
+  view: TrackerViewType;
+  monthLabel: string;
+}
+
+interface Props {
+  pageMeta: PageMeta;
+  parsed: TrackerInit | null;
+  parsedTab: SmartMoneyTab | null;
+  sm: SmartMoneyTrackerLinks;
+}
+
+const { pageMeta, parsed, parsedTab, sm } = Astro.props;
+---
+
+<nav class="container-wide pt-6" aria-label="Breadcrumb">
+  <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+    <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+    <li><span class="mx-1">/</span></li>
+    <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+    <li><span class="mx-1">/</span></li>
+    <li class="text-surface-900 dark:text-white font-medium" data-breadcrumb-leaf>{pageMeta.breadcrumbLabel || 'Smart Money'}</li>
+  </ol>
+</nav>
+
+<section class="container-wide pt-8 pb-4">
+  <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading || 'Smart Money Tracker'}</h1>
+  <p class="mt-1 text-sm text-surface-500" data-page-subtitle>{pageMeta.subtitle || 'Track institutional conviction — what fund managers are buying, selling, and rotating at the stock and sector level.'}</p>
+  <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
+</section>
+
+<section class="container-wide pb-12">
+  <SmartMoneyPage
+    client:load
+    initialTracker={parsed ? { view: parsed.view, monthLabel: parsed.monthLabel } : null}
+    initialTab={parsedTab}
+    trackerLinks={sm}
+  >
+    <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading Smart Money…</div>
+  </SmartMoneyPage>
+</section>
+
+<section class="container-wide pb-12">
+  <div class="max-w-3xl text-sm text-surface-600 dark:text-surface-300 space-y-6">
+    <div>
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How Smart Money Works</h2>
+      <p>Every month, SEBI-regulated AMCs publish their complete equity portfolio holdings. IPOFins processes these official disclosures and builds three complementary views of institutional activity:</p>
+    </div>
+
+    <div class="card p-5 space-y-2">
+      <h3 class="font-bold text-surface-900 dark:text-white">1. Smart Money Tracker</h3>
+      <p>Compares each fund's portfolio month-on-month by <strong>portfolio weight (% of NAV)</strong>, not share quantity alone. <strong>Most Bought</strong> and <strong>Most Sold</strong> rank by number of funds, showing average and total weight change. <strong>Fresh Entries</strong> and <strong>Complete Exits</strong> show stocks newly added or fully sold out. Filter by fund category and sector.</p>
+      <p class="text-xs text-surface-400">
+        <a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Hub</a>
+        {' · '}
+        <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought ({sm.latestMonth})</a>
+        {' · '}
+        <a href={sm.mostSold} class="text-primary-600 hover:underline">Most Sold</a>
+        {' · '}
+        <a href={sm.freshEntries} class="text-primary-600 hover:underline">Fresh Entries</a>
+        {' · '}
+        <a href={sm.completeExits} class="text-primary-600 hover:underline">Complete Exits</a>
+        {' · '}
+        <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes by AMC</a>
+        {' · '}
+        <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
+        {' · '}
+        <a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a>
+        {' · '}
+        <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a>
+        {' · '}
+        <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a>
+      </p>
+    </div>
+
+    <div class="card p-5 space-y-2">
+      <h3 class="font-bold text-surface-900 dark:text-white">2. Smart Money Signal</h3>
+      <p>Ranked table of stocks scored <strong>0–100</strong> within each fund category. Six factors are percentile-ranked against the category leader each month. Click any row for the full factor breakdown.</p>
+      <p class="text-xs">Signals: 🚀 Aggressive Accumulation (90+) · 🟢 Strong (75+) · 🟡 Moderate (60+) · ⚪ Neutral (40+) · 🟠 Distribution (25+) · 🔴 Strong Distribution (&lt;25)</p>
+      <p class="text-xs text-surface-400">
+        <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
+        {' · '}
+        <a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a>
+        {' · '}
+        <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a>
+      </p>
+    </div>
+
+    <div class="card p-5 space-y-2">
+      <h3 class="font-bold text-surface-900 dark:text-white">3. Stock Signal</h3>
+      <p>Browse individual stocks with a full institutional activity card for each name. Select any stock to see:</p>
+      <ul class="list-disc pl-5 space-y-1 text-xs">
+        <li><strong>Smart Money</strong> — Conviction Score, Smart Money Signal, Institutional Confidence</li>
+        <li><strong>Mutual Fund Activity</strong> — Funds Holding, Funds Increased/Reduced, Fresh Entries, Complete Exits</li>
+        <li><strong>Top Fund Holders</strong> — largest category funds by portfolio weight (e.g. SBI Bluechip, HDFC Flexi Cap)</li>
+      </ul>
+      <p class="text-xs text-surface-400">
+        <a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a>
+        {' · '}
+        <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
+        {' · '}
+        <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a>
+      </p>
+    </div>
+
+    <div class="card p-5 space-y-2">
+      <h3 class="font-bold text-surface-900 dark:text-white">4. Sector Intelligence</h3>
+      <p>Zooms out from individual stocks to <strong>sector-level rotation</strong>. Holdings from all equity funds with portfolio data are aggregated and grouped by AMC-disclosed sector names — Banks, Capital Markets, Pharmaceuticals, IT - Software, Auto Components, and dozens more.</p>
+      <p>For the <strong>latest two disclosure months</strong> (auto-selected — e.g. April vs May 2026), the table shows:</p>
+      <ul class="list-disc pl-5 space-y-1 text-xs">
+        <li><strong>Conviction Score (0–100)</strong> — 75% sector AUM momentum percentile + 25% fund-breadth (share of funds increasing exposure)</li>
+        <li><strong>Smart Money Signal</strong> — same bands as stock-level signals</li>
+        <li><strong>AUM Change</strong> — % change in total ₹ exposure to that sector across all funds</li>
+        <li><strong>Weight Δ</strong> — change in sector's share of total equity (percentage points)</li>
+        <li><strong>Trend</strong> — consecutive months of rising/falling sector weight (↑ 4M = four straight months of increase)</li>
+      </ul>
+      <p class="text-xs text-surface-400">Sectors below 0.1% of total equity exposure are excluded. Debt instruments and unknown sectors are filtered out.</p>
+      <p class="text-xs text-surface-400">
+        <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a>
+        {' · '}
+        <a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Tracker</a>
+        {' · '}
+        <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes</a>
+        {' · '}
+        <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a>
+      </p>
+    </div>
+
+    <p class="text-xs text-surface-400">Data is sourced exclusively from official AMC monthly portfolio disclosure filings mandated by SEBI. Not investment advice. Past institutional activity does not guarantee future performance.</p>
+  </div>
+</section>
+
+<section class="container-wide py-12 border-t border-surface-200 dark:border-surface-700">
+  <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+  <div class="space-y-4 max-w-3xl">
+    <details class="card group" open>
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Sector Intelligence and how is it different from Smart Money Tracker?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Tracker</a> focuses on <strong>individual stocks</strong> — which companies funds bought or sold. <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a> aggregates across all funds to show <strong>sector-level rotation</strong> — whether mutual funds as an industry are moving money into Banking, Healthcare, IT, Capital Markets, etc. Use Tracker for stock ideas; use Sector Intelligence for macro allocation trends.</p>
+    </details>
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the Stock Signal tab?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a> lets you pick any stock and see a complete institutional profile: conviction score, signal, confidence level, how many funds hold it, how many increased or reduced, fresh entries and exits, plus the top 3 funds with the largest weight in that stock. It is the stock-level drill-down companion to the ranked <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a> table.</p>
+    </details>
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which funds are included in Sector Intelligence?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">All active mutual fund schemes that have equity holdings data in our database for the comparison month — typically 500+ schemes across 40+ AMCs. This is broader than the <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a> tab (which lists 366 listable Direct-Growth equity funds) because sector rotation analysis benefits from maximum coverage.</p>
+    </details>
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What does AUM Change mean for a sector?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We sum the disclosed market value of every stock holding in a sector across all funds. AUM Change is the month-on-month percentage change in that total. For example, +18.9% means mutual funds collectively held 18.9% more ₹ value in that sector compared to the previous month. This captures both price movement and active buying/selling.</p>
+    </details>
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How are comparison months selected?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Automatically. The system reads the two most recent months with holdings data in the database. When you add June 2026 disclosures and run the monthly pipeline, the comparison switches from April vs May to May vs June — no configuration needed.</p>
+    </details>
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What sector names are used?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We use sector classifications as disclosed in AMC portfolio filings — the same labels you see in monthly Excel reports (e.g. "Banks", "Capital Markets", "Pharmaceuticals & Biotechnology"). We do not remap these into custom macro buckets in v1, so you may see granular industry names rather than simplified groupings.</p>
+    </details>
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How should I use this for investment research?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Sector Intelligence is a <strong>starting point</strong>, not a buy/sell signal. Rising sector conviction suggests fund managers are collectively allocating more capital — but this could reflect performance (price appreciation) as well as new buying. Cross-reference with <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes</a> for AMC-level detail, <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a> for names, <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a> for rotation trends, and <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a> for stock-level conviction within a category.</p>
+    </details>
+  </div>
+</section>
+
+<section class="container-wide pb-12 border-t border-surface-200 dark:border-surface-700 pt-8">
+  <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Explore Smart Money Tracker Views</h2>
+  <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">Deep links for {sm.latestMonth} — updated automatically when new disclosure months are added.</p>
+  <SmartMoneyInternalLinks showTabs />
+</section>

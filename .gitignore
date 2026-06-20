@@ -32,3 +32,24 @@ data/temp/
 
 # Deprecated fetch backups
 scripts/ipos_*.json
+
+# Local dev logs & script output (not needed for prod build)
+build-log.txt
+check-output.txt
+scripts/output/
+
+# Internal specs & SEO audit notes (not needed for prod build)
+.kiro/
+SEO_AUDIT_FINAL.md
+SEO_STRATEGY.md
+
+# Client JSON — regenerated on every `npm run build` / CI via export-client-data.mjs
+public/data/**
+!public/data/.gitkeep
+
+# Sitemaps — regenerated during export / build
+public/sitemap-smart-money-tracker.xml
+public/data/sitemap-portfolio-overlap*.xml
+
+# OG PNGs — rasterized from public/og-*.svg during build
+public/og-*.png

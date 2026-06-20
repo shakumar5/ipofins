@@ -3,6 +3,10 @@
  */
 
 import { requireDb } from '../db';
+import {
+  holdingsStatsFromIndex,
+  readHoldingsCompareIndexFromDisk,
+} from '../holdings-compare-server';
 import { LISTABLE_EQUITY_CATEGORIES } from '../holdings-utils';
 import { getFundSlugsWithHoldings } from './holdings';
 
@@ -271,20 +275,26 @@ export async function getHoldingsStats(): Promise<{
   fundsCovered: number;
   latestMonth: string;
 }> {
-  const sql = requireDb();
-  const rows = (await sql`
-    SELECT
-      COUNT(DISTINCT f.amc_id)::int AS amc_count,
-      COUNT(DISTINCT fh.fund_id)::int AS funds_covered,
-      TO_CHAR(MAX(fh.month), 'FMMonth YYYY') AS latest_month
-    FROM fund_holdings fh
-    JOIN funds f ON f.id = fh.fund_id
-    WHERE fh.month = (SELECT MAX(month) FROM fund_holdings)
-  `) as Record<string, unknown>[];
-  const row = rows[0];
-  return {
-    amcCount: Number(row?.amc_count ?? 0),
-    fundsCovered: Number(row?.funds_covered ?? 0),
-    latestMonth: String(row?.latest_month ?? '').trim(),
-  };
+  try {
+    const sql = requireDb();
+    const rows = (await sql`
+      SELECT
+        COUNT(DISTINCT f.amc_id)::int AS amc_count,
+        COUNT(DISTINCT fh.fund_id)::int AS funds_covered,
+        TO_CHAR(MAX(fh.month), 'FMMonth YYYY') AS latest_month
+      FROM fund_holdings fh
+      JOIN funds f ON f.id = fh.fund_id
+      WHERE fh.month = (SELECT MAX(month) FROM fund_holdings)
+    `) as Record<string, unknown>[];
+    const row = rows[0];
+    return {
+      amcCount: Number(row?.amc_count ?? 0),
+      fundsCovered: Number(row?.funds_covered ?? 0),
+      latestMonth: String(row?.latest_month ?? '').trim(),
+    };
+  } catch {
+    const index = readHoldingsCompareIndexFromDisk();
+    if (!index) throw new Error('Holdings stats unavailable — run npm run export:client-data');
+    return holdingsStatsFromIndex(index);
+  }
 }

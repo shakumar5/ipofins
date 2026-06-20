@@ -79,7 +79,7 @@ const otherAmcs = amcList.filter((a) => a.name !== amcName).slice(0, 10);
 
   <section class="container-wide py-4">
     <HoldingsCompare
-      client:idle
+      client:load
       initialAmc={amcName}
       initialMonth1={previousMonth}
       initialMonth2={currentMonth}

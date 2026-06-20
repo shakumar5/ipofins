@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SmartMoneyHubView from '../../../components/funds/SmartMoneyHubView.astro';
+import { BRAND_URL } from '../../../lib/brand';
+import { resolveSmartMoneyPage } from '../../../lib/smart-money-page-context';
+import { loadSmartMoneyTrackerLinks } from '../../../lib/smart-money-tracker-links';
+
+const { parsed, parsedTab, pageMeta } = resolveSmartMoneyPage(Astro.url.pathname);
+const sm = loadSmartMoneyTrackerLinks();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: pageMeta.heading || 'Smart Money Tracker',
+  description: pageMeta.description,
+  url: `${BRAND_URL}${pageMeta.path || '/mutual-funds/smart-money'}`,
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is Smart Money Tracker?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Smart Money Tracker compares each mutual fund's equity portfolio month-on-month using official AMC monthly portfolio disclosures. It shows the most bought and sold stocks, fresh entries (new positions), and complete exits (fully sold out positions) across all tracked funds.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is Smart Money Signal?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Smart Money Signal scores individual stocks from 0 to 100 within each fund category (Large Cap, Mid Cap, etc.). The score blends six factors — net weight change, net buying funds, fresh entries, complete exits, AMC breadth, and consecutive accumulation trend — percentile-ranked against category leaders each month.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is Sector Intelligence?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Sector Intelligence aggregates holdings across all mutual funds with portfolio data, groups stocks by their disclosed sector (Banks, Capital Markets, Pharmaceuticals, IT, etc.), and compares total sector exposure between the latest two disclosure months.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Where does Smart Money data come from?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'All data is sourced from official monthly portfolio disclosure filings published by Asset Management Companies (AMCs) as mandated by SEBI. This is not investment advice.',
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path || '/mutual-funds/smart-money'}`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} />
+</BaseLayout>

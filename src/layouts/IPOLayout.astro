@@ -5,11 +5,12 @@ interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  canonicalUrl?: string;
   jsonLd?: object;
   activeTab: string;
 }
 
-const { title, description, ogImage = '/og-ipo.png', jsonLd, activeTab } = Astro.props;
+const { title, description, ogImage = '/og-ipo.png', canonicalUrl, jsonLd, activeTab } = Astro.props;
 
 const tabs = [
   { key: 'all', label: 'All', href: '/ipo' },
@@ -23,7 +24,7 @@ const tabs = [
 ];
 ---
 
-<BaseLayout title={title} description={description} ogImage={ogImage} jsonLd={jsonLd}>
+<BaseLayout title={title} description={description} ogImage={ogImage} canonicalUrl={canonicalUrl} jsonLd={jsonLd}>
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

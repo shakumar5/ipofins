@@ -6,6 +6,12 @@ import {
   type PortfolioOverlapData,
 } from '../../lib/portfolio-overlap';
 import { fetchJsonCached } from '../../lib/client-data';
+import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import {
+  comparisonPathFromSlugs,
+  getPortfolioOverlapPageMeta,
+  parseComparisonFromPathname,
+} from '../../lib/portfolio-overlap-meta';
 
 const DATA_URL = '/data/portfolio-overlap.json';
 const MAX_FUNDS = 4;
@@ -107,20 +113,116 @@ function FundSearchSelect({
   );
 }
 
-export default function PortfolioOverlapChecker() {
+function createSlots(slugCount: number, slugs: string[] = []): FundSlot[] {
+  const count = Math.max(MIN_FUNDS, Math.min(MAX_FUNDS, slugCount || MIN_FUNDS));
+  return Array.from({ length: count }, (_, i) => ({
+    id: newSlot().id,
+    slug: slugs[i] || '',
+  }));
+}
+
+function validSlugsFromData(data: PortfolioOverlapData, slugs: string[]): string[] {
+  const known = new Set(data.funds.map((f) => f.slug));
+  return slugs.filter((slug) => known.has(slug) && fundHasHoldings(data, slug));
+}
+
+interface Props {
+  initialSlugs?: string[];
+}
+
+export default function PortfolioOverlapChecker({ initialSlugs = [] }: Props) {
   const [data, setData] = useState<PortfolioOverlapData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [slots, setSlots] = useState<FundSlot[]>(() => [newSlot(), newSlot()]);
+  const [slots, setSlots] = useState<FundSlot[]>(() => createSlots(
+    Math.max(initialSlugs.length, MIN_FUNDS),
+    initialSlugs,
+  ));
   const [result, setResult] = useState<ReturnType<typeof computeMultiFundOverlap>>(null);
   const [compared, setCompared] = useState(false);
+  const [computing, setComputing] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const urlSyncReady = useRef(false);
+
+  const fundNameBySlug = useMemo(() => {
+    if (!data) return new Map<string, string>();
+    return new Map(data.funds.map((f) => [f.slug, f.name]));
+  }, [data]);
+
+  const syncPageMeta = useCallback((slugs: string[]) => {
+    if (!data) return;
+    applyClientPageMeta(getPortfolioOverlapPageMeta(slugs, fundNameBySlug, data.month));
+  }, [data, fundNameBySlug]);
+
+  const syncUrl = useCallback((slugs: string[]) => {
+    if (typeof window === 'undefined') return;
+    const path = comparisonPathFromSlugs(slugs);
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== path) {
+      window.history.replaceState(null, '', path);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchJsonCached<PortfolioOverlapData>(DATA_URL)
-      .then(setData)
-      .catch((e: Error) => setError(e.message || 'Failed to load fund data'))
-      .finally(() => setLoading(false));
+    if (typeof window === 'undefined') return;
+    const slugs = parseComparisonFromPathname(window.location.pathname);
+    if (slugs.length >= MIN_FUNDS) {
+      setSlots(createSlots(slugs.length, slugs));
+    }
+    urlSyncReady.current = true;
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const onPopState = () => {
+      const slugs = parseComparisonFromPathname(window.location.pathname);
+      setSlots(createSlots(Math.max(slugs.length, MIN_FUNDS), slugs));
+      setCompared(false);
+      setResult(null);
+      if (data) syncPageMeta(slugs);
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [data, syncPageMeta]);
+
+  useEffect(() => {
+    if (!data || !urlSyncReady.current) return;
+
+    const slugs = slots.map((s) => s.slug).filter(Boolean);
+    const valid = validSlugsFromData(data, slugs);
+
+    if (valid.length >= MIN_FUNDS) {
+      syncUrl(valid);
+      syncPageMeta(valid);
+      return;
+    }
+
+    if (parseComparisonFromPathname(window.location.pathname).length > 0) {
+      syncUrl([]);
+      syncPageMeta([]);
+    }
+  }, [slots, data, syncUrl, syncPageMeta]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchJsonCached<PortfolioOverlapData>(DATA_URL)
+      .then((data) => {
+        if (!cancelled) setData(data);
+      })
+      .catch((e: Error) => {
+        if (!cancelled) setError(e.message || 'Failed to load fund data');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [retryKey]);
 
   const selectedSlugs = useMemo(
     () => slots.map((s) => s.slug).filter(Boolean),
@@ -153,21 +255,29 @@ export default function PortfolioOverlapChecker() {
   );
 
   const handleCompare = () => {
-    if (!data || !canCompare) return;
-    setResult(computeMultiFundOverlap(validSelectedSlugs, data.holdings));
-    setCompared(true);
+    if (!data || !canCompare || computing) return;
+    setComputing(true);
+    setCompared(false);
+    setResult(null);
+    window.setTimeout(() => {
+      setResult(computeMultiFundOverlap(validSelectedSlugs, data.holdings));
+      setCompared(true);
+      setComputing(false);
+    }, 0);
   };
 
   const addFund = () => {
     if (slots.length >= MAX_FUNDS) return;
     setSlots((prev) => [...prev, newSlot()]);
     setCompared(false);
+    setResult(null);
   };
 
   const removeFund = (id: string) => {
     if (slots.length <= MIN_FUNDS) return;
     setSlots((prev) => prev.filter((s) => s.id !== id));
     setCompared(false);
+    setResult(null);
   };
 
   if (loading) {
@@ -176,9 +286,18 @@ export default function PortfolioOverlapChecker() {
 
   if (error || !data) {
     return (
-      <p className="text-center py-12 text-sm text-red-600">
-        {error || 'No data'} — run <code className="text-xs">npm run export:client-data</code>
-      </p>
+      <div className="text-center py-12">
+        <p className="text-sm text-red-600">
+          {error || 'No data'} — run <code className="text-xs">npm run export:client-data</code>
+        </p>
+        <button
+          type="button"
+          onClick={() => setRetryKey((k) => k + 1)}
+          className="mt-3 px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
@@ -222,6 +341,7 @@ export default function PortfolioOverlapChecker() {
                 onChange={(slug) => {
                   setSlots((prev) => prev.map((s) => (s.id === slot.id ? { ...s, slug } : s)));
                   setCompared(false);
+                  setResult(null);
                 }}
                 placeholder="Search fund name or AMC…"
                 excludeSlugs={excludeForSlot(slot.id)}
@@ -250,10 +370,10 @@ export default function PortfolioOverlapChecker() {
         <button
           type="button"
           onClick={handleCompare}
-          disabled={!canCompare}
+          disabled={!canCompare || computing}
           className="px-5 py-2.5 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Compare overlap
+          {computing ? 'Comparing…' : 'Compare overlap'}
         </button>
         {slots.length < MAX_FUNDS && (
           <button

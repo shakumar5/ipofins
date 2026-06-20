@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SmartMoneyHubView from '../../../components/funds/SmartMoneyHubView.astro';
+import { BRAND_URL } from '../../../lib/brand';
+import { resolveSmartMoneyPage } from '../../../lib/smart-money-page-context';
+import { loadSmartMoneyStaticSegments, smartMoneyPathFromSegment } from '../../../lib/smart-money-static-segments';
+import { loadSmartMoneyTrackerLinks } from '../../../lib/smart-money-tracker-links';
+
+export function getStaticPaths() {
+  return loadSmartMoneyStaticSegments().map((segment) => ({
+    params: { segment },
+    props: { segment },
+  }));
+}
+
+const { segment } = Astro.props;
+const pathname = smartMoneyPathFromSegment(segment);
+const { parsed, parsedTab, pageMeta } = resolveSmartMoneyPage(pathname);
+const sm = loadSmartMoneyTrackerLinks();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: pageMeta.heading || 'Smart Money Tracker',
+  description: pageMeta.description,
+  url: `${BRAND_URL}${pageMeta.path}`,
+};
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} />
+</BaseLayout>

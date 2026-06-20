@@ -1,0 +1,70 @@
+---
+import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+
+interface Props {
+  /** inline text links vs button chips */
+  variant?: 'inline' | 'chips';
+  showHub?: boolean;
+  showTabs?: boolean;
+  monthNote?: boolean;
+}
+
+const { variant = 'chips', showHub = true, showTabs = false, monthNote = true } = Astro.props;
+const sm = loadSmartMoneyTrackerLinks();
+
+const trackerLinks = [
+  { label: 'Most Bought Stocks', href: sm.mostBought },
+  { label: 'Most Sold Stocks', href: sm.mostSold },
+  { label: 'Fresh Entries', href: sm.freshEntries },
+  { label: 'Complete Exits', href: sm.completeExits },
+];
+
+const tabLinks = [
+  { label: 'Smart Money Signal', href: sm.signals },
+  { label: 'Stock Signal', href: sm.stockSignal },
+  { label: 'Sector Intelligence', href: sm.sectorIntelligence },
+];
+---
+
+{variant === 'inline' ? (
+  <p class="text-xs text-surface-400">
+    {showHub && (
+      <>
+        <a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Tracker</a>
+        {' · '}
+      </>
+    )}
+    {trackerLinks.map((link, i) => (
+      <>
+        {i > 0 && ' · '}
+        <a href={link.href} class="text-primary-600 hover:underline">{link.label}</a>
+      </>
+    ))}
+    {showTabs && tabLinks.map((link) => (
+      <>
+        {' · '}
+        <a href={link.href} class="text-primary-600 hover:underline">{link.label}</a>
+      </>
+    ))}
+    {monthNote && (
+      <span class="text-surface-500"> ({sm.latestMonth})</span>
+    )}
+  </p>
+) : (
+  <div class="space-y-3">
+    {monthNote && (
+      <p class="text-xs text-surface-500 dark:text-surface-400">Latest month: <strong>{sm.latestMonth}</strong></p>
+    )}
+    <div class="flex flex-wrap gap-2">
+      {showHub && (
+        <a href={sm.hub} class="btn-secondary text-xs px-3 py-1.5">Smart Money Hub</a>
+      )}
+      {trackerLinks.map((link) => (
+        <a href={link.href} class="btn-secondary text-xs px-3 py-1.5">{link.label}</a>
+      ))}
+      {showTabs && tabLinks.map((link) => (
+        <a href={link.href} class="btn-secondary text-xs px-3 py-1.5">{link.label}</a>
+      ))}
+    </div>
+  </div>
+)}

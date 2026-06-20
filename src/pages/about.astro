@@ -1,5 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
+
+const sm = loadSmartMoneyTrackerLinks();
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -48,18 +51,20 @@ const jsonLd = {
           <li><a href="/ipo/subscription-status" class="text-primary-600 dark:text-primary-400 hover:underline">Subscription Data</a></li>
           <li><a href="/ipo/performance/2026" class="text-primary-600 dark:text-primary-400 hover:underline">IPO Listing Performance</a></li>
           <li><a href="/ipo/allotment-status" class="text-primary-600 dark:text-primary-400 hover:underline">Allotment Information</a></li>
-          <li>IPO Analytics and Insights</li>
+          <li><a href="/blogs/ipo" class="text-primary-600 dark:text-primary-400 hover:underline">IPO Analytics and Insights</a></li>
         </ul>
 
         <h3 class="text-lg font-semibold text-surface-900 dark:text-white pt-4">Mutual Fund Intelligence</h3>
         <ul class="list-disc list-inside space-y-1.5 ml-1">
-          <li>Monthly Portfolio Changes</li>
-          <li><a href="/mutual-funds/smart-money" class="text-primary-600 dark:text-primary-400 hover:underline">Smart Money Tracker</a></li>
-          <li>Most Bought Stocks</li>
-          <li>Most Sold Stocks</li>
-          <li>Fresh Entries</li>
-          <li>Complete Exits</li>
-          <li>AMC-wise Portfolio Analysis</li>
+          <li><a href="/mutual-funds/mutual-fund-holdings-changes" class="text-primary-600 dark:text-primary-400 hover:underline">Monthly Portfolio Changes</a></li>
+          <li><a href={sm.hub} class="text-primary-600 dark:text-primary-400 hover:underline">Smart Money Tracker</a></li>
+          <li><a href={sm.mostBought} class="text-primary-600 dark:text-primary-400 hover:underline">Most Bought Stocks</a></li>
+          <li><a href={sm.mostSold} class="text-primary-600 dark:text-primary-400 hover:underline">Most Sold Stocks</a></li>
+          <li><a href={sm.freshEntries} class="text-primary-600 dark:text-primary-400 hover:underline">Fresh Entries</a></li>
+          <li><a href={sm.completeExits} class="text-primary-600 dark:text-primary-400 hover:underline">Complete Exits</a></li>
+          <li><a href={sm.signals} class="text-primary-600 dark:text-primary-400 hover:underline">Smart Money Signal</a></li>
+          <li><a href={sm.sectorIntelligence} class="text-primary-600 dark:text-primary-400 hover:underline">Sector Intelligence</a></li>
+          <li><a href="/mutual-funds/mutual-fund-holdings-changes" class="text-primary-600 dark:text-primary-400 hover:underline">AMC-wise Portfolio Analysis</a></li>
         </ul>
 
         <h3 class="text-lg font-semibold text-surface-900 dark:text-white pt-4">Investment Tools</h3>
@@ -75,7 +80,7 @@ const jsonLd = {
         <ul class="list-disc list-inside space-y-1.5 ml-1">
           <li><a href="/learn" class="text-primary-600 dark:text-primary-400 hover:underline">IPO Education</a></li>
           <li><a href="/blogs/mutual-funds" class="text-primary-600 dark:text-primary-400 hover:underline">Mutual Fund Guides</a></li>
-          <li>Investment Concepts</li>
+          <li><a href="/learn" class="text-primary-600 dark:text-primary-400 hover:underline">Investment Concepts</a></li>
           <li><a href="/blogs" class="text-primary-600 dark:text-primary-400 hover:underline">Financial Planning Articles</a></li>
         </ul>
 

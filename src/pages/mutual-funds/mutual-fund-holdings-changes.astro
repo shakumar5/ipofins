@@ -2,12 +2,15 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import MfSectionHeader from '../../components/funds/MfSectionHeader.astro';
 import HoldingsCompare from '../../components/funds/HoldingsCompare.tsx';
+import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
 import { getAMCsWithHoldings, getAvailableMonths } from '../../lib/data/holdings';
 import { getHoldingsStats } from '../../lib/data/funds';
+import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
 import { monthSlug } from '../../utils/month-slug';
 import { mfTabConfig } from '../../lib/mf-section-config';
 
 const cfg = mfTabConfig('holdings-changes');
+const sm = loadSmartMoneyTrackerLinks();
 const amcListData = await getAMCsWithHoldings();
 const { amcCount, fundsCovered: fundCount, latestMonth } = await getHoldingsStats();
 const monthsList = await getAvailableMonths();
@@ -67,7 +70,9 @@ const faqJsonLd = {
   </section>
 
   <section class="container-wide py-4">
-    <HoldingsCompare client:idle pageMode="hub" />
+    <HoldingsCompare client:load pageMode="hub">
+      <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading holdings comparison…</div>
+    </HoldingsCompare>
   </section>
 
   <!-- Browse by AMC - SEO internal links -->
@@ -119,6 +124,12 @@ const faqJsonLd = {
     </div>
   </section>
 
+  <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Related: Smart Money Tracker</h2>
+    <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">AMC-level changes above; industry-wide stock rankings below ({sm.latestMonth}).</p>
+    <SmartMoneyInternalLinks showTabs />
+  </section>
+
   <!-- FAQ Section -->
   <section class="container-wide py-8">
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
@@ -129,7 +140,7 @@ const faqJsonLd = {
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How can I use this to make better investment decisions?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">By tracking what professional fund managers are buying, you can identify stocks that have institutional conviction. If multiple top-performing funds are adding the same stock, it signals strong fundamentals. For a macro view of sector rotation across all funds, see <a href="/mutual-funds/smart-money#sector-intelligence" class="text-primary-600 hover:underline">Sector Intelligence</a> on the Smart Money page.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">By tracking what professional fund managers are buying, you can identify stocks that have institutional conviction. If multiple top-performing funds are adding the same stock, it signals strong fundamentals. See industry-wide views: <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a>, <a href={sm.mostSold} class="text-primary-600 hover:underline">Most Sold</a>, and <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a>.</p>
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why does it show "No portfolio changes detected"?</summary>

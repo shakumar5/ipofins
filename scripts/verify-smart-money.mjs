@@ -38,12 +38,13 @@ for (const row of rows) {
 
   const key = stockGroupKey({ isin: row.isin, name: row.stock_name });
   if (!grouped.has(key)) {
-    grouped.set(key, { names: new Set(), sector: row.sector, funds: 0, weight: 0 });
+    grouped.set(key, { names: new Set(), sector: row.sector, funds: 0, weight: 0, weightAvg: 0 });
   }
   const g = grouped.get(key);
   g.names.add(row.stock_name);
   g.funds += 1;
   g.weight += Math.max(0, Number(row.pct_change));
+  g.weightAvg = g.funds > 0 ? g.weight / g.funds : 0;
 }
 
 const ranked = [...grouped.entries()]
@@ -54,6 +55,7 @@ const ranked = [...grouped.entries()]
     sector: g.sector,
     funds: g.funds,
     weight: Math.round(g.weight * 100) / 100,
+    weightAvg: Math.round(g.weightAvg * 100) / 100,
   }))
   .sort((a, b) => b.funds - a.funds);
 
@@ -67,7 +69,7 @@ console.log(`Invalid sectors: ${badSector.length}`);
 
 console.log('\nTop 15 Most Bought:');
 for (const r of ranked.slice(0, 15)) {
-  console.log(`  ${r.display} | ${r.sector} | ${r.funds} funds | ${r.weight.toFixed(2)}%`);
+  console.log(`  ${r.display} | ${r.sector} | ${r.funds} funds | avg ${r.weightAvg.toFixed(2)}% | total ${r.weight.toFixed(2)}%`);
 }
 
 if (multiName.length || badSector.length) process.exit(1);

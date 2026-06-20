@@ -6,6 +6,7 @@ import { getAllFunds } from '../../../lib/data/funds';
 import { selectBestFunds } from '../../../lib/best-funds';
 import { catToSlug } from '../../../lib/fund-category-slug';
 import { getFundTablePageMeta } from '../../../lib/fund-table-meta';
+import { BRAND_URL } from '../../../lib/brand';
 
 export async function getStaticPaths() {
   const fundsData = await getAllFunds();
@@ -35,6 +36,7 @@ const jsonLd = {
 <BaseLayout
   title={pageMeta.title}
   description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
   jsonLd={jsonLd}
 >
   <nav class="container-wide pt-6" aria-label="Breadcrumb">

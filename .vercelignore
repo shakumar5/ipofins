@@ -1,0 +1,9 @@
+# Source-only paths — CI deploys prebuilt `dist/`; these are not needed on Vercel.
+.kiro/
+SEO_AUDIT_FINAL.md
+SEO_STRATEGY.md
+build-log.txt
+check-output.txt
+scripts/output/
+data/amfi-excel/
+data/temp/

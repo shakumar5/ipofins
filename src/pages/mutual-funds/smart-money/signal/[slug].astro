@@ -1,81 +1,82 @@
 ---
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
-import { monthFileSlug, categoryFileSlug } from '../../../../lib/client-data';
+import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
+import { BRAND_URL } from '../../../../lib/brand';
+import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
+import { getSignalDetailPageMeta, signalDetailPath } from '../../../../lib/signal-detail-meta';
+import { stockSignalPath } from '../../../../lib/stock-signal-meta';
+
+const sm = loadSmartMoneyTrackerLinks();
 
 export function getStaticPaths() {
-  const dataDir = join(process.cwd(), 'public', 'data');
-  const indexPath = join(dataDir, 'smart-money-signals-index.json');
-
-  if (!existsSync(indexPath)) {
-    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder' } }];
+  const stocks = loadSmartMoneyStockSlugs();
+  if (!stocks.length) {
+    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder', stockName: 'Stock' } }];
   }
-
-  const index = JSON.parse(readFileSync(indexPath, 'utf-8')) as {
-    months: string[];
-    categories?: string[];
-    layout?: string;
-  };
-  const slugs = new Set<string>();
-  const signalsDir = join(dataDir, 'smart-money-signals');
-
-  if (index.layout === 'by-category' && index.categories?.length) {
-    for (const month of index.months) {
-      for (const category of index.categories) {
-        const monthPath = join(
-          signalsDir,
-          `${monthFileSlug(month)}--${categoryFileSlug(category)}.json`,
-        );
-        if (!existsSync(monthPath)) continue;
-        const file = JSON.parse(readFileSync(monthPath, 'utf-8')) as { rows: { stockSlug: string }[] };
-        for (const r of file.rows) slugs.add(r.stockSlug);
-      }
-    }
-  } else {
-    for (const month of index.months) {
-      const monthPath = join(signalsDir, `${monthFileSlug(month)}.json`);
-      if (!existsSync(monthPath)) continue;
-      const file = JSON.parse(readFileSync(monthPath, 'utf-8')) as { rows: { stockSlug: string }[] };
-      for (const r of file.rows) slugs.add(r.stockSlug);
-    }
-  }
-
-  if (slugs.size === 0) {
-    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder' } }];
-  }
-
-  return [...slugs].map((slug) => ({
+  return stocks.map(({ slug, stockName }) => ({
     params: { slug },
-    props: { stockSlug: slug },
+    props: { stockSlug: slug, stockName },
   }));
 }
 
-const { stockSlug } = Astro.props;
+const { stockSlug, stockName } = Astro.props;
 const isPlaceholder = stockSlug === '_placeholder';
+const pageMeta = isPlaceholder
+  ? { title: 'Smart Money Signal | IPOFins', description: 'Institutional conviction score breakdown.', path: signalDetailPath('_placeholder') }
+  : getSignalDetailPageMeta(stockName, stockSlug);
+
+const jsonLd = isPlaceholder
+  ? undefined
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: pageMeta.heading,
+      description: pageMeta.description,
+      url: `${BRAND_URL}${pageMeta.path}`,
+    };
 ---
 
 <BaseLayout
-  title="Smart Money Signal - Institutional Conviction | IPOFins"
-  description="Detailed smart money signal breakdown: conviction score, fund buying activity, AMC participation, and institutional confidence."
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
   ogImage="/og-fund.png"
+  jsonLd={jsonLd}
 >
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
       <li><span class="mx-1">/</span></li>
-      <li><a href="/mutual-funds/smart-money" class="hover:text-primary-600 transition-colors">Smart Money</a></li>
+      <li><a href={sm.hub} class="hover:text-primary-600 transition-colors">Smart Money</a></li>
       <li><span class="mx-1">/</span></li>
-      <li class="text-surface-900 dark:text-white font-medium">Signal Detail</li>
+      <li><a href={stockSignalPath()} class="hover:text-primary-600 transition-colors">Stock Signal</a></li>
+      {!isPlaceholder && (
+        <>
+          <li><span class="mx-1">/</span></li>
+          <li class="text-surface-900 dark:text-white font-medium">{stockName}</li>
+        </>
+      )}
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Score Breakdown</li>
     </ol>
   </nav>
 
-  <section class="container-wide py-8 pb-12">
+  <section class="container-wide pt-8 pb-4">
+    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>
+      {isPlaceholder ? 'Smart Money Signal' : pageMeta.heading}
+    </h1>
+    <p class="mt-1 text-sm text-surface-500" data-page-subtitle>
+      {isPlaceholder ? 'Conviction score breakdown' : pageMeta.subtitle}
+    </p>
+  </section>
+
+  <section class="container-wide py-4 pb-12">
     {isPlaceholder ? (
       <div class="text-center py-12 text-surface-500 text-sm">
         <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate signal pages.</p>
-        <a href="/mutual-funds/smart-money" class="text-primary-600 mt-2 inline-block">← Back to Smart Money</a>
+        <a href={sm.hub} class="text-primary-600 mt-2 inline-block">← Back to Smart Money</a>
       </div>
     ) : (
       <SmartMoneySignalDetailPage client:only="react" stockSlug={stockSlug}>
@@ -83,4 +84,11 @@ const isPlaceholder = stockSlug === '_placeholder';
       </SmartMoneySignalDetailPage>
     )}
   </section>
+
+  {!isPlaceholder && (
+    <section class="container-wide pb-12">
+      <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">More Smart Money</h2>
+      <SmartMoneyInternalLinks monthNote={false} />
+    </section>
+  )}
 </BaseLayout>

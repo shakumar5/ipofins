@@ -45,9 +45,32 @@ function signalMonthUrl(month: string): string {
   return `${SIGNALS_BASE}/${monthFileSlug(month)}.json`;
 }
 
-function resolveCategory(index: SignalsIndex, category: string): string {
-  if (category && category !== 'All') return category;
-  return index.categories[0] || 'Large Cap';
+function signalCategoriesWithAll(categories: string[]): string[] {
+  const rest = categories.filter((c) => c !== 'All');
+  return ['All', ...rest];
+}
+
+async function loadSignalsCategoryRows(
+  month: string,
+  category: string,
+  index: SignalsIndex,
+): Promise<SmartMoneySignalRow[]> {
+  try {
+    return await loadSignalsCategoryChunk(month, category);
+  } catch {
+    if (index.layout === 'by-category') return [];
+    return loadSignalsMonolithFiltered(month, category);
+  }
+}
+
+async function loadSignalsAllCategories(
+  month: string,
+  index: SignalsIndex,
+): Promise<SmartMoneySignalRow[]> {
+  const chunks = await Promise.all(
+    index.categories.map((cat) => loadSignalsCategoryRows(month, cat, index)),
+  );
+  return chunks.flat();
 }
 
 export async function loadSignalsIndex(): Promise<SignalsIndex> {
@@ -72,37 +95,18 @@ async function loadSignalsMonolithFiltered(
 
 export async function loadSignalsMonth(
   month: string,
-  category = 'Large Cap',
+  category = 'All',
 ): Promise<SmartMoneySignalsData> {
   const index = await loadSignalsIndex();
-  const targetCategory = resolveCategory(index, category);
+  const categories = signalCategoriesWithAll(index.categories);
 
-  if (index.layout === 'by-category') {
-    const rows = await loadSignalsCategoryChunk(month, targetCategory);
-    return {
-      months: index.months,
-      categories: index.categories,
-      rows,
-    };
+  if (category === 'All') {
+    const rows = await loadSignalsAllCategories(month, index);
+    return { months: index.months, categories, rows };
   }
 
-  // Prefer per-category files even when index predates the split (partial deploys).
-  try {
-    const rows = await loadSignalsCategoryChunk(month, targetCategory);
-    return {
-      months: index.months,
-      categories: index.categories,
-      rows,
-    };
-  } catch {
-    // Fall back to legacy monolith — filtered to one category after full parse.
-    const rows = await loadSignalsMonolithFiltered(month, targetCategory);
-    return {
-      months: index.months,
-      categories: index.categories,
-      rows,
-    };
-  }
+  const rows = await loadSignalsCategoryRows(month, category, index);
+  return { months: index.months, categories, rows };
 }
 
 export async function loadTrackerIndex(): Promise<TrackerIndex> {

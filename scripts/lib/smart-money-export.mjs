@@ -51,6 +51,26 @@ function roundPct(value, digits = 2) {
   return Math.round(value * factor) / factor;
 }
 
+const WEIGHT_CHANGE_THRESHOLD = 0.01;
+
+function computeTrackerStockWeights(funds, changeType) {
+  if (!funds.length) return { weightAvg: 0, weightTotal: 0 };
+  if (changeType === 'increased') {
+    const sum = funds.reduce((s, f) => s + f.pctChange, 0);
+    return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+  }
+  if (changeType === 'decreased') {
+    const sum = funds.reduce((s, f) => s + (f.prevPct - f.newPct), 0);
+    return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+  }
+  if (changeType === 'fresh_entry') {
+    const sum = funds.reduce((s, f) => s + f.newPct, 0);
+    return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+  }
+  const sum = funds.reduce((s, f) => s + f.prevPct, 0);
+  return { weightTotal: roundPct(sum), weightAvg: roundPct(sum / funds.length) };
+}
+
 function pickBetterStockMeta(current, candidate) {
   const betterName = candidate.stockName.length >= current.stockName.length ? candidate.stockName : current.stockName;
   const betterSlug = candidate.stockName.length >= current.stockName.length ? candidate.stockSlug : current.stockSlug;
@@ -123,29 +143,21 @@ function aggregateChanges(rows) {
         const allFunds = bucket.funds.sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
         const funds =
           changeType === 'increased'
-            ? allFunds.filter((f) => f.pctChange > 0)
+            ? allFunds.filter((f) => f.pctChange > WEIGHT_CHANGE_THRESHOLD)
             : changeType === 'decreased'
-              ? allFunds.filter((f) => f.pctChange < 0)
+              ? allFunds.filter((f) => f.pctChange < -WEIGHT_CHANGE_THRESHOLD)
               : allFunds;
         if (changeType === 'increased' || changeType === 'decreased') {
           if (funds.length === 0) continue;
         }
-        const weightTotal =
-          changeType === 'increased'
-            ? roundPct(funds.reduce((s, f) => s + f.pctChange, 0))
-            : changeType === 'decreased'
-              ? roundPct(funds.reduce((s, f) => s + (f.prevPct - f.newPct), 0))
-              : changeType === 'fresh_entry'
-                ? roundPct(funds.reduce((s, f) => s + f.newPct, 0) / funds.length)
-                : changeType === 'complete_exit'
-                  ? roundPct(funds.reduce((s, f) => s + f.prevPct, 0) / funds.length)
-                  : 0;
+        const weights = computeTrackerStockWeights(funds, changeType);
         result.push({
           stockName: bucket.stockName,
           stockSlug: bucket.stockSlug,
           sector: bucket.sector,
           fundCount: funds.length,
-          weightTotal,
+          weightAvg: weights.weightAvg,
+          weightTotal: weights.weightTotal,
           funds,
         });
       }

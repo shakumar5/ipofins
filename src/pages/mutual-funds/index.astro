@@ -1,8 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAllFunds, getHoldingsStats } from '../../lib/data/funds';
+import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
 
 const fundsData = await getAllFunds();
+const sm = loadSmartMoneyTrackerLinks();
 const categories = [...new Set(fundsData.map((f) => f.category))].sort((a, b) => a.localeCompare(b));
 const totalFunds = fundsData.length;
 const { amcCount } = await getHoldingsStats();
@@ -56,7 +59,7 @@ const faqJsonLd = {
       <a href="/mutual-funds/mutual-fund-holdings-changes" class="btn-secondary px-6 py-3">📋 Holdings Changes</a>
       <a href="/mutual-funds/portfolio-overlap-checker" class="btn-secondary px-6 py-3">🔗 Portfolio Overlap</a>
       <a href="/mutual-funds/fund-overlap" class="btn-secondary px-6 py-3">📊 Fund Overlap</a>
-      <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">💡 Smart Money Tracker</a>
+      <a href={sm.hub} class="btn-secondary px-6 py-3">💡 Smart Money Tracker</a>
     </div>
   </section>
 
@@ -72,16 +75,32 @@ const faqJsonLd = {
             <h3 class="text-sm font-bold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">Track Fund Manager Moves — Holdings Changes</h3>
             <span class="px-2 py-0.5 text-xs font-bold bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 rounded-full">NEW</span>
           </div>
-          <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Compare portfolios month-on-month across {amcCount} AMCs. See what stocks top fund managers are buying and selling.</p>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">Compare portfolios month-on-month across {amcCount} AMCs. Or see industry-wide <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought</a> / <a href={sm.mostSold} class="text-primary-600 hover:underline">Most Sold</a> stocks.</p>
         </div>
         <svg class="w-5 h-5 text-primary-500 flex-shrink-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </div>
     </a>
   </section>
 
+  <!-- Smart Money Tracker Highlight -->
+  <section class="container-wide py-4">
+    <div class="card bg-gradient-to-r from-emerald-50 to-surface-50 dark:from-emerald-950/20 dark:to-surface-800 border-emerald-200 dark:border-emerald-800">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-surface-900 dark:text-white">Smart Money Tracker — What Funds Are Buying & Selling</h3>
+          <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Industry-wide stock activity from official AMC disclosures. Ranked by number of funds with portfolio weight changes.</p>
+        </div>
+        <a href={sm.hub} class="text-xs font-medium text-primary-600 hover:underline flex-shrink-0">Open hub →</a>
+      </div>
+      <div class="mt-4">
+        <SmartMoneyInternalLinks showHub={false} monthNote={false} />
+      </div>
+    </div>
+  </section>
+
   <!-- Sector Intelligence Highlight -->
   <section class="container-wide py-4">
-    <a href="/mutual-funds/smart-money#sector-intelligence" class="block card bg-gradient-to-r from-violet-50 to-surface-50 dark:from-violet-950/20 dark:to-surface-800 border-violet-200 dark:border-violet-800 hover:border-violet-400 group">
+    <a href={sm.sectorIntelligence} class="block card bg-gradient-to-r from-violet-50 to-surface-50 dark:from-violet-950/20 dark:to-surface-800 border-violet-200 dark:border-violet-800 hover:border-violet-400 group">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 bg-violet-100 dark:bg-violet-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
           <span class="text-2xl">🌐</span>
@@ -226,6 +245,8 @@ const faqJsonLd = {
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
     <div class="flex flex-wrap gap-3">
       <a href="/tools/sip-calculator" class="btn-secondary">SIP Calculator</a>
+      <a href={sm.mostBought} class="btn-secondary">Most Bought Stocks</a>
+      <a href={sm.holdingsChanges} class="btn-secondary">Holdings Changes</a>
       <a href="/tools/lumpsum-calculator" class="btn-secondary">Lumpsum Calculator</a>
       <a href="/tools/cagr-calculator" class="btn-secondary">CAGR Calculator</a>
       <a href="/ipo" class="btn-secondary">Live IPOs</a>

@@ -4,6 +4,7 @@ import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
 import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
 import { getMfHubBuildData } from '../../../lib/mf-hub-build';
 import { mfTabConfig } from '../../../lib/mf-section-config';
+import { BRAND_URL } from '../../../lib/brand';
 
 const hub = await getMfHubBuildData();
 const cfg = mfTabConfig('best');
@@ -56,7 +57,7 @@ const faqJsonLd = {
 };
 ---
 
-<BaseLayout title={cfg.title} description={cfg.description} jsonLd={jsonLd}>
+<BaseLayout title={cfg.title} description={cfg.description} canonicalUrl={`${BRAND_URL}/mutual-funds/best`} jsonLd={jsonLd}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>

@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useTransition, useRef, lazy, Suspense
 const SmartMoneyTracker = lazy(() => import('./SmartMoneyTracker'));
 const SmartMoneySignalTable = lazy(() => import('./SmartMoneySignalTable'));
 const SectorIntelligenceTable = lazy(() => import('./SectorIntelligenceTable'));
-const StockSignalTab = lazy(() => import('./StockSignalTab'));
 
 import type { SmartMoneyTrackerData } from '../../lib/data/holdings';
 import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
@@ -11,9 +10,19 @@ import type { SectorIntelligenceData } from '../../lib/sector-intelligence';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import {
   getSmartMoneyPageMeta,
-  SMART_MONEY_TAB_HASH,
+  parseSmartMoneyTabFromPathname,
+  smartMoneyTabPath,
   type SmartMoneyTab,
 } from '../../lib/smart-money-meta';
+import {
+  getSmartMoneyTrackerPageMeta,
+  parseTrackerFromPathname,
+  trackerPathFromViewMonth,
+  TRACKER_BASE_PATH,
+  TRACKER_VIEW_OPTIONS,
+  type TrackerViewType,
+} from '../../lib/smart-money-tracker-meta';
+import type { SmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
 
 import {
   loadSignalsIndex,
@@ -24,39 +33,43 @@ import {
 import { fetchJsonCached } from '../../lib/client-data';
 
 const SECTOR_URL = '/data/sector-intelligence.json';
-const BASE_PATH = '/mutual-funds/smart-money';
+const BASE_PATH = TRACKER_BASE_PATH;
+
+interface SmartMoneyPageProps {
+  initialTracker?: { view: TrackerViewType; monthLabel: string } | null;
+  initialTab?: SmartMoneyTab | null;
+  trackerLinks?: SmartMoneyTrackerLinks | null;
+}
 
 type Tab = SmartMoneyTab;
 
-function tabFromHash(): Tab | null {
-  if (typeof window === 'undefined') return null;
-  const hash = window.location.hash;
-  if (hash === '#sector-intelligence') return 'sectors';
-  if (hash === '#stock-signal') return 'stock-signal';
-  if (hash === '#signals') return 'signals';
-  return null;
-}
+const LEGACY_HASH_TAB: Record<string, Tab> = {
+  '#signals': 'signals',
+  '#stock-signal': 'stock-signal',
+  '#sector-intelligence': 'sectors',
+};
 
-function scheduleAfterPaint(task: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-  const w = window as Window & {
-    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    cancelIdleCallback?: (id: number) => void;
-  };
-  if (w.requestIdleCallback) {
-    const id = w.requestIdleCallback(task, { timeout: 1200 });
-    return () => w.cancelIdleCallback?.(id);
-  }
-  const t = window.setTimeout(task, 0);
-  return () => window.clearTimeout(t);
-}
-
-export default function SmartMoneyPage() {
-  const [tab, setTab] = useState<Tab>(() => tabFromHash() || 'tracker');
+export default function SmartMoneyPage({
+  initialTracker = null,
+  initialTab = null,
+  trackerLinks = null,
+}: SmartMoneyPageProps) {
+  const [tab, setTab] = useState<Tab>(() => {
+    if (initialTracker) return 'tracker';
+    if (initialTab) return initialTab;
+    if (typeof window !== 'undefined') {
+      const fromPath = parseSmartMoneyTabFromPathname(window.location.pathname);
+      if (fromPath) return fromPath;
+    }
+    return 'tracker';
+  });
   const [, startTransition] = useTransition();
   const trackerLoadStarted = useRef(false);
   const signalsLoadStarted = useRef(false);
   const sectorLoadStarted = useRef(false);
+  const [trackerRetry, setTrackerRetry] = useState(0);
+  const [signalsRetry, setSignalsRetry] = useState(0);
+  const [sectorRetry, setSectorRetry] = useState(0);
 
   const [trackerData, setTrackerData] = useState<SmartMoneyTrackerData | null>(null);
   const [trackerLoading, setTrackerLoading] = useState(false);
@@ -72,14 +85,32 @@ export default function SmartMoneyPage() {
   const [sectorError, setSectorError] = useState<string | null>(null);
 
   const applyTab = useCallback((next: Tab, push = true) => {
+    if (next === 'stock-signal') {
+      window.location.href = trackerLinks?.stockSignal ?? smartMoneyTabPath('stock-signal');
+      return;
+    }
     setTab(next);
     if (typeof window === 'undefined') return;
-    const target = `${BASE_PATH}${SMART_MONEY_TAB_HASH[next]}`;
-    if (push && `${window.location.pathname}${window.location.hash}` !== target) {
+    let target = smartMoneyTabPath(next);
+    if (next === 'tracker') {
+      const parsed = parseTrackerFromPathname(window.location.pathname);
+      if (parsed) target = trackerPathFromViewMonth(parsed.view, parsed.monthLabel);
+    }
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (push && current !== target) {
       window.history.pushState({ smTab: next }, '', target);
     }
-    applyClientPageMeta(getSmartMoneyPageMeta(next));
-  }, []);
+    if (next === 'tracker') {
+      const parsed = parseTrackerFromPathname(target);
+      if (parsed) {
+        applyClientPageMeta(getSmartMoneyTrackerPageMeta(parsed.view, parsed.monthLabel));
+      } else {
+        applyClientPageMeta(getSmartMoneyPageMeta('tracker'));
+      }
+    } else {
+      applyClientPageMeta(getSmartMoneyPageMeta(next));
+    }
+  }, [trackerLinks]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -87,17 +118,78 @@ export default function SmartMoneyPage() {
       window.location.replace('/mutual-funds/fund-overlap');
       return;
     }
-    const syncHash = () => {
-      applyTab(tabFromHash() || 'tracker', false);
+    const legacyTab = LEGACY_HASH_TAB[window.location.hash];
+    if (legacyTab) {
+      if (legacyTab === 'stock-signal') {
+        window.location.replace(smartMoneyTabPath('stock-signal'));
+        return;
+      }
+      const target = smartMoneyTabPath(legacyTab);
+      const qs = window.location.search;
+      window.history.replaceState(null, '', `${target}${qs}`);
+      setTab(legacyTab);
+      applyClientPageMeta(getSmartMoneyPageMeta(legacyTab));
+      return;
+    }
+    const syncFromNavigation = () => {
+      const parsedTracker = parseTrackerFromPathname(window.location.pathname);
+      if (parsedTracker) {
+        setTab('tracker');
+        applyClientPageMeta(getSmartMoneyTrackerPageMeta(parsedTracker.view, parsedTracker.monthLabel));
+        return;
+      }
+      const parsedTab = parseSmartMoneyTabFromPathname(window.location.pathname);
+      if (parsedTab === 'stock-signal') {
+        window.location.replace(smartMoneyTabPath('stock-signal'));
+        return;
+      }
+      if (parsedTab) {
+        setTab(parsedTab);
+        applyClientPageMeta(getSmartMoneyPageMeta(parsedTab));
+        return;
+      }
+      if (window.location.pathname === BASE_PATH || window.location.pathname === `${BASE_PATH}/`) {
+        setTab('tracker');
+        applyClientPageMeta(getSmartMoneyPageMeta('tracker'));
+      }
     };
-    syncHash();
-    window.addEventListener('hashchange', syncHash);
-    window.addEventListener('popstate', syncHash);
-    return () => {
-      window.removeEventListener('hashchange', syncHash);
-      window.removeEventListener('popstate', syncHash);
+    syncFromNavigation();
+    window.addEventListener('popstate', syncFromNavigation);
+    return () => window.removeEventListener('popstate', syncFromNavigation);
+  }, []);
+
+  function scheduleAfterPaint(task: () => void): () => void {
+    if (typeof window === 'undefined') return () => {};
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
     };
-  }, [applyTab]);
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(task, { timeout: 1200 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(task, 0);
+    return () => window.clearTimeout(t);
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const legacyView = params.get('view');
+    if (!legacyView || !TRACKER_VIEW_OPTIONS.some((o) => o.id === legacyView)) return;
+
+    const month =
+      initialTracker?.monthLabel ||
+      trackerData?.months[0]?.label;
+    if (!month) return;
+
+    params.delete('view');
+    const qs = params.toString();
+    const path = trackerPathFromViewMonth(legacyView as TrackerViewType, month);
+    window.history.replaceState(null, '', `${path}${qs ? `?${qs}` : ''}`);
+    setTab('tracker');
+    applyClientPageMeta(getSmartMoneyTrackerPageMeta(legacyView as TrackerViewType, month));
+  }, [trackerData, initialTracker]);
 
   const loadTrackerForMonth = useCallback(async (month: string, merge = true) => {
     setTrackerLoading(true);
@@ -121,7 +213,7 @@ export default function SmartMoneyPage() {
   }, []);
 
   useEffect(() => {
-    if (tab !== 'tracker' || trackerData || trackerError || trackerLoadStarted.current) return;
+    if (tab !== 'tracker' || trackerData || trackerLoadStarted.current) return;
     trackerLoadStarted.current = true;
     let cancelled = false;
     const cancelSchedule = scheduleAfterPaint(() => {
@@ -129,7 +221,11 @@ export default function SmartMoneyPage() {
         setTrackerLoading(true);
         try {
           const index = await loadTrackerIndex();
-          const firstMonth = index.months[0]?.label;
+          const deepMonth = initialTracker?.monthLabel;
+          const firstMonth =
+            deepMonth && index.months.some((m) => m.label === deepMonth)
+              ? deepMonth
+              : index.months[0]?.label;
           if (!firstMonth) throw new Error('No tracker months available');
           if (cancelled) return;
           const chunk = await loadTrackerMonth(firstMonth);
@@ -146,9 +242,9 @@ export default function SmartMoneyPage() {
       cancelled = true;
       cancelSchedule();
     };
-  }, [tab, trackerData, trackerError, startTransition]);
+  }, [tab, trackerData, trackerError, trackerRetry, startTransition, initialTracker]);
 
-  const loadSignalsForMonth = useCallback(async (month: string, category = 'Large Cap') => {
+  const loadSignalsForMonth = useCallback(async (month: string, category = 'All') => {
     setSignalsLoading(true);
     setSignalsError(null);
     try {
@@ -165,9 +261,9 @@ export default function SmartMoneyPage() {
   }, []);
 
   useEffect(() => {
-    if (tab !== 'signals' && tab !== 'stock-signal') return;
+    if (tab !== 'signals') return;
     if (signalsData && signalsMonth) return;
-    if (signalsError || signalsLoadStarted.current) return;
+    if (signalsLoadStarted.current) return;
     signalsLoadStarted.current = true;
     let cancelled = false;
     const cancelSchedule = scheduleAfterPaint(() => {
@@ -177,7 +273,7 @@ export default function SmartMoneyPage() {
           const index = await loadSignalsIndex();
           const month = index.months[0] || '';
           if (!month) throw new Error('No signal months available');
-          const data = await loadSignalsMonth(month, 'Large Cap');
+          const data = await loadSignalsMonth(month, 'All');
           if (cancelled) return;
           startTransition(() => {
             setSignalsData(data);
@@ -194,10 +290,10 @@ export default function SmartMoneyPage() {
       cancelled = true;
       cancelSchedule();
     };
-  }, [tab, signalsData, signalsMonth, signalsError, startTransition]);
+  }, [tab, signalsData, signalsMonth, signalsRetry, startTransition]);
 
   useEffect(() => {
-    if (tab !== 'sectors' || sectorData || sectorError || sectorLoadStarted.current) return;
+    if (tab !== 'sectors' || sectorData || sectorLoadStarted.current) return;
     sectorLoadStarted.current = true;
     setSectorLoading(true);
     const cancelSchedule = scheduleAfterPaint(() => {
@@ -207,7 +303,42 @@ export default function SmartMoneyPage() {
         .finally(() => setSectorLoading(false));
     });
     return cancelSchedule;
-  }, [tab, sectorData, sectorError, startTransition]);
+  }, [tab, sectorData, sectorRetry, startTransition]);
+
+  const retryTracker = () => {
+    trackerLoadStarted.current = false;
+    setTrackerError(null);
+    setTrackerData(null);
+    setTrackerRetry((r) => r + 1);
+  };
+
+  const retrySignals = () => {
+    signalsLoadStarted.current = false;
+    setSignalsError(null);
+    setSignalsData(null);
+    setSignalsMonth('');
+    setSignalsRetry((r) => r + 1);
+  };
+
+  const retrySector = () => {
+    sectorLoadStarted.current = false;
+    setSectorError(null);
+    setSectorData(null);
+    setSectorRetry((r) => r + 1);
+  };
+
+  const errorPanel = (message: string, onRetry: () => void) => (
+    <div className="text-center py-12 text-red-600 dark:text-red-400">
+      <p className="text-sm">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-3 px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   const tabClass = (active: boolean) =>
     `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -225,19 +356,28 @@ export default function SmartMoneyPage() {
         <button type="button" onClick={() => applyTab('signals')} className={tabClass(tab === 'signals')}>
           Smart Money Signal
         </button>
-        <button type="button" id="stock-signal" onClick={() => applyTab('stock-signal')} className={tabClass(tab === 'stock-signal')}>
+        <button type="button" onClick={() => applyTab('stock-signal')} className={tabClass(tab === 'stock-signal')}>
           Stock Signal
         </button>
-        <button type="button" id="sector-intelligence" onClick={() => applyTab('sectors')} className={tabClass(tab === 'sectors')}>
+        <button type="button" onClick={() => applyTab('sectors')} className={tabClass(tab === 'sectors')}>
           Sector Intelligence
         </button>
       </div>
 
+      {trackerLinks && (
+        <div className="mb-6 flex flex-wrap gap-2 text-xs">
+          <a href={trackerLinks.mostBought} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Most Bought</a>
+          <a href={trackerLinks.mostSold} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Most Sold</a>
+          <a href={trackerLinks.freshEntries} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Fresh Entries</a>
+          <a href={trackerLinks.completeExits} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Complete Exits</a>
+          <a href={trackerLinks.holdingsChanges} className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600">Holdings Changes</a>
+          <span className="text-surface-400 self-center">({trackerLinks.latestMonth})</span>
+        </div>
+      )}
+
       {tab === 'tracker' && (
         trackerError ? (
-          <div className="text-center py-12 text-red-600 dark:text-red-400">
-            <p className="text-sm">{trackerError}</p>
-          </div>
+          errorPanel(trackerError, retryTracker)
         ) : trackerLoading && !trackerData ? (
           <div className="text-center py-12 text-surface-500 dark:text-surface-400">
             <p className="text-sm">Loading Smart Money tracker…</p>
@@ -247,6 +387,8 @@ export default function SmartMoneyPage() {
             <SmartMoneyTracker
             data={trackerData}
             loadingMonth={trackerLoading}
+            initialView={initialTracker?.view}
+            initialMonth={initialTracker?.monthLabel}
             onMonthChange={(month) => {
               if (!trackerData.byMonth[month]) loadTrackerForMonth(month);
             }}
@@ -257,9 +399,7 @@ export default function SmartMoneyPage() {
 
       {tab === 'signals' && (
         signalsError ? (
-          <div className="text-center py-12 text-red-600 dark:text-red-400">
-            <p className="text-sm">{signalsError}</p>
-          </div>
+          errorPanel(signalsError, retrySignals)
         ) : signalsLoading && !signalsData ? (
           <div className="text-center py-12 text-surface-500 dark:text-surface-400">
             <p className="text-sm">Loading smart money signals…</p>
@@ -279,39 +419,13 @@ export default function SmartMoneyPage() {
         ) : null
       )}
 
-      {tab === 'stock-signal' && (
-        signalsError ? (
-          <div className="text-center py-12 text-red-600 dark:text-red-400">
-            <p className="text-sm">{signalsError}</p>
-          </div>
-        ) : signalsLoading && !signalsData ? (
-          <div className="text-center py-12 text-surface-500 dark:text-surface-400">
-            <p className="text-sm">Loading stock signals…</p>
-          </div>
-        ) : signalsData ? (
-          <Suspense fallback={<div className="text-center py-12 text-surface-500"><p className="text-sm">Loading stock signals…</p></div>}>
-            <StockSignalTab
-            data={signalsData}
-            loading={signalsLoading}
-            month={signalsMonth}
-            onMonthChange={loadSignalsForMonth}
-            onCategoryChange={(category) => {
-              if (signalsMonth) loadSignalsForMonth(signalsMonth, category);
-            }}
-          />
-          </Suspense>
-        ) : null
-      )}
-
       {tab === 'sectors' && (
         sectorLoading ? (
           <div className="text-center py-12 text-surface-500 dark:text-surface-400">
             <p className="text-sm">Loading sector intelligence…</p>
           </div>
         ) : sectorError ? (
-          <div className="text-center py-12 text-red-600 dark:text-red-400">
-            <p className="text-sm">{sectorError}</p>
-          </div>
+          errorPanel(sectorError, retrySector)
         ) : sectorData ? (
           <Suspense fallback={<div className="text-center py-12 text-surface-500"><p className="text-sm">Loading sectors…</p></div>}>
             <SectorIntelligenceTable data={sectorData} />
