@@ -11,12 +11,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 
 const BAD_PATTERNS = [
-  { re: /<title>[^<]*\| ipofins/i, msg: '<title> uses lowercase "| ipofins"' },
-  { re: /© 2026 ipofins/i, msg: 'Footer copyright uses lowercase "ipofins"' },
-  { re: /About ipofins/i, msg: 'About page uses lowercase "About ipofins"' },
-  { re: /property="og:site_name" content="ipofins"/i, msg: 'og:site_name is lowercase' },
-  { re: /name="author" content="ipofins"/i, msg: 'meta author is lowercase' },
-  { re: /<span class="text-white font-bold text-sm">F<\/span>\s*\n\s*<span[^>]*>\s*ipofins/i, msg: 'Header logo reads as "F ipofins"' },
+  // Case-sensitive: must match literal lowercase "ipofins", not canonical "IPOFins".
+  { re: /<title>[^<]*\| ipofins/, msg: '<title> uses lowercase "| ipofins"' },
+  { re: /© 2026 ipofins/, msg: 'Footer copyright uses lowercase "ipofins"' },
+  { re: /About ipofins/, msg: 'About page uses lowercase "About ipofins"' },
+  { re: /property="og:site_name" content="ipofins"/, msg: 'og:site_name is lowercase' },
+  { re: /name="author" content="ipofins"/, msg: 'meta author is lowercase' },
+  { re: /<span class="text-white font-bold text-sm">F<\/span>\s*\n\s*<span[^>]*>\s*ipofins/, msg: 'Header logo reads as "F ipofins"' },
 ];
 
 let errors = [];
