@@ -145,7 +145,7 @@ function putBetter(map, key, fundId, fundById) {
   if (fundQualityScore(next) > fundQualityScore(cur)) map.set(key, fundId);
 }
 
-function slugVariants(slug) {
+export function slugVariants(slug) {
   const variants = new Set([slug]);
   const add = (s) => variants.add(s);
   add(slug.replace(/-midcap-/g, '-mid-cap-').replace(/-midcap$/g, '-mid-cap'));
@@ -160,7 +160,7 @@ function slugVariants(slug) {
 }
 
 /** AMFI slug → holdings fund slug (renamed schemes). */
-const AMFI_SLUG_ALIASES = {
+export const AMFI_SLUG_ALIASES = {
   'sbi-large-cap-fund': 'sbi-bluechip-fund',
   'sbi-large-and-midcap-fund': 'sbi-large-midcap-fund',
   'sbi-flexicap-fund-direct-plan': 'sbi-flexi-cap-fund',
@@ -264,6 +264,25 @@ const AMFI_SLUG_ALIASES = {
     'parag-parikh-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across',
   'nippon-india-flexi-cap-fund':
     'nippon-india-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across',
+  'samco-flexi-cap-fund': 'samco-flexicap-fund',
+  'samco-large-cap-fund': 'samco-large-cap-fund',
+  'samco-mid-cap-fund': 'samco-mid-cap-fund',
+  'samco-multi-cap-fund': 'samco-multi-cap-fund',
+  'samco-small-cap-fund': 'samco-small-cap-fund',
+  'samco-special-opportunities-fund': 'samco-special-opportunities-fund',
+  '360-one-focused-fund': '360-one-focused-fund-formerly-known-as-360-one-focused-equity-fund',
+  'bank-of-india-multi-cap-fund': 'bank-of-india-multi-cap-fund-direct-plan-growth',
+  'edelweiss-large-mid-cap-fund': 'edelweiss-large-mid-cap-fund-option',
+  'groww-value-fund': 'groww-value-fund-formerly-known-as-indiabulls-value-fund-option',
+  'hdfc-multi-cap-fund': 'hdfc-multi-cap-fund-growth-option-direct-plan',
+  'quant-large-mid-cap-fund': 'quant-large-mid-cap-fund-growth-option-direct-plan',
+  'trustmf-multi-cap-fund': 'trustmf-multi-cap-fund-direct-plan-growth',
+  'union-large-midcap-fund': 'union-large-midcap-fund-option',
+  'baroda-bnp-paribas-banking-and-financial-services-fund': 'baroda-bnp-paribas-banking-financial-services-fund',
+  'baroda-bnp-paribas-large-and-mid-cap-fund': 'baroda-bnp-paribas-large-mid-cap-fund',
+  'dsp-natural-resources-and-new-energy-fund': 'dsp-natural-resources-new-energy-fund',
+  'bajaj-finserv-banking-and-financial-services-fund-direct': 'bajaj-finserv-banking-and-financial-services-fund',
+  'capitalmind-flexi-cap-fund-direct-growth': 'capitalmind-flexi-cap-fund',
 };
 
 /**

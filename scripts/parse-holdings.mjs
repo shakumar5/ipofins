@@ -33,6 +33,10 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { unpackMonthHoldings } from './lib/holdings-month.mjs';
+import {
+  isGarbageDisclosureFund,
+  normalizeDisclosureFundName,
+} from './lib/holdings-name-utils.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
@@ -55,7 +59,47 @@ function monthStocks(fund, month) {
 }
 
 function slugify(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').substring(0, 80);
+  return slugifyFundName(text);
+}
+
+function slugifyFundName(text) {
+  const normalized = normalizeDisclosureFundName(text);
+  return normalized.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').substring(0, 80);
+}
+
+function mergeFundMonthData(existing, incoming) {
+  const months = Object.keys(incoming).filter((k) => k !== 'name' && k !== 'amc');
+  for (const month of months) {
+    const packed = unpackMonthHoldings(incoming[month]);
+    if (!packed.stocks.length) continue;
+    if (!existing[month]) {
+      existing[month] = incoming[month];
+      continue;
+    }
+    const current = unpackMonthHoldings(existing[month]);
+    if (packed.totalStocks > current.totalStocks) existing[month] = incoming[month];
+  }
+}
+
+function finalizeHoldingsKeys(output) {
+  const next = {};
+  for (const [slug, fund] of Object.entries(output.holdings)) {
+    const cleanName = normalizeDisclosureFundName(fund.name);
+    const cleanSlug = slugifyFundName(cleanName);
+    if (isGarbageDisclosureFund(cleanName, cleanSlug)) continue;
+    if (!next[cleanSlug]) {
+      next[cleanSlug] = { ...fund, name: cleanName };
+      continue;
+    }
+    mergeFundMonthData(next[cleanSlug], fund);
+  }
+  output.holdings = next;
+
+  const finalFundNames = new Set(Object.values(output.holdings).map((f) => f.name));
+  for (const [amc, funds] of Object.entries(output.amcs)) {
+    output.amcs[amc] = funds.filter((f) => finalFundNames.has(f));
+    if (output.amcs[amc].length === 0) delete output.amcs[amc];
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1995,6 +2039,9 @@ for (const entry of allResults) {
 
 output.months = sortMonthLabels(monthSet);
 
+// Normalize fund names/slugs (Samco titles, ERSTWHILE suffixes, etc.)
+finalizeHoldingsKeys(output);
+
 // Sort AMC fund lists
 for (const amc of Object.keys(output.amcs)) {
   output.amcs[amc].sort();
@@ -2050,9 +2097,11 @@ const junkFundPatterns = [
   /^Portfolio Statement/i,
   /^SCHEME CODE/i,
   /^\(Investment Manager/i,
+  /^Pursuant\s+to\s+Regulation/i,
+  /Securities\s+and\s+Exchange\s+Board.*Regulation/i,
 ];
 for (const [slug, fund] of Object.entries(output.holdings)) {
-  if (junkFundPatterns.some(p => p.test(fund.name))) {
+  if (isGarbageDisclosureFund(fund.name, slug) || junkFundPatterns.some(p => p.test(fund.name))) {
     delete output.holdings[slug];
     validationIssues++;
   }

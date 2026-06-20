@@ -63,9 +63,10 @@ console.log(`  Fund holdings:  ${counts.fund_holdings}`);
 console.log(`  Stocks:         ${counts.stocks}`);
 
 const warnings = [];
-if (counts.funds < 100) warnings.push('funds table looks empty (expected ~1,900)');
-if (counts.fund_navs < 100) warnings.push('fund_navs table looks empty (run pipeline:nav or 0-Predeploy.bat)');
-if (counts.fund_holdings < 1000) warnings.push('fund_holdings looks empty (run monthly holdings pipeline)');
+if (counts.funds > 0 && counts.funds < 50) warnings.push('funds table looks sparse (curated rebuild may be needed)');
+if (counts.funds > 800) warnings.push('funds table still has full AMFI universe — consider db:rebuild-curated-mf');
+if (counts.fund_navs > 0 && counts.fund_navs < 50) warnings.push('fund_navs sparse (run seed-curated-mf or pipeline:nav)');
+if (counts.fund_holdings < 500) warnings.push('fund_holdings looks empty (run db:rebuild-curated-mf or pipeline:monthly)');
 
 if (warnings.length) {
   console.warn('\n⚠️  Data warnings:');

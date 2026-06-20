@@ -35,9 +35,9 @@ async function main() {
 
   const parseFlags = fullReload ? '' : ' --incremental';
   run(`node scripts/parse-holdings.mjs${parseFlags}`, 'Parse Excel → fund-holdings.json');
-  run(nodeExecCmd('db/seed/fix-amc-assignments.mjs'), 'Fix AMCs + sync missing funds');
+  run(nodeExecCmd('db/seed/seed-curated-mf.mjs'), 'Upsert curated fund universe');
 
-  const seedFlags = fullReload ? '--full' : '';
+  const seedFlags = fullReload ? '--full --curated-only' : '--curated-only';
   run(nodeExecCmd('db/seed/seed-holdings-batch.mjs', seedFlags), 'Seed holdings into Neon');
   run(nodeExecCmd('db/seed/dedupe-stocks-canonical.mjs'), 'Deduplicate stocks + remove debt rows');
 

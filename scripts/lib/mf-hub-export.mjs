@@ -1,7 +1,9 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { resolveMfFundHoldings } from './mf-hub-holdings-meta.mjs';
 
-function toTableRow(f, holdingSlugsSet, holdingStockCounts) {
+function toTableRow(f, meta) {
+  const holdings = resolveMfFundHoldings(f, meta);
   return {
     name: f.name,
     slug: f.slug,
@@ -13,8 +15,9 @@ function toTableRow(f, holdingSlugsSet, holdingStockCounts) {
     rating: f.rating ?? null,
     aum: f.aum ?? null,
     riskLevel: f.riskLevel || 'medium',
-    hasHoldings: holdingSlugsSet.has(f.slug),
-    stockCount: holdingStockCounts[f.slug] ?? 0,
+    hasHoldings: holdings.hasHoldings,
+    stockCount: holdings.stockCount,
+    detailSlug: holdings.detailSlug,
   };
 }
 
@@ -51,8 +54,7 @@ export function loadMutualFundsJson(root) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
-export function buildMfHubExports(funds, holdingSlugs = [], holdingStockCounts = {}, stats = {}) {
-  const holdingSlugsSet = new Set(holdingSlugs);
+export function buildMfHubExports(funds, holdingsMeta, stats = {}) {
   const categories = [...new Set(funds.map((f) => f.category))].sort((a, b) => a.localeCompare(b));
   const bestFunds = selectBestFunds(funds);
   const latestUpdate = funds.reduce((latest, f) => {
@@ -63,18 +65,20 @@ export function buildMfHubExports(funds, holdingSlugs = [], holdingStockCounts =
     ? new Date(latestUpdate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'N/A';
 
+  const withHoldings = funds.filter((f) => resolveMfFundHoldings(f, holdingsMeta).hasHoldings);
+
   return {
     meta: {
       categories,
       bestFundsCount: bestFunds.length,
       totalFunds: funds.length,
-      holdingsCount: holdingSlugs.length,
+      holdingsCount: withHoldings.length,
       dataDate,
       amcCount: stats.amcCount ?? 0,
-      fundCount: stats.fundCount ?? 0,
+      fundCount: stats.fundCount ?? withHoldings.length,
       latestMonth: stats.latestMonth ?? '',
     },
-    best: bestFunds.map((f) => toTableRow(f, holdingSlugsSet, holdingStockCounts)),
-    all: funds.map((f) => toTableRow(f, holdingSlugsSet, holdingStockCounts)),
+    best: bestFunds.map((f) => toTableRow(f, holdingsMeta)),
+    all: funds.map((f) => toTableRow(f, holdingsMeta)),
   };
 }

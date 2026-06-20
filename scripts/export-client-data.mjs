@@ -11,6 +11,11 @@ import { buildSectorIntelligenceExport } from './lib/sector-intelligence-export.
 import { slimSignalRow, signalCategoryFileName } from './lib/signal-export-utils.mjs';
 import { unpackMonthHoldings } from './lib/holdings-month.mjs';
 import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs';
+import {
+  loadHoldingsMetaFromDb,
+  buildHoldingsMetaFromJson,
+} from './lib/mf-hub-holdings-meta.mjs';
+import { filterMutualFundsToCurated } from './lib/canonical-fund-filter.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'data');
@@ -304,19 +309,33 @@ async function main() {
     portfolioOverlap.funds.map((f) => ({ slug: f.slug, name: f.name })),
   );
 
-  const mfFunds = loadMutualFundsJson(ROOT);
+  const mfFundsAll = loadMutualFundsJson(ROOT);
+  const mfFunds = holdings
+    ? filterMutualFundsToCurated(mfFundsAll, holdings)
+    : mfFundsAll;
+  if (mfFunds.length && mfFunds.length < mfFundsAll.length) {
+    console.log(`  ℹ mf-hub table: ${mfFunds.length} curated funds (${mfFundsAll.length - mfFunds.length} excluded)`);
+  }
   if (mfFunds.length) {
-    const holdingSlugs = Object.keys(holdings.holdings || {});
-    const holdingStockCounts = {};
-    for (const [slug, fund] of Object.entries(holdings.holdings || {})) {
-      const months = holdings.months || [];
-      const last = months[months.length - 1];
-      const rows = last ? fund[last] : null;
-      if (Array.isArray(rows)) holdingStockCounts[slug] = rows.length;
+    let holdingsMeta = null;
+    if (isDbConfigured()) {
+      try {
+        holdingsMeta = await loadHoldingsMetaFromDb(sql);
+      } catch (e) {
+        console.warn('  ⚠ mf-hub holdings meta from DB failed:', e.message);
+      }
     }
-    const hub = buildMfHubExports(mfFunds, holdingSlugs, holdingStockCounts, {
+    if (!holdingsMeta) {
+      const rawPath = join(ROOT, 'src', 'data', 'fund-holdings.json');
+      const rawHoldings = existsSync(rawPath)
+        ? JSON.parse(readFileSync(rawPath, 'utf-8'))
+        : holdings;
+      holdingsMeta = buildHoldingsMetaFromJson(rawHoldings);
+      console.log('  ℹ mf-hub holdings meta from JSON fallback');
+    }
+    const hub = buildMfHubExports(mfFunds, holdingsMeta, {
       amcCount: Object.keys(holdings.amcs || {}).length,
-      fundCount: holdingSlugs.length,
+      fundCount: Object.values(holdingsMeta.stockCounts).length,
       latestMonth: holdings.months?.[holdings.months.length - 1] || '',
     });
     mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });

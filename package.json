@@ -22,6 +22,9 @@
     "preview": "astro preview",
     "astro": "astro",
     "predeploy": "node scripts/node-with-ca.mjs scripts/pipeline/sync-nav-only.mjs && node db/verify-schema.mjs",
+    "db:rebuild-curated": "node scripts/node-with-ca.mjs db/rebuild-curated-mf.mjs",
+    "db:purge-mf": "node scripts/node-with-ca.mjs db/purge-mf-data.mjs --confirm",
+    "db:seed-curated": "node scripts/node-with-ca.mjs db/seed/seed-curated-mf.mjs",
     "db:verify": "node db/verify-schema.mjs",
     "db:seed": "node scripts/node-with-ca.mjs db/seed/seed-from-json.mjs",
     "db:seed-holdings": "node scripts/node-with-ca.mjs db/seed/seed-holdings-batch.mjs",
@@ -39,6 +42,7 @@
     "report:amcs": "node scripts/report-missing-amcs.mjs",
     "report:holdings": "node scripts/report-holdings-by-amc.mjs",
     "export:client-data": "node scripts/node-with-ca.mjs scripts/export-client-data.mjs",
+    "refresh:mutual-funds-json": "node scripts/node-with-ca.mjs scripts/refresh-mutual-funds-json.mjs",
     "og:generate": "node scripts/generate-og-images.mjs"
   },
   "dependencies": {

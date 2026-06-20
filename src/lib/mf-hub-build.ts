@@ -15,6 +15,7 @@ export interface MfHubFundRow {
   riskLevel: string;
   hasHoldings?: boolean;
   stockCount?: number;
+  detailSlug?: string | null;
 }
 
 function toTableRow(
@@ -46,6 +47,7 @@ function toTableRow(
     riskLevel: f.riskLevel,
     hasHoldings: holdingSlugs.has(f.slug),
     stockCount: holdingStockCounts[f.slug] ?? 0,
+    detailSlug: holdingSlugs.has(f.slug) ? f.slug : null,
   };
 }
 

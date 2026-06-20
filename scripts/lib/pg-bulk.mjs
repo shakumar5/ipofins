@@ -63,6 +63,62 @@ export async function bulkUpsertFundHoldings(rows, chunkSize = 3000) {
 }
 
 /**
+ * Bulk upsert sectors from holdings disclosures.
+ */
+export async function bulkUpsertSectors(rows, chunkSize = 200) {
+  if (!rows.length) return 0;
+  const pool = getPgPool();
+  let upserted = 0;
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const names = chunk.map((r) => r.name);
+    const slugs = chunk.map((r) => r.slug);
+
+    await pool.query(
+      `INSERT INTO sectors (name, slug)
+       SELECT u.name, u.slug
+       FROM UNNEST($1::text[], $2::text[]) AS u(name, slug)
+       ON CONFLICT (slug) DO NOTHING`,
+      [names, slugs],
+    );
+    upserted += chunk.length;
+  }
+
+  return upserted;
+}
+
+/**
+ * Bulk upsert stocks from holdings disclosures.
+ */
+export async function bulkUpsertStocks(rows, chunkSize = 500) {
+  if (!rows.length) return 0;
+  const pool = getPgPool();
+  let upserted = 0;
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const isins = chunk.map((r) => r.isin);
+    const names = chunk.map((r) => r.name);
+    const slugs = chunk.map((r) => r.slug);
+    const sectorIds = chunk.map((r) => r.sector_id);
+
+    await pool.query(
+      `INSERT INTO stocks (isin, name, slug, sector_id)
+       SELECT u.isin, u.name, u.slug, u.sector_id
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int[]) AS u(isin, name, slug, sector_id)
+       ON CONFLICT (slug) DO UPDATE SET
+         isin = COALESCE(stocks.isin, EXCLUDED.isin),
+         sector_id = COALESCE(EXCLUDED.sector_id, stocks.sector_id)`,
+      [isins, names, slugs, sectorIds],
+    );
+    upserted += chunk.length;
+  }
+
+  return upserted;
+}
+
+/**
  * Bulk upsert full portfolio stock counts (parsed before top-N trim).
  */
 export async function bulkUpsertFundPortfolioStats(rows, chunkSize = 2000) {

@@ -11,7 +11,7 @@ export const TRACKER_CATEGORIES = [
   'Others',
 ] as const;
 
-/** Equity fund categories shown in All Funds / Best Funds listings. */
+/** Equity fund categories in the curated DB universe (holdings-gated). */
 export const LISTABLE_EQUITY_CATEGORIES = [
   'Large Cap',
   'Large & Mid Cap',
@@ -21,12 +21,9 @@ export const LISTABLE_EQUITY_CATEGORIES = [
   'Small Cap',
   'Value',
   'Focused',
-  'ELSS',
   'Sectoral/Thematic',
   'Sectoral',
   'Contra',
-  'Dividend Yield',
-  'Index',
 ] as const;
 
 /** Equity fund categories included in smart-money analytics. */

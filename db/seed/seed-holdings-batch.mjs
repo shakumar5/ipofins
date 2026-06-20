@@ -14,9 +14,16 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { buildFundMatcher, slugify } from '../../scripts/lib/fund-match.mjs';
-import { buildStockIdResolver } from '../../scripts/lib/stock-utils.mjs';
+import { buildStockIdResolver, isDebtInstrument } from '../../scripts/lib/stock-utils.mjs';
 import { unpackMonthHoldings } from '../../scripts/lib/holdings-month.mjs';
-import { bulkUpsertFundHoldings, bulkUpsertFundPortfolioStats, closePgPool } from '../../scripts/lib/pg-bulk.mjs';
+import { buildCuratedParserSlugSet } from '../../scripts/lib/canonical-fund-filter.mjs';
+import {
+  bulkUpsertFundHoldings,
+  bulkUpsertFundPortfolioStats,
+  bulkUpsertSectors,
+  bulkUpsertStocks,
+  closePgPool,
+} from '../../scripts/lib/pg-bulk.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -24,6 +31,7 @@ const DATA_DIR = join(ROOT, 'src', 'data');
 
 const args = process.argv.slice(2);
 const fullReload = args.includes('--full');
+const curatedOnly = args.includes('--curated-only');
 const monthArg = args.find((a) => a.startsWith('--month='))?.split('=')[1];
 
 const envContent = readFileSync(join(ROOT, '.env'), 'utf-8');
@@ -54,6 +62,76 @@ function monthLabelFromIso(iso) {
   return `${names[Number(m) - 1]} ${y}`;
 }
 
+function sanitizeSectorName(sectorName) {
+  let sector = String(sectorName || '').trim();
+  if (!sector || /^\d+$/.test(sector)) return '';
+  if (/^\[?(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)/i.test(sector)) return '';
+  return sector;
+}
+
+function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs) {
+  const stockBySlug = new Map();
+  const sectorBySlug = new Map();
+
+  for (const [fundSlug, fundData] of Object.entries(holdingsData.holdings)) {
+    if (allowedParserSlugs && !allowedParserSlugs.has(fundSlug)) continue;
+
+    for (const monthStr of Object.keys(fundData).filter((k) => k !== 'name' && k !== 'amc')) {
+      const monthDate = monthToDate(monthStr);
+      if (!monthDate || !targetDates.has(monthDate)) continue;
+
+      const { stocks: holdings } = unpackMonthHoldings(fundData[monthStr]);
+      for (const holding of holdings) {
+        if (!holding?.name || isDebtInstrument(holding.name, holding.sector)) continue;
+
+        const stockSlug = slugify(holding.name);
+        if (!stockSlug || stockBySlug.has(stockSlug)) continue;
+
+        const sectorName = sanitizeSectorName(holding.sector);
+        if (sectorName) {
+          const sectorSlug = slugify(sectorName);
+          if (sectorSlug && !sectorBySlug.has(sectorSlug)) {
+            sectorBySlug.set(sectorSlug, { name: sectorName, slug: sectorSlug });
+          }
+        }
+
+        stockBySlug.set(stockSlug, {
+          isin: holding.isin ? String(holding.isin).trim() : null,
+          name: holding.name,
+          slug: stockSlug,
+          sectorSlug: sectorName ? slugify(sectorName) : null,
+        });
+      }
+    }
+  }
+
+  return {
+    sectors: [...sectorBySlug.values()],
+    stocks: [...stockBySlug.values()],
+  };
+}
+
+async function ensureStocksFromHoldings(holdingsData, targetDates, allowedParserSlugs) {
+  const { sectors, stocks } = collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs);
+  if (!stocks.length) return 0;
+
+  if (sectors.length) {
+    await bulkUpsertSectors(sectors);
+  }
+
+  const sectorRows = await sql`SELECT id, slug FROM sectors`;
+  const sectorIdBySlug = Object.fromEntries(sectorRows.map((r) => [r.slug, r.id]));
+
+  const stockRows = stocks.map((stock) => ({
+    isin: stock.isin,
+    name: stock.name,
+    slug: stock.slug,
+    sector_id: stock.sectorSlug ? sectorIdBySlug[stock.sectorSlug] ?? null : null,
+  }));
+
+  return bulkUpsertStocks(stockRows);
+}
+
 async function main() {
   const t0 = Date.now();
   console.log('═══════════════════════════════════════════════════════════');
@@ -81,14 +159,26 @@ async function main() {
 
   const targetDates = new Set(targetMonthLabels.map(monthToDate).filter(Boolean));
 
+  let allowedParserSlugs = null;
+  if (curatedOnly) {
+    const mutualFunds = readJSON('mutual-funds.json') || [];
+    allowedParserSlugs = buildCuratedParserSlugSet(holdingsData, mutualFunds);
+    console.log(`  Curated-only: ${allowedParserSlugs.size} parser slugs allowed`);
+  }
+
   const fundRows = await sql`SELECT id, slug, name, amc_id FROM funds`;
   const amcRows = await sql`SELECT id, name, slug FROM amcs`;
   const resolveFundId = buildFundMatcher(fundRows, amcRows);
 
+  console.log(`  Funds: ${fundRows.length}`);
+
+  console.log('\n  📈 Ensuring stock universe from holdings...');
+  const stocksUpserted = await ensureStocksFromHoldings(holdingsData, targetDates, allowedParserSlugs);
+  console.log(`  Stocks upserted: ${stocksUpserted}`);
+
   const stockRows = await sql`SELECT id, slug, name, isin FROM stocks`;
   const resolveStockId = buildStockIdResolver(stockRows, slugify);
-
-  console.log(`  Funds: ${fundRows.length}, Stocks: ${stockRows.length}`);
+  console.log(`  Stocks in DB: ${stockRows.length}`);
 
   if (fullReload) {
     await sql`DELETE FROM holdings_changes`;
@@ -111,6 +201,7 @@ async function main() {
   let unmatchedFunds = 0;
 
   for (const [fundSlug, fundData] of Object.entries(holdingsData.holdings)) {
+    if (allowedParserSlugs && !allowedParserSlugs.has(fundSlug)) continue;
     const fundId = resolveFundId(fundSlug, fundData);
     if (!fundId) {
       unmatchedFunds++;

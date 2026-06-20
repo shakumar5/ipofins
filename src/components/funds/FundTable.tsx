@@ -16,6 +16,8 @@ interface Fund {
   riskLevel: string;
   hasHoldings?: boolean;
   stockCount?: number;
+  /** DB direct-plan slug used for /mutual-funds/fund/{detailSlug}-holdings */
+  detailSlug?: string | null;
 }
 
 interface Props {
@@ -315,6 +317,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
         {paginatedFunds.map((fund, i) => {
           const hasHold = fund.hasHoldings === true;
           const stockCount = fund.stockCount;
+          const detailSlug = fund.detailSlug || fund.slug;
           const rank = startIdx + i + 1;
           const rowClass =
             'block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-all list-accent-hover';
@@ -362,7 +365,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
                 )}
               </div>
               <div className="text-center">
-                {stockCount ? (
+                {hasHold && stockCount != null && stockCount > 0 ? (
                   <span className="text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200">{stockCount}</span>
                 ) : (
                   <span className="text-xs text-gray-400">--</span>
@@ -375,7 +378,9 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{rank}. {fund.name}</h3>
                 <div className="flex items-center gap-1.5">
                   {hasHold && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">✓ Portfolio</span>}
-                  {stockCount ? <span className="text-[10px] font-semibold tabular-nums text-gray-600 dark:text-gray-300">{stockCount} stocks</span> : null}
+                  {hasHold && stockCount != null && stockCount > 0 ? (
+                    <span className="text-[10px] font-semibold tabular-nums text-gray-600 dark:text-gray-300">{stockCount} stocks</span>
+                  ) : null}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
                     fund.riskLevel === 'low' ? 'bg-green-50 text-green-600' :
                     fund.riskLevel === 'moderate' ? 'bg-yellow-50 text-yellow-600' :
@@ -405,7 +410,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
           return hasHold ? (
             <a
               key={fund.slug}
-              href={`/mutual-funds/fund/${fund.slug}-holdings`}
+              href={`/mutual-funds/fund/${detailSlug}-holdings`}
               className={`${rowClass} hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer`}
             >
               {rowInner}
