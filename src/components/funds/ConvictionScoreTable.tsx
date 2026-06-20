@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import FilterSelect from './FilterSelect';
 import type { ConvictionScoreRow } from '../../lib/data/holdings';
 
 interface ConvictionData {
@@ -59,32 +60,33 @@ export default function ConvictionScoreTable({ data }: Props) {
   return (
     <div>
       <div className="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">
+        <fieldset className="border-0 p-0 m-0 min-w-0">
+          <legend className="sr-only">Conviction score filters</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
-            >
-              {displayCategories.map((c) => (
-                <option key={c} value={c}>{c === 'ALL' ? 'All' : c}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Month</label>
-            <select
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
-            >
-              {data.months.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
+          <FilterSelect
+            id="conviction-category"
+            name="conviction-category"
+            label="Category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {displayCategories.map((c) => (
+              <option key={c} value={c}>{c === 'ALL' ? 'All' : c}</option>
+            ))}
+          </FilterSelect>
+          <FilterSelect
+            id="conviction-month"
+            name="conviction-month"
+            label="Month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+          >
+            {data.months.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </FilterSelect>
         </div>
+        </fieldset>
         <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
           Conviction score (0–100) ranks stocks by net fund-manager activity: fresh entries and increases boost score; exits and decreases lower it.
           Scores are percentile-ranked within each market-cap bucket for the selected month.

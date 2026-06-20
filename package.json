@@ -46,6 +46,7 @@
     "report:amcs": "node scripts/report-missing-amcs.mjs",
     "report:holdings": "node scripts/report-holdings-by-amc.mjs",
     "export:client-data": "node scripts/node-with-ca.mjs scripts/export-client-data.mjs",
+    "test:holdings-compare": "node scripts/test-holdings-compare.mjs",
     "refresh:mutual-funds-json": "node scripts/node-with-ca.mjs scripts/refresh-mutual-funds-json.mjs",
     "og:generate": "node scripts/generate-og-images.mjs"
   },

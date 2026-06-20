@@ -3,6 +3,7 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import SearchOverlay from '../components/SearchOverlay.astro';
+import DeferredAnalytics from '../components/DeferredAnalytics.astro';
 import { BRAND_NAME, BRAND_URL, BRAND_TWITTER_HANDLE, BRAND_TWITTER_URL } from '../lib/brand';
 
 interface Props {
@@ -78,9 +79,7 @@ const organizationSchema = {
     <meta name="geo.placename" content="India" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <!-- Preconnect to Google Fonts (eliminates DNS+TLS latency from critical chain) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preconnect only to our own origin (fonts use system stack — no Google Fonts round-trip) -->
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -102,6 +101,16 @@ const organizationSchema = {
     <script is:inline>
       (function(){
         var analyticsLoaded = false;
+        window.__webVitalsPending = false;
+        window.__analyticsReadyPending = false;
+        window.__startWebVitals = function() {
+          window.__webVitalsPending = true;
+          if (window.__runWebVitals) window.__runWebVitals();
+        };
+        window.__markAnalyticsReady = function() {
+          if (window.__flushAnalyticsReady) window.__flushAnalyticsReady();
+          else window.__analyticsReadyPending = true;
+        };
         window.loadThirdPartyScripts = function() {
           if (analyticsLoaded) return;
           analyticsLoaded = true;
@@ -180,11 +189,7 @@ const organizationSchema = {
       <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     )}
 
-    <!-- Vercel Web Analytics -->
-    <script>
-      import { inject } from '@vercel/analytics';
-      inject();
-    </script>
+    <slot name="head" />
 
   </head>
   <body class="min-h-screen flex flex-col">
@@ -201,7 +206,7 @@ const organizationSchema = {
     <SearchOverlay />
 
     <!-- Cookie Consent (for AdSense compliance) -->
-    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl transition-transform duration-300 translate-y-full" aria-hidden="true">
+    <div id="cookie-consent" class="cookie-consent-banner fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl cookie-consent-banner--hidden" aria-hidden="true">
       <div class="container-wide flex flex-col sm:flex-row items-center justify-between gap-4">
         <p class="text-sm text-surface-300">We use cookies for analytics and ads. By continuing, you agree to our <a href="/privacy" class="text-primary-300 underline hover:text-primary-200">Privacy Policy</a>.</p>
         <div class="flex gap-2">
@@ -214,29 +219,31 @@ const organizationSchema = {
       (function() {
         if (!localStorage.getItem('cookie-consent')) {
           var el = document.getElementById('cookie-consent');
-          if (el) { el.removeAttribute('aria-hidden'); setTimeout(function() { el.classList.remove('translate-y-full'); }, 1000); }
+          if (el) {
+            el.removeAttribute('aria-hidden');
+            var showBanner = function() {
+              requestAnimationFrame(function() {
+                el.classList.remove('cookie-consent-banner--hidden');
+              });
+            };
+            if (document.readyState === 'complete') {
+              setTimeout(showBanner, 4000);
+            } else {
+              window.addEventListener('load', function() { setTimeout(showBanner, 4000); }, { once: true });
+            }
+          }
         }
       })();
       function acceptCookies() {
         try {
           localStorage.setItem('cookie-consent', 'accepted');
           var el = document.getElementById('cookie-consent');
-          if (el) el.classList.add('translate-y-full');
+          if (el) el.classList.add('cookie-consent-banner--hidden');
           if (window.scheduleThirdPartyAfterHydration) window.scheduleThirdPartyAfterHydration();
         } catch (e) {}
       }
-      function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('translate-y-full'); }
+      function dismissCookies() { localStorage.setItem('cookie-consent', 'dismissed'); var el = document.getElementById('cookie-consent'); el.classList.add('cookie-consent-banner--hidden'); }
     </script>
-    <!-- Load Inter font non-blocking with font-display=optional -->
-    <script is:inline>
-      (function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=optional';l.media='print';l.onload=function(){l.media='all'};document.head.appendChild(l)})();
-    </script>
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=optional" />
-    </noscript>
-    <!-- Core Web Vitals RUM (cookie-consent gated via window.__startWebVitals) -->
-    <script>
-      import '../lib/web-vitals-report';
-    </script>
+    <DeferredAnalytics client:idle />
   </body>
 </html>

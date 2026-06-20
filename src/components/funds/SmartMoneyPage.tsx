@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useTransition, useRef, lazy, Suspense } from 'react';
 
-const SmartMoneyTracker = lazy(() => import('./SmartMoneyTracker'));
+import SmartMoneyTracker from './SmartMoneyTracker';
+import SmartMoneyAppSkeleton from './SmartMoneyAppSkeleton';
 const SmartMoneySignalTable = lazy(() => import('./SmartMoneySignalTable'));
 const SectorIntelligenceTable = lazy(() => import('./SectorIntelligenceTable'));
 
@@ -8,6 +9,13 @@ import type { SmartMoneyTrackerData } from '../../lib/data/holdings';
 import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
 import type { SectorIntelligenceData } from '../../lib/sector-intelligence';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import { seedJsonCache, monthFileSlug } from '../../lib/client-data';
+import {
+  resolveTrackerDataBootstrap,
+  resolveTrackerIndexBootstrap,
+  TRACKER_INDEX_PUBLIC_PATH,
+} from '../../lib/smart-money-tracker-bootstrap';
+import type { TrackerIndexDisk } from '../../lib/smart-money-tracker-server';
 import {
   getSmartMoneyPageMeta,
   parseSmartMoneyTabFromPathname,
@@ -23,20 +31,23 @@ import {
   type TrackerViewType,
 } from '../../lib/smart-money-tracker-meta';
 
-import {
-  loadSignalsIndex,
-  loadSignalsMonth,
-  loadTrackerIndex,
-  loadTrackerMonth,
-} from '../../lib/smart-money-client';
-import { fetchJsonCached } from '../../lib/client-data';
-
 const SECTOR_URL = '/data/sector-intelligence.json';
 const BASE_PATH = TRACKER_BASE_PATH;
+
+function loadSmartMoneyClient() {
+  return import('../../lib/smart-money-client');
+}
+
+function loadClientData() {
+  return import('../../lib/client-data');
+}
 
 interface SmartMoneyPageProps {
   initialTracker?: { view: TrackerViewType; monthLabel: string } | null;
   initialTab?: SmartMoneyTab | null;
+  initialTrackerIndex?: TrackerIndexDisk | null;
+  initialTrackerMonth?: string | null;
+  initialTrackerData?: SmartMoneyTrackerData | null;
 }
 
 type Tab = SmartMoneyTab;
@@ -50,6 +61,9 @@ const LEGACY_HASH_TAB: Record<string, Tab> = {
 export default function SmartMoneyPage({
   initialTracker = null,
   initialTab = null,
+  initialTrackerIndex = null,
+  initialTrackerMonth = null,
+  initialTrackerData = null,
 }: SmartMoneyPageProps) {
   const [tab, setTab] = useState<Tab>(() => {
     if (initialTracker) return 'tracker';
@@ -68,7 +82,9 @@ export default function SmartMoneyPage({
   const [signalsRetry, setSignalsRetry] = useState(0);
   const [sectorRetry, setSectorRetry] = useState(0);
 
-  const [trackerData, setTrackerData] = useState<SmartMoneyTrackerData | null>(null);
+  const [trackerData, setTrackerData] = useState<SmartMoneyTrackerData | null>(() =>
+    resolveTrackerDataBootstrap(initialTrackerData),
+  );
   const [trackerLoading, setTrackerLoading] = useState(false);
   const [trackerError, setTrackerError] = useState<string | null>(null);
 
@@ -80,6 +96,26 @@ export default function SmartMoneyPage({
   const [sectorData, setSectorData] = useState<SectorIntelligenceData | null>(null);
   const [sectorLoading, setSectorLoading] = useState(false);
   const [sectorError, setSectorError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const index = resolveTrackerIndexBootstrap(initialTrackerIndex);
+    if (index) {
+      seedJsonCache(TRACKER_INDEX_PUBLIC_PATH, index);
+    }
+    const bootstrap = resolveTrackerDataBootstrap(initialTrackerData);
+    if (!bootstrap) return;
+    const month = Object.keys(bootstrap.byMonth)[0];
+    if (!month) return;
+    const bucket = bootstrap.byMonth[month];
+    seedJsonCache(`/data/smart-money-tracker/${monthFileSlug(month)}.json`, {
+      month: bucket.month,
+      prevMonth: bucket.prevMonth,
+      increased: bucket.increased,
+      decreased: bucket.decreased,
+      fresh_entry: bucket.fresh_entry,
+      complete_exit: bucket.complete_exit,
+    });
+  }, [initialTrackerIndex, initialTrackerData]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -164,7 +200,9 @@ export default function SmartMoneyPage({
     setTrackerLoading(true);
     setTrackerError(null);
     try {
-      const chunk = await loadTrackerMonth(month);
+      const { loadTrackerMonth } = await loadSmartMoneyClient();
+      const cachedIndex = resolveTrackerIndexBootstrap(initialTrackerIndex);
+      const chunk = await loadTrackerMonth(month, cachedIndex ?? undefined);
       startTransition(() => {
         setTrackerData((prev) => {
           if (!merge || !prev) return chunk;
@@ -179,7 +217,7 @@ export default function SmartMoneyPage({
     } finally {
       setTrackerLoading(false);
     }
-  }, []);
+  }, [initialTrackerIndex]);
 
   useEffect(() => {
     if (tab !== 'tracker' || trackerData || trackerLoadStarted.current) return;
@@ -189,15 +227,20 @@ export default function SmartMoneyPage({
       (async () => {
         setTrackerLoading(true);
         try {
-          const index = await loadTrackerIndex();
+          const { loadTrackerIndex, loadTrackerMonth } = await loadSmartMoneyClient();
+          const cachedIndex = resolveTrackerIndexBootstrap(initialTrackerIndex);
+          const index = cachedIndex ?? await loadTrackerIndex();
           const deepMonth = initialTracker?.monthLabel;
+          const bootstrapMonth = initialTrackerMonth;
           const firstMonth =
             deepMonth && index.months.some((m) => m.label === deepMonth)
               ? deepMonth
-              : index.months[0]?.label;
+              : bootstrapMonth && index.months.some((m) => m.label === bootstrapMonth)
+                ? bootstrapMonth
+                : index.months[0]?.label;
           if (!firstMonth) throw new Error('No tracker months available');
           if (cancelled) return;
-          const chunk = await loadTrackerMonth(firstMonth);
+          const chunk = await loadTrackerMonth(firstMonth, index);
           if (cancelled) return;
           startTransition(() => setTrackerData(chunk));
         } catch (err) {
@@ -211,12 +254,13 @@ export default function SmartMoneyPage({
       cancelled = true;
       cancelSchedule();
     };
-  }, [tab, trackerData, trackerError, trackerRetry, startTransition, initialTracker]);
+  }, [tab, trackerData, trackerError, trackerRetry, startTransition, initialTracker, initialTrackerMonth, initialTrackerIndex]);
 
   const loadSignalsForMonth = useCallback(async (month: string, category = 'All') => {
     setSignalsLoading(true);
     setSignalsError(null);
     try {
+      const { loadSignalsMonth } = await loadSmartMoneyClient();
       const data = await loadSignalsMonth(month, category);
       startTransition(() => {
         setSignalsData(data);
@@ -239,6 +283,7 @@ export default function SmartMoneyPage({
       (async () => {
         setSignalsLoading(true);
         try {
+          const { loadSignalsIndex, loadSignalsMonth } = await loadSmartMoneyClient();
           const index = await loadSignalsIndex();
           const month = index.months[0] || '';
           if (!month) throw new Error('No signal months available');
@@ -266,7 +311,8 @@ export default function SmartMoneyPage({
     sectorLoadStarted.current = true;
     setSectorLoading(true);
     const cancelSchedule = scheduleAfterPaint(() => {
-      fetchJsonCached<SectorIntelligenceData>(SECTOR_URL)
+      loadClientData()
+        .then(({ fetchJsonCached }) => fetchJsonCached<SectorIntelligenceData>(SECTOR_URL))
         .then((data) => startTransition(() => setSectorData(data)))
         .catch((err: Error) => setSectorError(err.message || 'Failed to load sector intelligence'))
         .finally(() => setSectorLoading(false));
@@ -315,12 +361,9 @@ export default function SmartMoneyPage({
         trackerError ? (
           errorPanel(trackerError, retryTracker)
         ) : trackerLoading && !trackerData ? (
-          <div className="text-center py-12 text-surface-500 dark:text-surface-400">
-            <p className="text-sm">Loading Smart Money tracker…</p>
-          </div>
+          <SmartMoneyAppSkeleton />
         ) : trackerData ? (
-          <Suspense fallback={<div className="text-center py-12 text-surface-500"><p className="text-sm">Loading tracker…</p></div>}>
-            <SmartMoneyTracker
+          <SmartMoneyTracker
             data={trackerData}
             loadingMonth={trackerLoading}
             initialView={initialTracker?.view}
@@ -329,7 +372,6 @@ export default function SmartMoneyPage({
               if (!trackerData.byMonth[month]) loadTrackerForMonth(month);
             }}
           />
-          </Suspense>
         ) : null
       )}
 
@@ -337,11 +379,9 @@ export default function SmartMoneyPage({
         signalsError ? (
           errorPanel(signalsError, retrySignals)
         ) : signalsLoading && !signalsData ? (
-          <div className="text-center py-12 text-surface-500 dark:text-surface-400">
-            <p className="text-sm">Loading smart money signals…</p>
-          </div>
+          <SmartMoneyAppSkeleton />
         ) : signalsData ? (
-          <Suspense fallback={<div className="text-center py-12 text-surface-500"><p className="text-sm">Loading signals…</p></div>}>
+          <Suspense fallback={<SmartMoneyAppSkeleton pulse={false} />}>
             <SmartMoneySignalTable
             data={signalsData}
             loading={signalsLoading}
@@ -357,13 +397,11 @@ export default function SmartMoneyPage({
 
       {tab === 'sectors' && (
         sectorLoading ? (
-          <div className="text-center py-12 text-surface-500 dark:text-surface-400">
-            <p className="text-sm">Loading sector intelligence…</p>
-          </div>
+          <SmartMoneyAppSkeleton />
         ) : sectorError ? (
           errorPanel(sectorError, retrySector)
         ) : sectorData ? (
-          <Suspense fallback={<div className="text-center py-12 text-surface-500"><p className="text-sm">Loading sectors…</p></div>}>
+          <Suspense fallback={<SmartMoneyAppSkeleton pulse={false} />}>
             <SectorIntelligenceTable data={sectorData} />
           </Suspense>
         ) : null

@@ -6,6 +6,8 @@ import SmartMoneyPage from './SmartMoneyPage.tsx';
 import SmartMoneyInternalLinks from './SmartMoneyInternalLinks.astro';
 import SmartMoneySubNav from './SmartMoneySubNav.astro';
 import type { TrackerViewType } from '../../lib/smart-money-tracker-meta';
+import type { SmartMoneyTrackerBootstrap } from '../../lib/smart-money-tracker-server';
+import { SMART_MONEY_TRACKER_DATA_BOOTSTRAP_ID, SMART_MONEY_TRACKER_INDEX_BOOTSTRAP_ID } from '../../lib/smart-money-tracker-bootstrap';
 
 interface TrackerInit {
   view: TrackerViewType;
@@ -17,14 +19,25 @@ interface Props {
   parsed: TrackerInit | null;
   parsedTab: SmartMoneyTab | null;
   sm: SmartMoneyTrackerLinks;
+  trackerBootstrap?: SmartMoneyTrackerBootstrap | null;
 }
 
-const { pageMeta, parsed, parsedTab, sm } = Astro.props;
+const { pageMeta, parsed, parsedTab, sm, trackerBootstrap = null } = Astro.props;
 
 const smNavActive =
   parsedTab === 'signals' ? 'signals'
   : parsedTab === 'sectors' ? 'sectors'
   : 'tracker';
+
+const trackerIndexJson = trackerBootstrap
+  ? JSON.stringify(trackerBootstrap.index).replace(/</g, '\\u003c')
+  : null;
+
+const trackerDataJson = trackerBootstrap?.data
+  ? JSON.stringify(trackerBootstrap.data).replace(/</g, '\\u003c')
+  : null;
+
+const skeletonRows = Array.from({ length: 12 });
 ---
 
 <nav class="container-wide pt-6" aria-label="Breadcrumb">
@@ -39,19 +52,83 @@ const smNavActive =
 
 <section class="container-wide pt-8 pb-4">
   <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading || 'Smart Money Tracker'}</h1>
-  <p class="mt-1 text-sm text-surface-500" data-page-subtitle>{pageMeta.subtitle || 'Track institutional conviction — what fund managers are buying, selling, and rotating at the stock and sector level.'}</p>
-  <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
+  <p class="mt-1 text-sm text-surface-600 dark:text-surface-400" data-page-subtitle>{pageMeta.subtitle || 'Track institutional conviction — what fund managers are buying, selling, and rotating at the stock and sector level.'}</p>
+  <p class="mt-2 text-xs text-surface-600 dark:text-surface-400">Source: AMC monthly portfolio disclosures · Updated monthly</p>
   <SmartMoneySubNav active={smNavActive} />
 </section>
 
-<section class="container-wide pb-12">
-  <SmartMoneyPage
-    client:load
-    initialTracker={parsed ? { view: parsed.view, monthLabel: parsed.monthLabel } : null}
-    initialTab={parsedTab}
-  >
-    <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading Smart Money…</div>
+<section class="container-wide pb-12 smart-money-tracker-section">
+  {trackerIndexJson && (
+    <div
+      id={SMART_MONEY_TRACKER_INDEX_BOOTSTRAP_ID}
+      data-json={trackerIndexJson}
+      hidden
+      aria-hidden="true"
+    />
+  )}
+  {trackerDataJson && (
+    <div
+      id={SMART_MONEY_TRACKER_DATA_BOOTSTRAP_ID}
+      data-json={trackerDataJson}
+      hidden
+      aria-hidden="true"
+    />
+  )}
+  <div class="smart-money-app-shell">
+    <SmartMoneyPage
+      client:idle
+      initialTracker={parsed ? { view: parsed.view, monthLabel: parsed.monthLabel } : null}
+      initialTab={parsedTab}
+      initialTrackerIndex={trackerBootstrap?.index ?? null}
+      initialTrackerMonth={trackerBootstrap?.initialMonth ?? null}
+      initialTrackerData={trackerBootstrap?.data ?? null}
+    >
+      <div slot="fallback" class="animate-pulse" aria-busy="true" aria-label="Loading Smart Money">
+      <div class="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="smart-money-skeleton-bar h-16"></div>
+          <div class="smart-money-skeleton-bar h-16"></div>
+          <div class="smart-money-skeleton-bar h-16"></div>
+          <div class="smart-money-skeleton-bar h-16"></div>
+        </div>
+        <div class="smart-money-skeleton-bar h-3 w-full max-w-2xl mt-3" aria-hidden="true"></div>
+      </div>
+      <div class="md:hidden flex flex-wrap gap-2 mb-3" aria-hidden="true">
+        <div class="smart-money-skeleton-bar h-7 w-10"></div>
+        <div class="smart-money-skeleton-bar h-7 w-14"></div>
+        <div class="smart-money-skeleton-bar h-7 w-14"></div>
+        <div class="smart-money-skeleton-bar h-7 w-12"></div>
+      </div>
+      <div class="md:hidden space-y-2" aria-hidden="true">
+        {skeletonRows.map(() => (
+          <div class="smart-money-skeleton-card space-y-2">
+            <div class="smart-money-skeleton-bar h-3 w-8"></div>
+            <div class="smart-money-skeleton-bar h-4 w-3/4"></div>
+            <div class="smart-money-skeleton-bar h-3 w-1/2"></div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <div class="smart-money-skeleton-bar h-8"></div>
+              <div class="smart-money-skeleton-bar h-8"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class="md:hidden mt-3 flex justify-center" aria-hidden="true">
+        <div class="smart-money-skeleton-bar h-10 w-44"></div>
+      </div>
+      <div class="hidden md:block space-y-2" aria-hidden="true">
+        <div class="smart-money-skeleton-bar h-10"></div>
+        {skeletonRows.map(() => (
+          <div class="smart-money-skeleton-bar h-10"></div>
+        ))}
+      </div>
+      <div class="hidden md:flex md:mt-3 md:justify-center" aria-hidden="true">
+        <div class="smart-money-skeleton-bar h-10 w-44"></div>
+      </div>
+      <div class="smart-money-skeleton-bar h-8 w-full max-w-3xl mt-4" aria-hidden="true"></div>
+      <p class="sr-only">Loading Smart Money…</p>
+    </div>
   </SmartMoneyPage>
+  </div>
 </section>
 
 <section class="container-wide pb-12">
@@ -64,26 +141,26 @@ const smNavActive =
     <div class="card p-5 space-y-2">
       <h3 class="font-bold text-surface-900 dark:text-white">1. Smart Money Tracker</h3>
       <p>Compares each fund's portfolio month-on-month by <strong>portfolio weight (% of NAV)</strong>, not share quantity alone. <strong>Most Bought</strong> and <strong>Most Sold</strong> rank by number of funds, showing average and total weight change. <strong>Fresh Entries</strong> and <strong>Complete Exits</strong> show stocks newly added or fully sold out. Filter by fund category and sector.</p>
-      <p class="text-xs text-surface-400">
-        <a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Hub</a>
+      <p class="text-xs text-surface-600 dark:text-surface-400">
+        <a href={sm.hub} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Hub</a>
         {' · '}
-        <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought ({sm.latestMonth})</a>
+        <a href={sm.mostBought} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Most Bought ({sm.latestMonth})</a>
         {' · '}
-        <a href={sm.mostSold} class="text-primary-600 hover:underline">Most Sold</a>
+        <a href={sm.mostSold} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Most Sold</a>
         {' · '}
-        <a href={sm.freshEntries} class="text-primary-600 hover:underline">Fresh Entries</a>
+        <a href={sm.freshEntries} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Fresh Entries</a>
         {' · '}
-        <a href={sm.completeExits} class="text-primary-600 hover:underline">Complete Exits</a>
+        <a href={sm.completeExits} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Complete Exits</a>
         {' · '}
-        <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes by AMC</a>
+        <a href={sm.holdingsChanges} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Holdings Changes by AMC</a>
         {' · '}
-        <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
+        <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a>
         {' · '}
-        <a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a>
+        <a href={sm.stockSignal} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Stock Signal</a>
         {' · '}
-        <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a>
+        <a href={sm.sectorIntelligence} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Sector Intelligence</a>
         {' · '}
-        <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a>
+        <a href="/mutual-funds/all" class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">All Funds</a>
       </p>
     </div>
 
@@ -91,12 +168,12 @@ const smNavActive =
       <h3 class="font-bold text-surface-900 dark:text-white">2. Smart Money Signal</h3>
       <p>Ranked table of stocks scored <strong>0–100</strong>. Each stock appears once — fund activity is aggregated across all schemes and scored vs peers in the same <strong>market-cap bucket</strong> (Large / Mid / Small / Micro). Click any row for the full factor breakdown.</p>
       <p class="text-xs">Signals: 🚀 Aggressive Accumulation (90+) · 🟢 Strong (75+) · 🟡 Moderate (60+) · ⚪ Neutral (40+) · 🟠 Distribution (25+) · 🔴 Strong Distribution (&lt;25)</p>
-      <p class="text-xs text-surface-400">
-        <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
+      <p class="text-xs text-surface-600 dark:text-surface-400">
+        <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a>
         {' · '}
-        <a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a>
+        <a href={sm.stockSignal} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Stock Signal</a>
         {' · '}
-        <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a>
+        <a href={sm.mostBought} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Most Bought Stocks</a>
       </p>
     </div>
 
@@ -108,12 +185,12 @@ const smNavActive =
         <li><strong>Mutual Fund Activity</strong> — Funds Holding, Funds Increased/Reduced, Fresh Entries, Complete Exits</li>
         <li><strong>Top Fund Holders</strong> — largest category funds by portfolio weight (e.g. SBI Bluechip, HDFC Flexi Cap)</li>
       </ul>
-      <p class="text-xs text-surface-400">
-        <a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a>
+      <p class="text-xs text-surface-600 dark:text-surface-400">
+        <a href={sm.stockSignal} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Stock Signal</a>
         {' · '}
-        <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
+        <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a>
         {' · '}
-        <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a>
+        <a href={sm.mostBought} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Most Bought Stocks</a>
       </p>
     </div>
 
@@ -128,19 +205,19 @@ const smNavActive =
         <li><strong>Weight Δ</strong> — change in sector's share of total equity (percentage points)</li>
         <li><strong>Trend</strong> — consecutive months of rising/falling sector weight (↑ 4M = four straight months of increase)</li>
       </ul>
-      <p class="text-xs text-surface-400">Sectors below 0.1% of total equity exposure are excluded. Debt instruments and unknown sectors are filtered out.</p>
-      <p class="text-xs text-surface-400">
-        <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a>
+      <p class="text-xs text-surface-600 dark:text-surface-400">Sectors below 0.1% of total equity exposure are excluded. Debt instruments and unknown sectors are filtered out.</p>
+      <p class="text-xs text-surface-600 dark:text-surface-400">
+        <a href={sm.sectorIntelligence} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Sector Intelligence</a>
         {' · '}
-        <a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Tracker</a>
+        <a href={sm.hub} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Tracker</a>
         {' · '}
-        <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes</a>
+        <a href={sm.holdingsChanges} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Holdings Changes</a>
         {' · '}
-        <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a>
+        <a href="/mutual-funds/all" class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">All Funds</a>
       </p>
     </div>
 
-    <p class="text-xs text-surface-400">Data is sourced exclusively from official AMC monthly portfolio disclosure filings mandated by SEBI. Not investment advice. Past institutional activity does not guarantee future performance.</p>
+    <p class="text-xs text-surface-600 dark:text-surface-400">Data is sourced exclusively from official AMC monthly portfolio disclosure filings mandated by SEBI. Not investment advice. Past institutional activity does not guarantee future performance.</p>
   </div>
 </section>
 
@@ -149,15 +226,15 @@ const smNavActive =
   <div class="space-y-4 max-w-3xl">
     <details class="card group" open>
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Sector Intelligence and how is it different from Smart Money Tracker?</summary>
-      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.hub} class="text-primary-600 hover:underline">Smart Money Tracker</a> focuses on <strong>individual stocks</strong> — which companies funds bought or sold. <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a> aggregates across all funds to show <strong>sector-level rotation</strong> — whether mutual funds as an industry are moving money into Banking, Healthcare, IT, Capital Markets, etc. Use Tracker for stock ideas; use Sector Intelligence for macro allocation trends.</p>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.hub} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Tracker</a> focuses on <strong>individual stocks</strong> — which companies funds bought or sold. <a href={sm.sectorIntelligence} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Sector Intelligence</a> aggregates across all funds to show <strong>sector-level rotation</strong> — whether mutual funds as an industry are moving money into Banking, Healthcare, IT, Capital Markets, etc. Use Tracker for stock ideas; use Sector Intelligence for macro allocation trends.</p>
     </details>
     <details class="card group">
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the Stock Signal tab?</summary>
-      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.stockSignal} class="text-primary-600 hover:underline">Stock Signal</a> lets you pick any stock and see a complete institutional profile: conviction score, signal, confidence level, how many funds hold it, how many increased or reduced, fresh entries and exits, plus the top 3 funds with the largest weight in that stock. It is the stock-level drill-down companion to the ranked <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a> table.</p>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.stockSignal} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Stock Signal</a> lets you pick any stock and see a complete institutional profile: conviction score, signal, confidence level, how many funds hold it, how many increased or reduced, fresh entries and exits, plus the top 3 funds with the largest weight in that stock. It is the stock-level drill-down companion to the ranked <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a> table.</p>
     </details>
     <details class="card group">
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which funds are included in Sector Intelligence?</summary>
-      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">All active mutual fund schemes that have equity holdings data in our database for the comparison month — typically 500+ schemes across 40+ AMCs. This is broader than the <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a> tab (which lists 366 listable Direct-Growth equity funds) because sector rotation analysis benefits from maximum coverage.</p>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">All active mutual fund schemes that have equity holdings data in our database for the comparison month — typically 500+ schemes across 40+ AMCs. This is broader than the <a href="/mutual-funds/all" class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">All Funds</a> tab (which lists 366 listable Direct-Growth equity funds) because sector rotation analysis benefits from maximum coverage.</p>
     </details>
     <details class="card group">
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What does AUM Change mean for a sector?</summary>
@@ -173,7 +250,7 @@ const smNavActive =
     </details>
     <details class="card group">
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How should I use this for investment research?</summary>
-      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Sector Intelligence is a <strong>starting point</strong>, not a buy/sell signal. Rising sector conviction suggests fund managers are collectively allocating more capital — but this could reflect performance (price appreciation) as well as new buying. Cross-reference with <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes</a> for AMC-level detail, <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a> for names, <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a> for rotation trends, and <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a> for stock-level conviction.</p>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Sector Intelligence is a <strong>starting point</strong>, not a buy/sell signal. Rising sector conviction suggests fund managers are collectively allocating more capital — but this could reflect performance (price appreciation) as well as new buying. Cross-reference with <a href={sm.holdingsChanges} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Holdings Changes</a> for AMC-level detail, <a href={sm.mostBought} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Most Bought Stocks</a> for names, <a href={sm.sectorIntelligence} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Sector Intelligence</a> for rotation trends, and <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a> for stock-level conviction.</p>
     </details>
   </div>
 </section>

@@ -19,6 +19,10 @@ declare global {
     plausible?: PlausibleFn;
     __startWebVitals?: () => void;
     __markAnalyticsReady?: () => void;
+    __webVitalsPending?: boolean;
+    __analyticsReadyPending?: boolean;
+    __runWebVitals?: () => void;
+    __flushAnalyticsReady?: () => void;
   }
 }
 
@@ -95,10 +99,19 @@ export async function initWebVitalsReporting(): Promise<void> {
 
 /** Exposed on window for inline consent / analytics bootstrap scripts. */
 export function registerWebVitalsHooks(): void {
+  window.__runWebVitals = () => {
+    void initWebVitalsReporting();
+  };
+  window.__flushAnalyticsReady = () => {
+    markAnalyticsReady();
+  };
   window.__startWebVitals = () => {
     void initWebVitalsReporting();
   };
   window.__markAnalyticsReady = markAnalyticsReady;
+
+  if (window.__webVitalsPending) void initWebVitalsReporting();
+  if (window.__analyticsReadyPending) markAnalyticsReady();
 }
 
 registerWebVitalsHooks();

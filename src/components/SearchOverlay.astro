@@ -110,8 +110,10 @@
     _so.setAttribute('aria-hidden', 'false');
     _sin.value = '';
     setMessage('Start typing to search across IPOs, mutual funds, brokers, tools...');
-    _sin.focus();
-    trapFocus();
+    requestAnimationFrame(function() {
+      _sin.focus();
+      trapFocus();
+    });
     loadData();
   }
 

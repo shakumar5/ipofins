@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
 
 import { SIGNAL_OPTIONS, stockCapDisplayLabel } from '../../lib/smart-money-signals';
+import FilterSelect from './FilterSelect';
 
 
 
@@ -43,82 +44,57 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
       <div className="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">
 
+        <fieldset className="border-0 p-0 m-0 min-w-0">
+          <legend className="sr-only">Smart Money signal filters</legend>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-          <div>
+          <FilterSelect
+            id="sm-signal-cap"
+            name="sm-signal-cap"
+            label="Market Cap"
+            value={category}
+            onChange={(e) => {
+              const next = e.target.value;
+              setCategory(next);
+              onCategoryChange?.(next);
+            }}
+          >
+            {data.categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </FilterSelect>
 
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Market Cap</label>
+          <FilterSelect
+            id="sm-signal-month"
+            name="sm-signal-month"
+            label="Month"
+            value={month}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (onMonthChange) onMonthChange(next);
+              else setMonthLocal(next);
+            }}
+            disabled={loading}
+          >
+            {data.months.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </FilterSelect>
 
-            <select
-
-              value={category}
-
-              onChange={(e) => {
-                const next = e.target.value;
-                setCategory(next);
-                onCategoryChange?.(next);
-              }}
-
-              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
-
-            >
-
-              {data.categories.map((c) => (
-
-                <option key={c} value={c}>{c}</option>
-
-              ))}
-
-            </select>
-
-          </div>
-
-          <div>
-
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Month</label>
-
-            <select
-              value={month}
-              onChange={(e) => {
-                const next = e.target.value;
-                if (onMonthChange) onMonthChange(next);
-                else setMonthLocal(next);
-              }}
-              disabled={loading}
-              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
-            >
-              {data.months.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-
-          </div>
-
-          <div>
-
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Signal</label>
-
-            <select
-
-              value={signalFilter}
-
-              onChange={(e) => setSignalFilter(e.target.value)}
-
-              className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
-
-            >
-
-              {SIGNAL_OPTIONS.map((opt) => (
-
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-
-              ))}
-
-            </select>
-
-          </div>
+          <FilterSelect
+            id="sm-signal-filter"
+            name="sm-signal-filter"
+            label="Signal"
+            value={signalFilter}
+            onChange={(e) => setSignalFilter(e.target.value)}
+          >
+            {SIGNAL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </FilterSelect>
 
         </div>
+        </fieldset>
 
         <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
           Each stock appears once. Activity is aggregated across all mutual funds. Scores are percentile-ranked vs other stocks in the same market-cap bucket (Large / Mid / Small / Micro).
@@ -200,7 +176,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
 
 
-      <p className="mt-4 text-xs text-surface-400">
+      <p className="mt-4 text-xs text-surface-600 dark:text-surface-400">
 
         Category: {category === 'All' ? 'All market caps' : category} · Click View for raw metrics and percentile breakdown. Not investment advice.
 
@@ -231,7 +207,7 @@ function SignalCard({
     <div className="card p-3 border border-surface-200 dark:border-surface-700">
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-surface-400 tabular-nums">#{rank}</p>
+          <p className="text-xs text-surface-600 dark:text-surface-400 tabular-nums">#{rank}</p>
           <p className="text-sm font-semibold text-surface-900 dark:text-white">{row.stockName}</p>
           <p className="text-xs text-surface-500 mt-0.5">
             {row.sector}
@@ -240,7 +216,7 @@ function SignalCard({
         </div>
         <div className="text-right flex-shrink-0">
           <p className="text-lg font-bold text-primary-600 tabular-nums">{row.convictionScore}</p>
-          <p className="text-[10px] text-surface-400">Score</p>
+          <p className="text-xs text-surface-600 dark:text-surface-400">Score</p>
         </div>
       </div>
       <div className="flex items-center justify-between mt-3 gap-2">

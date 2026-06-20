@@ -4,6 +4,15 @@ const MAX_CACHE_ENTRIES = 5;
 const FETCH_TIMEOUT_MS = 25_000;
 const jsonCache = new Map<string, unknown>();
 
+/** Seed cache from SSR/bootstrap so client fetch skips the network. */
+export function seedJsonCache(url: string, data: unknown): void {
+  if (jsonCache.size >= MAX_CACHE_ENTRIES) {
+    const oldest = jsonCache.keys().next().value;
+    if (oldest) jsonCache.delete(oldest);
+  }
+  jsonCache.set(url, data);
+}
+
 export function yieldToMain(): Promise<void> {
   return new Promise((resolve) => {
     if (typeof requestAnimationFrame === 'function') {

@@ -84,14 +84,14 @@ const otherAmcs = amcList.filter((a) => a.name !== amcName).slice(0, 10);
 
   <section class="container-wide py-4">
     {holdingsIndex && (
-      <script
-        type="application/json"
+      <div
         id="holdings-compare-bootstrap"
-        set:html={JSON.stringify(holdingsIndex)}
+        hidden
+        data-json={JSON.stringify(holdingsIndex)}
       />
     )}
     <HoldingsCompare
-      client:load
+      client:only="react"
       initialAmc={amcName}
       initialMonth1={previousMonth}
       initialMonth2={currentMonth}

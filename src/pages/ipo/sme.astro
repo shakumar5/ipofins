@@ -32,12 +32,12 @@ const jsonLd = {
                   <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
                   <span class={`badge text-xs ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'open' ? 'bg-amber-50 text-amber-700' : ipo.status === 'listed' ? 'badge-listed' : ipo.status === 'allotment' ? 'bg-teal-50 text-teal-700' : 'badge-closed'}`}>{ipo.status}</span>
                 </div>
-                <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.issueSize} • {ipo.openDate} – {ipo.closeDate}</p>
+                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.issueSize} • {ipo.openDate} – {ipo.closeDate}</p>
               </div>
               <div class="flex items-center gap-5 text-xs">
-                <div><span class="text-surface-400">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
-                <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                {ipo.aiScore && <div><span class="text-surface-400">Score </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-500' : 'text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
+                <div><span class="ipo-label">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
+                <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                {ipo.aiScore && <div><span class="ipo-label">Score </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
               </div>
             </div>
           </a>

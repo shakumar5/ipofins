@@ -15,7 +15,7 @@ export function getStaticPaths() {
 
 const { segment } = Astro.props;
 const pathname = smartMoneyPathFromSegment(segment);
-const { parsed, parsedTab, pageMeta } = resolveSmartMoneyPage(pathname);
+const { parsed, parsedTab, pageMeta, trackerBootstrap } = resolveSmartMoneyPage(pathname);
 const sm = loadSmartMoneyTrackerLinks();
 
 const jsonLd = {
@@ -34,5 +34,11 @@ const jsonLd = {
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
 >
-  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} />
+  {trackerBootstrap && !trackerBootstrap.data && (
+    <>
+      <link slot="head" rel="preload" href={trackerBootstrap.preloadMonthUrl} as="fetch" crossorigin />
+      <link slot="head" rel="preload" href="/data/smart-money-tracker-index.json" as="fetch" crossorigin />
+    </>
+  )}
+  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} trackerBootstrap={trackerBootstrap} />
 </BaseLayout>

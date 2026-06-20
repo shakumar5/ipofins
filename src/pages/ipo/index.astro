@@ -59,14 +59,14 @@ const faqJsonLd = {
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
                     <span class="badge text-xs badge-live">live</span>
-                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                   </div>
-                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.openDate} – {ipo.closeDate}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                  <div><span class="ipo-label">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="ipo-label">Sub </span><span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span></div>}
                 </div>
               </div>
             </a>
@@ -91,13 +91,13 @@ const faqJsonLd = {
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
                     <span class="badge text-xs bg-amber-50 text-amber-700">open</span>
-                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                   </div>
-                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Opens: {ipo.openDate}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Opens: {ipo.openDate}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  <div><span class="ipo-label">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
                 </div>
               </div>
             </a>
@@ -120,14 +120,14 @@ const faqJsonLd = {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
-                    <span class="badge text-xs bg-primary-50 text-primary-600">upcoming</span>
-                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="badge text-xs badge-upcoming">upcoming</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                   </div>
-                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Opens: {ipo.openDate} – {ipo.closeDate}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Opens: {ipo.openDate} – {ipo.closeDate}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  <div><span class="ipo-label">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
                 </div>
               </div>
             </a>
@@ -151,14 +151,14 @@ const faqJsonLd = {
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
                     <span class="badge text-xs bg-teal-50 text-teal-700">allotment</span>
-                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                   </div>
-                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                  <div><span class="ipo-label">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="ipo-label">Sub </span><span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span></div>}
                 </div>
               </div>
             </a>
@@ -182,14 +182,14 @@ const faqJsonLd = {
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
                     <span class="badge text-xs badge-closed">closed</span>
-                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                   </div>
-                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Listing: {ipo.listingDate}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                  <div><span class="ipo-label">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="ipo-label">Sub </span><span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span></div>}
                 </div>
               </div>
             </a>
@@ -214,14 +214,14 @@ const faqJsonLd = {
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h3>
                     <span class="badge text-xs badge-listed">listed</span>
-                    <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                   </div>
-                  <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Listed: {ipo.listingDate}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Listed: {ipo.listingDate}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  <div><span class="text-surface-400">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                  <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                  {ipo.subscription && <div><span class="text-surface-400">Sub </span><span class="font-bold text-primary-600">{ipo.subscription}x</span></div>}
+                  <div><span class="ipo-label">Price </span><span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                  <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                  {ipo.subscription && <div><span class="ipo-label">Sub </span><span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span></div>}
                 </div>
               </div>
             </a>

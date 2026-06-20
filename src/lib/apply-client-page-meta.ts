@@ -26,16 +26,22 @@ export function applyClientPageMeta(opts: PageMeta) {
 
   if (opts.heading) {
     const heading = document.querySelector('[data-page-heading]');
-    if (heading) heading.textContent = opts.heading;
+    if (heading && heading.textContent !== opts.heading) {
+      heading.textContent = opts.heading;
+    }
   }
 
   if (opts.subtitle) {
     const subtitle = document.querySelector('[data-page-subtitle]');
-    if (subtitle) subtitle.textContent = opts.subtitle;
+    if (subtitle && subtitle.textContent !== opts.subtitle) {
+      subtitle.textContent = opts.subtitle;
+    }
   }
 
   if (opts.breadcrumbLabel) {
     const crumb = document.querySelector('[data-breadcrumb-leaf]');
-    if (crumb) crumb.textContent = opts.breadcrumbLabel;
+    if (crumb && crumb.textContent !== opts.breadcrumbLabel) {
+      crumb.textContent = opts.breadcrumbLabel;
+    }
   }
 }

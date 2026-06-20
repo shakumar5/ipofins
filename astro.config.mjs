@@ -23,6 +23,10 @@ export default defineConfig({
     }),
   ],
   output: 'static',
+  build: {
+    // ~17 KiB global CSS — inline to remove render-blocking link (saves ~170–340 ms LCP/FCP)
+    inlineStylesheets: 'always',
+  },
   vite: {
     plugins: [
       tailwindcss(),
@@ -39,6 +43,21 @@ export default defineConfig({
         },
       },
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (
+              id.includes('SmartMoneyPage')
+              || id.includes('SmartMoneyTracker')
+              || id.includes('SmartMoneyAppSkeleton')
+            ) {
+              return 'smart-money-app';
+            }
+          },
+        },
+      },
+    },
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-dom/client'],
     },

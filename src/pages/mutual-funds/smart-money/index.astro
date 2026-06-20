@@ -5,7 +5,7 @@ import { BRAND_URL } from '../../../lib/brand';
 import { resolveSmartMoneyPage } from '../../../lib/smart-money-page-context';
 import { loadSmartMoneyTrackerLinks } from '../../../lib/smart-money-tracker-links';
 
-const { parsed, parsedTab, pageMeta } = resolveSmartMoneyPage(Astro.url.pathname);
+const { parsed, parsedTab, pageMeta, trackerBootstrap } = resolveSmartMoneyPage(Astro.url.pathname);
 const sm = loadSmartMoneyTrackerLinks();
 
 const jsonLd = {
@@ -63,6 +63,12 @@ const faqJsonLd = {
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
 >
+  {trackerBootstrap && !trackerBootstrap.data && (
+    <>
+      <link slot="head" rel="preload" href={trackerBootstrap.preloadMonthUrl} as="fetch" crossorigin />
+      <link slot="head" rel="preload" href="/data/smart-money-tracker-index.json" as="fetch" crossorigin />
+    </>
+  )}
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
-  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} />
+  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} trackerBootstrap={trackerBootstrap} />
 </BaseLayout>

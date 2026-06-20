@@ -1,0 +1,10 @@
+---
+/** Loads Vercel Analytics + web-vitals reporting after idle — not on the LCP critical path. */
+---
+
+<script>
+  import { inject } from '@vercel/analytics';
+  import '../lib/web-vitals-report';
+
+  inject();
+</script>

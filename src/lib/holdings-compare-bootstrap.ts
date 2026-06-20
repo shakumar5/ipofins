@@ -5,9 +5,11 @@ export const HOLDINGS_COMPARE_BOOTSTRAP_ID = 'holdings-compare-bootstrap';
 export function readHoldingsCompareBootstrapFromDom(): HoldingsCompareIndex | null {
   if (typeof document === 'undefined') return null;
   const el = document.getElementById(HOLDINGS_COMPARE_BOOTSTRAP_ID);
-  if (!el?.textContent?.trim()) return null;
+  if (!el) return null;
+  const raw = el.getAttribute('data-json') || el.textContent;
+  if (!raw?.trim()) return null;
   try {
-    const parsed = JSON.parse(el.textContent) as HoldingsCompareIndex;
+    const parsed = JSON.parse(raw) as HoldingsCompareIndex;
     if (!Array.isArray(parsed.months) || !Array.isArray(parsed.amcs) || parsed.amcs.length === 0) {
       return null;
     }

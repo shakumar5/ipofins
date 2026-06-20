@@ -53,7 +53,7 @@ const faqJsonLd = {
       <div class="flex items-center gap-3 mb-4">
         <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
         <h2 class="text-lg font-bold text-surface-900 dark:text-white">Opening Soon — Dates Announced</h2>
-        <span class="badge bg-primary-50 text-primary-600">{openSoonIPOs.length}</span>
+        <span class="badge badge-upcoming">{openSoonIPOs.length}</span>
       </div>
       <div class="space-y-2">
         {openSoonIPOs.map(ipo => (
@@ -62,14 +62,14 @@ const faqJsonLd = {
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                  <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-primary-50 text-primary-600">Opening Soon</span>
-                  <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                  <span class="badge text-xs badge-upcoming">Opening Soon</span>
+                  <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                 </div>
-                <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • Opens: {ipo.openDate} – {ipo.closeDate}</p>
+                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Opens: {ipo.openDate} – {ipo.closeDate}</p>
               </div>
               <div class="flex items-center gap-5 text-xs">
-                <div><span class="text-surface-400">Price </span><span class="font-bold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                <div><span class="text-surface-400">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
+                <div><span class="ipo-label">Price </span><span class="font-bold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
+                <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
               </div>
             </div>
           </a>
@@ -95,11 +95,11 @@ const faqJsonLd = {
                   <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
                   <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-success-50 text-success-600">Approved</span>
                 </div>
-                <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
+                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
               </div>
               <div class="flex items-center gap-5 text-xs">
-                {ipo.issueSize && <div><span class="text-surface-400">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
-                {ipo.drhpDate && <div><span class="text-surface-400">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
+                {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
+                {ipo.drhpDate && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
               </div>
             </div>
           </a>
@@ -125,12 +125,12 @@ const faqJsonLd = {
                   <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
                   <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-warning-50 text-warning-600">DRHP Filed</span>
                 </div>
-                <p class="text-xs text-surface-400 mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
+                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
               </div>
               <div class="flex items-center gap-5 text-xs">
-                {ipo.issueSize && <div><span class="text-surface-400">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
-                {ipo.drhpDate && <div><span class="text-surface-400">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
-                <div><span class="text-surface-400">Expected </span><span class="font-medium text-primary-600">2-4 months</span></div>
+                {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
+                {ipo.drhpDate && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
+                <div><span class="ipo-label">Expected </span><span class="font-medium text-primary-700 dark:text-primary-400">2-4 months</span></div>
               </div>
             </div>
           </a>
@@ -155,12 +155,12 @@ const faqJsonLd = {
                 <div class="flex items-center gap-2">
                   <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
                   <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300">Upcoming</span>
-                  <span class="text-xs text-surface-400 uppercase">{ipo.type}</span>
+                  <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
                 </div>
-                <p class="text-xs text-surface-400 mt-0.5">{ipo.sector}</p>
+                <p class="text-xs ipo-meta mt-0.5">{ipo.sector}</p>
               </div>
               <div class="flex items-center gap-5 text-xs">
-                {ipo.issueSize && <div><span class="text-surface-400">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
+                {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
               </div>
             </div>
           </a>

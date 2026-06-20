@@ -122,9 +122,14 @@ export async function loadTrackerIndex(): Promise<TrackerIndex> {
   return trackerIndexPromise;
 }
 
-export async function loadTrackerMonth(month: string): Promise<SmartMoneyTrackerData> {
-  const index = await loadTrackerIndex();
-  const file = await fetchJsonCached<TrackerMonthFile>(`${TRACKER_BASE}/${monthFileSlug(month)}.json`);
+export async function loadTrackerMonth(
+  month: string,
+  cachedIndex?: TrackerIndex,
+): Promise<SmartMoneyTrackerData> {
+  const [index, file] = await Promise.all([
+    cachedIndex ? Promise.resolve(cachedIndex) : loadTrackerIndex(),
+    fetchJsonCached<TrackerMonthFile>(`${TRACKER_BASE}/${monthFileSlug(month)}.json`),
+  ]);
   return {
     months: index.months,
     categories: index.categories,

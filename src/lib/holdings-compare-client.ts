@@ -51,8 +51,12 @@ export async function loadHoldingsCompareAmc(
   amcSlug: string,
 ): Promise<Record<string, HoldingsCompareFund>> {
   const url = `${AMC_BASE}/${amcSlug}.json`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20_000);
   try {
-    const data = await fetchJsonCached<{ holdings: Record<string, HoldingsCompareFund> }>(url);
+    const res = await fetch(url, { signal: controller.signal, cache: 'default' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = (await res.json()) as { holdings?: Record<string, HoldingsCompareFund> };
     if (!data?.holdings || Object.keys(data.holdings).length === 0) {
       throw new Error(`No holdings found for AMC "${amcSlug}"`);
     }
@@ -60,6 +64,8 @@ export async function loadHoldingsCompareAmc(
   } catch (err) {
     const msg = (err as Error).message || 'Unknown error';
     throw new Error(`Failed to load ${url} (${msg})`);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
