@@ -9,20 +9,6 @@ interface Props {
   defaultCategory?: string;
 }
 
-function scheduleIdle(task: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-  const w = window as Window & {
-    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    cancelIdleCallback?: (id: number) => void;
-  };
-  if (w.requestIdleCallback) {
-    const id = w.requestIdleCallback(task, { timeout: 2500 });
-    return () => w.cancelIdleCallback?.(id);
-  }
-  const t = window.setTimeout(task, 1);
-  return () => window.clearTimeout(t);
-}
-
 export default function FundTableLoader({ table, basePath, defaultCategory = 'All' }: Props) {
   const [meta, setMeta] = useState<MfHubMeta | null>(null);
   const [funds, setFunds] = useState<MfHubFundRow[] | null>(null);
@@ -30,26 +16,25 @@ export default function FundTableLoader({ table, basePath, defaultCategory = 'Al
 
   useEffect(() => {
     let cancelled = false;
-    const cancel = scheduleIdle(() => {
-      loadMfHubFunds(table)
-        .then((rows) => {
-          if (!cancelled) setFunds(rows);
-        })
-        .catch((err: Error) => {
-          if (!cancelled) setError(err.message || 'Failed to load funds');
-        });
 
-      loadMfHubMeta()
-        .then((m) => {
-          if (!cancelled) setMeta(m);
-        })
-        .catch(() => {
-          /* categories can be derived from funds */
-        });
-    });
+    loadMfHubFunds(table)
+      .then((rows) => {
+        if (!cancelled) setFunds(rows);
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message || 'Failed to load funds');
+      });
+
+    loadMfHubMeta()
+      .then((m) => {
+        if (!cancelled) setMeta(m);
+      })
+      .catch(() => {
+        /* categories can be derived from funds */
+      });
+
     return () => {
       cancelled = true;
-      cancel();
     };
   }, [table]);
 
