@@ -1,16 +1,21 @@
 /**
- * Build smart-money-signals.json — per-category percentile scoring.
+ * Build smart-money-signals.json — stock-level aggregation, percentile scoring
+ * within each stock's market-cap bucket (Large / Mid / Small / Micro).
  */
 import { isDebtInstrument, isValidEquitySector } from './stock-utils.mjs';
 import { loadRawHoldingsChanges } from './smart-money-export.mjs';
 import {
   buildSignalRowFromMetrics,
   computeCategoryMaxes,
-  consecutiveStrictTrend,
-  SIGNAL_CATEGORIES,
+  consecutiveAggregatedNetWeightTrend,
+  normalizeStockCapCategory,
+  STOCK_CAP_CATEGORIES,
 } from './smart-money-signals-core.mjs';
 
-const EQUITY_FUND_CATEGORIES = new Set(SIGNAL_CATEGORIES);
+const EQUITY_FUND_CATEGORIES = new Set([
+  'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap',
+  'Value', 'Focused', 'ELSS', 'Sectoral/Thematic', 'Sectoral', 'Contra', 'Dividend Yield', 'Index',
+]);
 
 const MONTH_ORDER = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -65,16 +70,16 @@ function shortFundDisplayName(name) {
   return shortened || name;
 }
 
+/** Top fund holders and fund count — aggregated across all equity funds per stock. */
 async function loadStockHolderMeta(sql) {
   const rows = await sql`
     WITH ranked AS (
       SELECT
         s.slug AS stock_slug,
-        f.category,
         TRIM(TO_CHAR(fh.month, 'FMMonth YYYY')) AS month_label,
         f.name AS fund_name,
         ROW_NUMBER() OVER (
-          PARTITION BY s.slug, f.category, fh.month
+          PARTITION BY s.slug, fh.month
           ORDER BY fh.pct_to_nav DESC NULLS LAST, f.name
         ) AS rn
       FROM fund_holdings fh
@@ -83,13 +88,12 @@ async function loadStockHolderMeta(sql) {
       WHERE fh.month >= (SELECT MAX(month) - INTERVAL '12 months' FROM fund_holdings)
     ),
     counts AS (
-      SELECT stock_slug, category, month_label, COUNT(*)::int AS funds_holding
+      SELECT stock_slug, month_label, COUNT(*)::int AS funds_holding
       FROM ranked
-      GROUP BY stock_slug, category, month_label
+      GROUP BY stock_slug, month_label
     )
     SELECT
       r.stock_slug,
-      r.category,
       r.month_label,
       c.funds_holding,
       r.fund_name,
@@ -97,15 +101,14 @@ async function loadStockHolderMeta(sql) {
     FROM ranked r
     JOIN counts c
       ON c.stock_slug = r.stock_slug
-     AND c.category = r.category
      AND c.month_label = r.month_label
     WHERE r.rn <= 3
-    ORDER BY r.month_label DESC, r.stock_slug, r.category, r.rn
+    ORDER BY r.month_label DESC, r.stock_slug, r.rn
   `;
 
   const meta = new Map();
   for (const r of rows) {
-    const key = `${r.stock_slug}|${r.month_label}|${r.category}`;
+    const key = `${r.stock_slug}|${r.month_label}`;
     if (!meta.has(key)) {
       meta.set(key, { fundsHolding: Number(r.funds_holding) || 0, topFundHolders: [] });
     }
@@ -118,7 +121,7 @@ export async function buildSmartMoneySignalsExport(sql) {
   const rawRows = await loadRawHoldingsChanges(sql);
   const byKey = new Map();
   const monthsSet = new Set();
-  const categoriesSet = new Set();
+  const capsPresent = new Set();
 
   for (const row of rawRows) {
     if (!isEquityFundCategory(row.fundCategory)) continue;
@@ -126,11 +129,11 @@ export async function buildSmartMoneySignalsExport(sql) {
     if (!isValidEquitySector(row.sector)) continue;
 
     const month = row.monthLabel;
-    const category = row.fundCategory;
+    const stockCap = normalizeStockCapCategory(row.stockCapCategory);
     const groupKey = stockGroupKey(row.isin, row.stockName);
-    const key = `${groupKey}|${month}|${category}`;
+    const key = `${groupKey}|${month}`;
     monthsSet.add(month);
-    categoriesSet.add(category);
+    capsPresent.add(stockCap);
 
     if (!byKey.has(key)) {
       byKey.set(key, {
@@ -138,14 +141,13 @@ export async function buildSmartMoneySignalsExport(sql) {
         stockName: row.stockName,
         stockSlug: row.stockSlug,
         sector: row.sector || 'Unknown',
-        category,
+        category: stockCap,
         month,
         increasedCount: 0,
         decreasedCount: 0,
         freshEntries: 0,
         completeExits: 0,
         netWeightChangePct: 0,
-        pctChanges: [],
         amcIdsAll: new Set(),
         amcIdsBuying: new Set(),
       });
@@ -155,6 +157,9 @@ export async function buildSmartMoneySignalsExport(sql) {
     if (row.stockName.length >= m.stockName.length) {
       m.stockName = row.stockName;
       m.stockSlug = row.stockSlug;
+    }
+    if (m.category === 'Unknown' && stockCap !== 'Unknown') {
+      m.category = stockCap;
     }
 
     const type = row.changeType;
@@ -171,7 +176,6 @@ export async function buildSmartMoneySignalsExport(sql) {
     }
 
     m.netWeightChangePct += row.pctChange;
-    m.pctChanges.push(row.pctChange);
     if (row.amcId) m.amcIdsAll.add(row.amcId);
   }
 
@@ -186,10 +190,7 @@ export async function buildSmartMoneySignalsExport(sql) {
       continue;
     }
 
-    const trend = consecutiveStrictTrend(sortedMonths, (mo) => {
-      const entry = byKey.get(`${raw.stockGroupKey}|${mo}|${raw.category}`);
-      return entry ? { pctChanges: entry.pctChanges } : undefined;
-    });
+    const trend = consecutiveAggregatedNetWeightTrend(sortedMonths, raw.stockGroupKey, byKey);
 
     enriched.push({
       ...raw,
@@ -217,7 +218,7 @@ export async function buildSmartMoneySignalsExport(sql) {
 
   const holderMeta = await loadStockHolderMeta(sql);
   for (const row of signalRows) {
-    const key = `${row.stockSlug}|${row.month}|${row.category}`;
+    const key = `${row.stockSlug}|${row.month}`;
     const meta = holderMeta.get(key);
     if (meta) {
       row.fundsHolding = meta.fundsHolding;
@@ -228,18 +229,16 @@ export async function buildSmartMoneySignalsExport(sql) {
   signalRows.sort((a, b) => {
     const cmp = monthIndex(b.month) - monthIndex(a.month);
     if (cmp !== 0) return cmp;
-    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    const ai = STOCK_CAP_CATEGORIES.indexOf(a.category);
+    const bi = STOCK_CAP_CATEGORIES.indexOf(b.category);
+    if (ai !== bi) return ai - bi;
     return b.convictionScore - a.convictionScore;
   });
 
-  const categories = [...categoriesSet].sort((a, b) => {
-    const ai = SIGNAL_CATEGORIES.indexOf(a);
-    const bi = SIGNAL_CATEGORIES.indexOf(b);
-    if (ai === -1 && bi === -1) return a.localeCompare(b);
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
+  const categories = STOCK_CAP_CATEGORIES.filter((c) => capsPresent.has(c));
+  for (const cap of capsPresent) {
+    if (!categories.includes(cap)) categories.push(cap);
+  }
 
   return {
     months: [...sortedMonths].reverse(),

@@ -5,6 +5,7 @@ import {
   resetHoldingsCompareIndexCache,
   type HoldingsCompareIndex,
 } from '../../lib/holdings-compare-client';
+import { resolveHoldingsCompareIndex } from '../../lib/holdings-compare-bootstrap';
 import { compareAmcHoldingsAsync, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
 
 interface HoldingsMeta {
@@ -56,11 +57,16 @@ export default function HoldingsCompare({
   pageMode = 'hub',
   initialIndex = null,
 }: Props) {
-  const bootMonths = initialIndex ? defaultMonths(initialIndex, initialMonth1, initialMonth2) : null;
-  const [meta, setMeta] = useState<HoldingsMeta | null>(() => (initialIndex ? metaFromIndex(initialIndex) : null));
+  const resolvedIndex = useMemo(
+    () => resolveHoldingsCompareIndex(initialIndex),
+    [initialIndex],
+  );
+  const bootMonths = resolvedIndex ? defaultMonths(resolvedIndex, initialMonth1, initialMonth2) : null;
+  const [meta, setMeta] = useState<HoldingsMeta | null>(() => (resolvedIndex ? metaFromIndex(resolvedIndex) : null));
   const [amcHoldings, setAmcHoldings] = useState<Record<string, FundHoldings> | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [metaLoading, setMetaLoading] = useState(!initialIndex);
+  const [compareError, setCompareError] = useState<string | null>(null);
+  const [metaLoading, setMetaLoading] = useState(!resolvedIndex);
   const [amcLoading, setAmcLoading] = useState(false);
   const [selectedAMC, setSelectedAMC] = useState(initialAmc);
   const [selectedFund, setSelectedFund] = useState('All');
@@ -72,7 +78,7 @@ export default function HoldingsCompare({
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    if (initialIndex) return;
+    if (resolvedIndex) return;
 
     let cancelled = false;
     setMetaLoading(true);
@@ -105,7 +111,7 @@ export default function HoldingsCompare({
       }
     })();
     return () => { cancelled = true; };
-  }, [initialIndex, initialMonth1, initialMonth2, retryKey]);
+  }, [resolvedIndex, initialMonth1, initialMonth2, retryKey]);
 
   const deferredMonth1 = useDeferredValue(month1);
   const deferredMonth2 = useDeferredValue(month2);
@@ -130,6 +136,7 @@ export default function HoldingsCompare({
     let cancelled = false;
     setAmcLoading(true);
     setLoadError(null);
+    setCompareError(null);
     setAmcHoldings(null);
     setResultsLimit(RESULTS_PAGE);
     loadHoldingsCompareAmc(slug)
@@ -145,7 +152,7 @@ export default function HoldingsCompare({
         if (!cancelled) setLoadError(err.message || 'Failed to load AMC data');
       })
       .finally(() => {
-        if (!cancelled) setAmcLoading(false);
+        setAmcLoading(false);
       });
     return () => { cancelled = true; };
   }, [meta, selectedAMC]);
@@ -175,8 +182,13 @@ export default function HoldingsCompare({
 
   const fundsForAMC = useMemo(() => {
     if (!data || !selectedAMC) return [];
-    return (data.amcs[selectedAMC] || []).sort();
-  }, [selectedAMC, data]);
+    const loaded = data.amcs[selectedAMC] || [];
+    if (loaded.length > 0) return [...loaded].sort();
+    if (amcHoldings) return Object.values(amcHoldings).map((f) => f.name).sort();
+    return [];
+  }, [selectedAMC, data, amcHoldings]);
+
+  const fundCountForAmc = fundsForAMC.length || (data?.amcFundCounts[selectedAMC] ?? 0);
 
   const [comparison, setComparison] = useState<FundComparison[] | null>(null);
   const [comparing, setComparing] = useState(false);
@@ -191,6 +203,7 @@ export default function HoldingsCompare({
     let cancelled = false;
     setComparing(true);
     setComparison(null);
+    setCompareError(null);
 
     (async () => {
       try {
@@ -207,19 +220,20 @@ export default function HoldingsCompare({
         if (cancelled) return;
         startTransition(() => {
           setComparison(result);
-          setComparing(false);
         });
       } catch (err) {
         if (!cancelled) {
           setComparison(null);
-          setComparing(false);
-          setLoadError((err as Error).message || 'Failed to compare holdings');
+          setCompareError((err as Error).message || 'Failed to compare holdings');
         }
+      } finally {
+        if (!cancelled) setComparing(false);
       }
     })();
 
     return () => {
       cancelled = true;
+      setComparing(false);
     };
   }, [amcHoldings, selectedAMC, deferredMonth1, deferredMonth2, deferredFund, deferredCategory]);
 
@@ -235,10 +249,21 @@ export default function HoldingsCompare({
 
   const retryLoad = () => {
     resetHoldingsCompareIndexCache();
-    setMeta(null);
+    const boot = resolveHoldingsCompareIndex(initialIndex);
+    if (boot) {
+      const months = defaultMonths(boot, initialMonth1, initialMonth2);
+      setMeta(metaFromIndex(boot));
+      setMonth1(months.month1);
+      setMonth2(months.month2);
+      setMetaLoading(false);
+    } else {
+      setMeta(null);
+      setMetaLoading(true);
+    }
     setAmcHoldings(null);
     setComparison(null);
     setLoadError(null);
+    setCompareError(null);
     setRetryKey((k) => k + 1);
   };
 
@@ -373,12 +398,19 @@ export default function HoldingsCompare({
           </div>
         </div>
 
-        {selectedAMC && (
+        {selectedAMC && !amcLoading && (
           <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
-            Showing changes for <strong>{fundsForAMC.length}</strong> equity funds from {selectedAMC} between {month1} → {month2}
+            Showing changes for <strong>{fundCountForAmc}</strong> equity funds from {selectedAMC} between {month1} → {month2}
           </p>
         )}
       </div>
+
+      {compareError && selectedAMC && !amcLoading && (
+        <div className="text-center py-6 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-xl mb-6">
+          <p className="text-sm font-medium">Could not compute comparison</p>
+          <p className="text-xs mt-1 opacity-80">{compareError}</p>
+        </div>
+      )}
 
       {/* No AMC selected */}
       {!selectedAMC && (

@@ -84,6 +84,13 @@ const otherAmcs = amcList.filter((a) => a.name !== amcName).slice(0, 10);
   </section>
 
   <section class="container-wide py-4">
+    {holdingsIndex && (
+      <script
+        type="application/json"
+        id="holdings-compare-bootstrap"
+        set:html={JSON.stringify(holdingsIndex)}
+      />
+    )}
     <HoldingsCompare
       client:load
       initialAmc={amcName}

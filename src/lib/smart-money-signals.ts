@@ -1,4 +1,4 @@
-/** Smart Money Signal — per-category percentile scoring (Option A). */
+/** Smart Money Signal — stock-level aggregation, percentile scoring within market-cap bucket. */
 
 export type SmartMoneySignalType =
   | 'Aggressive Accumulation'
@@ -8,6 +8,18 @@ export type SmartMoneySignalType =
   | 'Distribution'
   | 'Strong Distribution';
 
+/** Stock market-cap buckets (SEBI-style) — peer group for percentile scoring. */
+export const STOCK_CAP_CATEGORIES = [
+  'Large Cap',
+  'Mid Cap',
+  'Small Cap',
+  'Micro Cap',
+  'Unknown',
+] as const;
+
+export type StockCapCategory = (typeof STOCK_CAP_CATEGORIES)[number];
+
+/** @deprecated Fund scheme categories — Smart Money Tracker only. */
 export const SIGNAL_CATEGORIES = [
   'Large Cap',
   'Large & Mid Cap',
@@ -25,7 +37,59 @@ export const SIGNAL_CATEGORIES = [
   'Index',
 ] as const;
 
-export type SignalCategory = (typeof SIGNAL_CATEGORIES)[number];
+export type SignalCategory = StockCapCategory;
+
+export function normalizeStockCapCategory(raw: string | null | undefined): StockCapCategory {
+  const v = String(raw || '').toLowerCase().replace(/_/g, ' ').trim();
+  if (!v) return 'Unknown';
+  if (v.includes('micro')) return 'Micro Cap';
+  if (v.includes('small')) return 'Small Cap';
+  if (v.includes('mid')) return 'Mid Cap';
+  if (v.includes('large')) return 'Large Cap';
+  return 'Unknown';
+}
+
+/** Mutual fund scheme types — not a stock's market-cap classification. */
+const FUND_SCHEME_ONLY = new Set([
+  'Large & Mid Cap',
+  'Multi Cap',
+  'Flexi Cap',
+  'Value',
+  'Focused',
+  'ELSS',
+  'Sectoral/Thematic',
+  'Sectoral',
+  'Contra',
+  'Dividend Yield',
+  'Index',
+]);
+
+/** Label for UI subtitles — returns null for legacy fund-scheme categories (e.g. Flexi Cap). */
+export function stockCapDisplayLabel(category: string): string | null {
+  if (!category || category === 'Unknown' || FUND_SCHEME_ONLY.has(category)) return null;
+  if ((STOCK_CAP_CATEGORIES as readonly string[]).includes(category as StockCapCategory)) {
+    return `${category} stock`;
+  }
+  return null;
+}
+
+export function isLegacyFundSchemeSignals(categories: string[]): boolean {
+  return categories.some((c) => FUND_SCHEME_ONLY.has(c));
+}
+
+export function consecutiveAggregatedNetWeightTrend(
+  sortedMonths: string[],
+  groupKey: string,
+  byKey: Map<string, { netWeightChangePct: number }>,
+): number {
+  let count = 0;
+  for (let i = sortedMonths.length - 1; i >= 0; i--) {
+    const entry = byKey.get(`${groupKey}|${sortedMonths[i]}`);
+    if (!entry || entry.netWeightChangePct <= 0) break;
+    count++;
+  }
+  return count;
+}
 
 export interface SignalFactorScores {
   netWeightChange: number;
@@ -47,6 +111,7 @@ export interface SmartMoneySignalRow {
   stockName: string;
   stockSlug: string;
   sector: string;
+  /** Stock market-cap bucket (Large / Mid / Small / Micro). */
   category: string;
   month: string;
   convictionScore: number;
@@ -143,7 +208,7 @@ export function buildInterpretation(stockName: string, signal: SmartMoneySignalT
     case 'Aggressive Accumulation':
       return `Mutual funds across the industry are aggressively increasing their exposure to ${shortName}. This indicates strong institutional conviction and broad-based buying interest.`;
     case 'Strong Accumulation':
-      return `Fund managers are meaningfully adding to ${shortName} across categories. Institutional interest is clearly positive this month.`;
+      return `Fund managers are meaningfully adding to ${shortName} across mutual funds. Institutional interest is clearly positive this month.`;
     case 'Moderate Accumulation':
       return `There is steady but measured buying in ${shortName}. Conviction is building without extreme one-sided activity.`;
     case 'Neutral':
@@ -406,4 +471,24 @@ export function buildSignalRowFromMetrics(
     fundsHolding: 0,
     topFundHolders: [],
   };
+}
+
+/** @deprecated Rows are one-per-stock; kept for safe client merges during rollout. */
+export function dedupeSignalsByStock(rows: SmartMoneySignalRow[]): SmartMoneySignalRow[] {
+  const bySlug = new Map<string, SmartMoneySignalRow>();
+  for (const row of rows) {
+    const prev = bySlug.get(row.stockSlug);
+    if (!prev || row.convictionScore > prev.convictionScore) {
+      bySlug.set(row.stockSlug, row);
+    }
+  }
+  return [...bySlug.values()];
+}
+
+export function stockSignalMetaLine(row: SmartMoneySignalRow): string {
+  const cap = stockCapDisplayLabel(row.category);
+  const parts = [row.sector];
+  if (cap) parts.push(cap);
+  parts.push(row.month);
+  return parts.join(' · ');
 }

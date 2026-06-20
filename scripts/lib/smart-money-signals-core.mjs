@@ -1,5 +1,15 @@
 /** Smart Money Signal scoring — Node build/export copy (mirrors src/lib/smart-money-signals.ts). */
 
+/** Stock market-cap buckets (SEBI-style) — used for peer percentile scoring. */
+export const STOCK_CAP_CATEGORIES = [
+  'Large Cap',
+  'Mid Cap',
+  'Small Cap',
+  'Micro Cap',
+  'Unknown',
+];
+
+/** @deprecated Fund scheme categories — only used by Smart Money Tracker, not Signal scoring. */
 export const SIGNAL_CATEGORIES = [
   'Large Cap',
   'Large & Mid Cap',
@@ -16,6 +26,26 @@ export const SIGNAL_CATEGORIES = [
   'Dividend Yield',
   'Index',
 ];
+
+export function normalizeStockCapCategory(raw) {
+  const v = String(raw || '').toLowerCase().replace(/_/g, ' ').trim();
+  if (!v) return 'Unknown';
+  if (v.includes('micro')) return 'Micro Cap';
+  if (v.includes('small')) return 'Small Cap';
+  if (v.includes('mid')) return 'Mid Cap';
+  if (v.includes('large')) return 'Large Cap';
+  return 'Unknown';
+}
+
+export function consecutiveAggregatedNetWeightTrend(sortedMonths, groupKey, byKey) {
+  let count = 0;
+  for (let i = sortedMonths.length - 1; i >= 0; i--) {
+    const entry = byKey.get(`${groupKey}|${sortedMonths[i]}`);
+    if (!entry || entry.netWeightChangePct <= 0) break;
+    count++;
+  }
+  return count;
+}
 
 const FACTOR_MAX = {
   netWeight: 35,
@@ -49,7 +79,7 @@ function buildInterpretation(stockName, signal) {
     case 'Aggressive Accumulation':
       return `Mutual funds across the industry are aggressively increasing their exposure to ${shortName}. This indicates strong institutional conviction and broad-based buying interest.`;
     case 'Strong Accumulation':
-      return `Fund managers are meaningfully adding to ${shortName} across categories. Institutional interest is clearly positive this month.`;
+      return `Fund managers are meaningfully adding to ${shortName} across mutual funds. Institutional interest is clearly positive this month.`;
     case 'Moderate Accumulation':
       return `There is steady but measured buying in ${shortName}. Conviction is building without extreme one-sided activity.`;
     case 'Neutral':

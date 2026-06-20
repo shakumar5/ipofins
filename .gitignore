@@ -48,8 +48,8 @@ public/data/**
 !public/data/.gitkeep
 
 # Sitemaps — regenerated during export / build
-public/sitemap-smart-money-tracker.xml
-public/sitemap-portfolio-overlap*.xml
+public/sitemap-*.xml
+public/sitemap-overlap-staging-*.xml
 
 # OG PNGs — rasterized from public/og-*.svg during build
 public/og-*.png

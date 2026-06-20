@@ -87,7 +87,7 @@ export default function ConvictionScoreTable({ data }: Props) {
         </div>
         <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
           Conviction score (0–100) ranks stocks by net fund-manager activity: fresh entries and increases boost score; exits and decreases lower it.
-          Scores are percentile-ranked within each category for the selected month.
+          Scores are percentile-ranked within each market-cap bucket for the selected month.
         </p>
       </div>
 

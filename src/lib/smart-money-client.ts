@@ -1,6 +1,7 @@
 import { fetchJsonCached, monthFileSlug, categoryFileSlug } from './client-data';
 import type { SmartMoneyTrackerData } from './data/holdings';
 import type { SmartMoneySignalsData, SmartMoneySignalRow } from './smart-money-signals';
+import { dedupeSignalsByStock } from './smart-money-signals';
 
 const SIGNALS_INDEX = '/data/smart-money-signals-index.json';
 const SIGNALS_BASE = '/data/smart-money-signals';
@@ -11,6 +12,7 @@ interface SignalsIndex {
   months: string[];
   categories: string[];
   layout?: 'by-category' | 'monolith';
+  scoringModel?: 'stock-cap-v2' | 'fund-scheme-v1';
 }
 
 interface SignalsMonthFile {
@@ -70,7 +72,9 @@ async function loadSignalsAllCategories(
   const chunks = await Promise.all(
     index.categories.map((cat) => loadSignalsCategoryRows(month, cat, index)),
   );
-  return chunks.flat();
+  const merged = chunks.flat();
+  if (index.scoringModel === 'stock-cap-v2') return merged;
+  return dedupeSignalsByStock(merged);
 }
 
 export async function loadSignalsIndex(): Promise<SignalsIndex> {
@@ -137,18 +141,14 @@ export async function loadTrackerMonth(month: string): Promise<SmartMoneyTracker
   };
 }
 
-export async function findSignalRow(
+export async function findSignalRowsForStock(
   stockSlug: string,
   month: string,
-  category: string,
-): Promise<SmartMoneySignalRow | null> {
+): Promise<SmartMoneySignalRow[]> {
   const index = await loadSignalsIndex();
-  const tryCategories =
-    category && category !== 'All'
-      ? [category]
-      : index.categories;
+  const matches: SmartMoneySignalRow[] = [];
 
-  for (const cat of tryCategories) {
+  for (const cat of index.categories) {
     let rows: SmartMoneySignalRow[];
     try {
       rows =
@@ -160,12 +160,27 @@ export async function findSignalRow(
     } catch {
       continue;
     }
-    const matches = rows.filter((r) => r.stockSlug === stockSlug && r.month === month);
-    if (!matches.length) continue;
-    return (
-      matches.find((r) => r.category === category) ||
-      matches[0]
-    );
+    for (const row of rows) {
+      if (row.stockSlug === stockSlug && row.month === month) {
+        matches.push(row);
+      }
+    }
   }
-  return null;
+
+  return matches;
+}
+
+export async function findSignalRow(
+  stockSlug: string,
+  month: string,
+  category: string,
+): Promise<SmartMoneySignalRow | null> {
+  const matches = await findSignalRowsForStock(stockSlug, month);
+  if (!matches.length) return null;
+
+  if (category && category !== 'All') {
+    return matches.find((r) => r.category === category) ?? matches[0] ?? null;
+  }
+
+  return matches[0] ?? null;
 }

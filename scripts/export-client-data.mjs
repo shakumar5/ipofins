@@ -142,14 +142,6 @@ function buildPortfolioOverlapExport(holdings) {
 }
 
 const PORTFOLIO_OVERLAP_SITEMAP_BASE = 'https://ipofins.com/mutual-funds/portfolio-overlap-checker';
-const SMART_MONEY_SITEMAP_BASE = 'https://ipofins.com/mutual-funds/smart-money';
-const STOCK_SIGNAL_SITEMAP_BASE = `${SMART_MONEY_SITEMAP_BASE}/stock-signal`;
-const SMART_MONEY_TRACKER_VIEW_SLUGS = [
-  'most-bought-stocks',
-  'most-sold-stocks',
-  'fresh-entries',
-  'complete-exits',
-];
 const SITEMAP_URLS_PER_FILE = 45_000;
 
 function writePortfolioOverlapSitemaps(funds) {
@@ -169,9 +161,8 @@ function writePortfolioOverlapSitemaps(funds) {
     chunks.push(urls.slice(i, i + SITEMAP_URLS_PER_FILE));
   }
 
-  const childNames = [];
   chunks.forEach((chunk, idx) => {
-    const name = `sitemap-portfolio-overlap-${idx}.xml`;
+    const name = `sitemap-overlap-staging-${idx}.xml`;
     const body = chunk
       .map((loc) => `  <url><loc>${escapeXml(loc)}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`)
       .join('\n');
@@ -179,82 +170,8 @@ function writePortfolioOverlapSitemaps(funds) {
       join(PUBLIC_DIR, name),
       `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
     );
-    childNames.push(name);
-    console.log(`  ✓ ${name} (${chunk.length} URLs)`);
+    console.log(`  ✓ ${name} (${chunk.length} overlap URLs, staging)`);
   });
-
-  const indexBody = childNames
-    .map((name) => `  <sitemap><loc>${escapeXml(`https://ipofins.com/${name}`)}</loc></sitemap>`)
-    .join('\n');
-  writeFileSync(
-    join(PUBLIC_DIR, 'sitemap-portfolio-overlap-index.xml'),
-    `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexBody}\n</sitemapindex>\n`,
-  );
-  console.log(`  ✓ sitemap-portfolio-overlap-index.xml (${urls.length} overlap URLs)`);
-}
-
-function loadStockSlugsFromDisk() {
-  const signalsDir = join(OUT_DIR, 'smart-money-signals');
-  if (!existsSync(signalsDir)) return [];
-  const slugs = new Set();
-  for (const fileName of readdirSync(signalsDir)) {
-    if (!fileName.endsWith('.json')) continue;
-    const file = JSON.parse(readFileSync(join(signalsDir, fileName), 'utf8'));
-    for (const row of file.rows || []) {
-      if (row.stockSlug) slugs.add(row.stockSlug);
-    }
-  }
-  return [...slugs].sort();
-}
-
-function writeSmartMoneyTrackerSitemaps(monthLabels) {
-  const labels = (monthLabels || [])
-    .map((m) => (typeof m === 'string' ? m : m.label))
-    .filter(Boolean);
-  if (!labels.length) return;
-
-  const urls = [
-    SMART_MONEY_SITEMAP_BASE,
-    `${SMART_MONEY_SITEMAP_BASE}/smart-money-signal`,
-    `${SMART_MONEY_SITEMAP_BASE}/stock-signal`,
-    `${SMART_MONEY_SITEMAP_BASE}/sector-intelligence`,
-  ];
-  for (const month of labels) {
-    const mSlug = monthFileSlug(month);
-    for (const viewSlug of SMART_MONEY_TRACKER_VIEW_SLUGS) {
-      urls.push(`${SMART_MONEY_SITEMAP_BASE}/${viewSlug}-in-${mSlug}`);
-    }
-  }
-
-  for (const stockSlug of loadStockSlugsFromDisk()) {
-    urls.push(`${STOCK_SIGNAL_SITEMAP_BASE}/${stockSlug}`);
-    urls.push(`${SMART_MONEY_SITEMAP_BASE}/signal/${stockSlug}`);
-  }
-
-  const escapeXml = (v) =>
-    v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-  const body = urls
-    .map(
-      (loc) =>
-        `  <url><loc>${escapeXml(loc)}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>`,
-    )
-    .join('\n');
-  writeFileSync(
-    join(PUBLIC_DIR, 'sitemap-smart-money-tracker.xml'),
-    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
-  );
-  const stockSignalCount = urls.filter((u) => u.startsWith(STOCK_SIGNAL_SITEMAP_BASE + '/')).length;
-  console.log(
-    `  ✓ sitemap-smart-money-tracker.xml (${urls.length} URLs, ${stockSignalCount} stock-signal pages)`,
-  );
-}
-
-function loadTrackerMonthLabelsFromDisk() {
-  const indexPath = join(OUT_DIR, 'smart-money-tracker-index.json');
-  if (!existsSync(indexPath)) return [];
-  const index = JSON.parse(readFileSync(indexPath, 'utf8'));
-  return (index.months || []).map((m) => m.label || m).filter(Boolean);
 }
 
 function loadHoldingsFromJson() {
@@ -329,6 +246,7 @@ function writeSignalsByCategory(signals) {
     months: signals.months,
     categories: signals.categories,
     layout: 'by-category',
+    scoringModel: 'stock-cap-v2',
   });
 
   for (const month of signals.months) {
@@ -397,6 +315,7 @@ function splitMonolithSignalsOnDisk() {
     writeJson('smart-money-signals-index.json', {
       ...index,
       layout: 'by-category',
+      scoringModel: 'stock-cap-v2',
     });
   }
 }
@@ -499,7 +418,6 @@ async function main() {
   }
 
   splitMonolithSignalsOnDisk();
-  writeSmartMoneyTrackerSitemaps(loadTrackerMonthLabelsFromDisk());
 
   console.log('');
 }

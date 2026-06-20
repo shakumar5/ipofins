@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
-import { buildInterpretation } from '../../lib/smart-money-signals';
+import { buildInterpretation, dedupeSignalsByStock, stockCapDisplayLabel, stockSignalMetaLine } from '../../lib/smart-money-signals';
 import {
   parseStockSignalSlugFromPathname,
   stockSignalPath,
@@ -31,7 +31,7 @@ function StockDetail({ row }: { row: SmartMoneySignalRow }) {
     <div className="card p-5 md:p-6">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-surface-900 dark:text-white">{row.stockName}</h2>
-        <p className="text-sm text-surface-500 mt-1">{row.sector} · {row.category} · {row.month}</p>
+        <p className="text-sm text-surface-500 mt-1">{stockSignalMetaLine(row)}</p>
       </div>
 
       <section className="mb-6">
@@ -83,7 +83,7 @@ function StockDetail({ row }: { row: SmartMoneySignalRow }) {
             ))}
           </ul>
           <p className="text-xs text-surface-400 mt-2">
-            Ranked by portfolio weight (% of NAV) in {row.category} funds for {row.month}
+            Ranked by portfolio weight (% of NAV) across all mutual funds for {row.month}
           </p>
         </section>
       )}
@@ -131,20 +131,17 @@ function Metric({
   );
 }
 
-function bestRowPerSlug(rows: SmartMoneySignalRow[]): SmartMoneySignalRow[] {
-  const bySlug = new Map<string, SmartMoneySignalRow>();
-  for (const row of rows) {
-    const prev = bySlug.get(row.stockSlug);
-    if (!prev || row.convictionScore > prev.convictionScore) bySlug.set(row.stockSlug, row);
-  }
-  return [...bySlug.values()].sort((a, b) => b.convictionScore - a.convictionScore);
+function rowForSlug(rows: SmartMoneySignalRow[], slug: string): SmartMoneySignalRow | null {
+  const matches = rows.filter((r) => r.stockSlug === slug);
+  if (!matches.length) return null;
+  if (matches.length === 1) return matches[0];
+  return dedupeSignalsByStock(matches)[0] ?? null;
 }
 
 export default function StockSignalView({ data, initialStockSlug = null, loading }: Props) {
   const month = data.months[0] || '';
   const [search, setSearch] = useState('');
   const [activeSlug, setActiveSlug] = useState<string | null>(initialStockSlug);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const monthRows = useMemo(
     () => data.rows.filter((r) => r.month === month),
@@ -156,7 +153,6 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
     if (replace) window.history.replaceState(null, '', path);
     else window.history.pushState(null, '', path);
     setActiveSlug(slug);
-    setSelectedCategory(null);
     setSearch('');
   }, []);
 
@@ -165,7 +161,6 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
     const sync = () => {
       const slug = parseStockSignalSlugFromPathname(window.location.pathname);
       setActiveSlug(slug);
-      if (slug) setSelectedCategory(null);
     };
     sync();
     window.addEventListener('popstate', sync);
@@ -182,33 +177,20 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
     const q = search.trim().toLowerCase();
     if (q.length < MIN_SEARCH_LEN) return [];
     const matched = monthRows.filter((r) => r.stockName.toLowerCase().includes(q));
-    return bestRowPerSlug(matched).slice(0, SUGGESTION_LIMIT);
+    return dedupeSignalsByStock(matched)
+      .sort((a, b) => b.convictionScore - a.convictionScore)
+      .slice(0, SUGGESTION_LIMIT);
   }, [monthRows, search]);
 
-  const slugRows = useMemo(() => {
-    if (!activeSlug) return [];
-    return monthRows
-      .filter((r) => r.stockSlug === activeSlug)
-      .sort((a, b) => b.convictionScore - a.convictionScore);
-  }, [monthRows, activeSlug]);
-
-  const selectedRow = useMemo(() => {
-    if (!slugRows.length) return null;
-    if (selectedCategory) {
-      return slugRows.find((r) => r.category === selectedCategory) || slugRows[0];
-    }
-    return slugRows[0];
-  }, [slugRows, selectedCategory]);
-
-  const otherCategories = useMemo(() => {
-    if (!selectedRow) return [];
-    return slugRows.filter((r) => r.category !== selectedRow.category);
-  }, [slugRows, selectedRow]);
+  const selectedRow = useMemo(
+    () => (activeSlug ? rowForSlug(monthRows, activeSlug) : null),
+    [monthRows, activeSlug],
+  );
 
   const searchQuery = search.trim();
   const showIdle = !activeSlug && searchQuery.length < MIN_SEARCH_LEN;
   const showNoSearchResults = !activeSlug && searchQuery.length >= MIN_SEARCH_LEN && suggestions.length === 0;
-  const showNotInMf = Boolean(activeSlug && slugRows.length === 0 && !loading);
+  const showNotInMf = Boolean(activeSlug && !selectedRow && !loading);
 
   return (
     <div>
@@ -281,26 +263,7 @@ export default function StockSignalView({ data, initialStockSlug = null, loading
         </div>
       )}
 
-      {selectedRow && (
-        <>
-          {otherCategories.length > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-surface-500">Also scored in:</span>
-              {otherCategories.map((row) => (
-                <button
-                  key={row.category}
-                  type="button"
-                  onClick={() => setSelectedCategory(row.category)}
-                  className="px-2.5 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30"
-                >
-                  {row.category} ({row.convictionScore})
-                </button>
-              ))}
-            </div>
-          )}
-          <StockDetail row={selectedRow} />
-        </>
-      )}
+      {selectedRow && <StockDetail row={selectedRow} />}
     </div>
   );
 }

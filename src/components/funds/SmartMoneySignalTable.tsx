@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
 
-import { SIGNAL_OPTIONS } from '../../lib/smart-money-signals';
+import { SIGNAL_OPTIONS, stockCapDisplayLabel } from '../../lib/smart-money-signals';
 
 
 
@@ -25,23 +25,14 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
 
   const rows = useMemo(() => {
-
     return data.rows
-
       .filter((r) => {
-
         if (month && r.month !== month) return false;
-
         if (category !== 'All' && r.category !== category) return false;
-
         if (signalFilter !== 'All' && r.signal !== signalFilter) return false;
-
         return true;
-
       })
-
       .sort((a, b) => b.convictionScore - a.convictionScore);
-
   }, [data.rows, month, category, signalFilter]);
 
 
@@ -56,7 +47,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
           <div>
 
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Category</label>
+            <label className="text-sm font-medium text-surface-700 dark:text-surface-300 block mb-1.5">Market Cap</label>
 
             <select
 
@@ -130,9 +121,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
         </div>
 
         <p className="mt-3 text-xs text-surface-500 dark:text-surface-400">
-
-          Scores are percentile-based within each fund category and month. Each factor is compared to the category leader that month.
-
+          Each stock appears once. Activity is aggregated across all mutual funds. Scores are percentile-ranked vs other stocks in the same market-cap bucket (Large / Mid / Small / Micro).
         </p>
 
       </div>
@@ -213,7 +202,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
       <p className="mt-4 text-xs text-surface-400">
 
-        Category: {category} · Click View for raw metrics and percentile breakdown. Not investment advice.
+        Category: {category === 'All' ? 'All market caps' : category} · Click View for raw metrics and percentile breakdown. Not investment advice.
 
       </p>
 
@@ -236,7 +225,7 @@ function SignalCard({
   month: string;
   category: string;
 }) {
-  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(category)}`;
+  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(row.category)}`;
 
   return (
     <div className="card p-3 border border-surface-200 dark:border-surface-700">
@@ -244,7 +233,10 @@ function SignalCard({
         <div className="min-w-0">
           <p className="text-xs text-surface-400 tabular-nums">#{rank}</p>
           <p className="text-sm font-semibold text-surface-900 dark:text-white">{row.stockName}</p>
-          <p className="text-xs text-surface-500 mt-0.5">{row.sector} · {row.category}</p>
+          <p className="text-xs text-surface-500 mt-0.5">
+            {row.sector}
+            {stockCapDisplayLabel(row.category) ? ` · ${stockCapDisplayLabel(row.category)}` : ''}
+          </p>
         </div>
         <div className="text-right flex-shrink-0">
           <p className="text-lg font-bold text-primary-600 tabular-nums">{row.convictionScore}</p>
@@ -286,7 +278,7 @@ function SignalRow({
 
 }) {
 
-  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(category)}`;
+  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(row.category)}`;
 
 
 
@@ -296,7 +288,13 @@ function SignalRow({
 
       <td className="px-4 py-3 text-surface-500">{rank}</td>
 
-      <td className="px-4 py-3 font-medium text-surface-900 dark:text-white">{row.stockName}</td>
+      <td className="px-4 py-3 font-medium text-surface-900 dark:text-white">
+        {row.stockName}
+        <span className="block text-xs font-normal text-surface-500 dark:text-surface-400 mt-0.5">
+          {row.sector}
+          {stockCapDisplayLabel(row.category) ? ` · ${stockCapDisplayLabel(row.category)}` : ''}
+        </span>
+      </td>
 
       <td className="px-4 py-3 text-right font-bold text-primary-600">{row.convictionScore}</td>
 

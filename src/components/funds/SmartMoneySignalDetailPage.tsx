@@ -26,7 +26,7 @@ export default function SmartMoneySignalDetailPage({
 
     const params = new URLSearchParams(window.location.search);
     const monthParam = initialMonth || params.get('month') || '';
-    const categoryParam = initialCategory || params.get('category') || 'Large Cap';
+    const categoryParam = initialCategory || params.get('category') || 'All';
 
     (async () => {
       try {

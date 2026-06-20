@@ -23,6 +23,8 @@ export function getStaticPaths() {
 
 const { stockSlug, stockName } = Astro.props;
 const isPlaceholder = stockSlug === '_placeholder';
+const initialMonth = Astro.url.searchParams.get('month') ?? undefined;
+const initialCategory = Astro.url.searchParams.get('category') ?? undefined;
 const pageMeta = isPlaceholder
   ? { title: 'Smart Money Signal | IPOFins', description: 'Institutional conviction score breakdown.', path: signalDetailPath('_placeholder') }
   : getSignalDetailPageMeta(stockName, stockSlug);
@@ -79,7 +81,12 @@ const jsonLd = isPlaceholder
         <a href={sm.hub} class="text-primary-600 mt-2 inline-block">← Back to Smart Money</a>
       </div>
     ) : (
-      <SmartMoneySignalDetailPage client:only="react" stockSlug={stockSlug}>
+      <SmartMoneySignalDetailPage
+        client:only="react"
+        stockSlug={stockSlug}
+        initialMonth={initialMonth}
+        initialCategory={initialCategory}
+      >
         <div slot="fallback" class="py-12 text-center text-sm text-surface-500">Loading…</div>
       </SmartMoneySignalDetailPage>
     )}

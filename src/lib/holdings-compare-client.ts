@@ -39,7 +39,10 @@ export function loadHoldingsCompareIndex(force = false): Promise<HoldingsCompare
   if (!indexPromise) {
     indexPromise = fetchJsonCached<HoldingsCompareIndex>(INDEX_URL)
       .then((data) => data)
-      .catch(() => null);
+      .catch(() => {
+        indexPromise = null;
+        return null;
+      });
   }
   return indexPromise;
 }

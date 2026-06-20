@@ -81,6 +81,13 @@ const faqJsonLd = {
         Holdings data is not loaded locally. Run <code class="text-xs bg-white/60 dark:bg-black/20 px-1 rounded">npm run dev:sync</code> or <code class="text-xs bg-white/60 dark:bg-black/20 px-1 rounded">npm run build</code> to export JSON from the database.
       </div>
     )}
+    {holdingsIndex && (
+      <script
+        type="application/json"
+        id="holdings-compare-bootstrap"
+        set:html={JSON.stringify(holdingsIndex)}
+      />
+    )}
     <HoldingsCompare client:load pageMode="hub" initialIndex={holdingsIndex}>
       <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading holdings comparison…</div>
     </HoldingsCompare>

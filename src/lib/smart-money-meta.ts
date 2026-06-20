@@ -44,10 +44,10 @@ export function getSmartMoneyPageMeta(tab: SmartMoneyTab): PageMeta {
       return {
         title: 'Smart Money Signal 2026 - Institutional Conviction Scores | IPOFins',
         description:
-          'Ranked stocks scored 0–100 by mutual fund institutional activity. Net weight change, fresh entries, exits, and AMC breadth by fund category.',
+          'Ranked stocks scored 0–100 from aggregated mutual fund activity. One row per stock, percentile-ranked vs peers in the same market-cap bucket.',
         path,
         heading: 'Smart Money Signal',
-        subtitle: 'Institutional conviction scores — ranked stocks by fund-manager buying and selling activity.',
+        subtitle: 'Institutional conviction — one score per stock, aggregated across all mutual funds.',
         breadcrumbLabel: 'Smart Money Signal',
       };
     case 'stock-signal':

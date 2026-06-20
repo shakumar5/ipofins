@@ -1,5 +1,5 @@
 import type { SmartMoneySignalRow, FactorBreakdown } from '../../lib/smart-money-signals';
-import { buildInterpretation } from '../../lib/smart-money-signals';
+import { buildInterpretation, stockCapDisplayLabel, stockSignalMetaLine } from '../../lib/smart-money-signals';
 
 
 
@@ -49,7 +49,7 @@ export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Pro
 
       <h1 className="text-2xl font-bold text-surface-900 dark:text-white text-center">{row.stockName}</h1>
 
-      <p className="text-center text-sm text-surface-500 mt-1">{row.category} · {row.month}</p>
+      <p className="text-center text-sm text-surface-500 mt-1">{stockSignalMetaLine(row)}</p>
 
 
 
@@ -193,7 +193,10 @@ export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Pro
 
         <p className="font-semibold text-surface-700 dark:text-surface-300 mb-2">
 
-          Score Breakdown ({row.category} percentile vs category max)
+          Score Breakdown
+          {stockCapDisplayLabel(row.category)
+            ? ` (${row.category} peers — percentile vs cap-bucket leader)`
+            : ' (percentile vs peer stocks)'}
 
         </p>
 
@@ -221,7 +224,7 @@ export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Pro
 
       <p className="mt-8 text-center text-xs text-surface-400">
 
-        {row.category} · {row.month} · Source: AMC monthly portfolio disclosures · Not investment advice.
+        {stockSignalMetaLine(row)} · Source: AMC monthly portfolio disclosures · Not investment advice.
 
       </p>
 

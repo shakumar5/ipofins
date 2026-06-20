@@ -83,7 +83,7 @@ const { pageMeta, parsed, parsedTab, sm } = Astro.props;
 
     <div class="card p-5 space-y-2">
       <h3 class="font-bold text-surface-900 dark:text-white">2. Smart Money Signal</h3>
-      <p>Ranked table of stocks scored <strong>0–100</strong> within each fund category. Six factors are percentile-ranked against the category leader each month. Click any row for the full factor breakdown.</p>
+      <p>Ranked table of stocks scored <strong>0–100</strong>. Each stock appears once — fund activity is aggregated across all schemes and scored vs peers in the same <strong>market-cap bucket</strong> (Large / Mid / Small / Micro). Click any row for the full factor breakdown.</p>
       <p class="text-xs">Signals: 🚀 Aggressive Accumulation (90+) · 🟢 Strong (75+) · 🟡 Moderate (60+) · ⚪ Neutral (40+) · 🟠 Distribution (25+) · 🔴 Strong Distribution (&lt;25)</p>
       <p class="text-xs text-surface-400">
         <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a>
@@ -167,7 +167,7 @@ const { pageMeta, parsed, parsedTab, sm } = Astro.props;
     </details>
     <details class="card group">
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How should I use this for investment research?</summary>
-      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Sector Intelligence is a <strong>starting point</strong>, not a buy/sell signal. Rising sector conviction suggests fund managers are collectively allocating more capital — but this could reflect performance (price appreciation) as well as new buying. Cross-reference with <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes</a> for AMC-level detail, <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a> for names, <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a> for rotation trends, and <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a> for stock-level conviction within a category.</p>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Sector Intelligence is a <strong>starting point</strong>, not a buy/sell signal. Rising sector conviction suggests fund managers are collectively allocating more capital — but this could reflect performance (price appreciation) as well as new buying. Cross-reference with <a href={sm.holdingsChanges} class="text-primary-600 hover:underline">Holdings Changes</a> for AMC-level detail, <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a> for names, <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a> for rotation trends, and <a href={sm.signals} class="text-primary-600 hover:underline">Smart Money Signal</a> for stock-level conviction.</p>
     </details>
   </div>
 </section>
