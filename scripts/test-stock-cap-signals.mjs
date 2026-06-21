@@ -121,6 +121,49 @@ if (midCap.category !== 'Mid Cap') {
   errors.push(`expected Mid Cap, got ${midCap.category}`);
 }
 
+// Shriram-like: many fresh entries, positive net fund flow — should not score as distribution
+const shriramLike = makeRaw({
+  stockName: 'Shriram Finance Limited',
+  netWeightChangePct: 61,
+  increasedCount: 9,
+  decreasedCount: 6,
+  freshEntries: 29,
+  completeExits: 9,
+  consecutivePositiveMonths: 0,
+  amcIdsBuying: new Set(Array.from({ length: 20 }, (_, i) => i + 1)),
+  amcIdsAll: new Set(Array.from({ length: 30 }, (_, i) => i + 1)),
+});
+const bucketMaxes = computeCategoryMaxes([
+  {
+    netWeightChangePct: 157.4,
+    increasedCount: 79,
+    decreasedCount: 12,
+    freshEntries: 38,
+    completeExits: 19,
+    amcsBuying: 30,
+    buyingFunds: 106,
+    consecutivePositiveMonths: 2,
+  },
+  {
+    netWeightChangePct: shriramLike.netWeightChangePct,
+    increasedCount: shriramLike.increasedCount,
+    decreasedCount: shriramLike.decreasedCount,
+    freshEntries: shriramLike.freshEntries,
+    completeExits: shriramLike.completeExits,
+    amcsBuying: shriramLike.amcIdsBuying.size,
+    buyingFunds: shriramLike.increasedCount + shriramLike.freshEntries,
+    consecutivePositiveMonths: shriramLike.consecutivePositiveMonths,
+  },
+]);
+const shriramScore = scoreStockInCategory(shriramLike, bucketMaxes);
+if (shriramScore.convictionScore < 50) {
+  errors.push(`Shriram-like profile expected score >= 50, got ${shriramScore.convictionScore}`);
+}
+const shriramRow = buildSignalRowFromMetrics(shriramLike, bucketMaxes);
+if (shriramRow.signal === 'Distribution' || shriramRow.signal === 'Strong Distribution') {
+  errors.push(`Shriram-like profile should not be distribution, got ${shriramRow.signal}`);
+}
+
 if (errors.length) {
   console.error('FAIL');
   for (const e of errors) console.error(' -', e);

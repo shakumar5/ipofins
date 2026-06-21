@@ -118,8 +118,27 @@ function amcInstitutionalConfidence(amcCount) {
   return { label: 'Very Low', stars: 1 };
 }
 
-function buildInterpretation(stockName, signal) {
+function buildInterpretation(stockName, signal, opts = {}) {
   const shortName = stockName.replace(/\s+(Limited|Ltd\.?)$/i, '').trim();
+  const flow = opts.netFundFlow ?? 0;
+  const score = opts.convictionScore ?? 0;
+  const fresh = opts.freshEntries ?? 0;
+  const cap = opts.category && opts.category !== 'All' ? opts.category : 'market-cap';
+
+  if (flow >= 15 && (opts.netWeightChangePct ?? 0) > 0) {
+    if (score >= 75) {
+      return `Fund managers are meaningfully adding to ${shortName} across mutual funds. Institutional interest is clearly positive this month.`;
+    }
+    if (score >= 50) {
+      return `Mutual funds are net buyers of ${shortName} — including ${fresh} fresh entries and broad weight increases — ranking among active ${cap} names this month.`;
+    }
+    return `Funds are net adding ${shortName} (${flow} more buy-side fund moves than sells), though activity is lighter than the top ${cap} leaders this month.`;
+  }
+
+  if (flow <= -10) {
+    return `More funds reduced or exited ${shortName} than added this month. Institutional conviction appears to be fading.`;
+  }
+
   switch (signal) {
     case 'Aggressive Accumulation':
       return `Mutual funds across the industry are aggressively increasing their exposure to ${shortName}. This indicates strong institutional conviction and broad-based buying interest.`;
@@ -164,6 +183,15 @@ export function percentilePoints(value, max, factorMax) {
   return Math.min(factorMax, (value / max) * factorMax);
 }
 
+export function sqrtPercentilePoints(value, max, factorMax) {
+  if (value <= 0 || max <= 0) return 0;
+  return Math.min(factorMax, (Math.sqrt(value) / Math.sqrt(max)) * factorMax);
+}
+
+export function netFundFlow(increasedCount, decreasedCount, freshEntries, completeExits) {
+  return increasedCount + freshEntries - decreasedCount - completeExits;
+}
+
 export function invertedPercentilePoints(value, max, factorMax) {
   if (max <= 0) return factorMax;
   return Math.max(0, (1 - value / max) * factorMax);
@@ -181,8 +209,13 @@ export function computeCategoryMaxes(items) {
     if (item.netWeightChangePct > maxPositiveNetWeight) {
       maxPositiveNetWeight = item.netWeightChangePct;
     }
-    const netBuying = item.increasedCount - item.decreasedCount;
-    if (netBuying > maxNetBuying) maxNetBuying = netBuying;
+    const netFlow = netFundFlow(
+      item.increasedCount,
+      item.decreasedCount,
+      item.freshEntries,
+      item.completeExits,
+    );
+    if (netFlow > maxNetBuying) maxNetBuying = netFlow;
     if (item.freshEntries > maxFreshEntries) maxFreshEntries = item.freshEntries;
     if (item.completeExits > maxCompleteExits) maxCompleteExits = item.completeExits;
     const br = breadthRaw(item.amcsBuying, item.buyingFunds);
@@ -208,7 +241,12 @@ function round1(n) {
 
 export function scoreStockInCategory(raw, maxes) {
   const netWeight = raw.netWeightChangePct;
-  const netBuying = raw.increasedCount - raw.decreasedCount;
+  const netFlow = netFundFlow(
+    raw.increasedCount,
+    raw.decreasedCount,
+    raw.freshEntries,
+    raw.completeExits,
+  );
   const buyingFunds = raw.increasedCount + raw.freshEntries;
   const amcsBuying = raw.amcIdsBuying.size;
   const brRaw = breadthRaw(amcsBuying, buyingFunds);
@@ -216,10 +254,11 @@ export function scoreStockInCategory(raw, maxes) {
 
   const netWeightPoints =
     netWeight >= 0
-      ? percentilePoints(netWeight, maxes.maxPositiveNetWeight, FACTOR_MAX.netWeight)
+      ? sqrtPercentilePoints(netWeight, maxes.maxPositiveNetWeight, FACTOR_MAX.netWeight)
       : negativeNetWeightPoints(netWeight);
 
-  const netBuyingPoints = percentilePoints(netBuying, maxes.maxNetBuying, FACTOR_MAX.netBuying);
+  const netBuyingPoints =
+    netFlow > 0 ? percentilePoints(netFlow, maxes.maxNetBuying, FACTOR_MAX.netBuying) : 0;
   const freshPoints = percentilePoints(raw.freshEntries, maxes.maxFreshEntries, FACTOR_MAX.freshEntries);
   const exitPoints = invertedPercentilePoints(
     raw.completeExits,
@@ -261,7 +300,7 @@ export function scoreStockInCategory(raw, maxes) {
       maxPoints: FACTOR_MAX.netWeight,
     },
     netBuying: {
-      raw: netBuying,
+      raw: netFlow,
       categoryMax: maxes.maxNetBuying,
       points: factorScores.netBuying,
       maxPoints: FACTOR_MAX.netBuying,
@@ -302,6 +341,12 @@ export function buildSignalRowFromMetrics(raw, maxes) {
   const conf = amcInstitutionalConfidence(amcCount);
   const buyingFunds = raw.increasedCount + raw.freshEntries;
   const fundsHolding = Math.max(0, raw.fundsHolding ?? 0);
+  const netFlow = netFundFlow(
+    raw.increasedCount,
+    raw.decreasedCount,
+    raw.freshEntries,
+    raw.completeExits,
+  );
 
   return {
     stockName: raw.stockName,
@@ -316,7 +361,7 @@ export function buildSignalRowFromMetrics(raw, maxes) {
     decreasedCount: raw.decreasedCount,
     freshEntries: raw.freshEntries,
     completeExits: raw.completeExits,
-    netBuying: raw.increasedCount - raw.decreasedCount,
+    netBuying: netFlow,
     netWeightChangePct: round1(raw.netWeightChangePct),
     amcCount,
     amcsBuying: raw.amcIdsBuying.size,
@@ -327,7 +372,13 @@ export function buildSignalRowFromMetrics(raw, maxes) {
     factorScores,
     factorBreakdown,
     ...(raw.fundActivity ? { fundActivity: raw.fundActivity } : {}),
-    interpretation: buildInterpretation(raw.stockName, signal),
+    interpretation: buildInterpretation(raw.stockName, signal, {
+      netFundFlow: netFlow,
+      freshEntries: raw.freshEntries,
+      convictionScore,
+      category: raw.category,
+      netWeightChangePct: raw.netWeightChangePct,
+    }),
     fundsHolding,
     topFundHolders: raw.topFundHolders || [],
     ...(raw.nseSymbol ? { nseSymbol: raw.nseSymbol } : {}),

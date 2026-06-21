@@ -236,13 +236,14 @@ html.dark {
 }
 
 .cookie-consent-banner {
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }
 
 .cookie-consent-banner--hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: translateY(100%);
 }
 
 .return-positive {
