@@ -88,7 +88,7 @@ const faqJsonLd = {
         data-json={JSON.stringify(holdingsIndex)}
       />
     )}
-    <HoldingsCompare client:only="react" pageMode="hub" initialIndex={holdingsIndex}>
+    <HoldingsCompare client:load pageMode="hub" initialIndex={holdingsIndex}>
       <div slot="fallback" class="py-12 text-center text-sm text-surface-500 dark:text-surface-400">Loading holdings comparison…</div>
     </HoldingsCompare>
   </section>

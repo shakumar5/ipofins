@@ -61,9 +61,18 @@ const jsonLd = {
 
   <script is:inline define:vars={{ initialQuery: query }}>
     (function () {
+      var BATCH_SIZE = 100;
+      var DEBOUNCE_MS = 200;
+      var MIN_QUERY_LEN = 2;
+
       var container = document.getElementById('search-page-results');
       var input = document.getElementById('site-search');
       if (!container) return;
+
+      var _rows = null;
+      var _loading = false;
+      var _searchGen = 0;
+      var _debounce = null;
 
       var catColors = {
         IPO: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -78,18 +87,55 @@ const jsonLd = {
         return typeof path === 'string' && path.charAt(0) === '/' && path.indexOf('://') === -1;
       }
 
-      function score(item, q) {
-        var text = (item.t + ' ' + (item.k || '') + ' ' + (item.m || '')).toLowerCase();
-        var lower = q.toLowerCase();
-        if (item.t.toLowerCase() === lower) return 100;
-        if (item.t.toLowerCase().indexOf(lower) === 0) return 80;
-        if (text.indexOf(lower) !== -1) return 50;
-        var words = lower.split(/\s+/);
+      function indexRows(items) {
+        _rows = new Array(items.length);
+        for (var i = 0; i < items.length; i++) {
+          var item = items[i];
+          _rows[i] = {
+            item: item,
+            text: (item.t + ' ' + (item.k || '') + ' ' + (item.m || '')).toLowerCase(),
+          };
+        }
+      }
+
+      function scoreRow(q, t, item) {
+        if (item.t.toLowerCase() === q) return 100;
+        if (item.t.toLowerCase().indexOf(q) === 0) return 80;
+        if (t.indexOf(q) !== -1) return 50;
+        var words = q.split(/\s+/);
         var hits = 0;
         for (var i = 0; i < words.length; i++) {
-          if (words[i].length > 1 && text.indexOf(words[i]) !== -1) hits++;
+          if (words[i].length > 1 && t.indexOf(words[i]) !== -1) hits++;
         }
         return hits > 0 ? 20 + hits * 5 : 0;
+      }
+
+      function ensureIndex(cb) {
+        if (_rows) { cb(); return; }
+        if (_loading) return;
+        _loading = true;
+        fetch('/data/search-index.json')
+          .then(function (r) {
+            if (!r.ok) throw new Error('fetch failed');
+            return r.text();
+          })
+          .then(function (text) {
+            var run = function () {
+              indexRows(JSON.parse(text));
+              _loading = false;
+              cb();
+            };
+            if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 500 });
+            else setTimeout(run, 0);
+          })
+          .catch(function () {
+            _loading = false;
+            container.textContent = '';
+            var err = document.createElement('p');
+            err.className = 'text-sm text-danger-600 dark:text-danger-400';
+            err.textContent = 'Search is temporarily unavailable. Please try again.';
+            container.appendChild(err);
+          });
       }
 
       function render(items, q) {
@@ -133,42 +179,43 @@ const jsonLd = {
       }
 
       function runSearch(q) {
-        if (!q) return;
-        fetch('/data/search-index.json')
-          .then(function (r) {
-            if (!r.ok) throw new Error('fetch failed');
-            return r.json();
-          })
-          .then(function (data) {
-            var results = data
-              .map(function (item) {
-                return { item: item, s: score(item, q) };
-              })
-              .filter(function (x) {
-                return x.s > 0;
-              })
-              .sort(function (a, b) {
-                return b.s - a.s;
-              })
-              .map(function (x) {
-                return x.item;
-              });
-            render(results, q);
-          })
-          .catch(function () {
-            container.textContent = '';
-            var err = document.createElement('p');
-            err.className = 'text-sm text-danger-600 dark:text-danger-400';
-            err.textContent = 'Search is temporarily unavailable. Please try again.';
-            container.appendChild(err);
-          });
+        if (!q || q.length < MIN_QUERY_LEN) return;
+        var gen = ++_searchGen;
+        var lower = q.toLowerCase();
+        var scored = [];
+        var i = 0;
+
+        ensureIndex(function () {
+          function processBatch() {
+            if (gen !== _searchGen) return;
+            var end = Math.min(i + BATCH_SIZE, _rows.length);
+            for (; i < end; i++) {
+              var row = _rows[i];
+              var s = scoreRow(lower, row.text, row.item);
+              if (s > 0) scored.push({ item: row.item, s: s });
+            }
+            if (i < _rows.length) {
+              requestAnimationFrame(processBatch);
+              return;
+            }
+            scored.sort(function (a, b) { return b.s - a.s; });
+            render(
+              scored.map(function (x) { return x.item; }),
+              q,
+            );
+          }
+          requestAnimationFrame(processBatch);
+        });
       }
 
-      if (initialQuery) runSearch(initialQuery);
+      if (initialQuery && initialQuery.length >= MIN_QUERY_LEN) runSearch(initialQuery);
       if (input) {
         input.addEventListener('input', function () {
+          clearTimeout(_debounce);
           var q = input.value.trim();
-          if (q.length >= 2) runSearch(q);
+          _debounce = setTimeout(function () {
+            if (q.length >= MIN_QUERY_LEN) runSearch(q);
+          }, DEBOUNCE_MS);
         });
       }
     })();

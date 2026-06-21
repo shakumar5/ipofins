@@ -10,7 +10,7 @@ function FactorRow({
   factor,
 }: {
   label: string;
-  factor: { raw: number; detail: string; points: number; maxPoints: number };
+  factor: { raw: number; categoryMax: number; points: number; maxPoints: number };
 }) {
   return (
     <div className="bg-surface-50 dark:bg-surface-800/50 rounded px-3 py-2">
@@ -20,7 +20,9 @@ function FactorRow({
           {factor.points} / {factor.maxPoints}
         </span>
       </div>
-      <p className="text-[11px] mt-0.5 text-surface-500 dark:text-surface-400">{factor.detail}</p>
+      <p className="text-[11px] mt-0.5 text-surface-500 dark:text-surface-400">
+        Raw {factor.raw} · category leader {factor.categoryMax}
+      </p>
     </div>
   );
 }
@@ -54,7 +56,6 @@ function FundList({ title, funds, tone }: { title: string; funds: string[]; tone
 
 export default function ConvictionScoreBreakdown({ row }: Props) {
   const b = row.factorBreakdown;
-  const v2 = row.convictionV2;
   const cap = stockCapDisplayLabel(row.category);
 
   if (!b) return null;
@@ -69,23 +70,17 @@ export default function ConvictionScoreBreakdown({ row }: Props) {
       </summary>
 
       <div className="px-4 pb-4 pt-1 space-y-4 border-t border-surface-200 dark:border-surface-700">
-        {v2 && (
-          <p className="text-xs text-surface-500">
-            Raw component total {v2.rawTotal}
-            {cap ? ` · ${cap}` : ''}
-            {v2.capMultiplier !== 1 ? ` · cap multiplier ×${v2.capMultiplier}` : ''}
-            {' · '}
-            Final {row.convictionScore}/100
-          </p>
-        )}
+        <p className="text-xs text-surface-500">
+          Scored vs peers in {cap || row.category} · Final {row.convictionScore}/100
+        </p>
 
         <div className="space-y-2">
-          <FactorRow label="Net Fund Activity" factor={b.netFundActivity} />
-          <FactorRow label="Fresh Entry Strength" factor={b.freshEntry} />
-          <FactorRow label="Complete Exit Impact" factor={b.exitPenalty} />
-          <FactorRow label="AMC Participation" factor={b.amcParticipation} />
-          <FactorRow label="Trend Consistency" factor={b.trend} />
           <FactorRow label="Net Weight Change" factor={b.netWeightChange} />
+          <FactorRow label="Net Buying Funds" factor={b.netBuying} />
+          <FactorRow label="Fresh Entries" factor={b.freshEntries} />
+          <FactorRow label="Complete Exits" factor={b.completeExits} />
+          <FactorRow label="AMC Breadth" factor={b.amcBreadth} />
+          <FactorRow label="Trend Consistency" factor={b.trend} />
         </div>
 
         {row.fundActivity && (
@@ -111,10 +106,7 @@ export default function ConvictionScoreBreakdown({ row }: Props) {
           </div>
           <div>
             <dt className="text-surface-400">AMCs buying</dt>
-            <dd className="font-semibold text-surface-800 dark:text-surface-100">
-              {row.amcsBuying}
-              {v2 ? ` / ${v2.totalActiveAmcs} active` : ''}
-            </dd>
+            <dd className="font-semibold text-surface-800 dark:text-surface-100">{row.amcsBuying}</dd>
           </div>
           <div>
             <dt className="text-surface-400">Trend streak</dt>

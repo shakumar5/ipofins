@@ -52,7 +52,6 @@ export function slimSignalRow(row) {
     fundsHolding: row.fundsHolding,
     topFundHolders: Array.isArray(row.topFundHolders) ? row.topFundHolders.slice(0, 3) : [],
     ...(row.nseSymbol ? { nseSymbol: row.nseSymbol } : {}),
-    ...(row.convictionV2 ? { convictionV2: row.convictionV2 } : {}),
   };
 }
 

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState, useTransition, useDeferredValue } from 'react';
 import type { SmartMoneyStockRow, SmartMoneyTrackerData } from '../../lib/data/holdings';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import {
@@ -115,6 +115,17 @@ export default function SmartMoneyTracker({
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showAllRows, setShowAllRows] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const deferredView = useDeferredValue(view);
+  const deferredCategory = useDeferredValue(category);
+  const deferredSector = useDeferredValue(sector);
+  const deferredMonth = useDeferredValue(month);
+  const filtersPending = isPending
+    || deferredView !== view
+    || deferredCategory !== category
+    || deferredSector !== sector
+    || deferredMonth !== month;
 
   const syncTrackerUrl = useCallback((nextView: ViewType, monthLabel: string, replace = true) => {
     if (typeof window === 'undefined' || !monthLabel) return;
@@ -148,11 +159,13 @@ export default function SmartMoneyTracker({
   }, [data.months, data.byMonth, onMonthChange]);
 
   const applyView = (next: ViewType) => {
-    setView(next);
-    setExpanded(null);
-    setShowAllRows(false);
-    setSortKey(sortKeyForView(next));
-    setSortDir('desc');
+    startTransition(() => {
+      setView(next);
+      setExpanded(null);
+      setShowAllRows(false);
+      setSortKey(sortKeyForView(next));
+      setSortDir('desc');
+    });
     syncTrackerUrl(next, month);
   };
 
@@ -165,19 +178,19 @@ export default function SmartMoneyTracker({
   const monthInfo = data.months.find((m) => m.label === month);
 
   const rows = useMemo(() => {
-    const monthData = data.byMonth[month];
+    const monthData = data.byMonth[deferredMonth];
     if (!monthData) return [];
 
     const source =
-      view === 'most_bought'
+      deferredView === 'most_bought'
         ? monthData.increased
-        : view === 'most_sold'
+        : deferredView === 'most_sold'
           ? monthData.decreased
-          : view === 'fresh_entries'
+          : deferredView === 'fresh_entries'
             ? monthData.fresh_entry
             : monthData.complete_exit;
 
-    const filtered = filterStockRows(source, category, sector, view);
+    const filtered = filterStockRows(source, deferredCategory, deferredSector, deferredView);
     return [...filtered].sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'stockName') {
@@ -185,21 +198,23 @@ export default function SmartMoneyTracker({
       } else if (sortKey === 'fundCount') {
         cmp = a.fundCount - b.fundCount;
       } else if (sortKey === 'weightAvg') {
-        cmp = rowWeightAvg(a, view) - rowWeightAvg(b, view);
+        cmp = rowWeightAvg(a, deferredView) - rowWeightAvg(b, deferredView);
       } else {
-        cmp = rowWeightTotal(a, view) - rowWeightTotal(b, view);
+        cmp = rowWeightTotal(a, deferredView) - rowWeightTotal(b, deferredView);
       }
       return sortDir === 'desc' ? -cmp : cmp;
     });
-  }, [data.byMonth, month, view, category, sector, sortKey, sortDir]);
+  }, [data.byMonth, deferredMonth, deferredView, deferredCategory, deferredSector, sortKey, sortDir]);
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-    } else {
-      setSortKey(key);
-      setSortDir('desc');
-    }
+    startTransition(() => {
+      if (sortKey === key) {
+        setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+      } else {
+        setSortKey(key);
+        setSortDir('desc');
+      }
+    });
   }
 
   const fundsColLabel =
@@ -278,7 +293,7 @@ export default function SmartMoneyTracker({
             name="sm-tracker-category"
             label="Category"
             value={category}
-            onChange={(e) => { setCategory(e.target.value); setExpanded(null); setShowAllRows(false); }}
+            onChange={(e) => startTransition(() => { setCategory(e.target.value); setExpanded(null); setShowAllRows(false); })}
           >
             {data.categories.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -290,7 +305,7 @@ export default function SmartMoneyTracker({
             name="sm-tracker-sector"
             label="Sector"
             value={sector}
-            onChange={(e) => { setSector(e.target.value); setExpanded(null); setShowAllRows(false); }}
+            onChange={(e) => startTransition(() => { setSector(e.target.value); setExpanded(null); setShowAllRows(false); })}
           >
             {sectorOptions.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -304,9 +319,11 @@ export default function SmartMoneyTracker({
             value={month}
             onChange={(e) => {
               const next = e.target.value;
-              setMonth(next);
-              setExpanded(null);
-              setShowAllRows(false);
+              startTransition(() => {
+                setMonth(next);
+                setExpanded(null);
+                setShowAllRows(false);
+              });
               onMonthChange?.(next);
               syncTrackerUrl(view, next);
             }}
@@ -339,6 +356,14 @@ export default function SmartMoneyTracker({
           {loadingMonth ? 'Loading month data…' : 'No data for this selection. Try a different month, category, or view.'}
         </p>
       ) : (
+        <div className={`relative ${filtersPending ? 'opacity-60 pointer-events-none' : ''}`}>
+          {filtersPending && (
+            <div className="absolute inset-0 z-10 flex items-start justify-center pt-6" aria-hidden="true">
+              <span className="text-xs font-medium text-surface-500 dark:text-surface-400 bg-white/90 dark:bg-surface-900/90 px-3 py-1.5 rounded-full border border-surface-200 dark:border-surface-600">
+                Updating…
+              </span>
+            </div>
+          )}
         <>
           <div className="md:hidden flex flex-wrap gap-2 mb-3">
             <span className="text-xs text-surface-500 self-center">Sort:</span>
@@ -559,6 +584,7 @@ export default function SmartMoneyTracker({
             </div>
           )}
         </>
+        </div>
       )}
 
       <p className="mt-4 text-xs text-surface-600 dark:text-surface-400">

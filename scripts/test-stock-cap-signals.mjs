@@ -1,0 +1,131 @@
+/**
+ * Golden tests — six-factor percentile scoring within stock cap bucket.
+ * Run: node scripts/test-stock-cap-signals.mjs
+ */
+import {
+  buildSignalRowFromMetrics,
+  computeCategoryMaxes,
+  scoreStockInCategory,
+} from './lib/smart-money-signals-core.mjs';
+
+const errors = [];
+
+function makeRaw(overrides = {}) {
+  return {
+    stockGroupKey: 'TEST',
+    stockName: 'Test Ltd',
+    stockSlug: 'test',
+    sector: 'Banks',
+    category: 'Large Cap',
+    month: 'May 2026',
+    increasedCount: 5,
+    decreasedCount: 1,
+    freshEntries: 2,
+    completeExits: 0,
+    netWeightChangePct: 1.5,
+    amcIdsAll: new Set([1, 2, 3]),
+    amcIdsBuying: new Set([1, 2]),
+    consecutivePositiveMonths: 2,
+    fundsHolding: 40,
+    ...overrides,
+  };
+}
+
+// Leader in bucket should score near 100 on positive factors
+const leader = makeRaw({
+  netWeightChangePct: 5,
+  increasedCount: 20,
+  decreasedCount: 0,
+  freshEntries: 10,
+  completeExits: 0,
+  consecutivePositiveMonths: 4,
+  amcIdsBuying: new Set([1, 2, 3, 4, 5]),
+  amcIdsAll: new Set([1, 2, 3, 4, 5, 6]),
+});
+
+const laggard = makeRaw({
+  netWeightChangePct: 0.1,
+  increasedCount: 1,
+  decreasedCount: 0,
+  freshEntries: 0,
+  completeExits: 0,
+  consecutivePositiveMonths: 0,
+  amcIdsBuying: new Set([1]),
+  amcIdsAll: new Set([1, 2]),
+});
+
+const maxes = computeCategoryMaxes([
+  {
+    netWeightChangePct: leader.netWeightChangePct,
+    increasedCount: leader.increasedCount,
+    decreasedCount: leader.decreasedCount,
+    freshEntries: leader.freshEntries,
+    completeExits: leader.completeExits,
+    amcsBuying: leader.amcIdsBuying.size,
+    buyingFunds: leader.increasedCount + leader.freshEntries,
+    consecutivePositiveMonths: leader.consecutivePositiveMonths,
+  },
+  {
+    netWeightChangePct: laggard.netWeightChangePct,
+    increasedCount: laggard.increasedCount,
+    decreasedCount: laggard.decreasedCount,
+    freshEntries: laggard.freshEntries,
+    completeExits: laggard.completeExits,
+    amcsBuying: laggard.amcIdsBuying.size,
+    buyingFunds: laggard.increasedCount + laggard.freshEntries,
+    consecutivePositiveMonths: laggard.consecutivePositiveMonths,
+  },
+]);
+
+const leaderScore = scoreStockInCategory(leader, maxes);
+const laggardScore = scoreStockInCategory(laggard, maxes);
+
+if (leaderScore.convictionScore <= laggardScore.convictionScore) {
+  errors.push(
+    `leader should outscore laggard: ${leaderScore.convictionScore} vs ${laggardScore.convictionScore}`,
+  );
+}
+
+if (leaderScore.convictionScore < 90) {
+  errors.push(`leader expected ~100, got ${leaderScore.convictionScore}`);
+}
+
+const row = buildSignalRowFromMetrics(leader, maxes);
+if (row.category !== 'Large Cap') {
+  errors.push(`expected Large Cap category, got ${row.category}`);
+}
+if (!row.factorBreakdown?.netWeightChange) {
+  errors.push('factorBreakdown missing netWeightChange');
+}
+if (row.convictionV2 != null) {
+  errors.push('convictionV2 should not be present');
+}
+
+// One stock per row — category is stock cap, not fund scheme
+const midCap = buildSignalRowFromMetrics(
+  makeRaw({ category: 'Mid Cap', stockSlug: 'mid-test' }),
+  computeCategoryMaxes([
+    {
+      netWeightChangePct: 1.5,
+      increasedCount: 5,
+      decreasedCount: 1,
+      freshEntries: 2,
+      completeExits: 0,
+      amcsBuying: 2,
+      buyingFunds: 7,
+      consecutivePositiveMonths: 2,
+    },
+  ]),
+);
+if (midCap.category !== 'Mid Cap') {
+  errors.push(`expected Mid Cap, got ${midCap.category}`);
+}
+
+if (errors.length) {
+  console.error('FAIL');
+  for (const e of errors) console.error(' -', e);
+  process.exit(1);
+}
+
+console.log('PASS stock-cap-v2 scoring');
+console.log(`  leader=${leaderScore.convictionScore}, laggard=${laggardScore.convictionScore}`);

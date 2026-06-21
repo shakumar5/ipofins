@@ -91,7 +91,7 @@ const otherAmcs = amcList.filter((a) => a.name !== amcName).slice(0, 10);
       />
     )}
     <HoldingsCompare
-      client:only="react"
+      client:load
       initialAmc={amcName}
       initialMonth1={previousMonth}
       initialMonth2={currentMonth}

@@ -14,7 +14,7 @@ export interface FundHoldings {
   [month: string]: Holding[] | string;
 }
 
-const YIELD_EVERY_N_FUNDS = 6;
+const YIELD_EVERY_N_FUNDS = 3;
 
 export interface FundComparison {
   fundName: string;
@@ -153,6 +153,15 @@ export async function compareAmcHoldingsAsync(
 ): Promise<FundComparison[] | null> {
   const { month1, month2, selectedFund, selectedCategory } = opts;
   if (!month1 || !month2 || month1 === month2) return null;
+
+  if (selectedFund !== 'All') {
+    await yieldToMain();
+    if (isCancelled?.()) return null;
+    const fund = Object.values(holdings).find((f) => f.name === selectedFund);
+    if (!fund) return [];
+    const row = compareSingleFund(fund, month1, month2, selectedFund, selectedCategory);
+    return row ? [row] : [];
+  }
 
   const results: FundComparison[] = [];
   const funds = Object.values(holdings);

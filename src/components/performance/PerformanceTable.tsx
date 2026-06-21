@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import {
   getIpoPerformancePageMeta,
@@ -39,6 +39,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
   });
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [visibleCount, setVisibleCount] = useState(IPO_PAGE_SIZE);
+  const [, startTransition] = useTransition();
 
   const counts = useMemo(
     () => ({
@@ -51,7 +52,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
 
   const syncFilter = useCallback(
     (next: IpoPerformanceFilter) => {
-      setFilter(next);
+      startTransition(() => setFilter(next));
       if (typeof window === 'undefined') return;
       const basePath = `/ipo/performance/${year}`;
       const newUrl = next === 'all' ? basePath : `${basePath}?type=${next}`;
@@ -60,7 +61,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
       }
       applyClientPageMeta(getIpoPerformancePageMeta(year, next, counts));
     },
-    [year, counts],
+    [year, counts, startTransition],
   );
 
   useEffect(() => {

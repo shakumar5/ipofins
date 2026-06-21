@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition, useDeferredValue } from 'react';
 
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
 
@@ -15,31 +15,39 @@ interface Props {
   loading?: boolean;
 }
 
+const INITIAL_ROWS = 50;
+const ROWS_PAGE = 50;
+
 export default function SmartMoneySignalTable({ data, month: monthProp, onMonthChange, onCategoryChange, loading }: Props) {
   const [monthLocal, setMonthLocal] = useState(data.months[0] || '');
   const month = monthProp ?? monthLocal;
 
   const [category, setCategory] = useState('All');
-
   const [signalFilter, setSignalFilter] = useState<string>('All');
+  const [visibleLimit, setVisibleLimit] = useState(INITIAL_ROWS);
+  const [, startTransition] = useTransition();
 
-
+  const deferredMonth = useDeferredValue(month);
+  const deferredCategory = useDeferredValue(category);
+  const deferredSignalFilter = useDeferredValue(signalFilter);
+  const filtersPending = deferredMonth !== month
+    || deferredCategory !== category
+    || deferredSignalFilter !== signalFilter;
 
   const rows = useMemo(() => {
     return data.rows
       .filter((r) => {
-        if (month && r.month !== month) return false;
-        if (category !== 'All' && r.category !== category) return false;
-        if (signalFilter !== 'All' && r.signal !== signalFilter) return false;
+        if (deferredMonth && r.month !== deferredMonth) return false;
+        if (deferredCategory !== 'All' && r.category !== deferredCategory) return false;
+        if (deferredSignalFilter !== 'All' && r.signal !== deferredSignalFilter) return false;
         return true;
       })
       .sort((a, b) => b.convictionScore - a.convictionScore);
-  }, [data.rows, month, category, signalFilter]);
+  }, [data.rows, deferredMonth, deferredCategory, deferredSignalFilter]);
 
-
+  const visibleRows = rows.slice(0, visibleLimit);
 
   return (
-
     <div>
 
       <div className="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl mb-6">
@@ -55,7 +63,10 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
             value={category}
             onChange={(e) => {
               const next = e.target.value;
-              setCategory(next);
+              startTransition(() => {
+                setCategory(next);
+                setVisibleLimit(INITIAL_ROWS);
+              });
               onCategoryChange?.(next);
             }}
           >
@@ -71,8 +82,11 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
             value={month}
             onChange={(e) => {
               const next = e.target.value;
-              if (onMonthChange) onMonthChange(next);
-              else setMonthLocal(next);
+              startTransition(() => {
+                if (onMonthChange) onMonthChange(next);
+                else setMonthLocal(next);
+                setVisibleLimit(INITIAL_ROWS);
+              });
             }}
             disabled={loading}
           >
@@ -86,7 +100,10 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
             name="sm-signal-filter"
             label="Signal"
             value={signalFilter}
-            onChange={(e) => setSignalFilter(e.target.value)}
+            onChange={(e) => startTransition(() => {
+              setSignalFilter(e.target.value);
+              setVisibleLimit(INITIAL_ROWS);
+            })}
           >
             {SIGNAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -114,8 +131,16 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
       ) : (
         <>
+        <div className={`relative ${filtersPending || loading ? 'opacity-60' : ''}`}>
+          {(filtersPending || loading) && (
+            <div className="absolute inset-0 z-10 flex items-start justify-center pt-6" aria-hidden="true">
+              <span className="text-xs font-medium text-surface-500 dark:text-surface-400 bg-white/90 dark:bg-surface-900/90 px-3 py-1.5 rounded-full border border-surface-200 dark:border-surface-600">
+                Updating…
+              </span>
+            </div>
+          )}
           <div className="md:hidden space-y-2">
-            {rows.slice(0, 100).map((row, idx) => (
+            {visibleRows.map((row, idx) => (
               <SignalCard
                 key={`${row.stockSlug}-${row.month}-${row.category}-m`}
                 row={row}
@@ -149,7 +174,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
             <tbody className="divide-y divide-surface-100 dark:divide-surface-700">
 
-              {rows.slice(0, 100).map((row, idx) => (
+              {visibleRows.map((row, idx) => (
 
                 <SignalRow
 
@@ -171,6 +196,18 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
 
           </table>
         </div>
+        </div>
+        {rows.length > visibleLimit && (
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => setVisibleLimit((n) => n + ROWS_PAGE)}
+              className="px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg"
+            >
+              Show more ({rows.length - visibleLimit} remaining)
+            </button>
+          </div>
+        )}
         </>
       )}
 

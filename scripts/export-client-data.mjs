@@ -254,7 +254,7 @@ function writeSignalsByCategory(signals) {
     months: signals.months,
     categories: signals.categories,
     layout: 'by-category',
-    scoringModel: 'conviction-v2',
+    scoringModel: 'stock-cap-v2',
     dataTier: 'list+detail+search',
     exportedAt: new Date().toISOString(),
   });
@@ -360,7 +360,7 @@ function splitMonolithSignalsOnDisk() {
     writeJson('smart-money-signals-index.json', {
       ...index,
       layout: 'by-category',
-      scoringModel: 'conviction-v2',
+      scoringModel: 'stock-cap-v2',
       exportedAt: index.exportedAt || new Date().toISOString(),
     });
   }

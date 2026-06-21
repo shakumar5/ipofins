@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useDeferredValue } from 'react';
 
 import type { SmartMoneySignalRow } from '../../lib/smart-money-signals';
 import { buildInterpretation, stockSignalMetaLine } from '../../lib/smart-money-signals';
@@ -151,6 +151,7 @@ export default function StockSignalView({
   loading,
 }: Props) {
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [activeSlug, setActiveSlug] = useState<string | null>(initialStockSlug);
   const [selectedRow, setSelectedRow] = useState<SmartMoneySignalRow | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -208,17 +209,19 @@ export default function StockSignalView({
   }, [activeSlug, month, searchStocks]);
 
   const suggestions = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     if (q.length < MIN_SEARCH_LEN) return [];
     return searchStocks
       .filter((s) => stockMatchesSearchQuery(s.stockName, s.stockSlug, q, s.nseSymbol))
       .sort((a, b) => b.convictionScore - a.convictionScore)
       .slice(0, SUGGESTION_LIMIT);
-  }, [searchStocks, search]);
+  }, [searchStocks, deferredSearch]);
 
   const searchQuery = search.trim();
+  const deferredQuery = deferredSearch.trim();
+  const searchPending = deferredQuery !== searchQuery;
   const showIdle = !activeSlug && searchQuery.length < MIN_SEARCH_LEN;
-  const showNoSearchResults = !activeSlug && searchQuery.length >= MIN_SEARCH_LEN && suggestions.length === 0;
+  const showNoSearchResults = !activeSlug && deferredQuery.length >= MIN_SEARCH_LEN && suggestions.length === 0 && !searchPending;
   const inSearchIndex = activeSlug ? searchStocks.some((s) => s.stockSlug === activeSlug) : false;
   const showNotInMf = Boolean(activeSlug && !inSearchIndex && !loading && !detailLoading);
 
@@ -238,6 +241,9 @@ export default function StockSignalView({
             className="w-full px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
             autoComplete="off"
           />
+          {searchPending && searchQuery.length >= MIN_SEARCH_LEN && (
+            <p className="text-xs text-surface-400 mt-2">Searching…</p>
+          )}
           {suggestions.length > 0 && (
             <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg border border-surface-200 dark:border-surface-600 bg-white dark:bg-surface-900 shadow-lg divide-y divide-surface-100 dark:divide-surface-700">
               {suggestions.map((entry) => (

@@ -34,8 +34,8 @@ else {
   if (b.months?.[0] === 'May 2026') pass('DATA_MONTH', 'Latest month May 2026');
   else fail('DATA_MONTH', `Latest month: ${b.months?.[0]}`);
 
-  if (b.scoringModel === 'conviction-v2') pass('SCORING_MODEL', 'conviction-v2');
-  else if (b.scoringModel === 'stock-cap-v2') warn('SCORING_MODEL', 'stock-cap-v2 (v1 percentile — v2 not live)');
+  if (b.scoringModel === 'stock-cap-v2') pass('SCORING_MODEL', 'stock-cap-v2');
+  else if (b.scoringModel === 'conviction-v2') warn('SCORING_MODEL', 'conviction-v2 (absolute model — expected stock-cap-v2)');
   else warn('SCORING_MODEL', String(b.scoringModel || 'missing'));
 
   if (b.exportedAt) pass('EXPORTED_AT', b.exportedAt);
@@ -57,12 +57,12 @@ else {
     pass('SCORE_RANGE', `sample ${sample.stockName} = ${sample.convictionScore}`);
   }
 
-  const v2Shape = sample?.factorBreakdown?.netFundActivity != null;
-  if (v2Shape) pass('V2_BREAKDOWN', 'factorBreakdown uses v2 keys');
-  else warn('V2_BREAKDOWN', 'no v2 factorBreakdown on rows');
+  const capShape = sample?.factorBreakdown?.netWeightChange != null;
+  if (capShape) pass('FACTOR_BREAKDOWN', 'factorBreakdown uses percentile keys');
+  else warn('FACTOR_BREAKDOWN', 'no percentile factorBreakdown on rows');
 
-  if (sample?.convictionV2) pass('V2_META', 'convictionV2 present');
-  else warn('V2_META', 'convictionV2 absent');
+  if (sample?.convictionV2) warn('V2_META', 'convictionV2 should not be present');
+  else pass('V2_META', 'convictionV2 absent (expected)');
 
   if (sample?.fundActivity) pass('FUND_ACTIVITY', 'fundActivity lists present');
   else warn('FUND_ACTIVITY', 'fundActivity absent');
@@ -126,7 +126,7 @@ for (const [path, label] of pagePaths) {
 }
 
 // Local-only checks message
-pass('LOCAL_TEST', 'Run: node scripts/test-conviction-v2.mjs + npm run check before deploy');
+pass('LOCAL_TEST', 'Run: node scripts/test-stock-cap-signals.mjs + npm run check before deploy');
 
 const fails = checks.filter((c) => c.status === 'FAIL');
 const warns = checks.filter((c) => c.status === 'WARN');

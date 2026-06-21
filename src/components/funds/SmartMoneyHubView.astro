@@ -38,7 +38,7 @@ const trackerDataJson = trackerBootstrap?.data
   : null;
 
 const skeletonRows = Array.from({ length: 12 });
-const islandDirective = parsedTab === 'signals' || parsedTab === 'sectors' ? 'load' : 'idle';
+const islandDirective = 'load';
 ---
 
 <nav class="container-wide pt-6" aria-label="Breadcrumb">
@@ -132,7 +132,7 @@ const islandDirective = parsedTab === 'signals' || parsedTab === 'sectors' ? 'lo
   </SmartMoneyPage>
     ) : (
     <SmartMoneyPage
-      client:idle
+      client:load
       initialTracker={parsed ? { view: parsed.view, monthLabel: parsed.monthLabel } : null}
       initialTab={parsedTab}
       initialTrackerIndex={trackerBootstrap?.index ?? null}
@@ -224,7 +224,7 @@ const islandDirective = parsedTab === 'signals' || parsedTab === 'sectors' ? 'lo
     <div class="card p-5 space-y-2">
       <h3 class="font-bold text-surface-900 dark:text-white">2. Smart Money Signal</h3>
       <p>Ranked table of stocks scored <strong>0–100</strong>. Each stock appears once — fund activity is aggregated across all schemes and scored vs peers in the same <strong>market-cap bucket</strong> (Large / Mid / Small / Micro). Click any row for the full factor breakdown.</p>
-      <p class="text-xs">Signals: 🚀 Aggressive (90+) · 🟢 Strong (80+) · 🟡 Accumulation (70+) · ⚪ Positive (60+) · Neutral (40+) · 🟠 Distribution (20+) · 🚨 Aggressive Distribution (&lt;20)</p>
+      <p class="text-xs">Signals: 🚀 Aggressive (90+) · 🟢 Strong (75+) · 🟡 Moderate (60+) · ⚪ Neutral (40+) · 🟠 Distribution (25+) · 🔴 Strong Distribution (&lt;25)</p>
       <p class="text-xs text-surface-600 dark:text-surface-400">
         <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a>
         {' · '}

@@ -44,11 +44,6 @@ export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Pro
           {row.convictionScore}{' '}
           <span className="text-lg font-normal text-surface-400">/ 100</span>
         </p>
-        {row.convictionV2 && row.convictionV2.capMultiplier !== 1 && (
-          <p className="text-xs text-surface-500 mt-1">
-            Raw {row.convictionV2.rawTotal} × {row.convictionV2.capMultiplier} cap multiplier
-          </p>
-        )}
       </section>
 
       <Divider />
@@ -64,7 +59,6 @@ export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Pro
           </li>
           <li>
             ✔ {row.amcsBuying} AMCs buying
-            {row.convictionV2 ? ` of ${row.convictionV2.totalActiveAmcs} active fund houses` : ''}
           </li>
           {row.consecutivePositiveMonths > 0 && (
             <li>

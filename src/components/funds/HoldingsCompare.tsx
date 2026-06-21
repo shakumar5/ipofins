@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useTransition, useDeferredValue, useCallback } from 'react';
 import {
   loadHoldingsCompareAmc,
   loadHoldingsCompareIndex,
@@ -8,6 +8,7 @@ import {
 import { resolveHoldingsCompareIndex } from '../../lib/holdings-compare-bootstrap';
 import { compareAmcHoldingsAsync, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
 import FilterSelect from './FilterSelect';
+import FundComparisonCard from './FundComparisonCard';
 
 interface HoldingsMeta {
   months: string[];
@@ -38,10 +39,10 @@ function metaFromIndex(index: HoldingsCompareIndex): HoldingsMeta {
 }
 
 const FUND_CATEGORIES = ['All', 'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Multi Cap', 'Flexi Cap', 'Small Cap', 'Others'];
-const RESULTS_PAGE = 25;
+const RESULTS_PAGE = 10;
 
-function fmtPct(value: number): string {
-  return Number(value.toFixed(2)).toString();
+function compareCacheKey(month1: string, month2: string, fund: string, category: string): string {
+  return `${month1}|${month2}|${fund}|${category}`;
 }
 
 function defaultMonths(index: HoldingsCompareIndex, initialMonth1?: string, initialMonth2?: string) {
@@ -89,6 +90,18 @@ export default function HoldingsCompare({
   const [comparison, setComparison] = useState<FundComparison[] | null>(null);
   const [compareLoading, setCompareLoading] = useState(false);
   const compareRequestId = useRef(0);
+  const compareCacheRef = useRef<Map<string, FundComparison[]>>(new Map());
+  const [isPending, startTransition] = useTransition();
+
+  const deferredFund = useDeferredValue(selectedFund);
+  const deferredCategory = useDeferredValue(selectedCategory);
+  const deferredMonth1 = useDeferredValue(month1);
+  const deferredMonth2 = useDeferredValue(month2);
+  const filtersPending = isPending
+    || deferredFund !== selectedFund
+    || deferredCategory !== selectedCategory
+    || deferredMonth1 !== month1
+    || deferredMonth2 !== month2;
 
   useEffect(() => {
     if (!bootIndex) return;
@@ -157,6 +170,7 @@ export default function HoldingsCompare({
     loadHoldingsCompareAmc(slug)
       .then((holdings) => {
         if (requestId !== amcRequestId.current) return;
+        compareCacheRef.current.clear();
         setAmcHoldings(holdings as Record<string, FundHoldings>);
       })
       .catch((err: Error) => {
@@ -172,7 +186,7 @@ export default function HoldingsCompare({
   const data = meta;
   const amcList = useMemo(() => (data ? Object.keys(data.amcs).sort() : []), [data]);
 
-  useEffect(() => { setSelectedFund('All'); }, [selectedAMC]);
+  useEffect(() => { startTransition(() => setSelectedFund('All')); }, [selectedAMC]);
 
   useEffect(() => {
     if (pageMode !== 'amc' || !data) return;
@@ -200,25 +214,33 @@ export default function HoldingsCompare({
   const fundCountForAmc = fundsForAMC.length || (data?.amcFundCounts[selectedAMC] ?? 0);
 
   useEffect(() => {
-    if (!amcHoldings || !selectedAMC || !month1 || !month2 || month1 === month2) {
+    if (!amcHoldings || !selectedAMC || !deferredMonth1 || !deferredMonth2 || deferredMonth1 === deferredMonth2) {
       setComparison(null);
+      setCompareLoading(false);
+      return;
+    }
+
+    const cacheKey = compareCacheKey(deferredMonth1, deferredMonth2, deferredFund, deferredCategory);
+    const cached = compareCacheRef.current.get(cacheKey);
+    if (cached) {
+      setComparison(cached);
       setCompareLoading(false);
       return;
     }
 
     const requestId = ++compareRequestId.current;
     setCompareLoading(true);
-    setComparison(null);
-    setResultsLimit(RESULTS_PAGE);
 
     compareAmcHoldingsAsync(
       amcHoldings,
-      { month1, month2, selectedFund, selectedCategory },
+      { month1: deferredMonth1, month2: deferredMonth2, selectedFund: deferredFund, selectedCategory: deferredCategory },
       () => requestId !== compareRequestId.current,
     )
       .then((result) => {
         if (requestId !== compareRequestId.current) return;
-        setComparison(result ?? []);
+        const next = result ?? [];
+        compareCacheRef.current.set(cacheKey, next);
+        setComparison(next);
       })
       .catch(() => {
         if (requestId !== compareRequestId.current) return;
@@ -227,9 +249,40 @@ export default function HoldingsCompare({
       .finally(() => {
         if (requestId === compareRequestId.current) setCompareLoading(false);
       });
-  }, [amcHoldings, selectedAMC, month1, month2, selectedFund, selectedCategory]);
+  }, [amcHoldings, selectedAMC, deferredMonth1, deferredMonth2, deferredFund, deferredCategory]);
 
-  const visibleComparison = comparison?.slice(0, resultsLimit) ?? null;
+  const visibleComparison = useMemo(
+    () => comparison?.slice(0, resultsLimit) ?? null,
+    [comparison, resultsLimit],
+  );
+
+  const onFundChange = useCallback((value: string) => {
+    startTransition(() => {
+      setSelectedFund(value);
+      setResultsLimit(RESULTS_PAGE);
+    });
+  }, []);
+
+  const onCategoryChange = useCallback((value: string) => {
+    startTransition(() => {
+      setSelectedCategory(value);
+      setResultsLimit(RESULTS_PAGE);
+    });
+  }, []);
+
+  const onMonth1Change = useCallback((value: string) => {
+    startTransition(() => {
+      setMonth1(value);
+      setResultsLimit(RESULTS_PAGE);
+    });
+  }, []);
+
+  const onMonth2Change = useCallback((value: string) => {
+    startTransition(() => {
+      setMonth2(value);
+      setResultsLimit(RESULTS_PAGE);
+    });
+  }, []);
 
   const retryLoad = () => {
     resetHoldingsCompareIndexCache();
@@ -248,6 +301,7 @@ export default function HoldingsCompare({
     }
     setAmcHoldings(null);
     setComparison(null);
+    compareCacheRef.current.clear();
     setIndexLoadError(null);
     setAmcLoadError(null);
     setRetryKey((k) => k + 1);
@@ -315,7 +369,7 @@ export default function HoldingsCompare({
             name="holdings-compare-fund"
             label="Select Fund"
             value={selectedFund}
-            onChange={(e) => setSelectedFund(e.target.value)}
+            onChange={(e) => onFundChange(e.target.value)}
             disabled={!selectedAMC || amcLoading}
             className="disabled:opacity-50"
           >
@@ -330,7 +384,7 @@ export default function HoldingsCompare({
             name="holdings-compare-category"
             label="Category"
             value={selectedCategory}
-            onChange={(e) => { setSelectedCategory(e.target.value); setResultsLimit(RESULTS_PAGE); }}
+            onChange={(e) => onCategoryChange(e.target.value)}
           >
             {FUND_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
@@ -342,7 +396,7 @@ export default function HoldingsCompare({
             name="holdings-compare-month-prev"
             label="Previous month"
             value={month1}
-            onChange={(e) => { setMonth1(e.target.value); setResultsLimit(RESULTS_PAGE); }}
+            onChange={(e) => onMonth1Change(e.target.value)}
           >
             {data.months.slice(0, -1).map((m) => (
               <option key={m} value={m}>{m}</option>
@@ -354,7 +408,7 @@ export default function HoldingsCompare({
             name="holdings-compare-month-current"
             label="Current month"
             value={month2}
-            onChange={(e) => { setMonth2(e.target.value); setResultsLimit(RESULTS_PAGE); }}
+            onChange={(e) => onMonth2Change(e.target.value)}
           >
             {data.months.map((m) => (
               <option key={m} value={m}>{m}</option>
@@ -402,112 +456,30 @@ export default function HoldingsCompare({
         </div>
       )}
 
-      {selectedAMC && amcHoldings && !amcLoading && compareLoading && (
+      {selectedAMC && amcHoldings && !amcLoading && (compareLoading || filtersPending) && !comparison && (
         <div className="text-center py-8 text-surface-500 dark:text-surface-400">
           <p className="text-sm">Computing portfolio changes for {selectedAMC}…</p>
         </div>
       )}
 
-      {selectedAMC && amcHoldings && !amcLoading && !compareLoading && comparison && comparison.length === 0 && (
+      {selectedAMC && amcHoldings && !amcLoading && !compareLoading && !filtersPending && comparison && comparison.length === 0 && (
         <div className="text-center py-12 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/50 rounded-xl" data-holdings-empty>
           <p className="text-sm font-medium">No portfolio changes detected</p>
           <p className="text-xs mt-1 text-surface-400">Between {month1} → {month2} for {selectedAMC}.</p>
         </div>
       )}
 
-      {visibleComparison && visibleComparison.length > 0 && !amcLoading && !compareLoading && (
-        <div className="space-y-6">
-          {visibleComparison.map((fund) => (
-            <div key={fund.fundName} className="border border-surface-200 dark:border-surface-600 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-600">
-                <h3 className="font-semibold text-surface-900 dark:text-white text-sm">{fund.fundName}</h3>
-                <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-                  {fund.additions.length} additions • {fund.removals.length} removals • {fund.increased.length} increased • {fund.decreased.length} decreased
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-surface-200 dark:divide-surface-600">
-                <div className="p-4 md:border-b md:border-surface-200 dark:md:border-surface-600">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2 h-2 bg-green-500 rounded-full" />
-                    <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase">New Additions</span>
-                  </div>
-                  {fund.additions.length === 0 ? (
-                    <p className="text-xs text-surface-400 italic">No new stocks added</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {fund.additions.map((h) => (
-                        <div key={`add-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
-                          <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
-                          <span className="text-green-600 font-semibold shrink-0">+{fmtPct(h.pct)}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 md:border-b md:border-surface-200 dark:md:border-surface-600">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2 h-2 bg-red-500 rounded-full" />
-                    <span className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase">Removed</span>
-                  </div>
-                  {fund.removals.length === 0 ? (
-                    <p className="text-xs text-surface-400 italic">No stocks removed</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {fund.removals.map((h) => (
-                        <div key={`rem-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
-                          <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
-                          <span className="text-red-500 font-semibold shrink-0">{fmtPct(h.pct)}% → 0%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase">Increased</span>
-                  </div>
-                  {fund.increased.length === 0 ? (
-                    <p className="text-xs text-surface-400 italic">No weight increases</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {fund.increased.map((h) => (
-                        <div key={`inc-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
-                          <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
-                          <span className="text-blue-600 dark:text-blue-400 font-semibold shrink-0">
-                            {fmtPct(h.oldPct)}% → {fmtPct(h.newPct)}%
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2 h-2 bg-amber-500 rounded-full" />
-                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase">Decreased</span>
-                  </div>
-                  {fund.decreased.length === 0 ? (
-                    <p className="text-xs text-surface-400 italic">No weight decreases</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {fund.decreased.map((h) => (
-                        <div key={`dec-${h.name}`} className="flex justify-between gap-2 text-xs py-1 border-b border-surface-100 dark:border-surface-700 last:border-0">
-                          <span className="font-medium text-surface-900 dark:text-white">{h.name}</span>
-                          <span className="text-amber-600 dark:text-amber-400 font-semibold shrink-0">
-                            {fmtPct(h.oldPct)}% → {fmtPct(h.newPct)}%
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+      {visibleComparison && visibleComparison.length > 0 && !amcLoading && (
+        <div className={`space-y-6 relative ${compareLoading || filtersPending ? 'opacity-60 pointer-events-none' : ''}`}>
+          {(compareLoading || filtersPending) && (
+            <div className="absolute inset-0 z-10 flex items-start justify-center pt-8" aria-hidden="true">
+              <span className="text-xs font-medium text-surface-500 dark:text-surface-400 bg-white/90 dark:bg-surface-900/90 px-3 py-1.5 rounded-full border border-surface-200 dark:border-surface-600">
+                Updating…
+              </span>
             </div>
+          )}
+          {visibleComparison.map((fund) => (
+            <FundComparisonCard key={fund.fundName} fund={fund} />
           ))}
           {comparison && comparison.length > resultsLimit && (
             <div className="text-center pt-2">

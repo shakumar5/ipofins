@@ -1,10 +1,12 @@
 /**
- * Build smart-money-signals.json — stock-level aggregation, Conviction Score v2.0.
+ * Build smart-money-signals.json — stock-level aggregation, percentile scoring
+ * within each stock's market-cap bucket (Large / Mid / Small / Micro).
  */
 import { isDebtInstrument, isValidEquitySector } from './stock-utils.mjs';
 import { loadRawHoldingsChanges } from './smart-money-export.mjs';
 import {
   buildSignalRowFromMetrics,
+  computeCategoryMaxes,
   consecutiveStrictTrend,
   inferStockCapFromFundVotes,
   normalizeStockCapCategory,
@@ -116,26 +118,6 @@ async function loadStockHolderMeta(sql) {
   return meta;
 }
 
-/** Distinct AMCs with at least one active equity fund per disclosure month. */
-async function loadActiveAmcCounts(sql) {
-  const rows = await sql`
-    SELECT
-      TRIM(TO_CHAR(fh.month, 'FMMonth YYYY')) AS month_label,
-      COUNT(DISTINCT f.amc_id)::int AS active_amcs
-    FROM fund_holdings fh
-    JOIN funds f ON f.id = fh.fund_id AND f.is_active = true
-    WHERE f.category = ANY(${[...EQUITY_FUND_CATEGORIES]})
-      AND fh.month >= (SELECT MAX(month) - INTERVAL '12 months' FROM fund_holdings)
-    GROUP BY fh.month
-    ORDER BY fh.month
-  `;
-
-  const byMonth = {};
-  for (const r of rows) {
-    byMonth[String(r.month_label).trim()] = Number(r.active_amcs) || 1;
-  }
-  return byMonth;
-}
 
 /** MoM weight change for every fund still holding each stock (strict trend input). */
 async function loadHolderPctChanges(sql) {
@@ -189,7 +171,6 @@ function emptyFundActivity() {
 export async function buildSmartMoneySignalsExport(sql) {
   const rawRows = await loadRawHoldingsChanges(sql);
   const holderMeta = await loadStockHolderMeta(sql);
-  const activeAmcByMonth = await loadActiveAmcCounts(sql);
   const holderPctChanges = await loadHolderPctChanges(sql);
 
   const byKey = new Map();
@@ -269,7 +250,7 @@ export async function buildSmartMoneySignalsExport(sql) {
   }
 
   const sortedMonths = sortMonths([...monthsSet]);
-  const signalRows = [];
+  const enriched = [];
 
   for (const raw of byKey.values()) {
     if (
@@ -294,22 +275,30 @@ export async function buildSmartMoneySignalsExport(sql) {
       return { pctChanges };
     });
 
-    const totalActiveAmcs = activeAmcByMonth[raw.month] || 1;
-
-    const row = buildSignalRowFromMetrics({
+    enriched.push({
       ...raw,
       netWeightChangePct: Math.round(raw.netWeightChangePct * 100) / 100,
       consecutivePositiveMonths: trend,
       fundsHolding,
-      totalActiveAmcs,
       topFundHolders: holder?.topFundHolders || [],
+      amcsBuying: raw.amcIdsBuying.size,
+      buyingFunds: raw.increasedCount + raw.freshEntries,
     });
+  }
 
-    if (holder?.topFundHolders?.length) {
-      row.topFundHolders = holder.topFundHolders;
+  const bucketMap = new Map();
+  for (const item of enriched) {
+    const bucketKey = `${item.month}|${item.category}`;
+    if (!bucketMap.has(bucketKey)) bucketMap.set(bucketKey, []);
+    bucketMap.get(bucketKey).push(item);
+  }
+
+  const signalRows = [];
+  for (const items of bucketMap.values()) {
+    const maxes = computeCategoryMaxes(items);
+    for (const item of items) {
+      signalRows.push(buildSignalRowFromMetrics(item, maxes));
     }
-
-    signalRows.push(row);
   }
 
   signalRows.sort((a, b) => {
@@ -327,11 +316,10 @@ export async function buildSmartMoneySignalsExport(sql) {
   if (capsPresent.has('Unknown')) categories.push('Unknown');
 
   return {
-    scoringModel: 'conviction-v2',
-    totalActiveAmcsByMonth: activeAmcByMonth,
+    scoringModel: 'stock-cap-v2',
     months: [...sortedMonths].reverse(),
     categories,
     rows: signalRows,
   };
 }
-
+

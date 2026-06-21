@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue, useTransition } from 'react';
 import {
   computeMultiFundOverlap,
   fundHasHoldings,
@@ -42,6 +42,7 @@ function FundSearchSelect({
   excludeSlugs: Set<string>;
 }) {
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +61,7 @@ function FundSearchSelect({
   }, []);
 
   const options = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     return funds
       .filter((f) => !excludeSlugs.has(f.slug) || f.slug === value)
       .filter((f) => {
@@ -72,7 +73,7 @@ function FundSearchSelect({
         );
       })
       .slice(0, 12);
-  }, [funds, query, excludeSlugs, value]);
+  }, [funds, deferredQuery, excludeSlugs, value]);
 
   return (
     <div ref={wrapRef} className="relative">
@@ -143,6 +144,7 @@ export default function PortfolioOverlapChecker({ initialSlugs = [] }: Props) {
   const [computing, setComputing] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const urlSyncReady = useRef(false);
+  const [, startTransition] = useTransition();
 
   const fundNameBySlug = useMemo(() => {
     if (!data) return new Map<string, string>();
@@ -254,16 +256,16 @@ export default function PortfolioOverlapChecker({ initialSlugs = [] }: Props) {
     [slots],
   );
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     if (!data || !canCompare || computing) return;
     setComputing(true);
     setCompared(false);
-    setResult(null);
-    window.setTimeout(() => {
-      setResult(computeMultiFundOverlap(validSelectedSlugs, data.holdings));
-      setCompared(true);
-      setComputing(false);
-    }, 0);
+    const { yieldToMain } = await import('../../lib/client-data');
+    await yieldToMain();
+    const next = computeMultiFundOverlap(validSelectedSlugs, data.holdings);
+    setResult(next);
+    setCompared(true);
+    setComputing(false);
   };
 
   const addFund = () => {
@@ -339,9 +341,10 @@ export default function PortfolioOverlapChecker({ initialSlugs = [] }: Props) {
                 funds={data.funds}
                 value={slot.slug}
                 onChange={(slug) => {
-                  setSlots((prev) => prev.map((s) => (s.id === slot.id ? { ...s, slug } : s)));
-                  setCompared(false);
-                  setResult(null);
+                  startTransition(() => {
+                    setSlots((prev) => prev.map((s) => (s.id === slot.id ? { ...s, slug } : s)));
+                    setCompared(false);
+                  });
                 }}
                 placeholder="Search fund name or AMC…"
                 excludeSlugs={excludeForSlot(slot.id)}

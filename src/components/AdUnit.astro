@@ -46,11 +46,14 @@ const adStyle = styleMap[format] || styleMap.auto;
     min-height: 0;
     text-align: center;
     overflow: hidden;
+    margin: 0;
+    padding: 0;
   }
-  .ad-container:not(:has(ins[data-ad-status="filled"])) {
-    display: none;
+  /* Avoid :has() — it forces full-document style recalc when ads fill during scroll. */
+  .ad-container ins:not([data-ad-status="filled"]) {
+    display: none !important;
   }
-  .ad-container:has(ins[data-ad-status="filled"]) {
+  .ad-container ins[data-ad-status="filled"] {
     display: block;
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
