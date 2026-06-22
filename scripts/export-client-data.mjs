@@ -599,7 +599,8 @@ async function main() {
     console.log(`  ℹ mf-hub table: ${mfFunds.length} curated funds (${mfFundsAll.length - mfFunds.length} excluded)`);
   }
   if (mfFunds.length) {
-    const doneMfHub = logStep('mf-hub export');
+    const doneHoldingsPages = logStep('fund holdings pages export');
+    const overlapSlugs = portfolioOverlap.funds.map((f) => f.slug).filter(Boolean);
     let holdingsMeta = null;
     if (isDbConfigured()) {
       try {
@@ -619,23 +620,8 @@ async function main() {
       holdingsMeta = buildHoldingsMetaFromJson(rawHoldings);
       console.log('  ℹ mf-hub holdings meta from JSON fallback');
     }
-    const hub = buildMfHubExports(mfFunds, holdingsMeta, {
-      amcCount: Object.keys(holdings.amcs || {}).length,
-      fundCount: Object.values(holdingsMeta.stockCounts).length,
-      latestMonth: holdings.months?.[holdings.months.length - 1] || '',
-      overlapSlugs: portfolioOverlap.funds.map((f) => f.slug),
-    });
-    mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });
-    writeJson('mf-hub/meta.json', hub.meta);
-    writeJson('mf-hub/best.json', hub.best);
-    writeJson('mf-hub/all.json', hub.all);
-    doneMfHub(`${mfFunds.length} funds`);
-
-    const doneHoldingsPages = logStep('fund holdings pages export');
-    const overlapSlugs = portfolioOverlap.funds.map((f) => f.slug).filter(Boolean);
     const enrichedMeta = enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs);
-    const metaDisk = serializeHoldingsMetaForDisk(enrichedMeta);
-    writeJson('fund-holdings-meta.json', metaDisk);
+    writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(enrichedMeta));
 
     let holdingsIndex = [];
     if (isDbConfigured()) {
@@ -648,8 +634,19 @@ async function main() {
         console.warn('  ⚠ Fund holdings index from DB failed:', e.message);
       }
     }
+    const pageSlugSet = new Set(holdingsIndex.map((f) => f.slug));
+
+    const doneMfHub = logStep('mf-hub export');
+    const hub = buildMfHubExports(mfFunds, holdingsMeta, {
+      amcCount: Object.keys(holdings.amcs || {}).length,
+      fundCount: Object.values(holdingsMeta.stockCounts).length,
+      latestMonth: holdings.months?.[holdings.months.length - 1] || '',
+      overlapSlugs,
+      pageSlugSet,
+    });
     if (!holdingsIndex.length) {
       holdingsIndex = buildFundHoldingsIndexFromHub(hub.all, mfFunds);
+      for (const row of holdingsIndex) pageSlugSet.add(row.slug);
       console.log('  ℹ Fund holdings index from mf-hub fallback');
     }
     if (holdingsIndex.length) {
@@ -665,6 +662,11 @@ async function main() {
     } else {
       doneHoldingsPages('skipped (no holdings pages)');
     }
+    mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });
+    writeJson('mf-hub/meta.json', hub.meta);
+    writeJson('mf-hub/best.json', hub.best);
+    writeJson('mf-hub/all.json', hub.all);
+    doneMfHub(`${mfFunds.length} funds`);
   }
 
   if (isDbConfigured()) {

@@ -30,13 +30,27 @@ function loadExisting() {
 function indexExisting(records) {
   const byScheme = new Map();
   const bySlug = new Map();
+  const byLooseName = new Map();
   for (const row of records) {
     if (isPollutedMfRecord(row)) continue;
     const sc = String(row.schemeCode || '').trim();
     if (sc && !byScheme.has(sc)) byScheme.set(sc, row);
     if (row.slug && !bySlug.has(row.slug)) bySlug.set(row.slug, row);
+    const loose = looseDisclosureMatchKey(row.name);
+    if (loose && !byLooseName.has(loose)) byLooseName.set(loose, row);
   }
-  return { byScheme, bySlug };
+  return { byScheme, bySlug, byLooseName };
+}
+
+function looseDisclosureMatchKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/\bfund\b/g, '')
+    .replace(/children?s/g, 'children')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function mergeRecord(amfiFund, existing) {
@@ -80,7 +94,7 @@ async function main() {
   console.log('\n═══ Refresh mutual-funds.json from AMFI ═══\n');
 
   const existing = loadExisting();
-  const { byScheme, bySlug } = indexExisting(existing);
+  const { byScheme, bySlug, byLooseName } = indexExisting(existing);
   const amfiFunds = await fetchAMFINAVs();
 
   const merged = [];
@@ -91,6 +105,7 @@ async function main() {
     const prior =
       byScheme.get(amfiFund.schemeCode) ||
       bySlug.get(amfiFund.slug) ||
+      byLooseName.get(looseDisclosureMatchKey(amfiFund.name)) ||
       null;
     const row = mergeRecord(amfiFund, prior);
     if (isPollutedMfRecord(row)) continue;

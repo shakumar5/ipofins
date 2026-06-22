@@ -9,6 +9,13 @@ import { resolveHoldingsCompareIndex } from '../../lib/holdings-compare-bootstra
 import { compareAmcHoldingsAsync, type FundComparison, type FundHoldings } from '../../lib/holdings-compare-diff';
 import FilterSelect from './FilterSelect';
 import FundComparisonCard from './FundComparisonCard';
+import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
+import {
+  buildFundSlugMap,
+  getHoldingsComparePageMeta,
+  holdingsChangesPath,
+  parseHoldingsChangesLocation,
+} from '../../lib/holdings-compare-meta';
 
 interface HoldingsMeta {
   months: string[];
@@ -92,6 +99,69 @@ export default function HoldingsCompare({
   const compareRequestId = useRef(0);
   const compareCacheRef = useRef<Map<string, FundComparison[]>>(new Map());
   const [isPending, startTransition] = useTransition();
+  const urlSyncReady = useRef(false);
+  const applyingFromUrl = useRef(false);
+
+  const amcNameBySlug = useMemo(() => {
+    if (!meta) return {};
+    return Object.fromEntries(
+      Object.entries(meta.amcSlugs).map(([name, slug]) => [slug, name]),
+    );
+  }, [meta]);
+
+  const fundSlugMap = useMemo(() => buildFundSlugMap(amcHoldings), [amcHoldings]);
+
+  const syncPageMeta = useCallback((path: string) => {
+    const amcSlug = selectedAMC ? amcSlugsRef.current[selectedAMC] : '';
+    applyClientPageMeta(
+      getHoldingsComparePageMeta({
+        amcName: selectedAMC || undefined,
+        amcSlug,
+        month1,
+        month2,
+        fundName: selectedFund,
+        path,
+      }),
+    );
+  }, [selectedAMC, month1, month2, selectedFund]);
+
+  const syncUrl = useCallback(() => {
+    if (typeof window === 'undefined' || !urlSyncReady.current || applyingFromUrl.current) return;
+    const amcSlug = selectedAMC ? amcSlugsRef.current[selectedAMC] : '';
+    const path = holdingsChangesPath({
+      amcSlug,
+      month2: selectedAMC ? month2 : undefined,
+      month1: selectedAMC ? month1 : undefined,
+      fund: selectedFund,
+      category: selectedCategory,
+      allMonths: monthsRef.current,
+    });
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== path) {
+      window.history.replaceState(null, '', path);
+    }
+    syncPageMeta(path);
+  }, [selectedAMC, month1, month2, selectedFund, selectedCategory, syncPageMeta]);
+
+  const applyUrlState = useCallback((search?: string) => {
+    if (typeof window === 'undefined' || !meta) return;
+    applyingFromUrl.current = true;
+    const parsed = parseHoldingsChangesLocation(
+      window.location.pathname,
+      search ?? window.location.search,
+      amcNameBySlug,
+      fundSlugMap,
+      FUND_CATEGORIES,
+    );
+    if (parsed.amcName) setSelectedAMC(parsed.amcName);
+    else if (!parsed.amcSlug) setSelectedAMC('');
+    if (parsed.month2) setMonth2(parsed.month2);
+    if (parsed.month1) setMonth1(parsed.month1);
+    if (parsed.fundName) setSelectedFund(parsed.fundName);
+    else if (parsed.fundSlug) setSelectedFund('All');
+    if (parsed.category) setSelectedCategory(parsed.category);
+    queueMicrotask(() => { applyingFromUrl.current = false; });
+  }, [meta, amcNameBySlug, fundSlugMap]);
 
   const deferredFund = useDeferredValue(selectedFund);
   const deferredCategory = useDeferredValue(selectedCategory);
@@ -186,7 +256,42 @@ export default function HoldingsCompare({
   const data = meta;
   const amcList = useMemo(() => (data ? Object.keys(data.amcs).sort() : []), [data]);
 
-  useEffect(() => { startTransition(() => setSelectedFund('All')); }, [selectedAMC]);
+  useEffect(() => {
+    if (!meta || urlSyncReady.current) return;
+    applyUrlState();
+    urlSyncReady.current = true;
+    syncUrl();
+  }, [meta, applyUrlState, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPopState = () => {
+      applyUrlState();
+      setResultsLimit(RESULTS_PAGE);
+      compareCacheRef.current.clear();
+      setComparison(null);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [applyUrlState]);
+
+  useEffect(() => {
+    if (!meta || !urlSyncReady.current) return;
+    syncUrl();
+  }, [selectedAMC, month1, month2, selectedFund, selectedCategory, meta, syncUrl]);
+
+  useEffect(() => {
+    if (!amcHoldings || !urlSyncReady.current || applyingFromUrl.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const fundSlug = params.get('fund');
+    if (!fundSlug) return;
+    const name = fundSlugMap.get(fundSlug);
+    if (name && name !== selectedFund) {
+      applyingFromUrl.current = true;
+      setSelectedFund(name);
+      queueMicrotask(() => { applyingFromUrl.current = false; });
+    }
+  }, [amcHoldings, fundSlugMap, selectedFund]);
 
   useEffect(() => {
     if (pageMode !== 'amc' || !data) return;
@@ -356,7 +461,12 @@ export default function HoldingsCompare({
             name="holdings-compare-amc"
             label="Select AMC"
             value={selectedAMC}
-            onChange={(e) => setSelectedAMC(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setSelectedAMC(next);
+              startTransition(() => setSelectedFund('All'));
+              setResultsLimit(RESULTS_PAGE);
+            }}
           >
             <option value="">-- Select AMC --</option>
             {amcList.map((amc) => (

@@ -120,7 +120,12 @@ function parseAMFIFunds(text) {
     if (lower.includes('segregated')) continue;
     if (lower.includes('workplace')) continue;
 
-    if (!currentCategory.toLowerCase().includes('equity')) continue;
+    const catLower = currentCategory.toLowerCase();
+    const includeCategory =
+      catLower.includes('equity') ||
+      catLower.includes('children') ||
+      catLower.includes('solution oriented');
+    if (!includeCategory) continue;
 
     const category = simplifyCategory(currentCategory);
     const cleanName = schemeName
@@ -155,6 +160,8 @@ function simplifyCategory(raw) {
     ['Mid Cap', 'Mid Cap'],
     ['Small Cap', 'Small Cap'],
     ['Flexi Cap', 'Flexi Cap'],
+    ['Children', 'Flexi Cap'],
+    ['Child', 'Flexi Cap'],
     ['Multi Cap', 'Multi Cap'],
     ['ELSS', 'ELSS'],
     ['Contra', 'Contra'],

@@ -71,14 +71,28 @@ export function enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs = []) {
   const stockCounts = { ...holdingsMeta.stockCounts };
   const overlapSlugSet = new Set(overlapSlugs);
   for (const slug of overlapSlugs) {
-    if (stockCounts[slug] > 0) continue;
+    const current = stockCounts[slug] ?? 0;
+    if (current > 1) continue;
+
+    let mapped = false;
+    for (const variant of slugVariants(slug)) {
+      const alias = AMFI_SLUG_ALIASES[variant];
+      if (alias && stockCounts[alias] > current) {
+        stockCounts[slug] = stockCounts[alias];
+        mapped = true;
+        break;
+      }
+    }
+    if (mapped) continue;
+
+    if (current > 0) continue;
+
     for (const [k, count] of Object.entries(holdingsMeta.stockCounts)) {
       if (basesMatch(k, slug)) {
         stockCounts[slug] = count;
         break;
       }
     }
-    if (!stockCounts[slug]) stockCounts[slug] = 1;
   }
   return { ...holdingsMeta, stockCounts, overlapSlugSet };
 }
@@ -265,8 +279,35 @@ export function buildHoldingsMetaFromJson(holdings) {
   return { stockCounts, bySchemeCode: {}, byBaseSlug };
 }
 
+/** Prefer slugs that match built static fund pages (not parser/AMFI shortcuts). */
+export function pickBestDetailSlug(candidates, { pageSlugSet, overlapSlugSet } = {}) {
+  const matched = [...new Set(candidates.filter(Boolean))].filter(
+    (slug) => typeof slug === 'string' && slug.length > 0,
+  );
+  if (!matched.length) return null;
+
+  matched.sort((a, b) => {
+    if (pageSlugSet?.size) {
+      const ap = pageSlugSet.has(a) ? 0 : 1;
+      const bp = pageSlugSet.has(b) ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+    }
+    const ad = a.includes('-direct-plan') ? 0 : 1;
+    const bd = b.includes('-direct-plan') ? 0 : 1;
+    if (ad !== bd) return ad - bd;
+    if (overlapSlugSet?.size) {
+      const ao = overlapSlugSet.has(a) ? 0 : 1;
+      const bo = overlapSlugSet.has(b) ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+    }
+    return b.length - a.length;
+  });
+
+  return matched[0];
+}
+
 export function resolveMfFundHoldings(mfFund, meta) {
-  const { stockCounts, bySchemeCode, byBaseSlug, overlapSlugSet } = meta;
+  const { stockCounts, bySchemeCode, byBaseSlug, overlapSlugSet, pageSlugSet } = meta;
 
   const pack = (detailSlug) => {
     const count = stockCounts[detailSlug];
@@ -276,25 +317,19 @@ export function resolveMfFundHoldings(mfFund, meta) {
 
   const pickFromMatches = (slugs) => {
     const matched = slugs.filter((slug) => basesMatch(slug, mfFund.slug));
-    if (overlapSlugSet?.size) {
-      matched.sort((a, b) => {
-        const ao = overlapSlugSet.has(a) ? 0 : 1;
-        const bo = overlapSlugSet.has(b) ? 0 : 1;
-        return ao - bo;
-      });
-    }
-    for (const slug of matched) {
-      const hit = pack(slug);
-      if (hit) return hit;
-    }
-    return null;
+    const best = pickBestDetailSlug(matched, { pageSlugSet, overlapSlugSet });
+    return best ? pack(best) : null;
   };
 
   const schemeCode = String(mfFund.schemeCode || mfFund.scheme_code || '').trim();
 
-  if (overlapSlugSet?.size) {
-    const overlapMatch = pickFromMatches(Object.keys(stockCounts));
-    if (overlapMatch) return overlapMatch;
+  // Named AMFI renames (e.g. axis-large-cap-fund → axis-bluechip-fund) before overlap shortcuts.
+  for (const variant of slugVariants(mfFund.slug)) {
+    const alias = AMFI_SLUG_ALIASES[variant];
+    if (alias) {
+      const hit = pack(alias);
+      if (hit) return hit;
+    }
   }
 
   if (schemeCode && bySchemeCode[schemeCode]) {
@@ -302,13 +337,9 @@ export function resolveMfFundHoldings(mfFund, meta) {
     if (hit) return hit;
   }
 
-  // Named AMFI renames before generic DB base-slug mappings (multicap → multi-cap, etc.)
-  for (const variant of slugVariants(mfFund.slug)) {
-    const alias = AMFI_SLUG_ALIASES[variant];
-    if (alias) {
-      const hit = pack(alias);
-      if (hit) return hit;
-    }
+  if (overlapSlugSet?.size) {
+    const overlapMatch = pickFromMatches(Object.keys(stockCounts));
+    if (overlapMatch) return overlapMatch;
   }
 
   const variantMatch = pickFromMatches(Object.keys(stockCounts));

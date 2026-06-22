@@ -1,48 +1,41 @@
 {
   "summary": {
-    "curated": 498,
-    "withNav": 430,
-    "missingNav": 68,
+    "curated": 495,
+    "withNav": 445,
+    "missingNav": 50,
     "byReason": {
-      "no_mf_match": 62,
+      "no_mf_match": 44,
       "mf_match_nav_null": 6
     },
     "byCategory": {
-      "Flexi Cap": 45,
-      "Sectoral/Thematic": 7,
-      "Mid Cap": 4,
-      "Large & Mid Cap": 3,
+      "Flexi Cap": 40,
       "Small Cap": 4,
       "Value": 2,
       "Focused": 1,
-      "Multi Cap": 2
+      "Multi Cap": 2,
+      "Mid Cap": 1
     },
     "byAmc": {
       "Aditya Birla Sun Life": 1,
       "Angel One": 1,
       "Axis": 1,
-      "Bajaj Finserv": 1,
-      "Bank of India": 2,
-      "Unknown": 13,
-      "Capitalmind": 1,
-      "DSP": 1,
-      "Edelweiss": 4,
+      "Unknown": 7,
+      "Edelweiss": 3,
       "Franklin India": 1,
       "Groww": 5,
       "HDFC": 1,
-      "Helios": 2,
-      "ICICI Prudential": 3,
+      "Helios": 1,
+      "ICICI Prudential": 2,
       "ITI": 2,
       "Kotak": 3,
       "LIC": 2,
-      "Motilal Oswal": 3,
+      "Motilal Oswal": 1,
       "Navi": 1,
       "Nippon India": 2,
-      "Quant": 1,
       "Samco": 2,
       "SBI": 4,
       "Sundaram": 8,
-      "Tata": 2,
+      "Tata": 1,
       "Trust": 1
     }
   },
@@ -97,111 +90,6 @@
       "reason": "no_mf_match"
     },
     {
-      "name": "Bajaj Finserv Banking and Financial Services Fund",
-      "category": "Sectoral/Thematic",
-      "amc": "Bajaj Finserv",
-      "parserSlug": "bajaj-finserv-banking-and-financial-services-fund",
-      "dbSlug": "bajaj-finserv-banking-and-financial-services-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "bajaj-finserv-banking-and-financial-services-fund-direct",
-          "name": "Bajaj Finserv Banking and Financial Services Fund - Direct",
-          "schemeCode": "153937",
-          "nav": 10.033
-        }
-      ]
-    },
-    {
-      "name": "Bank of India Mid Cap Fund (Mid Cap Fund",
-      "category": "Mid Cap",
-      "amc": "Bank of India",
-      "parserSlug": "bank-of-india-mid-cap-fund-mid-cap-fund",
-      "dbSlug": "bank-of-india-mid-cap-fund-mid-cap-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "bank-of-india-balanced-advantage-fund-direct-plan-growth",
-          "name": "BANK OF INDIA BALANCED ADVANTAGE FUND DIRECT PLAN GROWTH",
-          "schemeCode": "127850",
-          "nav": 28.3655
-        },
-        {
-          "slug": "bank-of-india-banking-financial-services-fund",
-          "name": "Bank of India Banking & Financial Services Fund",
-          "schemeCode": "154093",
-          "nav": 9.97
-        },
-        {
-          "slug": "bank-of-india-business-cycle-fund",
-          "name": "Bank of India Business Cycle Fund",
-          "schemeCode": "152789",
-          "nav": 9.62
-        }
-      ]
-    },
-    {
-      "name": "Bank Of India MID CAP TAX FUND Series 2 ( A 10 year Close -ended equity linked savings scheme)",
-      "category": "Mid Cap",
-      "amc": "Bank of India",
-      "parserSlug": "bank-of-india-mid-cap-tax-fund-series-2-a-10-year-close-ended-equity-linked-savi",
-      "dbSlug": "bank-of-india-mid-cap-tax-fund-series-2-a-10-year-close-ended-equity-linked-savi-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "bank-of-india-balanced-advantage-fund-direct-plan-growth",
-          "name": "BANK OF INDIA BALANCED ADVANTAGE FUND DIRECT PLAN GROWTH",
-          "schemeCode": "127850",
-          "nav": 28.3655
-        },
-        {
-          "slug": "bank-of-india-banking-financial-services-fund",
-          "name": "Bank of India Banking & Financial Services Fund",
-          "schemeCode": "154093",
-          "nav": 9.97
-        },
-        {
-          "slug": "bank-of-india-business-cycle-fund",
-          "name": "Bank of India Business Cycle Fund",
-          "schemeCode": "152789",
-          "nav": 9.62
-        }
-      ]
-    },
-    {
-      "name": "Baroda BNP Paribas Banking & Financial Services Fund",
-      "category": "Sectoral/Thematic",
-      "amc": "Unknown",
-      "parserSlug": "baroda-bnp-paribas-banking-financial-services-fund",
-      "dbSlug": "baroda-bnp-paribas-banking-financial-services-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "baroda-bnp-paribas-banking-and-financial-services-fund",
-          "name": "Baroda BNP Paribas Banking and Financial Services Fund",
-          "nav": 52.42
-        }
-      ]
-    },
-    {
-      "name": "Baroda BNP Paribas Business Conglomerates Fund",
-      "category": "Flexi Cap",
-      "amc": "Unknown",
-      "parserSlug": "baroda-bnp-paribas-business-conglomerates-fund",
-      "dbSlug": "baroda-bnp-paribas-business-conglomerates-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match"
-    },
-    {
       "name": "Baroda BNP Paribas Childrens Fund",
       "category": "Flexi Cap",
       "amc": "Unknown",
@@ -232,23 +120,6 @@
       "reason": "no_mf_match"
     },
     {
-      "name": "Baroda BNP Paribas Large & Mid Cap Fund",
-      "category": "Large & Mid Cap",
-      "amc": "Unknown",
-      "parserSlug": "baroda-bnp-paribas-large-mid-cap-fund",
-      "dbSlug": "baroda-bnp-paribas-large-mid-cap-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "baroda-bnp-paribas-large-and-mid-cap-fund",
-          "name": "Baroda BNP Paribas Large and Mid Cap Fund",
-          "nav": 28.64
-        }
-      ]
-    },
-    {
       "name": "Baroda BNP Paribas Multi Asset Fund",
       "category": "Flexi Cap",
       "amc": "Unknown",
@@ -259,42 +130,6 @@
       "reason": "no_mf_match"
     },
     {
-      "name": "Capitalmind Flexi Cap Fund",
-      "category": "Flexi Cap",
-      "amc": "Capitalmind",
-      "parserSlug": "capitalmind-flexi-cap-fund",
-      "dbSlug": "capitalmind-flexi-cap-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "capitalmind-flexi-cap-fund-direct-growth",
-          "name": "CAPITALMIND FLEXI CAP FUND DIRECT GROWTH",
-          "schemeCode": "153738",
-          "nav": 9.9693
-        }
-      ]
-    },
-    {
-      "name": "DSP Natural Resources & New Energy Fund",
-      "category": "Flexi Cap",
-      "amc": "DSP",
-      "parserSlug": "dsp-natural-resources-new-energy-fund",
-      "dbSlug": "dsp-natural-resources-new-energy-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "dsp-natural-resources-and-new-energy-fund",
-          "name": "DSP Natural Resources and New Energy Fund",
-          "schemeCode": "119028",
-          "nav": 121.987
-        }
-      ]
-    },
-    {
       "name": "EDEL NY LMCAP250 PL 8 13 YR GS 70 30 IDX",
       "category": "Flexi Cap",
       "amc": "Edelweiss",
@@ -303,29 +138,6 @@
       "schemeCode": null,
       "mfSlug": null,
       "reason": "no_mf_match"
-    },
-    {
-      "name": "EDELWEISS LARGE & MID CAP FUND",
-      "category": "Large & Mid Cap",
-      "amc": "Edelweiss",
-      "parserSlug": "edelweiss-large-mid-cap-fund",
-      "dbSlug": "edelweiss-large-mid-cap-fund-option",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "edelweiss-large-mid-cap-fund-option",
-          "name": "Edelweiss Large & Mid Cap Fund Option",
-          "schemeCode": "140175",
-          "nav": 106.091
-        },
-        {
-          "slug": "edelweiss-large-and-mid-cap-fund",
-          "name": "Edelweiss Large and Mid Cap Fund",
-          "nav": 102.75
-        }
-      ]
     },
     {
       "name": "EDELWEISS MSCI INDIA DOMESTIC & WORLD HEALTHCARE 45 INDEX",
@@ -420,29 +232,6 @@
       "reason": "mf_match_nav_null"
     },
     {
-      "name": "Helios Mid Cap Fund (Mid Cap Fund",
-      "category": "Mid Cap",
-      "amc": "Helios",
-      "parserSlug": "helios-mid-cap-fund-mid-cap-fund",
-      "dbSlug": "helios-mid-cap-fund-mid-cap-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "helios-mid-cap-fund",
-          "name": "Helios Mid Cap Fund",
-          "nav": 13.05
-        },
-        {
-          "slug": "helios-mid-cap-fund-option",
-          "name": "Helios Mid Cap Fund Option",
-          "schemeCode": "153326",
-          "nav": 13.75
-        }
-      ]
-    },
-    {
       "name": "Helios Small Cap Fund (Small Cap Fund",
       "category": "Small Cap",
       "amc": "Helios",
@@ -479,24 +268,6 @@
       "schemeCode": null,
       "mfSlug": null,
       "reason": "no_mf_match"
-    },
-    {
-      "name": "ICICI Prudential Banking & Financial Services Fund",
-      "category": "Sectoral/Thematic",
-      "amc": "ICICI Prudential",
-      "parserSlug": "icici-prudential-banking-financial-services-fund",
-      "dbSlug": "icici-prudential-banking-financial-services-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "icici-prudential-banking-and-financial-services-fund",
-          "name": "ICICI Prudential Banking and Financial Services Fund",
-          "schemeCode": "120244",
-          "nav": 149.21
-        }
-      ]
     },
     {
       "name": "ICICI Prudential Long Term Wealth Enhancement Fund",
@@ -602,44 +373,6 @@
       "reason": "no_mf_match"
     },
     {
-      "name": "Mahindra Manulife Banking & Financial Services Fund",
-      "category": "Sectoral/Thematic",
-      "amc": "Unknown",
-      "parserSlug": "mahindra-manulife-banking-financial-services-fund",
-      "dbSlug": "mahindra-manulife-banking-financial-services-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match"
-    },
-    {
-      "name": "Mahindra Manulife Innovation Opportunities Fund",
-      "category": "Flexi Cap",
-      "amc": "Unknown",
-      "parserSlug": "mahindra-manulife-innovation-opportunities-fund",
-      "dbSlug": "mahindra-manulife-innovation-opportunities-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match"
-    },
-    {
-      "name": "Motilal Oswal Consumption Fund",
-      "category": "Sectoral/Thematic",
-      "amc": "Motilal Oswal",
-      "parserSlug": "motilal-oswal-consumption-fund",
-      "dbSlug": "motilal-oswal-consumption-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "motilal-oswal-consumption-fund-direct",
-          "name": "Motilal Oswal Consumption Fund-Direct",
-          "schemeCode": "153913",
-          "nav": 9.7769
-        }
-      ]
-    },
-    {
       "name": "Motilal Oswal Financial Services Fund",
       "category": "Flexi Cap",
       "amc": "Motilal Oswal",
@@ -654,24 +387,6 @@
           "name": "Motilal Oswal Financial Services Fund- Direct Growth",
           "schemeCode": "154142",
           "nav": 10.3218
-        }
-      ]
-    },
-    {
-      "name": "Motilal Oswal Special Opportunities Fund",
-      "category": "Flexi Cap",
-      "amc": "Motilal Oswal",
-      "parserSlug": "motilal-oswal-special-opportunities-fund",
-      "dbSlug": "motilal-oswal-special-opportunities-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "motilal-oswal-special-opportunities-fund-direct",
-          "name": "Motilal Oswal Special Opportunities Fund - Direct",
-          "schemeCode": "153749",
-          "nav": 11.6916
         }
       ]
     },
@@ -729,29 +444,6 @@
           "slug": "nippon-india-multicap-fund",
           "name": "Nippon India Multicap Fund",
           "nav": 324.01
-        }
-      ]
-    },
-    {
-      "name": "Quant Large & Mid Cap Fund",
-      "category": "Large & Mid Cap",
-      "amc": "Quant",
-      "parserSlug": "quant-large-mid-cap-fund",
-      "dbSlug": "quant-large-mid-cap-fund-growth-option-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "quant-large-mid-cap-fund-growth-option-direct-plan",
-          "name": "quant Large & Mid Cap Fund - Growth Option-Direct Plan",
-          "schemeCode": "120826",
-          "nav": 137.4708
-        },
-        {
-          "slug": "quant-large-and-mid-cap-fund",
-          "name": "Quant Large and Mid Cap Fund",
-          "nav": 134.77
         }
       ]
     },
@@ -904,24 +596,6 @@
       "reason": "no_mf_match"
     },
     {
-      "name": "TATA BANKING & FINANCIAL SERVICES FUND",
-      "category": "Sectoral/Thematic",
-      "amc": "Tata",
-      "parserSlug": "tata-banking-financial-services-fund",
-      "dbSlug": "tata-banking-financial-services-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match",
-      "fuzzyCandidates": [
-        {
-          "slug": "tata-banking-and-financial-services-fund",
-          "name": "Tata Banking And Financial Services Fund",
-          "schemeCode": "135793",
-          "nav": 51.793
-        }
-      ]
-    },
-    {
       "name": "TATA CHILDRENS FUND",
       "category": "Flexi Cap",
       "amc": "Tata",
@@ -948,16 +622,6 @@
           "nav": 11.34
         }
       ]
-    },
-    {
-      "name": "WCET-THE WEALTH COMPANY ETHICAL FUND",
-      "category": "Sectoral/Thematic",
-      "amc": "Unknown",
-      "parserSlug": "wcet-the-wealth-company-ethical-fund",
-      "dbSlug": "wcet-the-wealth-company-ethical-fund-direct-plan",
-      "schemeCode": null,
-      "mfSlug": null,
-      "reason": "no_mf_match"
     },
     {
       "name": "WCFL-THE WEALTH COMPANY FLEXI CAP FUND",

@@ -78,6 +78,80 @@ export function indexMutualFunds(mutualFunds) {
   return { bySlug, byScheme, byNormName };
 }
 
+const NAV_SLUG_SUFFIXES = [
+  '-direct-growth',
+  '-direct-plan',
+  '-growth-option-direct-plan',
+  '-direct-plan-growth',
+];
+
+function looseDisclosureMatchKey(name) {
+  return disclosureMatchKey(name).replace(/children?s/g, 'children');
+}
+
+/** Prefer a mutual-funds.json row with live NAV (sibling Direct-Growth slug, etc.). */
+export function enrichMfFundRecord(fund, mutualFunds) {
+  if (!fund) return fund;
+  if (fund.nav != null && Number(fund.nav) > 0) return fund;
+
+  const { bySlug, byNormName } = indexMutualFunds(mutualFunds);
+  const candidates = new Map();
+  const add = (row) => {
+    if (row?.slug && !candidates.has(row.slug)) candidates.set(row.slug, row);
+  };
+
+  add(fund);
+  const bases = new Set([
+    fund.slug,
+    baseSlug(fund.slug),
+    ...slugVariants(baseSlug(fund.slug)),
+    ...collapseFundSlugVariants(baseSlug(fund.slug)),
+  ]);
+
+  for (const b of bases) {
+    add(bySlug.get(b));
+    for (const suf of NAV_SLUG_SUFFIXES) {
+      add(bySlug.get(`${b}${suf}`));
+      if (b.endsWith('-fund')) add(bySlug.get(`${b.replace(/-fund$/, '')}${suf}`));
+    }
+  }
+
+  const normKey = looseDisclosureMatchKey(fund.name);
+  if (byNormName.has(disclosureMatchKey(fund.name))) {
+    add(byNormName.get(disclosureMatchKey(fund.name)));
+  }
+
+  for (const row of mutualFunds) {
+    if (!(Number(row.nav) > 0)) continue;
+    if (looseDisclosureMatchKey(row.name) === normKey) add(row);
+  }
+
+  const ranked = [...candidates.values()].sort((a, b) => {
+    const an = Number(a.nav) > 0 ? 1 : 0;
+    const bn = Number(b.nav) > 0 ? 1 : 0;
+    if (bn !== an) return bn - an;
+    const as = String(a.schemeCode || '').trim() ? 1 : 0;
+    const bs = String(b.schemeCode || '').trim() ? 1 : 0;
+    if (bs !== as) return bs - as;
+    return String(a.slug).length - String(b.slug).length;
+  });
+
+  const best = ranked.find((r) => Number(r.nav) > 0);
+  if (!best) return fund;
+
+  return {
+    ...fund,
+    nav: best.nav,
+    schemeCode: String(fund.schemeCode || '').trim() || best.schemeCode || '',
+    returns1y: fund.returns1y ?? best.returns1y ?? null,
+    returns3y: fund.returns3y ?? best.returns3y ?? null,
+    returns5y: fund.returns5y ?? best.returns5y ?? null,
+    aum: fund.aum ?? best.aum ?? null,
+    rating: fund.rating ?? best.rating ?? null,
+    lastUpdated: best.lastUpdated || fund.lastUpdated,
+  };
+}
+
 function lookupBySlugCandidates(bySlug, slug) {
   if (bySlug.has(slug)) return bySlug.get(slug);
   for (const variant of slugVariants(baseSlug(slug))) {
@@ -153,7 +227,8 @@ export function buildCuratedFundList(holdingsData, mutualFunds) {
     if (!isDirectGrowthDisclosure(fundData.name, parserSlug)) continue;
     if (!hasHoldingsInAnyMonth(fundData, months)) continue;
 
-    const mf = resolveMfFundForParserSlug(parserSlug, fundData, mfIndex);
+    const mfRaw = resolveMfFundForParserSlug(parserSlug, fundData, mfIndex);
+    const mf = enrichMfFundRecord(mfRaw, mutualFunds);
     const category = mf?.category || inferCategoryFromFundName(fundData.name);
     if (!isCuratedCategory(category)) continue;
 
@@ -197,5 +272,7 @@ export function filterMutualFundsToCurated(mutualFunds, holdingsData) {
       .map((f) => f.mfSlug)
       .filter(Boolean),
   );
-  return mutualFunds.filter((f) => curatedMfSlugs.has(f.slug));
+  return mutualFunds
+    .filter((f) => curatedMfSlugs.has(f.slug))
+    .map((f) => enrichMfFundRecord(f, mutualFunds));
 }

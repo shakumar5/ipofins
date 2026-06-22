@@ -55,14 +55,28 @@ export function enrichLinkMetaWithOverlap(
 
   for (const slug of overlapSlugs) {
     slugs.add(slug);
-    if ((stockCounts[slug] ?? 0) > 0) continue;
+    const current = stockCounts[slug] ?? 0;
+    if (current > 1) continue;
+
+    let mapped = false;
+    for (const variant of slugVariants(slug)) {
+      const alias = ALIASES[variant];
+      if (alias && (stockCounts[alias] ?? 0) > current) {
+        stockCounts[slug] = stockCounts[alias];
+        mapped = true;
+        break;
+      }
+    }
+    if (mapped) continue;
+
+    if (current > 0) continue;
+
     for (const [k, count] of Object.entries(meta.stockCounts)) {
       if (basesMatch(k, slug)) {
         stockCounts[slug] = count;
         break;
       }
     }
-    if (!stockCounts[slug]) stockCounts[slug] = 1;
   }
 
   return { slugs, stockCounts };
@@ -82,8 +96,6 @@ export function resolveDetailSlug(
     return detailSlug;
   };
 
-  if (pack(fundSlug)) return fundSlug;
-
   for (const variant of slugVariants(fundSlug)) {
     const alias = ALIASES[variant];
     if (alias) {
@@ -91,6 +103,8 @@ export function resolveDetailSlug(
       if (hit) return hit;
     }
   }
+
+  if (pack(fundSlug)) return fundSlug;
 
   for (const s of slugs) {
     if (basesMatch(s, fundSlug) && pack(s)) return s;

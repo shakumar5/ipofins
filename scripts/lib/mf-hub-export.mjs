@@ -56,9 +56,11 @@ export function loadMutualFundsJson(root) {
 
 export function buildMfHubExports(funds, holdingsMeta, stats = {}) {
   const overlapSlugs = stats.overlapSlugs ?? [];
-  const meta = overlapSlugs.length
+  const pageSlugSet = stats.pageSlugSet ?? null;
+  const baseMeta = overlapSlugs.length
     ? enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs)
     : holdingsMeta;
+  const meta = pageSlugSet?.size ? { ...baseMeta, pageSlugSet } : baseMeta;
   const categories = [...new Set(funds.map((f) => f.category))].sort((a, b) => a.localeCompare(b));
   const bestFunds = selectBestFunds(funds);
   const latestUpdate = funds.reduce((latest, f) => {
