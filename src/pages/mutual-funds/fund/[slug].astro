@@ -1,19 +1,42 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
-import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug } from '../../../lib/data/funds';
+import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug, type FundRecord } from '../../../lib/data/funds';
 import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
+import { readFundHoldingsAliasesFromDisk } from '../../../lib/holdings-compare-server';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
-  return fundsData.map(fund => ({
-    params: { slug: `${fund.slug}-holdings` },
-    props: { fund },
-  }));
+  const aliases = readFundHoldingsAliasesFromDisk() ?? {};
+  const pathMap = new Map<string, { params: { slug: string }; props: { fund?: FundRecord; redirectTo?: string } }>();
+
+  for (const fund of fundsData) {
+    const slugParam = `${fund.slug}-holdings`;
+    pathMap.set(slugParam, { params: { slug: slugParam }, props: { fund } });
+  }
+
+  for (const [listableSlug, pageSlug] of Object.entries(aliases)) {
+    if (listableSlug === pageSlug) continue;
+    const aliasParam = `${listableSlug}-holdings`;
+    const canonical = `/mutual-funds/fund/${pageSlug}-holdings`;
+    if (!pathMap.has(aliasParam)) {
+      pathMap.set(aliasParam, { params: { slug: aliasParam }, props: { redirectTo: canonical } });
+    }
+  }
+
+  return [...pathMap.values()];
+}
+
+const redirectTo = Astro.props.redirectTo;
+if (redirectTo) {
+  return Astro.redirect(redirectTo, 301);
 }
 
 const { fund } = Astro.props;
+if (!fund) {
+  return Astro.redirect('/mutual-funds/all', 302);
+}
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);
 const relatedFundHref = (f: { slug: string; schemeCode: string }) =>

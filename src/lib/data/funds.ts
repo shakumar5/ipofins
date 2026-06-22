@@ -5,6 +5,7 @@
 import { requireDb } from '../db';
 import {
   holdingsStatsFromIndex,
+  readFundHoldingsIndexFromDisk,
   readHoldingsCompareIndexFromDisk,
   readPortfolioOverlapFromDisk,
 } from '../holdings-compare-server';
@@ -114,6 +115,26 @@ async function loadAllFunds(): Promise<FundRecord[]> {
 
 /** Funds with holdings — builds detail pages for listable Direct Plan funds. */
 export async function getFundsWithHoldings(): Promise<FundRecord[]> {
+  const disk = readFundHoldingsIndexFromDisk();
+  if (disk?.length) {
+    return disk.map((f) => ({
+      name: f.name,
+      slug: f.slug,
+      category: f.category,
+      nav: f.nav,
+      returns1y: f.returns1y,
+      returns3y: f.returns3y,
+      returns5y: f.returns5y,
+      aum: f.aum,
+      riskLevel: f.riskLevel,
+      rating: f.rating,
+      schemeCode: f.schemeCode,
+      lastUpdated: f.lastUpdated,
+      expenseRatio: f.expenseRatio,
+      expenseRatioRegular: f.expenseRatioRegular,
+    }));
+  }
+
   const sql = requireDb();
   const slugs = new Set(await getFundSlugsWithHoldings());
   const overlap = readPortfolioOverlapFromDisk();

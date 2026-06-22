@@ -1,7 +1,7 @@
-import { getFundsWithOverlaps } from '../../lib/data/holdings';
+import { readFundOverlapIndexFromDisk } from '../../lib/holdings-compare-server';
 
 export async function GET() {
-  const funds = await getFundsWithOverlaps();
+  const funds = readFundOverlapIndexFromDisk() ?? [];
   return new Response(JSON.stringify(funds), {
     headers: { 'Content-Type': 'application/json' },
   });

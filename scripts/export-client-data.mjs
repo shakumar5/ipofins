@@ -25,6 +25,17 @@ import {
   buildHoldingsMetaFromJson,
 } from './lib/mf-hub-holdings-meta.mjs';
 import { filterMutualFundsToCurated } from './lib/canonical-fund-filter.mjs';
+import {
+  loadAllFundOverlapsFromDb,
+  loadFundsWithOverlapsFromDb,
+} from './lib/fund-overlap-export.mjs';
+import {
+  buildFundHoldingsAliases,
+  buildFundHoldingsIndexFromHub,
+  loadFundHoldingsIndexFromDb,
+  serializeHoldingsMetaForDisk,
+} from './lib/fund-holdings-export.mjs';
+import { enrichHoldingsMetaWithOverlap } from './lib/mf-hub-holdings-meta.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'data');
@@ -550,6 +561,36 @@ async function main() {
   );
   doneCompare(`${portfolioOverlap.funds.length} funds`);
 
+  const doneFundOverlap = logStep('Fund overlap pages (DB)');
+  if (isDbConfigured()) {
+    try {
+      const overlapFunds = await withDbRetry(
+        () => loadFundsWithOverlapsFromDb(sql),
+        { label: 'Fund overlap index' },
+      );
+      const bySlug = await withDbRetry(
+        () => loadAllFundOverlapsFromDb(sql),
+        { label: 'Fund overlap pairs' },
+      );
+      if (overlapFunds.length) {
+        writeJson('fund-overlap-index.json', overlapFunds);
+        writeJson('fund-overlaps-by-fund.json', {
+          month: portfolioOverlap.month || '',
+          bySlug,
+        });
+        doneFundOverlap(`${overlapFunds.length} funds, ${Object.keys(bySlug).length} with rows`);
+      } else {
+        console.warn('  ⚠ fund_overlaps empty — run db:compute-overlaps; keeping holdings-based index');
+        doneFundOverlap('skipped (no fund_overlaps rows)');
+      }
+    } catch (e) {
+      console.warn('  ⚠ Fund overlap DB export failed:', e.message);
+      doneFundOverlap('holdings-based index only');
+    }
+  } else {
+    doneFundOverlap('skipped (no DB)');
+  }
+
   const mfFundsAll = loadMutualFundsJson(ROOT);
   const mfFunds = holdings
     ? filterMutualFundsToCurated(mfFundsAll, holdings)
@@ -589,6 +630,41 @@ async function main() {
     writeJson('mf-hub/best.json', hub.best);
     writeJson('mf-hub/all.json', hub.all);
     doneMfHub(`${mfFunds.length} funds`);
+
+    const doneHoldingsPages = logStep('fund holdings pages export');
+    const overlapSlugs = portfolioOverlap.funds.map((f) => f.slug).filter(Boolean);
+    const enrichedMeta = enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs);
+    const metaDisk = serializeHoldingsMetaForDisk(enrichedMeta);
+    writeJson('fund-holdings-meta.json', metaDisk);
+
+    let holdingsIndex = [];
+    if (isDbConfigured()) {
+      try {
+        holdingsIndex = await withDbRetry(
+          () => loadFundHoldingsIndexFromDb(sql, overlapSlugs),
+          { label: 'Fund holdings index' },
+        );
+      } catch (e) {
+        console.warn('  ⚠ Fund holdings index from DB failed:', e.message);
+      }
+    }
+    if (!holdingsIndex.length) {
+      holdingsIndex = buildFundHoldingsIndexFromHub(hub.all, mfFunds);
+      console.log('  ℹ Fund holdings index from mf-hub fallback');
+    }
+    if (holdingsIndex.length) {
+      writeJson('fund-holdings-index.json', holdingsIndex);
+      const aliases = buildFundHoldingsAliases(
+        hub.all,
+        holdingsIndex.map((f) => f.slug),
+      );
+      writeJson('fund-holdings-aliases.json', aliases);
+      doneHoldingsPages(
+        `${holdingsIndex.length} pages, ${Object.keys(aliases).length} aliases`,
+      );
+    } else {
+      doneHoldingsPages('skipped (no holdings pages)');
+    }
   }
 
   if (isDbConfigured()) {

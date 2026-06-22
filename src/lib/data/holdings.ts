@@ -5,6 +5,9 @@
 import { requireDb } from '../db';
 import {
   monthsFromIndex,
+  readFundHoldingsMetaFromDisk,
+  readFundOverlapIndexFromDisk,
+  readFundOverlapsByFundFromDisk,
   readHoldingsCompareIndexFromDisk,
   readPortfolioOverlapFromDisk,
 } from '../holdings-compare-server';
@@ -592,6 +595,14 @@ async function loadFundHoldingsMeta(): Promise<FundHoldingsMeta> {
 }
 
 async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
+  const disk = readFundHoldingsMetaFromDisk();
+  if (disk?.slugs?.length) {
+    return {
+      slugs: new Set(disk.slugs),
+      stockCounts: disk.stockCounts,
+    };
+  }
+
   const sql = requireDb();
   const rows = await sql`
     WITH fund_latest AS (
@@ -878,6 +889,11 @@ export async function getAMCHoldingsComparison(
 }
 
 export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Record<string, unknown>[]> {
+  const disk = readFundOverlapsByFundFromDisk();
+  if (disk?.bySlug?.[fundSlug]) {
+    return disk.bySlug[fundSlug].slice(0, limit).map((row) => ({ ...row })) as Record<string, unknown>[];
+  }
+
   const sql = requireDb();
   const rows = await sql`
     SELECT
@@ -912,6 +928,11 @@ export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Rec
 }
 
 export async function getFundsWithOverlaps(): Promise<{ slug: string; name: string }[]> {
+  const disk = readFundOverlapIndexFromDisk();
+  if (disk?.length) {
+    return disk.map((f) => ({ slug: f.slug, name: f.name }));
+  }
+
   const sql = requireDb();
   const rows = await sql`
     SELECT DISTINCT f.slug, f.name
