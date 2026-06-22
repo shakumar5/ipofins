@@ -164,6 +164,57 @@ if (shriramRow.signal === 'Distribution' || shriramRow.signal === 'Strong Distri
   errors.push(`Shriram-like profile should not be distribution, got ${shriramRow.signal}`);
 }
 
+// GMR-like: low peer rank but positive net flow — Light Accumulation, not Distribution
+const gmrLike = makeRaw({
+  stockName: 'GMR Airports Limited',
+  stockSlug: 'gmr-airports-ltd',
+  category: 'Mid Cap',
+  netWeightChangePct: 4.7,
+  increasedCount: 1,
+  decreasedCount: 0,
+  freshEntries: 2,
+  completeExits: 0,
+  consecutivePositiveMonths: 0,
+  amcIdsBuying: new Set([1]),
+  amcIdsAll: new Set([1, 2, 3]),
+});
+const midCapMaxes = computeCategoryMaxes([
+  {
+    netWeightChangePct: 93,
+    increasedCount: 45,
+    decreasedCount: 2,
+    freshEntries: 30,
+    completeExits: 0,
+    amcsBuying: 25,
+    buyingFunds: 75,
+    consecutivePositiveMonths: 3,
+  },
+  {
+    netWeightChangePct: gmrLike.netWeightChangePct,
+    increasedCount: gmrLike.increasedCount,
+    decreasedCount: gmrLike.decreasedCount,
+    freshEntries: gmrLike.freshEntries,
+    completeExits: gmrLike.completeExits,
+    amcsBuying: gmrLike.amcIdsBuying.size,
+    buyingFunds: gmrLike.increasedCount + gmrLike.freshEntries,
+    consecutivePositiveMonths: gmrLike.consecutivePositiveMonths,
+  },
+]);
+const gmrScore = scoreStockInCategory(gmrLike, midCapMaxes);
+const gmrRow = buildSignalRowFromMetrics(gmrLike, midCapMaxes);
+if (gmrRow.netBuying <= 0) {
+  errors.push(`GMR-like should have positive net flow, got ${gmrRow.netBuying}`);
+}
+if (gmrScore.convictionScore >= 40) {
+  errors.push(`GMR-like expected low peer rank score, got ${gmrScore.convictionScore}`);
+}
+if (gmrRow.signal === 'Distribution' || gmrRow.signal === 'Strong Distribution') {
+  errors.push(`GMR-like should not be distribution, got ${gmrRow.signal}`);
+}
+if (gmrRow.signal !== 'Light Accumulation') {
+  errors.push(`GMR-like expected Light Accumulation, got ${gmrRow.signal}`);
+}
+
 if (errors.length) {
   console.error('FAIL');
   for (const e of errors) console.error(' -', e);

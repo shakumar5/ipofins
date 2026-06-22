@@ -1,12 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BRAND_NAME, withBrandSuffix } from '../../lib/brand';
-import { getAllFunds, getHoldingsStats } from '../../lib/data/funds';
+import { getAllFunds, getHoldingsStats, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug } from '../../lib/data/funds';
 import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
 import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
 import MfSectionTabs from '../../components/funds/MfSectionTabs.astro';
 
 const fundsData = await getAllFunds();
+const holdingsMeta = await getFundHoldingsLinkMeta();
+const fundHref = (fund: { slug: string; schemeCode: string }) =>
+  fundHoldingsHref(resolveFundDetailSlug(fund, holdingsMeta));
 const sm = loadSmartMoneyTrackerLinks();
 const categories = [...new Set(fundsData.map((f) => f.category))].sort((a, b) => a.localeCompare(b));
 const totalFunds = fundsData.length;
@@ -139,7 +142,7 @@ const faqJsonLd = {
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Top Funds by 3Y Returns</h2>
     <div class="space-y-2">
       {fundsData.sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).map((fund, i) => (
-        <a href={`/mutual-funds/fund/${fund.slug}-holdings`} class="card-compact group block hover:shadow-md transition-shadow">
+        <a href={fundHref(fund)} class="card-compact group block hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{i+1}. {fund.name}</h3>

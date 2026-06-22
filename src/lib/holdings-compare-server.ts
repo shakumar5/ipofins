@@ -55,3 +55,28 @@ export function holdingsStatsFromIndex(index: HoldingsCompareIndexDisk) {
 export function monthsFromIndex(index: HoldingsCompareIndexDisk): string[] {
   return [...index.months].reverse();
 }
+
+export interface PortfolioOverlapDisk {
+  month: string;
+  funds: { slug: string; name: string; amc?: string }[];
+}
+
+let portfolioOverlapCache: PortfolioOverlapDisk | null | undefined;
+
+/** Slugs from exported portfolio-overlap.json (holder funds, incl. growth-option direct plans). */
+export function readPortfolioOverlapFromDisk(): PortfolioOverlapDisk | null {
+  if (portfolioOverlapCache !== undefined) return portfolioOverlapCache;
+  for (const root of projectRoots()) {
+    const path = join(root, 'public', 'data', 'portfolio-overlap.json');
+    if (!existsSync(path)) continue;
+    try {
+      portfolioOverlapCache = JSON.parse(readFileSync(path, 'utf-8')) as PortfolioOverlapDisk;
+      return portfolioOverlapCache;
+    } catch {
+      portfolioOverlapCache = null;
+      return null;
+    }
+  }
+  portfolioOverlapCache = null;
+  return null;
+}

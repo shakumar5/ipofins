@@ -1,11 +1,15 @@
 import { getAllIPOs } from '../../lib/data/ipos';
-import { getAllFunds } from '../../lib/data/funds';
+import { fundHoldingsHref, getAllFunds, getFundHoldingsLinkMeta, resolveFundDetailSlug } from '../../lib/data/funds';
 import articlesData from '../../data/articles.json';
 import toolsData from '../../data/tools.json';
 import brokersData from '../../data/brokers.json';
 
 export async function GET() {
-  const [iposData, fundsData] = await Promise.all([getAllIPOs(), getAllFunds()]);
+  const [iposData, fundsData, holdingsMeta] = await Promise.all([
+    getAllIPOs(),
+    getAllFunds(),
+    getFundHoldingsLinkMeta(),
+  ]);
 
   const searchItems = [
     ...iposData.map((i) => ({
@@ -15,13 +19,16 @@ export async function GET() {
       m: `${i.sector} • ${i.type}`,
       k: `${i.name} ${i.sector} ${i.type} ipo`,
     })),
-    ...fundsData.map((f) => ({
-      t: f.name,
-      u: `/mutual-funds/fund/${f.slug}-holdings`,
-      y: 'Fund',
-      m: f.category,
-      k: `${f.name} ${f.category} mutual fund mf`,
-    })),
+    ...fundsData.map((f) => {
+      const detailSlug = resolveFundDetailSlug(f, holdingsMeta);
+      return {
+        t: f.name,
+        u: fundHoldingsHref(detailSlug),
+        y: 'Fund',
+        m: f.category,
+        k: `${f.name} ${f.category} mutual fund mf`,
+      };
+    }),
     ...brokersData.map((b: { name: string; slug: string; type: string; tradingFee: string }) => ({
       t: `${b.name} Review`,
       u: `/broker/${b.slug}`,

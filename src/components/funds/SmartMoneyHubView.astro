@@ -221,16 +221,138 @@ const islandDirective = 'load';
       </p>
     </div>
 
-    <div class="card p-5 space-y-2">
+    <div class="card p-5 space-y-3">
       <h3 class="font-bold text-surface-900 dark:text-white">2. Smart Money Signal</h3>
       <p>Ranked table of stocks scored <strong>0–100</strong>. Each stock appears once — fund activity is aggregated across all schemes and scored vs peers in the same <strong>market-cap bucket</strong> (Large / Mid / Small / Micro). Click any row for the full factor breakdown.</p>
-      <p class="text-xs">Signals: 🚀 Aggressive (90+) · 🟢 Strong (75+) · 🟡 Moderate (60+) · ⚪ Neutral (40+) · 🟠 Distribution (25+) · 🔴 Strong Distribution (&lt;25)</p>
+      <p class="text-xs text-surface-600 dark:text-surface-400">
+        <strong>Conviction Score</strong> = how active vs peers. <strong>Smart Money Signal</strong> = buy/sell direction this month, with intensity from the score. A low score with net buying shows as 🔵 Light Accumulation — not distribution.
+      </p>
       <p class="text-xs text-surface-600 dark:text-surface-400">
         <a href={sm.signals} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Signal</a>
         {' · '}
         <a href={sm.stockSignal} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Stock Signal</a>
         {' · '}
         <a href={sm.mostBought} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Most Bought Stocks</a>
+      </p>
+    </div>
+
+    <div class="card p-5 space-y-4" id="how-scoring-works">
+      <h3 class="font-bold text-surface-900 dark:text-white">How Conviction Scoring Works</h3>
+      <p class="text-xs text-surface-600 dark:text-surface-400">Stock-level signals use peer-percentile scoring within each market-cap bucket. Scores and labels update monthly from AMC portfolio disclosures.</p>
+
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-surface-900 dark:text-white">Conviction Score (0–100)</h4>
+        <p class="text-xs">Ranks how <strong>active</strong> a stock was vs other stocks in the same cap bucket this month. It is a relative rank — not a buy/sell recommendation.</p>
+        <ul class="text-xs space-y-1 text-surface-600 dark:text-surface-400">
+          <li><strong>90–100</strong> — among the most active names in the bucket</li>
+          <li><strong>75–89</strong> — well above average activity</li>
+          <li><strong>50–74</strong> — moderate activity vs peers</li>
+          <li><strong>25–49</strong> — below-average activity</li>
+          <li><strong>0–24</strong> — near the bottom of the bucket</li>
+        </ul>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-surface-900 dark:text-white">Six score factors</h4>
+        <p class="text-xs text-surface-600 dark:text-surface-400">Each factor earns points vs the <strong>category leader</strong> that month. Points sum to the final score (max 100).</p>
+        <div class="overflow-x-auto -mx-1">
+          <table class="w-full text-xs border-collapse">
+            <thead>
+              <tr class="text-left text-surface-500 border-b border-surface-200 dark:border-surface-600">
+                <th class="py-1.5 pr-3 font-medium">Factor</th>
+                <th class="py-1.5 pr-3 font-medium whitespace-nowrap">Max pts</th>
+                <th class="py-1.5 font-medium">What it measures</th>
+              </tr>
+            </thead>
+            <tbody class="text-surface-600 dark:text-surface-400">
+              <tr class="border-b border-surface-100 dark:border-surface-700/80">
+                <td class="py-1.5 pr-3 font-medium text-surface-800 dark:text-surface-200">Net Weight Change</td>
+                <td class="py-1.5 pr-3 tabular-nums">35</td>
+                <td class="py-1.5">Aggregate month-on-month portfolio weight change across all funds holding the stock</td>
+              </tr>
+              <tr class="border-b border-surface-100 dark:border-surface-700/80">
+                <td class="py-1.5 pr-3 font-medium text-surface-800 dark:text-surface-200">Net Buying Funds</td>
+                <td class="py-1.5 pr-3 tabular-nums">20</td>
+                <td class="py-1.5">(Increased + fresh entries) − (reduced + complete exits); only counts when net flow is positive</td>
+              </tr>
+              <tr class="border-b border-surface-100 dark:border-surface-700/80">
+                <td class="py-1.5 pr-3 font-medium text-surface-800 dark:text-surface-200">Fresh Entries</td>
+                <td class="py-1.5 pr-3 tabular-nums">15</td>
+                <td class="py-1.5">Funds that newly initiated a position this month</td>
+              </tr>
+              <tr class="border-b border-surface-100 dark:border-surface-700/80">
+                <td class="py-1.5 pr-3 font-medium text-surface-800 dark:text-surface-200">Complete Exits</td>
+                <td class="py-1.5 pr-3 tabular-nums">10</td>
+                <td class="py-1.5">Fewer full sell-outs = more points (inverted vs bucket leader)</td>
+              </tr>
+              <tr class="border-b border-surface-100 dark:border-surface-700/80">
+                <td class="py-1.5 pr-3 font-medium text-surface-800 dark:text-surface-200">AMC Breadth</td>
+                <td class="py-1.5 pr-3 tabular-nums">10</td>
+                <td class="py-1.5">How many distinct AMCs are buying; rewards broad participation over one AMC with many schemes</td>
+              </tr>
+              <tr>
+                <td class="py-1.5 pr-3 font-medium text-surface-800 dark:text-surface-200">Trend Consistency</td>
+                <td class="py-1.5 pr-3 tabular-nums">10</td>
+                <td class="py-1.5">Consecutive months where every holder increased portfolio weight</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-surface-900 dark:text-white">Activity counts</h4>
+        <p class="text-xs text-surface-600 dark:text-surface-400">Shown in the stock detail view and used to determine signal direction:</p>
+        <ul class="text-xs list-disc pl-5 space-y-1 text-surface-600 dark:text-surface-400">
+          <li><strong>Funds holding</strong> — schemes with a position after the month</li>
+          <li><strong>Increased / Reduced</strong> — existing holders who raised or trimmed weight</li>
+          <li><strong>Fresh entries</strong> — new positions started this month</li>
+          <li><strong>Complete exits</strong> — funds that sold out entirely</li>
+          <li><strong>Net buying</strong> — increased + fresh − reduced − exits</li>
+          <li><strong>Net weight MoM</strong> — combined % change in portfolio weight</li>
+          <li><strong>AMCs buying</strong> — distinct asset managers with buy-side activity</li>
+        </ul>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-surface-900 dark:text-white">Smart Money Signal labels</h4>
+        <p class="text-xs text-surface-600 dark:text-surface-400">Direction comes from net fund flow first; score sets intensity within that direction.</p>
+        <div class="grid sm:grid-cols-2 gap-3 text-xs">
+          <div class="rounded-lg bg-surface-50 dark:bg-surface-800/50 p-3 space-y-1">
+            <p class="font-medium text-surface-800 dark:text-surface-200">When funds are net buyers</p>
+            <ul class="space-y-0.5 text-surface-600 dark:text-surface-400">
+              <li>🚀 Aggressive Accumulation — score 90+</li>
+              <li>🟢 Strong Accumulation — score 75–89</li>
+              <li>🟡 Moderate Accumulation — score 50–74</li>
+              <li>🔵 Light Accumulation — score &lt; 50</li>
+            </ul>
+          </div>
+          <div class="rounded-lg bg-surface-50 dark:bg-surface-800/50 p-3 space-y-1">
+            <p class="font-medium text-surface-800 dark:text-surface-200">When funds are net sellers</p>
+            <ul class="space-y-0.5 text-surface-600 dark:text-surface-400">
+              <li>🔴 Strong Distribution — score 75+ or &lt; 25</li>
+              <li>🟠 Distribution — score 50–74</li>
+              <li>🟠 Light Distribution — score 25–49</li>
+            </ul>
+          </div>
+        </div>
+        <p class="text-xs text-surface-600 dark:text-surface-400">⚪ <strong>Neutral</strong> — mixed or flat activity (net flow and weight change both near zero).</p>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-surface-900 dark:text-white">Institutional Confidence (stars)</h4>
+        <p class="text-xs text-surface-600 dark:text-surface-400">Based on how many AMCs hold the stock — breadth of institutional coverage:</p>
+        <ul class="text-xs space-y-1 text-surface-600 dark:text-surface-400">
+          <li><strong>★★★★★ Very High</strong> — 20+ AMCs</li>
+          <li><strong>★★★★☆ High</strong> — 15–19 AMCs</li>
+          <li><strong>★★★☆☆ Medium</strong> — 10–14 AMCs</li>
+          <li><strong>★★☆☆☆ Low</strong> — 5–9 AMCs</li>
+          <li><strong>★☆☆☆☆ Very Low</strong> — fewer than 5 AMCs</li>
+        </ul>
+      </div>
+
+      <p class="text-xs text-surface-500 dark:text-surface-400 border-t border-surface-200 dark:border-surface-700 pt-3">
+        <strong>Quick read:</strong> Score = how loud vs peers · Signal = buying or selling + how strong · Activity counts = what actually happened. Example: score 21 with net buying +3 → 🔵 Light Accumulation (modest buying, quiet vs Mid Cap leaders).
       </p>
     </div>
 
@@ -281,6 +403,10 @@ const islandDirective = 'load';
 <section class="container-wide py-12 border-t border-surface-200 dark:border-surface-700">
   <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
   <div class="space-y-4 max-w-3xl">
+    <details class="card group">
+      <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the difference between Conviction Score and Smart Money Signal?</summary>
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><strong>Conviction Score (0–100)</strong> ranks how active a stock was vs peers in the same market-cap bucket — it is relative, not a buy/sell call. <strong>Smart Money Signal</strong> reflects whether funds were net buyers or sellers this month, with intensity from the score. A stock can have a low score but still show 🔵 Light Accumulation if funds are net adding (just less actively than leaders). See <a href="#how-scoring-works" class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">How Conviction Scoring Works</a> above for the full factor breakdown.</p>
+    </details>
     <details class="card group" open>
       <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Sector Intelligence and how is it different from Smart Money Tracker?</summary>
       <p class="mt-3 text-sm text-surface-600 dark:text-surface-300"><a href={sm.hub} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Smart Money Tracker</a> focuses on <strong>individual stocks</strong> — which companies funds bought or sold. <a href={sm.sectorIntelligence} class="text-primary-700 dark:text-primary-300 underline underline-offset-2 hover:text-primary-800 dark:hover:text-primary-200">Sector Intelligence</a> aggregates across all funds to show <strong>sector-level rotation</strong> — whether mutual funds as an industry are moving money into Banking, Healthcare, IT, Capital Markets, etc. Use Tracker for stock ideas; use Sector Intelligence for macro allocation trends.</p>

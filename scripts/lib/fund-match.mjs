@@ -154,6 +154,8 @@ export function slugVariants(slug) {
   add(slug.replace(/-multicap-/g, '-multi-cap-').replace(/-multicap$/g, '-multi-cap'));
   add(slug.replace(/-flexicap-/g, '-flexi-cap-').replace(/-flexicap$/g, '-flexi-cap'));
   add(slug.replace(/-flexi-cap-/g, '-flexicap-').replace(/-flexi-cap$/g, '-flexicap'));
+  add(slug.replace(/-fund-direct$/, '-direct-plan'));
+  add(slug.replace(/-direct-plan$/, '-fund-direct'));
   add(slug.replace(/-and-/g, '-'));
   add(slug.replace(/-fund$/g, ''));
   return [...variants];
@@ -166,7 +168,42 @@ export const AMFI_SLUG_ALIASES = {
   'sbi-flexicap-fund-direct-plan': 'sbi-flexi-cap-fund',
   'axis-large-cap-fund': 'axis-bluechip-fund',
   'icici-prudential-large-cap-fund': 'icici-prudential-bluechip-fund',
-  'franklin-india-large-cap-fund': 'franklin-india-bluechip-fund',
+  'franklin-india-large-cap-fund':
+    'franklin-india-large-cap-fund-formerly-known-as-franklin-india-bluechip-fund-direct-plan',
+  'franklin-india-flexi-cap-fund':
+    'franklin-india-flexi-cap-fund-formerly-known-as-franklin-india-equity-fund-direct-plan',
+  'franklin-india-large-mid-cap-fund':
+    'franklin-india-large-mid-cap-fund-formerly-known-as-franklin-india-equity-advant-direct-plan',
+  'franklin-india-mid-cap-fund':
+    'franklin-india-mid-cap-fund-formerly-known-as-franklin-india-prima-fund-direct-plan',
+  'franklin-india-small-cap-fund':
+    'franklin-india-small-cap-fund-formerly-known-as-franklin-india-smaller-companies-direct-plan',
+  'franklin-india-multi-factor-fund-direct': 'franklin-india-multi-factor-fund-direct-plan',
+  'franklin-india-multi-factor-fund': 'franklin-india-multi-factor-fund-direct-plan',
+  'helios-flexi-cap-fund':
+    'helios-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across-large-direct-plan',
+  'helios-large-mid-cap-fund': 'helios-large-mid-cap-fund-large-mid-cap-fund-direct-plan',
+  'helios-mid-cap-fund': 'helios-mid-cap-fund-mid-cap-fund-direct-plan',
+  'bank-of-india-mid-cap-fund': 'bank-of-india-mid-cap-fund-mid-cap-fund-direct-plan',
+  'baroda-bnp-paribas-business-conglomerates-fund-direct-growth-option':
+    'baroda-bnp-paribas-business-conglomerates-fund-direct-plan',
+  'dsp-india-t-i-g-e-r-fund':
+    'dsp-india-t-i-g-e-r-fund-the-infrastructure-growth-and-economic-reforms-fund-direct-plan',
+  'mahindra-manulife-banking-financial-services-fund-direct':
+    'mahindra-manulife-banking-financial-services-fund-direct-plan',
+  'mahindra-manulife-innovation-opportunities-fund-direct':
+    'mahindra-manulife-innovation-opportunities-fund-direct-plan',
+  'motilal-oswal-consumption-fund-direct': 'motilal-oswal-consumption-fund-direct-plan',
+  'motilal-oswal-special-opportunities-fund-direct': 'motilal-oswal-special-opportunities-fund-direct-plan',
+  'nippon-india-growth-mid-cap-fund': 'nippon-india-growth-mid-cap-fund-mid-cap-fund-direct-plan',
+  'nippon-india-mnc-fund':
+    'nippon-india-mnc-fund-an-open-ended-equity-scheme-following-multinational-compan-direct-plan',
+  'nippon-india-small-cap-fund':
+    'nippon-india-small-cap-fund-an-open-ended-equity-scheme-predominantly-investing--direct-plan',
+  'nippon-india-active-momentum-fund':
+    'nippon-india-active-momentum-fund-an-open-ended-equity-scheme-following-momentum-direct-plan',
+  'bajaj-finserv-banking-and-financial-services-fund-direct':
+    'bajaj-finserv-banking-and-financial-services-fund-direct-plan',
   'canara-robeco-flexicap-fund-direct-plan': 'canara-robeco-flexi-cap-fund',
   'invesco-india-midcap-fund-direct-plan': 'invesco-india-mid-cap-fund',
   'invesco-india-largecap-fund-direct-plan': 'invesco-india-large-cap-fund',
@@ -180,6 +217,10 @@ export const AMFI_SLUG_ALIASES = {
   'icici-prudential-smallcap-fund-direct-plan': 'icici-prudential-small-cap-fund',
   'icici-prudential-flexicap-fund-direct-plan': 'icici-prudential-flexi-cap-fund',
   'icici-prudential-exports-services-fund-direct-plan': 'icici-prudential-exports-and-services-fund',
+  'icici-prudential-banking-and-financial-services-fund':
+    'icici-prudential-banking-financial-services-fund-direct-plan',
+  'tata-banking-and-financial-services-fund': 'tata-banking-financial-services-fund-direct-plan',
+  'dsp-midcap-fund': 'dsp-mid-cap-fund-direct-plan',
   'aditya-birla-sun-life-banking-and-financial-services-fund-direct-plan':
     'aditya-birla-sun-life-banking-financial-services-fund',
   'lic-mf-banking-and-financial-services-fund-direct-plan': 'lic-mf-banking-financial-services-fund',
@@ -195,13 +236,14 @@ export const AMFI_SLUG_ALIASES = {
   'groww-multicap-fund': 'groww-multicap-fund-direct-plan',
   'ib60-groww-small-cap-fund': 'groww-small-cap-fund-direct-plan',
   'groww-small-cap-fund': 'groww-small-cap-fund-direct-plan',
-  'mirae-asset-large-midcap-fund': 'mirae-asset-large-midcap-fund-direct-plan',
   'mirae-asset-flexi-cap-fund': 'mirae-asset-flexi-cap-fund-direct-plan',
   'mirae-asset-midcap-fund': 'mirae-asset-mid-cap-fund-direct-plan',
   'mirae-asset-small-cap-fund': 'mirae-asset-small-cap-fund-direct-plan',
   'mirae-asset-elss-tax-saver-fund': 'mirae-asset-elss-tax-saver-fund-direct-plan',
   'mirae-asset-focused-fund': 'mirae-asset-focused-fund-direct-plan',
   'mirae-asset-large-cap-fund': 'mirae-asset-large-cap-fund-direct-plan',
+  'mirae-asset-large-midcap-fund': 'mirae-asset-large-midcap-fund-direct-plan',
+  'mirae-asset-multicap-fund': 'mirae-asset-multicap-fund-direct-plan',
   'quant-flexi-cap-fund': 'quant-flexi-cap-fund-growth-option-direct-plan',
   'quant-large-cap-fund': 'quant-large-cap-fund-growth-option-direct-plan',
   'quant-mid-cap-fund': 'quant-mid-cap-fund-growth-option-direct-plan',
@@ -242,7 +284,7 @@ export const AMFI_SLUG_ALIASES = {
   'kotak-technology-fund': 'kotak-technology-fund-direct-plan',
   'kotak-large-midcap-fund': 'kotak-large-midcap-fund-direct-plan',
   'bandhan-midcap-fund': 'bandhan-midcap-fund-direct-plan',
-  'bandhan-multicap-fund': 'bandhan-multicap-fund-direct-plan',
+  'bandhan-multicap-fund': 'bandhan-multi-cap-fund-direct-plan',
   'bandhan-small-cap-fund': 'bandhan-small-cap-fund-direct-plan',
   'bandhan-multi-cap-fund': 'bandhan-multi-cap-fund-direct-plan',
   'hdfc-flexi-cap-fund': 'hdfc-flexi-cap-fund-growth-option-direct-plan',
@@ -252,12 +294,14 @@ export const AMFI_SLUG_ALIASES = {
   'hdfc-focused-fund': 'hdfc-focused-fund-growth-option-direct-plan',
   'hdfc-large-and-mid-cap-fund': 'hdfc-large-and-mid-cap-fund-growth-option-direct-plan',
   'hdfc-multi-cap-fund': 'hdfc-multi-cap-fund-growth-option-direct-plan',
+  'hdfc-multicap-fund': 'hdfc-multi-cap-fund-growth-option-direct-plan',
   'hdfc-value-fund': 'hdfc-value-fund-growth-option-direct-plan',
   'hdfc-elss-tax-saver': 'hdfc-elss-tax-saver-growth-option-direct-plan',
   'canara-robeco-elss-tax-saver': 'canara-robeco-elss-tax-saver-direct-plan',
   'canara-robeco-focused-fund': 'canara-robeco-focused-fund-direct-plan',
   'union-largecap-fund': 'union-largecap-fund-direct-plan',
   'union-large-midcap-fund': 'union-large-midcap-fund-direct-plan',
+  'union-large-and-mid-cap-fund': 'union-large-midcap-fund-direct-plan',
   'sundaram-large-cap-fund': 'sundaram-large-cap-fund-formerly-known-as-sundaram-blue-chip-fund-direct-plan',
   'sundaram-large-and-mid-cap-fund': 'sundaram-large-and-midcap-fund-direct-plan',
   'parag-parikh-flexi-cap-fund':
@@ -271,17 +315,16 @@ export const AMFI_SLUG_ALIASES = {
   'samco-small-cap-fund': 'samco-small-cap-fund',
   'samco-special-opportunities-fund': 'samco-special-opportunities-fund',
   '360-one-focused-fund': '360-one-focused-fund-formerly-known-as-360-one-focused-equity-fund',
-  'bank-of-india-multi-cap-fund': 'bank-of-india-multi-cap-fund-direct-plan-growth',
-  'edelweiss-large-mid-cap-fund': 'edelweiss-large-mid-cap-fund-option',
+  'bank-of-india-multi-cap-fund': 'bank-of-india-multi-cap-fund-direct-plan',
+  'bank-of-india-multicap-fund': 'bank-of-india-multi-cap-fund-direct-plan',
+  'edelweiss-large-mid-cap-fund': 'edelweiss-large-mid-cap-fund-direct-plan',
+  'edelweiss-large-and-mid-cap-fund': 'edelweiss-large-mid-cap-fund-direct-plan',
   'groww-value-fund': 'groww-value-fund-formerly-known-as-indiabulls-value-fund-option',
-  'hdfc-multi-cap-fund': 'hdfc-multi-cap-fund-growth-option-direct-plan',
   'quant-large-mid-cap-fund': 'quant-large-mid-cap-fund-growth-option-direct-plan',
   'trustmf-multi-cap-fund': 'trustmf-multi-cap-fund-direct-plan-growth',
-  'union-large-midcap-fund': 'union-large-midcap-fund-option',
   'baroda-bnp-paribas-banking-and-financial-services-fund': 'baroda-bnp-paribas-banking-financial-services-fund',
   'baroda-bnp-paribas-large-and-mid-cap-fund': 'baroda-bnp-paribas-large-mid-cap-fund',
   'dsp-natural-resources-and-new-energy-fund': 'dsp-natural-resources-new-energy-fund',
-  'bajaj-finserv-banking-and-financial-services-fund-direct': 'bajaj-finserv-banking-and-financial-services-fund',
   'capitalmind-flexi-cap-fund-direct-growth': 'capitalmind-flexi-cap-fund',
 };
 

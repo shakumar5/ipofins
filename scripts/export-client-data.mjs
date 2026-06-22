@@ -531,6 +531,7 @@ async function main() {
       amcCount: Object.keys(holdings.amcs || {}).length,
       fundCount: Object.values(holdingsMeta.stockCounts).length,
       latestMonth: holdings.months?.[holdings.months.length - 1] || '',
+      overlapSlugs: portfolioOverlap.funds.map((f) => f.slug),
     });
     mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });
     writeJson('mf-hub/meta.json', hub.meta);

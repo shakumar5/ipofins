@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
-import { getFundsWithHoldings, getRelatedFunds } from '../../../lib/data/funds';
+import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug } from '../../../lib/data/funds';
 import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 
@@ -14,7 +14,10 @@ export async function getStaticPaths() {
 }
 
 const { fund } = Astro.props;
+const holdingsMeta = await getFundHoldingsLinkMeta();
 const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);
+const relatedFundHref = (f: { slug: string; schemeCode: string }) =>
+  fundHoldingsHref(resolveFundDetailSlug(f, holdingsMeta));
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -263,7 +266,7 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">More {fund.category} Funds</h2>
     <div class="space-y-2">
       {relatedFunds.map(f => (
-        <a href={`/mutual-funds/fund/${f.slug}-holdings`} class="card-compact group block hover:shadow-md transition-shadow">
+        <a href={relatedFundHref(f)} class="card-compact group block hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{f.name}</h3>

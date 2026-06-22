@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getFundsWithOverlaps, getFundOverlaps, getFundHoldingsMeta } from '../../../lib/data/holdings';
-import { getAllFunds } from '../../../lib/data/funds';
+import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holdings';
+import { getAllFunds, fundHoldingsHref, getFundHoldingsLinkMeta } from '../../../lib/data/funds';
+import { resolveDetailSlug } from '../../../lib/fund-detail-slug';
 import { parsePgTextArray } from '../../../lib/holdings-utils';
 
 export async function getStaticPaths() {
@@ -18,7 +19,7 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const { fundName } = Astro.props;
 const overlaps = (await getFundOverlaps(slug!, 15)) as Array<Record<string, unknown>>;
-const { slugs: holdingSlugs } = await getFundHoldingsMeta();
+const holdingsMeta = await getFundHoldingsLinkMeta();
 
 const overlapRows = overlaps.map((row) => {
   const stockNames = parsePgTextArray(row.common_stock_names);
@@ -74,15 +75,21 @@ const jsonLd = {
           </thead>
           <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
             {overlapRows.map((row) => {
-              const hasDetailPage = holdingSlugs.has(row.slug);
+              const detailSlug = resolveDetailSlug(
+                row.slug,
+                '',
+                holdingsMeta.slugs,
+                holdingsMeta.stockCounts,
+              );
+              const hasDetailPage = Boolean(detailSlug);
               const canExpand = row.stockNames.length > 0;
               return (
               <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30 align-top">
                 <td class="px-4 py-3">
                   <a href={`/mutual-funds/fund-overlap/${row.slug}`} class="font-medium text-primary-600 hover:underline">{row.name}</a>
-                  {hasDetailPage && (
+                  {hasDetailPage && detailSlug && (
                     <span class="text-xs text-surface-400 block">
-                      <a href={`/mutual-funds/fund/${row.slug}-holdings`} class="hover:underline">View holdings →</a>
+                      <a href={fundHoldingsHref(detailSlug)} class="hover:underline">View holdings →</a>
                     </span>
                   )}
                 </td>
