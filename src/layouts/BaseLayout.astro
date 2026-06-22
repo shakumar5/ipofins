@@ -216,16 +216,20 @@ const organizationSchema = {
               return delay(2500);
             })
             .then(function() {
-              return loadScript('https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG');
-            })
-            .then(function() {
-              window.dataLayer = window.dataLayer || [];
-              function gtag() { window.dataLayer.push(arguments); }
-              window.gtag = gtag;
-              gtag('js', new Date());
-              gtag('config', 'G-VRXGEC8RTG');
-              if (window.__markAnalyticsReady) window.__markAnalyticsReady();
-              return delay(3000);
+              if (typeof window.gtag === 'function') {
+                window.gtag('config', 'G-VRXGEC8RTG');
+                if (window.__markAnalyticsReady) window.__markAnalyticsReady();
+                return delay(3000);
+              }
+              return loadScript('https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG').then(function() {
+                window.dataLayer = window.dataLayer || [];
+                function gtag() { window.dataLayer.push(arguments); }
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', 'G-VRXGEC8RTG');
+                if (window.__markAnalyticsReady) window.__markAnalyticsReady();
+                return delay(3000);
+              });
             })
             .then(function() {
               loadAdsenseWhenNeeded();
@@ -271,6 +275,14 @@ const organizationSchema = {
 
   </head>
   <body class="min-h-screen flex flex-col">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18230401074"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-18230401074');
+    </script>
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:shadow-lg">
       Skip to main content
     </a>

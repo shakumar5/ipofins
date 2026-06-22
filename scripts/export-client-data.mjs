@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { platform } from 'os';
 import { sql, isDbConfigured } from './lib/db.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
@@ -28,6 +29,12 @@ import { filterMutualFundsToCurated } from './lib/canonical-fund-filter.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'data');
 const PUBLIC_DIR = join(ROOT, 'public');
+
+function neonTlsHint() {
+  if (platform() !== 'win32') return '';
+  if (process.execArgv.includes('--use-system-ca')) return '';
+  return ' On Windows, run: npm run export:client-data (uses --use-system-ca for Neon TLS).';
+}
 
 const MONTH_ORDER = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -479,6 +486,9 @@ function reslimAllSignalListFiles(dir) {
 
 async function main() {
   console.log('\n  Export client data → public/data/\n');
+  if (platform() === 'win32' && !process.execArgv.includes('--use-system-ca')) {
+    console.warn('  ⚠ Windows: use npm run export:client-data so Neon TLS works (--use-system-ca).');
+  }
   mkdirSync(OUT_DIR, { recursive: true });
 
   let holdings = null;
@@ -540,33 +550,37 @@ async function main() {
   }
 
   if (isDbConfigured()) {
-    const { tracker } = await buildSmartMoneyExports(sql);
-    writeSplitByMonth(
-      'smart-money-tracker',
-      'smart-money-tracker-index.json',
-      {
-        months: tracker.months,
-        categories: tracker.categories,
-        sectors: tracker.sectors,
-      },
-      tracker.months.map((m) => m.label),
-      (month) => {
-        const block = tracker.byMonth[month];
-        return {
-          month: block.month,
-          prevMonth: block.prevMonth,
-          increased: block.increased,
-          decreased: block.decreased,
-          fresh_entry: block.fresh_entry,
-          complete_exit: block.complete_exit,
-        };
-      },
-    );
-    const signals = await buildSmartMoneySignalsExport(sql);
-    writeSignalsByCategory(signals);
+    try {
+      const { tracker } = await buildSmartMoneyExports(sql);
+      writeSplitByMonth(
+        'smart-money-tracker',
+        'smart-money-tracker-index.json',
+        {
+          months: tracker.months,
+          categories: tracker.categories,
+          sectors: tracker.sectors,
+        },
+        tracker.months.map((m) => m.label),
+        (month) => {
+          const block = tracker.byMonth[month];
+          return {
+            month: block.month,
+            prevMonth: block.prevMonth,
+            increased: block.increased,
+            decreased: block.decreased,
+            fresh_entry: block.fresh_entry,
+            complete_exit: block.complete_exit,
+          };
+        },
+      );
+      const signals = await buildSmartMoneySignalsExport(sql);
+      writeSignalsByCategory(signals);
 
-    const sectors = await buildSectorIntelligenceExport(sql);
-    writeJson('sector-intelligence.json', sectors);
+      const sectors = await buildSectorIntelligenceExport(sql);
+      writeJson('sector-intelligence.json', sectors);
+    } catch (e) {
+      throw new Error(`${e.message}${neonTlsHint()}`);
+    }
   } else {
     console.log('  ℹ DB not configured — checking for monolith signal files to split');
   }
