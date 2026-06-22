@@ -25,6 +25,11 @@ for (const name of files) {
     process.exit(1);
   }
 
+  if (existsSync(pngPath) && statSync(pngPath).mtimeMs >= statSync(svgPath).mtimeMs) {
+    console.log(`  ⏭ ${name}.png up to date`);
+    continue;
+  }
+
   await sharp(svgPath).resize(WIDTH, HEIGHT).png().toFile(pngPath);
 
   const bytes = statSync(pngPath).size;

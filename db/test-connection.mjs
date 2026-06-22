@@ -25,4 +25,8 @@ try {
 } catch (err) {
   console.error('❌ Connection failed:', err.message);
   if (err.cause) console.error('   Cause:', err.cause.message || err.cause);
+  if (process.platform === 'win32' && !process.execArgv.includes('--use-system-ca')) {
+    console.error('   Tip: run with --use-system-ca or: npm run export:client-data');
+  }
+  process.exit(1);
 }

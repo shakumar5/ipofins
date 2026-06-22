@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdir
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { platform } from 'os';
-import { sql, isDbConfigured } from './lib/db.mjs';
+import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
 import { buildSectorIntelligenceExport } from './lib/sector-intelligence-export.mjs';
@@ -34,6 +34,15 @@ function neonTlsHint() {
   if (platform() !== 'win32') return '';
   if (process.execArgv.includes('--use-system-ca')) return '';
   return ' On Windows, run: npm run export:client-data (uses --use-system-ca for Neon TLS).';
+}
+
+function logStep(label) {
+  console.log(`  ▶ ${label}…`);
+  const start = Date.now();
+  return (detail = '') => {
+    const sec = ((Date.now() - start) / 1000).toFixed(1);
+    console.log(`    ✓ ${label}${detail ? ` — ${detail}` : ''} (${sec}s)`);
+  };
 }
 
 const MONTH_ORDER = [
@@ -74,7 +83,8 @@ function compactHoldings(raw) {
 }
 
 async function loadHoldingsFromDb() {
-  const rows = await sql`
+  return withDbRetry(async () => {
+    const rows = await sql`
     SELECT
       f.slug,
       f.name AS fund_name,
@@ -132,6 +142,7 @@ async function loadHoldingsFromDb() {
 
   compact.amcSlugs = Object.fromEntries(amcSlugs);
   return compact;
+  }, { label: 'Load holdings from DB' });
 }
 
 function buildPortfolioOverlapExport(holdings) {
@@ -432,6 +443,16 @@ function migrateSignalsExportTiersOnDisk() {
 }
 
 /** Fail the build when Smart Money client JSON is missing or empty. */
+function hasExistingSmartMoneyExports() {
+  try {
+    verifySmartMoneyExports();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Fail the build when Smart Money client JSON is missing or empty. */
 function verifySmartMoneyExports() {
   const requiredFiles = [
     'smart-money-tracker-index.json',
@@ -485,6 +506,7 @@ function reslimAllSignalListFiles(dir) {
 }
 
 async function main() {
+  const totalStart = Date.now();
   console.log('\n  Export client data → public/data/\n');
   if (platform() === 'win32' && !process.execArgv.includes('--use-system-ca')) {
     console.warn('  ⚠ Windows: use npm run export:client-data so Neon TLS works (--use-system-ca).');
@@ -492,7 +514,18 @@ async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
 
   let holdings = null;
-  if (isDbConfigured()) {
+  const jsonHoldingsPath = join(ROOT, 'src', 'data', 'fund-holdings.json');
+  const holdingsSource = process.env.EXPORT_HOLDINGS || 'auto';
+  const preferJson =
+    holdingsSource === 'json'
+    || (holdingsSource === 'auto' && existsSync(jsonHoldingsPath));
+
+  const doneHoldings = logStep('Load holdings');
+  if (preferJson) {
+    holdings = loadHoldingsFromJson();
+    if (holdings) console.log('  ℹ Holdings from fund-holdings.json (fast path)');
+  }
+  if (!holdings && isDbConfigured() && holdingsSource !== 'json') {
     try {
       holdings = await loadHoldingsFromDb();
     } catch (e) {
@@ -504,6 +537,9 @@ async function main() {
     if (holdings) console.log('  ℹ Using fund-holdings.json fallback');
   }
   if (!holdings) throw new Error('No holdings data source available');
+  doneHoldings(`${holdings.months?.length || 0} months, ${Object.keys(holdings.holdings || {}).length} funds`);
+
+  const doneCompare = logStep('Holdings compare + overlap');
   writeHoldingsCompareExports(holdings);
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
@@ -512,6 +548,7 @@ async function main() {
     'fund-overlap-index.json',
     portfolioOverlap.funds.map((f) => ({ slug: f.slug, name: f.name })),
   );
+  doneCompare(`${portfolioOverlap.funds.length} funds`);
 
   const mfFundsAll = loadMutualFundsJson(ROOT);
   const mfFunds = holdings
@@ -521,10 +558,14 @@ async function main() {
     console.log(`  ℹ mf-hub table: ${mfFunds.length} curated funds (${mfFundsAll.length - mfFunds.length} excluded)`);
   }
   if (mfFunds.length) {
+    const doneMfHub = logStep('mf-hub export');
     let holdingsMeta = null;
     if (isDbConfigured()) {
       try {
-        holdingsMeta = await loadHoldingsMetaFromDb(sql);
+        holdingsMeta = await withDbRetry(
+          () => loadHoldingsMetaFromDb(sql),
+          { label: 'mf-hub holdings meta' },
+        );
       } catch (e) {
         console.warn('  ⚠ mf-hub holdings meta from DB failed:', e.message);
       }
@@ -547,11 +588,21 @@ async function main() {
     writeJson('mf-hub/meta.json', hub.meta);
     writeJson('mf-hub/best.json', hub.best);
     writeJson('mf-hub/all.json', hub.all);
+    doneMfHub(`${mfFunds.length} funds`);
   }
 
   if (isDbConfigured()) {
     try {
-      const { tracker } = await buildSmartMoneyExports(sql);
+      const doneSmDb = logStep('Smart Money exports (DB — parallel)');
+      const smStart = Date.now();
+
+      const [trackerResult, signals, sectors] = await Promise.all([
+        withDbRetry(() => buildSmartMoneyExports(sql), { label: 'Smart Money tracker export' }),
+        withDbRetry(() => buildSmartMoneySignalsExport(sql), { label: 'Smart Money signals export' }),
+        withDbRetry(() => buildSectorIntelligenceExport(sql), { label: 'Sector intelligence export' }),
+      ]);
+
+      const { tracker } = trackerResult;
       writeSplitByMonth(
         'smart-money-tracker',
         'smart-money-tracker-index.json',
@@ -573,26 +624,44 @@ async function main() {
           };
         },
       );
-      const signals = await buildSmartMoneySignalsExport(sql);
       writeSignalsByCategory(signals);
-
-      const sectors = await buildSectorIntelligenceExport(sql);
       writeJson('sector-intelligence.json', sectors);
+
+      const smSec = ((Date.now() - smStart) / 1000).toFixed(1);
+      doneSmDb(
+        `tracker ${tracker.months.length}mo · signals ${signals.months?.length || 0}mo · sectors ${sectors.rows?.length || 0} rows (${smSec}s)`,
+      );
     } catch (e) {
-      throw new Error(`${e.message}${neonTlsHint()}`);
+      if (hasExistingSmartMoneyExports()) {
+        console.warn(`  ⚠ Smart Money DB export failed — using existing public/data files: ${e.message}`);
+        console.warn('  ℹ Re-run when Neon is reachable to refresh signals.');
+      } else {
+        throw new Error(formatDbError(e, { step: 'Smart Money export', windowsTlsHint: neonTlsHint() }));
+      }
     }
   } else {
     console.log('  ℹ DB not configured — checking for monolith signal files to split');
   }
 
+  const doneFinalize = logStep('Finalize + verify');
   splitMonolithSignalsOnDisk();
   migrateSignalsExportTiersOnDisk();
   verifySmartMoneyExports();
+  doneFinalize();
 
-  console.log('');
+  const totalSec = ((Date.now() - totalStart) / 1000).toFixed(1);
+  writeFileSync(
+    join(OUT_DIR, '.export-stamp.json'),
+    JSON.stringify({ exportedAt: new Date().toISOString(), durationSec: Number(totalSec) }),
+  );
+  console.log(`\n  ✅ Export complete (${totalSec}s total)\n`);
 }
 
 main().catch((e) => {
   console.error('❌ export-client-data failed:', e.message);
+  if (platform() === 'win32' && !process.execArgv.includes('--use-system-ca')) {
+    console.error('   Tip: use npm run export:client-data (not raw node) for Neon TLS on Windows.');
+  }
+  console.error('   Quick test: node --use-system-ca db/test-connection.mjs');
   process.exit(1);
 });

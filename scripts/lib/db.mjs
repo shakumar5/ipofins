@@ -44,10 +44,58 @@ if (!DATABASE_URL) {
   console.warn('⚠️  DATABASE_URL not set. DB writes will be skipped (JSON-only mode).');
 }
 
+/** True for transient Neon/network errors worth retrying. */
+export function isRetryableDbError(err) {
+  const parts = [err?.message, err?.cause?.message, err?.cause?.code, String(err?.cause || '')];
+  const text = parts.filter(Boolean).join(' ').toLowerCase();
+  return (
+    text.includes('fetch failed')
+    || text.includes('connect timeout')
+    || text.includes('connection terminated')
+    || text.includes('econnreset')
+    || text.includes('etimedout')
+    || text.includes('enotfound')
+    || text.includes('socket hang up')
+    || text.includes('und_err')
+    || text.includes('network')
+  );
+}
+
+export function formatDbError(err, { step = 'database', windowsTlsHint = '' } = {}) {
+  const cause = err?.cause?.message || err?.cause?.code;
+  const detail = cause && !String(err.message).includes(cause) ? ` (${cause})` : '';
+  return `${step}: ${err.message}${detail}${windowsTlsHint}`;
+}
+
+/**
+ * Retry a DB operation on transient fetch / connect failures (common on Windows + Neon).
+ */
+export async function withDbRetry(fn, { label = 'DB query', retries = 4 } = {}) {
+  let lastErr;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryableDbError(err) || attempt === retries) break;
+      const delayMs = attempt * 3000;
+      console.warn(`    ↻ ${label} failed (${attempt}/${retries}): ${err.message} — retrying in ${delayMs / 1000}s…`);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
 /**
  * SQL tagged template — null-safe (returns null if no DB configured)
  */
 export const sql = DATABASE_URL ? neon(DATABASE_URL) : null;
+
+/** Run a tagged-template query with retries. */
+export async function sqlRetry(queryFn, opts) {
+  if (!sql) return null;
+  return withDbRetry(() => queryFn(sql), opts);
+}
 
 /**
  * Check if database is configured
