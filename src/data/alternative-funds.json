@@ -1,0 +1,126 @@
+[
+  {
+    "name": "Westbridge Capital",
+    "displayName": "Westbridge",
+    "type": "aif",
+    "aliases": ["Westbridge Ventures", "Westbridge India", "Westbridge Crossover Fund", "Westbridge Select Investments"],
+    "parentOrg": "Westbridge Capital Management",
+    "registrationId": "INAIF-002",
+    "focus": "Public equities Cat-III AIF; long-term compounders (one of India's most followed AIFs)",
+    "bio": "Among the largest India-focused public-equity AIFs. Notable holders in Titan, Cafe Coffee Day universe. Long holding periods.",
+    "website": "https://www.westbridgecap.com",
+    "location": "Mumbai",
+    "tags": ["growth", "long-term", "large-cap", "mid-cap"]
+  },
+  {
+    "name": "Nalanda Capital",
+    "displayName": "Nalanda",
+    "type": "aif",
+    "aliases": ["Nalanda India Fund", "Nalanda India Equity Fund", "Nalanda Capital"],
+    "parentOrg": "Nalanda Capital",
+    "registrationId": "INAIF-006",
+    "focus": "Public equities Cat-III AIF; quality + governance focus (Pulak Prasad)",
+    "bio": "Singapore-domiciled India-focused AIF founded by Pulak Prasad, author of 'Where the Bucks Stop'. Concentrated, low-turnover quality portfolio.",
+    "website": "https://www.nalanda-india.com",
+    "location": "Singapore",
+    "tags": ["quality", "long-term", "concentrated"]
+  },
+  {
+    "name": "ChrysCapital",
+    "displayName": "ChrysCap",
+    "type": "aif",
+    "aliases": ["ChrysCapital Advisors", "ChrysCapital India", "ChrysCapital Investment Advisors"],
+    "parentOrg": "ChrysCapital Advisors LLP",
+    "registrationId": "INAIF-008",
+    "focus": "PE + public market Cat-II AIF; large private and public stakes",
+    "bio": "One of India's largest homegrown PE/AIF funds. Mix of PE and public-market bets.",
+    "website": "https://www.chryscap.com",
+    "location": "Mumbai",
+    "tags": ["growth", "private-equity"]
+  },
+  {
+    "name": "Abakkus Asset Manager",
+    "displayName": "Abakkus",
+    "type": "aif",
+    "aliases": ["Abakkus Asset Manager", "Abakkus Emerging Opportunities", "Abakkus Alpha Fund"],
+    "parentOrg": "Abakkus Asset Manager LLP",
+    "registrationId": "INAIF-030",
+    "focus": "Cat-III AIF; Sunil Singhania's mid/small-cap multiplier franchise",
+    "bio": "Founded by Sunil Singhania. Mid/small-cap focused Cat-III AIF; frequently appears in >1% disclosures.",
+    "website": "https://www.abakkus.co",
+    "location": "Mumbai",
+    "tags": ["mid-cap", "small-cap", "growth"]
+  },
+  {
+    "name": "Malabar Investments",
+    "displayName": "Malabar",
+    "type": "aif",
+    "aliases": ["Malabar India Fund", "Malabar Investments", "Malabar Value Fund"],
+    "parentOrg": "Malabar Investments",
+    "registrationId": "INAIF-035",
+    "focus": "Cat-III AIF; India-focused long-only (FII + AIF structure)",
+    "bio": "Singapore-based India long-only AIF. Mid/small-cap focus with concentrated portfolio.",
+    "website": "https://www.malabarinvestments.com",
+    "location": "Singapore",
+    "tags": ["mid-cap", "small-cap", "value"]
+  },
+  {
+    "name": "Stealview India Growth Fund",
+    "displayName": "Stealview",
+    "type": "aif",
+    "aliases": ["Stealview India Growth Fund", "Stealview"],
+    "parentOrg": "Stealview Advisors",
+    "registrationId": "INAIF-041",
+    "focus": "Cat-III AIF; long-only public equities",
+    "bio": "India-focused Cat-III long-only AIF; regular SAST filer across mid-caps.",
+    "website": null,
+    "location": "Mumbai",
+    "tags": ["mid-cap", "growth"]
+  },
+  {
+    "name": "Schweitzer International",
+    "displayName": "Schweitzer",
+    "type": "aif",
+    "aliases": ["Schweitzer International", "Schweitzer International Opportunities", "Schweitzer Fund"],
+    "parentOrg": "Schweitzer International",
+    "registrationId": "INAIF-066",
+    "focus": "Cat-III AIF; systematic India equities",
+    "bio": "Frequent SAST filer across emerging Indian mid-cap names.",
+    "website": null,
+    "location": "Singapore",
+    "tags": ["mid-cap", "systematic"]
+  },
+  {
+    "name": "UTI AMC SIF Strategies",
+    "displayName": "UTI SIF",
+    "type": "sif",
+    "aliases": ["UTI SIF", "UTI Specialized Investment Fund"],
+    "parentOrg": "UTI Asset Management Company",
+    "registrationId": "IN-SIF-2024-01",
+    "focus": "New SEBI SIF vehicle — equity-based strategies with ₹10L minimum ticket",
+    "bio": "Among the first AMCs to launch SIF strategies under the 2024 framework. Strategy-level disclosures expected as the regime matures.",
+    "website": "https://www.utimf.com",
+    "location": "Mumbai",
+    "tags": ["equity", "strategy-based"],
+    "strategies": [
+      { "name": "UTI Multi Cap Trends", "strategyType": "multi", "minTicketCr": 0.1, "description": "Multi-cap trends strategy under the SIF framework." },
+      { "name": "UTI ITB", "strategyType": "thematic", "minTicketCr": 0.1, "description": "Innovation, Technology, Business-cycle strategy." }
+    ]
+  },
+  {
+    "name": "HDFC AMC SIF Strategies",
+    "displayName": "HDFC SIF",
+    "type": "sif",
+    "aliases": ["HDFC SIF", "HDFC Specialized Investment Fund"],
+    "parentOrg": "HDFC Asset Management Company",
+    "registrationId": "IN-SIF-2024-02",
+    "focus": "SEBI SIF strategies — sectoral and thematic",
+    "bio": "SIF vehicle from HDFC AMC; strategy-level disclosures emerging.",
+    "website": "https://www.hdfcfund.com",
+    "location": "Mumbai",
+    "tags": ["thematic", "strategy-based"],
+    "strategies": [
+      { "name": "HDFC Innovation Leaders", "strategyType": "thematic", "minTicketCr": 0.1, "description": "Innovation-led equity strategy." }
+    ]
+  }
+]

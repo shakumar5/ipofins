@@ -1,0 +1,181 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntityCard from '../../components/tracked/EntityCard.astro';
+import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
+import {
+  getAifFunds,
+  getSifFunds,
+  withLiveStats,
+  getTrackedSnapshot,
+  altFundUrl,
+  canonicalFor,
+} from '../../lib/tracked-entities';
+
+const aifEntities = await withLiveStats(getAifFunds());
+const sifEntities = await withLiveStats(getSifFunds());
+const snapshot = await getTrackedSnapshot();
+
+const path = '/alternative-funds';
+const canonical = canonicalFor(path);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Alternative Investment Funds (AIF) & Specialized Investment Funds (SIF) in India',
+  description:
+    'Track the public-market portfolios of India\u2019s leading AIFs (Cat-I/II/III) and the new 2024 SIF vehicle \u2014 Westbridge, Nalanda, ChrysCapital, Abakkus, Malabar, Stealview, Schweitzer, UTI SIF, HDFC SIF. Holdings, conviction, quarterly changes.',
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Alternative Funds', item: canonical },
+    ],
+  },
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is an Alternative Investment Fund (AIF)?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'An AIF is a SEBI-regulated privately pooled investment vehicle. Categories: Cat-I (infra/SME/VC), Cat-II (PE/debt, no leverage or special incentives), Cat-III (hedge funds / public-market funds that may use leverage). Cat-III AIFs are the most relevant for public-equity tracking because they appear frequently in Shareholding Pattern and SAST filings.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is a Specialized Investment Fund (SIF)?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'SIF is a new SEBI vehicle introduced in 2024 with a \u20b910 lakh minimum. It allows strategy-based equity investing \u2014 between a mutual fund (\u20b9500 SIP) and a PMS (\u20b950 lakh). UTI and HDFC AMC were among the first to launch SIF strategies.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is AIF/SIF data disclosed?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'AIF stakes surface in quarterly Shareholding Pattern filings wherever they cross 1% of a company, plus event-driven SAST Form B filings. SIF strategy-level disclosures are emerging as the regime matures. IPOFins aggregates both via the tracked_entities table.',
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Alternative Investment Funds (AIF) & SIF in India \u2014 Tracked | IPOFins"
+  description="Track India\u2019s leading AIFs (Cat-I/II/III) and the new 2024 SIF vehicle \u2014 Westbridge, Nalanda, ChrysCapital, Abakkus, Malabar, UTI SIF, HDFC SIF. Holdings, conviction scores, quarterly changes."
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Alternative Funds</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Alternative Funds \u2014 AIF &amp; SIF Portfolios
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
+      Track the public-market portfolios of India\u2019s leading Alternative Investment Funds (Cat-I/II/III) and the
+      new 2024 Specialized Investment Fund (SIF) vehicle. Holdings, conviction, and quarterly changes sourced
+      from Shareholding Pattern and SAST filings.
+    </p>
+    <div class="nav-btn-group mt-6">
+      <a href="/pms" class="btn-primary px-6 py-3">PMS Providers</a>
+      <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+      <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
+      <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
+    </div>
+  </section>
+
+  <section class="container-wide pb-4">
+    <SnapshotStrip snapshot={snapshot} noun="alternative funds" />
+  </section>
+
+  <!-- AIF tab -->
+  <section class="container-wide py-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white">Alternative Investment Funds (AIF)</h2>
+      <span class="text-sm text-surface-500 dark:text-surface-400">{aifEntities.length} funds \u00b7 Cat I/II/III</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {aifEntities.map((entity) => (
+        <EntityCard entity={entity} href={altFundUrl(entity.slug)} accent="portfolio" />
+      ))}
+    </div>
+  </section>
+
+  <!-- SIF tab -->
+  {sifEntities.length > 0 && (
+    <section class="container-wide py-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white">Specialized Investment Funds (SIF)</h2>
+        <span class="text-sm text-surface-500 dark:text-surface-400">{sifEntities.length} funds \u00b7 2024 regime \u00b7 \u20b910L min</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sifEntities.map((entity) => (
+          <EntityCard entity={entity} href={altFundUrl(entity.slug)} accent="strategies" />
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- SEO content -->
+  <section class="container-wide py-10 max-w-3xl">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-3">AIF categories &amp; the new SIF</h2>
+    <div class="text-surface-600 dark:text-surface-300 space-y-3">
+      <p>
+        SEBI categorises Alternative Investment Funds into three buckets: <strong>Cat-I</strong> (infrastructure,
+        SME, venture capital), <strong>Cat-II</strong> (private equity and debt funds without leverage), and
+        <strong>Cat-III</strong> (hedge funds and public-market funds that may employ leverage). The Cat-III AIFs
+        \u2014 like Westbridge, Nalanda, Abakkus, Malabar, Stealview and Schweitzer \u2014 are the most relevant for
+        public-equity tracking because their stakes appear frequently in Shareholding Pattern and SAST filings.
+      </p>
+      <p>
+        The <strong>Specialized Investment Fund (SIF)</strong> is a 2024 SEBI innovation with a \u20b910 lakh
+        minimum \u2014 a middle ground between a mutual fund and a PMS. UTI and HDFC AMC were early movers.
+        Strategy-level disclosures are still maturing; IPOFins surfaces what\u2019s available and backfills as the
+        regime firms up.
+      </p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is an AIF?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A SEBI-regulated privately pooled investment vehicle. Cat-I (infra/SME/VC), Cat-II (PE/debt), Cat-III (hedge/public-market funds). Cat-III AIFs dominate public-equity tracking.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a SIF?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A Specialized Investment Fund \u2014 a new 2024 SEBI vehicle with a \u20b910 lakh minimum, sitting between a mutual fund and a PMS. UTI and HDFC AMC were early movers.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is the data disclosed?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">AIF stakes surface in quarterly Shareholding Pattern filings wherever they cross 1%, plus event-driven SAST filings. SIF strategy-level disclosures are emerging.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-wide py-8">
+    <div class="nav-btn-group">
+      <a href="/pms" class="btn-secondary px-6 py-3">PMS Providers</a>
+      <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+      <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
+    </div>
+  </section>
+</BaseLayout>

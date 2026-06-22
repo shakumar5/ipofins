@@ -225,3 +225,69 @@ If migrating from existing JSON:
 ```bash
 npm run db:seed          # one-time import from local JSON files
 ```
+
+## Super Investors / 1% Club / PMS / Alternative Funds (Migration 005)
+
+Additive schema (migrations 005 + 006) backs four route products sharing one
+unified `tracked_entities` table. **Promoters are excluded** from all curated
+views — they live only in `shareholding_pattern_holders` with `is_promoter = TRUE`
+so we can show "% held by promoters" on stock pages, but never treat them as
+conviction signals.
+
+| Route | Entity types | Source |
+|-------|--------------|--------|
+| `/super-investors` | individual, family_office, fii, dii | NSE/BSE Shareholding Pattern + SAST |
+| `/1-percent-club` | all raw ≥1% holders (uncurated) | Full Shareholding Pattern parse |
+| `/pms` | PMS providers + their strategies | Provider disclosures + SEBI PMS database |
+| `/alternative-funds` | aif (Cat I/II/III) + sif (2024) — two tabs | SAST + SEBI AIF/SIF database |
+
+### Schema (Migration 005 — additive, zero ALTER to existing tables)
+
+```
+tracked_entities ─┬─< entity_holdings >── stocks
+                  ├─< entity_changes   >── stocks
+                  ├─< entity_conviction>── stocks
+                  ├─< entity_quarterly_stats
+                  ├─< entity_strategies (PMS/SIF only)
+                  ├─< tracked_entity_tags
+                  └─< entity_overlaps >── tracked_entities (self)
+                              ▲
+shareholding_pattern_holders >── stocks      (raw ≥1% holders, 1% Club)
+sast_filings               >── stocks        (intra-quarter event-driven)
+entity_stock_signals       >── stocks        (aggregate smart-money signal)
+corporate_actions          >── stocks        (splits/bonuses rebasing)
+pipeline_runs                                (run log for /health dashboard)
+```
+
+### Setup (one-time, additive)
+
+```bash
+psql $DATABASE_URL -f db/migrations/005_super_investors.sql
+psql $DATABASE_URL -f db/migrations/006_super_investor_views.sql
+npm run db:seed-superinvestors   # load curated rosters from src/data/*.json
+```
+
+### Pipelines (automated via GitHub Actions — no manual .bat files)
+
+| # | Pipeline | Cadence | Source | Writes to |
+|---|----------|---------|--------|-----------|
+| 4 | `pipeline:superinvestor` | Quarterly (qtr-end +25d) | NSE/BSE Shareholding Pattern | `shareholding_pattern_holders`, `entity_holdings` |
+| — | `pipeline:1pc-club` | (shared fetch with #4) | Same | `shareholding_pattern_holders` raw parse |
+| 6 | `pipeline:pms` | Quarterly + monthly catch-up | Provider disclosures | `entity_holdings` (with `strategy_id`) |
+| 7 | `pipeline:altfunds` | Quarterly | SEBI AIF/SIF + SAST | `entity_holdings`, `sast_filings` |
+| 8 | `pipeline:sast-sweep` | Weekly (Monday 3 AM UTC) | NSE/BSE corporate announcements | `sast_filings`, `entity_holdings` (preliminary) |
+
+Each run is wrapped with two automatic gates:
+- **Quality gate** — row-count delta vs prior quarter; aborts + alerts if <70%.
+- **Build gate** — export-count check; no deploy if it fails.
+
+### Quarterly cadence (fixed SEBI calendar — Apr/Jul/Oct/Jan +25d)
+
+The full quarterly workflow runs unattended in GitHub Actions:
+fetch → quality gate → compute changes/signals/conviction/overlaps → refresh
+materialized views → generate SEO reports → build → deploy. The site keeps
+serving last-known-good data if any gate fails; the next scheduled run
+self-heals.
+
+See `/health` dashboard for live run-state, row counts, and staleness alerts.
+

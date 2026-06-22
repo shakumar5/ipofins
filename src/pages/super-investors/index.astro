@@ -1,0 +1,205 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntityCard from '../../components/tracked/EntityCard.astro';
+import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
+import {
+  getSuperInvestors,
+  withLiveStats,
+  getTrackedSnapshot,
+  superInvestorUrl,
+  tierRank,
+  tierLabel,
+  typeLabel,
+  canonicalFor,
+} from '../../lib/tracked-entities';
+
+// Curated roster is always present; enrich with live Neon stats when 005 is populated.
+const all = getSuperInvestors().sort((a, b) => tierRank(a.tier) - tierRank(b.tier));
+const entities = await withLiveStats(all);
+const snapshot = await getTrackedSnapshot();
+
+const byType = new Map<string, typeof entities>();
+for (const e of entities) {
+  const arr = byType.get(e.type) ?? [];
+  arr.push(e);
+  byType.set(e.type, arr);
+}
+const typeOrder = ['individual', 'family_office', 'fii', 'dii'];
+const sections = typeOrder
+  .map((t) => ({ type: t, items: byType.get(t) ?? [] }))
+  .filter((s) => s.items.length > 0);
+
+const path = '/super-investors';
+const canonical = canonicalFor(path);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Top Super Investors in India 2026 — Tracked Portfolios',
+  description:
+    'Track the latest public-market portfolios of India\u2019s most followed super investors \u2014 Dolly Khanna, Vijay Kedia, Ashish Kacholia, Radhakishan Damani, Mohnish Pabrai and more. Quarter-on-quarter holdings, fresh entries, and exits.',
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Super Investors', item: canonical },
+    ],
+  },
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Who are super investors in India?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Super investors are high-profile individual investors, family offices, FIIs and DIIs whose public-market portfolios are closely tracked because of their long-term track record. Examples include Dolly Khanna, Vijay Kedia, Ashish Kacholia, Radhakishan Damani, Sunil Singhania and Mohnish Pabrai. Their holdings are disclosed quarterly via the Shareholding Pattern and event-driven SAST filings.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How often is super investor portfolio data updated?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Listed companies file the Shareholding Pattern every quarter (within 21 days of quarter-end), which shows every shareholder holding 1% or more. Between quarters, SAST Form B filings capture any acquisition or disposal crossing reporting thresholds. IPOFins ingests both and shows the latest disclosed snapshot plus quarter-on-quarter changes.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Are promoters included in the super investor list?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Promoters are tracked separately so we can show "% held by promoters" on stock pages, but they are excluded from curated super-investor views. The conviction signals here reflect non-promoter public-market investors only.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is following super investors legal or investment advice?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Tracking disclosed holdings is perfectly legal \u2014 the data comes from public regulatory filings. However, it is not investment advice. Super investors have different risk capacity, holding periods, and cost bases. Always do your own research.',
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Top Super Investors in India 2026 \u2014 Tracked Portfolios | IPOFins"
+  description="Track India\u2019s top super investors \u2014 Dolly Khanna, Vijay Kedia, Ashish Kacholia, Rakesh Jhunjhunwala portfolio, Mohnish Pabrai & more. Latest holdings, fresh entries, exits & conviction scores from NSE/BSE filings."
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <!-- Breadcrumb -->
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Super Investors</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      Super Investors \u2014 Track India\u2019s Best Public-Market Investors
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
+      Quarter-on-quarter portfolios of legendary individual investors, family offices, FIIs and DIIs \u2014 sourced
+      directly from NSE/BSE Shareholding Pattern filings and SAST disclosures. See what they buy, sell, and hold.
+    </p>
+    <div class="nav-btn-group mt-6">
+      <a href="/1-percent-club" class="btn-primary px-6 py-3">Explore the 1% Club</a>
+      <a href="/pms" class="btn-secondary px-6 py-3">PMS Portfolios</a>
+      <a href="/alternative-funds" class="btn-secondary px-6 py-3">AIF &amp; SIF</a>
+      <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
+    </div>
+  </section>
+
+  <!-- Snapshot -->
+  <section class="container-wide pb-4">
+    <SnapshotStrip snapshot={snapshot} noun="super investors" />
+  </section>
+
+  <!-- Sections per entity type -->
+  {sections.map((section) => (
+    <section class="container-wide py-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white">{typeLabel(section.type as any)}s</h2>
+        <span class="text-sm text-surface-500 dark:text-surface-400">{section.items.length} tracked</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {section.items.map((entity) => (
+          <EntityCard entity={entity} href={superInvestorUrl(entity.slug)} accent="portfolio" />
+        ))}
+      </div>
+    </section>
+  ))}
+
+  <!-- SEO content -->
+  <section class="container-wide py-10 max-w-3xl">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-3">How to track super investors in India</h2>
+    <div class="text-sm text-surface-600 dark:text-surface-300 space-y-3">
+      <p>
+        India\u2019s top investors are required to disclose their public-market holdings every quarter through the
+        Shareholding Pattern filed by each listed company. This filing lists every shareholder owning 1% or more of
+        the company \u2014 making it possible to reconstruct the portfolios of marquee names like
+        <a href={superInvestorUrl('dolly-khanna')} class="text-primary-600 hover:underline">Dolly Khanna</a>,
+        <a href={superInvestorUrl('vijay-kedia')} class="text-primary-600 hover:underline">Vijay Kedia</a>, and
+        <a href={superInvestorUrl('ashish-kacholia')} class="text-primary-600 hover:underline">Ashish Kacholia</a>.
+      </p>
+      <p>
+        IPOFins aggregates these filings across 1,700+ stocks, resolves the many name variants a single investor
+        files under (\u201cKhanna Dolly\u201d, \u201cDolly Khanna HUF\u201d, \u201cKhanna Dolly Chhaganlal\u201d all roll
+        up to one entity), and computes fresh entries, complete exits, conviction scores, and pairwise overlaps
+        every quarter. <a href="/methodology" class="text-primary-600 hover:underline">Read the full methodology</a>.
+      </p>
+      <p>
+        Promoters are deliberately excluded from these curated views \u2014 they appear only on individual stock pages
+        as \u201c% held by promoters\u201d, never as conviction signals.
+      </p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Who are super investors in India?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">High-profile individual investors, family offices, FIIs and DIIs whose public-market portfolios are tracked for their long-term track record \u2014 Dolly Khanna, Vijay Kedia, Ashish Kacholia, Radhakishan Damani, Sunil Singhania, Mohnish Pabrai and others.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How often is the data updated?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Quarterly via the Shareholding Pattern (within 21 days of quarter-end) and continuously via SAST Form B filings for any intra-quarter acquisition or disposal crossing reporting thresholds.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Are promoters included?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">No. Promoters are tracked separately on stock pages only. Super-investor conviction signals reflect non-promoter public-market investors.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is this investment advice?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">No. Tracking disclosed holdings is legal and uses public regulatory filings, but it is not investment advice. Super investors have different risk capacity and holding periods. Always do your own research.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Cross-links -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
+    <div class="nav-btn-group">
+      <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
+      <a href="/pms" class="btn-secondary px-6 py-3">PMS Portfolios</a>
+      <a href="/alternative-funds" class="btn-secondary px-6 py-3">AIF &amp; SIF</a>
+      <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">Smart Money Tracker</a>
+      <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
+    </div>
+  </section>
+</BaseLayout>

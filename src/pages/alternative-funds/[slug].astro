@@ -1,0 +1,259 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import {
+  getAlternativeFunds,
+  getEntityWithLive,
+  altFundUrl,
+  typeLabel,
+  formatCr,
+  formatQuarter,
+  canonicalFor,
+  ALT_FUNDS_HUB,
+} from '../../lib/tracked-entities';
+
+export function getStaticPaths() {
+  const entities = getAlternativeFunds();
+  if (!entities.length) {
+    return [{ params: { slug: '_placeholder' }, props: { slug: '_placeholder' } }];
+  }
+  return entities.map((e) => ({ params: { slug: e.slug }, props: { slug: e.slug } }));
+}
+
+const { slug } = Astro.props;
+const isPlaceholder = slug === '_placeholder';
+const entity = isPlaceholder ? undefined : await getEntityWithLive(slug);
+
+if (!isPlaceholder && !entity) {
+  return Astro.redirect('/404');
+}
+
+const path = isPlaceholder ? ALT_FUNDS_HUB : altFundUrl(slug);
+const canonical = canonicalFor(path);
+
+const title = isPlaceholder
+  ? 'Alternative Funds'
+  : `${entity!.displayName} \u2014 Holdings & Conviction | IPOFins`;
+const description = isPlaceholder
+  ? 'Track India\u2019s leading AIF and SIF funds.'
+  : `${entity!.displayName} (${typeLabel(entity!.type)}) holdings, conviction and quarterly changes. ${entity!.focus ?? ''} ${entity!.registrationId ? `\u00b7 SEBI reg ${entity!.registrationId}` : ''}`;
+
+const live = entity?.live;
+const hasLive = !!live;
+const isSif = entity?.type === 'sif';
+
+const jsonLd = isPlaceholder
+  ? null
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'FinancialProduct',
+      name: `${entity!.displayName} ${isSif ? 'SIF' : 'AIF'}`,
+      description: entity!.bio ?? entity!.focus,
+      url: canonical,
+      category: isSif ? 'Specialized Investment Fund' : 'Alternative Investment Fund',
+      provider: {
+        '@type': 'Organization',
+        name: entity!.parentOrg ?? entity!.name,
+        ...(entity!.registrationId ? { identifier: entity!.registrationId } : {}),
+      },
+      ...(entity!.website ? { sameAs: [entity!.website] } : {}),
+    };
+
+const breadcrumbJsonLd = isPlaceholder
+  ? null
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+        { '@type': 'ListItem', position: 2, name: 'Alternative Funds', item: canonicalFor(ALT_FUNDS_HUB) },
+        { '@type': 'ListItem', position: 3, name: entity!.displayName, item: canonical },
+      ],
+    };
+
+const peers = isPlaceholder
+  ? []
+  : (isSif ? getAlternativeFunds().filter((e) => e.type === 'sif') : getAlternativeFunds().filter((e) => e.type === 'aif'))
+      .filter((e) => e.slug !== slug)
+      .slice(0, 6);
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd ?? undefined}
+>
+  {breadcrumbJsonLd && (
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  )}
+
+  {isPlaceholder ? (
+    <section class="container-wide py-20 text-center">
+      <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Alternative Funds</h1>
+      <p class="mt-2 text-surface-600 dark:text-surface-300">Curated roster coming soon.</p>
+      <a href={ALT_FUNDS_HUB} class="btn-primary px-6 py-3 mt-6 inline-block">Back to hub</a>
+    </section>
+  ) : (
+    <>
+      <nav class="container-wide pt-6" aria-label="Breadcrumb">
+        <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+          <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+          <li><span class="mx-1">/</span></li>
+          <li><a href={ALT_FUNDS_HUB} class="hover:text-primary-600 transition-colors">Alternative Funds</a></li>
+          <li><span class="mx-1">/</span></li>
+          <li class="text-surface-900 dark:text-white font-medium">{entity!.displayName}</li>
+        </ol>
+      </nav>
+
+      <section class="container-wide pt-8 pb-6">
+        <div class="flex flex-col md:flex-row md:items-start gap-6">
+          <div class="w-20 h-20 shrink-0 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+            <span class="text-white font-bold text-3xl">{entity!.displayName.charAt(0)}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+                {entity!.displayName}
+              </h1>
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                {isSif ? 'SIF' : 'AIF'}
+              </span>
+            </div>
+            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
+              {typeLabel(entity!.type)}
+              {entity!.parentOrg && ` \u00b7 ${entity!.parentOrg}`}
+              {entity!.location && ` \u00b7 ${entity!.location}`}
+            </p>
+            {entity!.registrationId && (
+              <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">SEBI Registration: <span class="font-mono">{entity!.registrationId}</span></p>
+            )}
+            {entity!.focus && (
+              <p class="mt-3 text-surface-700 dark:text-surface-200 max-w-2xl">{entity!.focus}</p>
+            )}
+            {entity!.bio && (
+              <p class="mt-2 text-sm text-surface-600 dark:text-surface-300 max-w-2xl">{entity!.bio}</p>
+            )}
+            <div class="flex flex-wrap gap-1.5 mt-3">
+              {entity!.tags.map((tag) => (
+                <span class="px-2 py-0.5 text-xs bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded">{tag}</span>
+              ))}
+            </div>
+            {entity!.website && (
+              <a href={entity!.website} rel="nofollow sponsored noopener noreferrer" target="_blank"
+                class="inline-block mt-3 text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                Official website &rarr;
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {entity!.strategies.length > 0 && (
+        <section class="container-wide py-6">
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Strategies ({entity!.strategies.length})</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {entity!.strategies.map((s) => (
+              <div class="card">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="font-semibold text-surface-900 dark:text-white">{s.name}</h3>
+                  {s.strategyType && (
+                    <span class="px-2 py-0.5 text-[11px] bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded capitalize">
+                      {s.strategyType.replace('-', ' ')}
+                    </span>
+                  )}
+                </div>
+                {s.description && <p class="text-sm text-surface-600 dark:text-surface-300 mb-2">{s.description}</p>}
+                {s.minTicketCr != null && (
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Min ticket: \u20b9{(s.minTicketCr * 100).toFixed(0)} L</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hasLive && (
+        <section class="container-wide py-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">{live!.totalHoldings ?? '\u2014'}</p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Disclosed holdings</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-surface-900 dark:text-white">{formatCr(live!.portfolioValueCr)}</p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Disclosed value</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-success-600 dark:text-success-400">
+                {(live!.freshEntries ?? 0) + (live!.adds ?? 0) > 0 ? `+${(live!.freshEntries ?? 0) + (live!.adds ?? 0)}` : '\u2014'}
+              </p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Adds</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-warning-600 dark:text-warning-400">
+                {(live!.exits ?? 0) + (live!.trims ?? 0) > 0 ? `\u2212${(live!.exits ?? 0) + (live!.trims ?? 0)}` : '\u2014'}
+              </p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Trims</p>
+            </div>
+          </div>
+          <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-3">
+            Latest disclosure: {formatQuarter(live!.quarter)}
+          </p>
+        </section>
+      )}
+
+      {!hasLive && (
+        <section class="container-wide pb-6">
+          <div class="card bg-primary-50/60 dark:bg-primary-950/20">
+            <p class="text-sm text-surface-700 dark:text-surface-200">
+              {isSif
+                ? 'SIF strategy-level disclosures are emerging as the 2024 regime matures. Holdings populate here as filings land.'
+                : `${entity!.displayName} holdings populate after the next quarterly Shareholding Pattern pipeline run.`}
+            </p>
+          </div>
+        </section>
+      )}
+
+      <section class="container-wide py-8 max-w-3xl">
+        <div class="card bg-warning-50/60 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-900/40">
+          <p class="text-xs text-surface-700 dark:text-surface-300">
+            <strong>Disclosure:</strong> AIF/SIF holdings are sourced from public regulatory filings. Past performance is not indicative of future returns.
+            {isSif ? ' SIF minimum investment \u20b910 lakh.' : ' AIF minimum investment \u20b91 crore.'}
+            {' '}Not investment advice. See <a href="/disclaimer" class="text-primary-600 hover:underline">disclaimer</a> and
+            <a href="/methodology" class="text-primary-600 hover:underline">methodology</a>.
+          </p>
+        </div>
+      </section>
+
+      {peers.length > 0 && (
+        <section class="container-wide py-8">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Other {isSif ? 'SIF' : 'AIF'} funds</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {peers.map((peer) => (
+              <a href={altFundUrl(peer.slug)} class="card group block">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+                    <span class="text-white font-bold">{peer.displayName.charAt(0)}</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{peer.displayName}</h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 truncate">{peer.focus ?? peer.parentOrg ?? 'fund'}</p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section class="container-wide py-8">
+        <div class="nav-btn-group">
+          <a href={ALT_FUNDS_HUB} class="btn-secondary px-6 py-3">All Alternative Funds</a>
+          <a href="/pms" class="btn-secondary px-6 py-3">PMS</a>
+          <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+        </div>
+      </section>
+    </>
+  )}
+</BaseLayout>

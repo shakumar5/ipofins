@@ -1,0 +1,105 @@
+[
+  {
+    "name": "Marcellus Investment Managers",
+    "displayName": "Marcellus",
+    "type": "pms",
+    "aliases": ["Marcellus Investment Managers", "Marcellus"],
+    "parentOrg": "Marcellus Investment Managers LLP",
+    "registrationId": "INP000000650",
+    "focus": "Mean-reverting & consistent compounders; concentrated portfolios",
+    "bio": "Founded by Saurabh Mukherjea. Known for 'Consistent Compounders' and 'Little Champs' strategies — concentrated, low-turnover, quality-first.",
+    "website": "https://marcellus.in",
+    "location": "Mumbai",
+    "tags": ["quality", "concentrated", "low-turnover"],
+    "strategies": [
+      { "name": "Consistent Compounders", "strategyType": "large-cap", "minTicketCr": 0.5, "description": "Resilient, predictable compounders — low turnover, 12–15 stock portfolio." },
+      { "name": "Little Champs", "strategyType": "mid-small", "minTicketCr": 0.5, "description": "Mid/small-cap market leaders with strong franchises." },
+      { "name": "Kings of Capital", "strategyType": "thematic", "minTicketCr": 0.5, "description": "Best-of-breed financial services franchises." },
+      { "name": "Rising Giants", "strategyType": "mid-cap", "minTicketCr": 0.5, "description": "Next-generation large-caps; sector-leading mid-caps." }
+    ]
+  },
+  {
+    "name": "Ask Investment Managers",
+    "displayName": "ASK",
+    "type": "pms",
+    "aliases": ["ASK Investment Managers", "ASK PMS", "ASK"],
+    "parentOrg": "ASK Investment Managers Pvt Ltd",
+    "registrationId": "INP000000255",
+    "focus": "Bottom-up mid/small-cap, buy-and-hold",
+    "bio": "Among India's largest PMS providers. Style: high-conviction, low-turnover mid/small-cap portfolios.",
+    "website": "https://www.askgroup.in",
+    "location": "Mumbai",
+    "tags": ["mid-cap", "small-cap", "low-turnover"],
+    "strategies": [
+      { "name": "ASK Select Businesses", "strategyType": "multi", "minTicketCr": 1.0, "description": "Concentrated portfolio of select growth businesses." },
+      { "name": "ASK Emerging Champions", "strategyType": "mid-small", "minTicketCr": 1.0, "description": "Tomorrow's leaders — emerging mid/small-cap champions." }
+    ]
+  },
+  {
+    "name": "Motilal Oswal Asset Management",
+    "displayName": "Motilal Oswal PMS",
+    "type": "pms",
+    "aliases": ["Motilal Oswal PMS", "Motilal Oswal Asset Management Company"],
+    "parentOrg": "Motilal Oswal Financial Services",
+    "registrationId": "INP000000811",
+    "focus": "Buy-right-sit-tight; QGLB (Quality Growth Leadership Business)",
+    "bio": "PMS arm of Motilal Oswal. Multiple strategies across large, mid, and small-caps.",
+    "website": "https://www.motilaloswalmf.com/pms",
+    "location": "Mumbai",
+    "tags": ["quality", "growth", "long-term"],
+    "strategies": [
+      { "name": "QGLB", "strategyType": "large-cap", "minTicketCr": 0.5, "description": "Quality Growth Leadership Business — large-cap leaders." },
+      { "name": "Trillion Opportunities", "strategyType": "large-cap", "minTicketCr": 0.5, "description": "$1T+ market cap universe." },
+      { "name": "Mid and Small Cap", "strategyType": "mid-small", "minTicketCr": 0.5, "description": "High-growth mid and small-cap universe." },
+      { "name": "Next Trillion Digital", "strategyType": "thematic", "minTicketCr": 0.5, "description": "India's digital transformation winners." }
+    ]
+  },
+  {
+    "name": "Helios Capital",
+    "displayName": "Helios PMS",
+    "type": "pms",
+    "aliases": ["Helios Capital", "Helios Capital (India) Pvt Ltd"],
+    "parentOrg": "Helios Capital",
+    "registrationId": "INP000005181",
+    "focus": "Large-cap (Nifty 100) long-only; momentum and quality",
+    "bio": "Founded by Samir Arora. Large-cap long-only strategy — one of the most followed in India.",
+    "website": "https://www.helioscapital.in",
+    "location": "Mumbai",
+    "tags": ["large-cap", "momentum"],
+    "strategies": [
+      { "name": "Helios Rising India", "strategyType": "large-cap", "minTicketCr": 0.5, "description": "Large-cap (Nifty 100) long-only portfolio." }
+    ]
+  },
+  {
+    "name": "Equity Intelligence India",
+    "displayName": "Equity Intelligence",
+    "type": "pms",
+    "aliases": ["Equity Intelligence India", "Equity Intelligence India Ltd"],
+    "parentOrg": "Equity Intelligence India Ltd",
+    "registrationId": "INP000002821",
+    "focus": "Deep value, contrarian, small-cap (Porinju Veliyath)",
+    "bio": "Kochi-based PMS founded by Porinju Veliyath. Style: deep value, contrarian, small-cap concentration.",
+    "website": "https://www.eqintelligence.com",
+    "location": "Kochi",
+    "tags": ["value", "contrarian", "small-cap"],
+    "strategies": [
+      { "name": "Value & Emerging Opportunities", "strategyType": "multi", "minTicketCr": 0.25, "description": "Value-led multi-cap portfolio." }
+    ]
+  },
+  {
+    "name": "WhiteOak Capital Management",
+    "displayName": "WhiteOak PMS",
+    "type": "pms",
+    "aliases": ["WhiteOak Capital", "WhiteOak Capital Management"],
+    "parentOrg": "WhiteOak Investment Managers Pvt Ltd",
+    "registrationId": "INP000008234",
+    "focus": "Quantamental large & mid-cap",
+    "bio": "Founded by Prashant Khemka (ex-Barings). Quantamental approach across multiple strategies.",
+    "website": "https://www.whiteoaksmf.com",
+    "location": "Mumbai",
+    "tags": ["quantamental", "large-cap", "mid-cap"],
+    "strategies": [
+      { "name": "WhiteOak Large Cap", "strategyType": "large-cap", "minTicketCr": 0.5, "description": "Nifty 100 quantamental long-only." }
+    ]
+  }
+]

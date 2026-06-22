@@ -1,0 +1,167 @@
+[
+  {
+    "name": "Dolly Khanna",
+    "displayName": "Dolly Khanna",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Khanna Dolly", "Dolly Khanna HUF", "Khanna Dolly Chhaganlal"],
+    "focus": "Small/mid-cap consumer, chemicals, paper",
+    "bio": "Chennai-based veteran investor known for spotting multi-bagger small-caps early. Portfolios often filed jointly under the Khanna family.",
+    "location": "Chennai",
+    "tags": ["small-cap", "consumer", "multibagger", "momentum"]
+  },
+  {
+    "name": "Vijay Kedia",
+    "displayName": "Vijay Kishanlal Kedia",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Kedia Vijay", "Vijay Kishanlal Kedia", "Kedia Vijay Kishanlal"],
+    "focus": "SMILE — Small in size, Medium in experience, Large in aspiration, Extra-large in market potential",
+    "bio": "Self-taught investor famous for the SMILE framework and long holding periods. Adept at spotting compounding businesses early.",
+    "location": "Mumbai",
+    "tags": ["small-cap", "long-term", "compounding"]
+  },
+  {
+    "name": "Ashish Kacholia",
+    "displayName": "Ashish Kacholia",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Kacholia Ashish", "Kacholia Ashish Ramesh"],
+    "focus": "Mid/small-cap manufacturing, specialty chemicals, electronics",
+    "bio": "Known as the 'Big Whale' of mid/small-caps. Co-founded Hungama Digital before turning full-time investor.",
+    "location": "Mumbai",
+    "tags": ["mid-cap", "small-cap", "manufacturing"]
+  },
+  {
+    "name": "Radhakishan Damani",
+    "displayName": "Radhakishan S Damani",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Damani Radhakishan", "Damani Radhakishan Shivkishan", "R G Damani"],
+    "focus": "Value, retail, FMCG, financials (founder of D-Mart / Avenue Supermarts)",
+    "bio": "Founder of Avenue Supermarts (D-Mart). One of India's most successful value investors; holds stakes via multiple entities including Derive Trading and Bright Star Investments.",
+    "location": "Mumbai",
+    "tags": ["value", "retail", "large-cap"]
+  },
+  {
+    "name": "Mukul Agrawal",
+    "displayName": "Mukul Mahavir Agrawal",
+    "type": "individual",
+    "tier": "active",
+    "aliases": ["Agrawal Mukul", "Agrawal Mukul Mahavir", "Mukul Mahavir Agrawal"],
+    "focus": "Diversified mid/small-cap, new-age, financials",
+    "bio": "Aggressive accumulator across 40+ stocks; one of the most active individual investors by breadth.",
+    "location": "Mumbai",
+    "tags": ["mid-cap", "small-cap", "diversified"]
+  },
+  {
+    "name": "Akash Bhansali",
+    "displayName": "Akash Bhansali",
+    "type": "individual",
+    "tier": "active",
+    "aliases": ["Bhansali Akash", "Bhansali Akash R"],
+    "focus": "Diversified; ex-Mohtasham (Lupin family office)",
+    "bio": "Veteran markets professional turned full-time investor; runs a diversified public-equity book.",
+    "location": "Mumbai",
+    "tags": ["diversified", "value"]
+  },
+  {
+    "name": "Sunil Singhania",
+    "displayName": "Sunil Singhania",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Singhania Sunil", "Singhania Sunil Bhageerathy"],
+    "focus": "Growth-oriented broad portfolio; runs Abakkus Asset Manager (AIF)",
+    "bio": "Former head of equities at Reliance Mutual Fund. Now runs Abakkus — appears both as an individual and via the Abakkus AIF.",
+    "location": "Mumbai",
+    "tags": ["growth", "large-cap", "mid-cap"]
+  },
+  {
+    "name": "Porinju Veliyath",
+    "displayName": "Porinju Veliyath",
+    "type": "individual",
+    "tier": "active",
+    "aliases": ["Veliyath Porinju", "Veliyath Porinjuveliyath", "Equity Intelligence India"],
+    "focus": "Deep value, contrarian, small-caps",
+    "bio": "Kochi-based value investor; runs Equity Intelligence (PMS). Known for bold contrarian calls.",
+    "location": "Kochi",
+    "tags": ["value", "contrarian", "small-cap"]
+  },
+  {
+    "name": "Nemish Shah",
+    "displayName": "Nemish Shah",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Shah Nemish", "Shah Nemish Ranchhoddas"],
+    "focus": "Quality compounding, financials, capital goods",
+    "bio": "Co-founder of Enam Holdings. One of India's most respected long-term quality investors.",
+    "location": "Mumbai",
+    "tags": ["quality", "long-term", "large-cap"]
+  },
+  {
+    "name": "Raamdeo Agrawal",
+    "displayName": "Raamdeo Agrawal",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Agrawal Raamdeo", "Agrawal Raamdeo Arjundas"],
+    "focus": "Quality, financials, auto (co-founder of Motilal Oswal)",
+    "bio": "Co-founder & Chairman of Motilal Oswal Financial Services. Authored 'The Art of Wealth Creation'.",
+    "location": "Mumbai",
+    "tags": ["quality", "long-term", "large-cap"]
+  },
+  {
+    "name": "Anil Kumar Goel",
+    "displayName": "Anil Kumar Goel",
+    "type": "individual",
+    "tier": "active",
+    "aliases": ["Goel Anil Kumar", "Goel Anil Kumar Khubchand", "Anil Kumar Goel"],
+    "focus": "Small-cap industrials, specialty chemicals, paper",
+    "bio": "Chennai-based investor specialising in obscure small-cap manufacturing names.",
+    "location": "Chennai",
+    "tags": ["small-cap", "manufacturing", "chemicals"]
+  },
+  {
+    "name": "Rekha Jhunjhunwala",
+    "displayName": "Rekha Jhunjhunwala",
+    "type": "individual",
+    "tier": "legendary",
+    "aliases": ["Jhunjhunwala Rekha", "Jhunjhunwala Rekha Rajeshkumar", "Rekha Rajeshkumar Jhunjhunwala"],
+    "focus": "Continuation of Rakesh Jhunjhunwala's portfolio (Titan, Star Health, etc.)",
+    "bio": "Inherits and continues the public-market portfolio built with the late Rakesh Jhunjhunwala.",
+    "location": "Mumbai",
+    "tags": ["large-cap", "long-term", "quality"]
+  },
+  {
+    "name": "Mohnish Pabrai",
+    "displayName": "Mohnish Pabrai",
+    "type": "fii",
+    "tier": "legendary",
+    "aliases": ["Pabrai Mohnish", "Pabrai Funds", "Pabrai Investment Funds", "Dalal Street Investments"],
+    "focus": "Cloning, deep value, concentrated bets (India-focused FII)",
+    "bio": "US-based value investor of Indian origin; runs Pabrai Funds. Disciplined practitioner of 'shameless cloning'.",
+    "location": "Irvine, USA",
+    "tags": ["value", "concentrated", "long-term"]
+  },
+  {
+    "name": "Govind Capital",
+    "displayName": "Govind Capital",
+    "type": "fii",
+    "tier": "emerging",
+    "aliases": ["Govind Capital Pte Ltd", "Govind Capital Pte. Ltd."],
+    "focus": "Systematic mid/small-cap FII — frequent SAST filer",
+    "bio": "Singapore-based FII known for aggressive accumulation of Indian mid/small-caps.",
+    "location": "Singapore",
+    "tags": ["fii", "mid-cap", "small-cap"]
+  },
+  {
+    "name": "Life Insurance Corporation of India",
+    "displayName": "LIC",
+    "type": "dii",
+    "tier": "legendary",
+    "aliases": ["LIC", "Life Insurance Corporation", "Life Insurance Corporation Of India"],
+    "focus": "Largest domestic institutional holder across large-caps",
+    "bio": "India's largest institutional investor. A >1% stake is common across the Nifty 500.",
+    "location": "Mumbai",
+    "tags": ["dii", "large-cap", "long-term"]
+  }
+]

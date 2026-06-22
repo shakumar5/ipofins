@@ -1,0 +1,163 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EntityCard from '../../components/tracked/EntityCard.astro';
+import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
+import {
+  getPmsProviders,
+  withLiveStats,
+  getTrackedSnapshot,
+  pmsUrl,
+  canonicalFor,
+} from '../../lib/tracked-entities';
+
+const all = getPmsProviders();
+const entities = await withLiveStats(all);
+const snapshot = await getTrackedSnapshot();
+const totalStrategies = all.reduce((n, e) => n + e.strategies.length, 0);
+
+const path = '/pms';
+const canonical = canonicalFor(path);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Top PMS Providers in India 2026 \u2014 SEBI-Registered Portfolio Management Services',
+  description:
+    'Track the equity portfolios of India\u2019s leading SEBI-registered Portfolio Management Service (PMS) providers \u2014 Marcellus, ASK, Motilal Oswal, Helios, Equity Intelligence, WhiteOak. Strategy-level holdings, conviction, and quarterly changes.',
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'PMS', item: canonical },
+    ],
+  },
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is a Portfolio Management Service (PMS)?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A PMS is a SEBI-regulated investment vehicle where a portfolio manager invests on your behalf in securities. Minimum ticket is \u20b950 lakh. Unlike a mutual fund, each client holds securities in their own demat account and gets a customised (or discretionary) portfolio.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is PMS data disclosed in India?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'SEBI-registered PMS providers must publish their top-10 equity holdings every month. Their aggregate stakes also appear in quarterly Shareholding Pattern filings whenever they cross 1% of a company. IPOFins merges both to show strategy-level portfolios.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the minimum investment for a PMS?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The SEBI-mandated minimum ticket for any PMS is \u20b950 lakh. Some strategies set a higher entry. See each provider\u2019s page for strategy-specific minimums.',
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Top PMS Providers in India 2026 \u2014 SEBI-Registered | IPOFins"
+  description="Track India\u2019s leading SEBI-registered Portfolio Management Services (PMS) \u2014 Marcellus, ASK, Motilal Oswal, Helios, WhiteOak. Strategy-level holdings, conviction scores, quarterly changes."
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">PMS Providers</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      PMS Providers \u2014 SEBI-Registered Portfolio Managers
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
+      Track the equity portfolios of India\u2019s leading Portfolio Management Services. Each provider runs one or
+      more strategies; we resolve monthly top-10 disclosures and quarterly Shareholding Pattern stakes to show
+      strategy-level holdings and conviction.
+    </p>
+    <div class="nav-btn-group mt-6">
+      <a href="/alternative-funds" class="btn-primary px-6 py-3">AIF &amp; SIF</a>
+      <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+      <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
+      <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
+    </div>
+    <p class="mt-4 text-xs text-surface-500 dark:text-surface-400">
+      {entities.length} providers \u00b7 {totalStrategies} strategies tracked \u00b7 SEBI minimum ticket: \u20b950 lakh
+    </p>
+  </section>
+
+  <section class="container-wide pb-4">
+    <SnapshotStrip snapshot={snapshot} noun="PMS providers" />
+  </section>
+
+  <section class="container-wide py-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {entities.map((entity) => (
+        <EntityCard entity={entity} href={pmsUrl(entity.slug)} accent="strategies" />
+      ))}
+    </div>
+  </section>
+
+  <!-- SEO content -->
+  <section class="container-wide py-10 max-w-3xl">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-3">PMS vs mutual funds vs AIF</h2>
+    <div class="text-surface-600 dark:text-surface-300 space-y-3">
+      <p>
+        A Portfolio Management Service sits between a mutual fund and a full Alternative Investment Fund. Like a
+        mutual fund it is regulated by SEBI and invests in listed securities, but each client holds securities in
+        their own demat account and the portfolio manager can tailor holdings. The minimum investment is
+        \u20b950 lakh \u2014 far higher than a mutual fund\u2019s \u20b9500 SIP.
+      </p>
+      <p>
+        For tracking purposes, PMS top-10 holdings are published monthly, which makes them the most frequently
+        refreshed of the tracked-entity families on IPOFins. Aggregate positions also surface in quarterly
+        Shareholding Pattern filings wherever a strategy crosses the 1% threshold.
+        <a href="/methodology" class="text-primary-600 hover:underline">Read the full methodology</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a PMS?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A SEBI-regulated investment vehicle where a portfolio manager invests on your behalf. Minimum ticket is \u20b950 lakh. Each client holds securities in their own demat account and gets a customised or discretionary portfolio.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is PMS data disclosed?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">SEBI-registered PMS providers must publish top-10 equity holdings monthly. Aggregate stakes also appear in quarterly Shareholding Pattern filings whenever they cross 1% of a company.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the minimum investment?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">The SEBI-mandated minimum is \u20b950 lakh. Some strategies set a higher entry. See each provider\u2019s page for strategy-specific minimums.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-wide py-8">
+    <div class="nav-btn-group">
+      <a href="/alternative-funds" class="btn-secondary px-6 py-3">AIF &amp; SIF</a>
+      <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+      <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
+    </div>
+  </section>
+</BaseLayout>
