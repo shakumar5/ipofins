@@ -5,6 +5,7 @@ import {
   ipoFilterFromSearch,
   type IpoPerformanceFilter,
 } from '../../lib/ipo-performance-meta';
+import { ipoDetailHref } from '../../lib/list-back-nav';
 
 interface IPOPerformance {
   name: string;
@@ -199,7 +200,7 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
           return (
             <a
               key={i}
-              href={`/ipo/${slug}`}
+              href={ipoDetailHref(slug, 'performance')}
               className="block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer"
             >
               {/* Desktop */}

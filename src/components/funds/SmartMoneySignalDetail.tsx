@@ -1,12 +1,9 @@
 import type { SmartMoneySignalRow } from '../../lib/smart-money-signals';
 import { buildInterpretation, stockSignalMetaLine } from '../../lib/smart-money-signals';
-import { stockSignalPath } from '../../lib/stock-signal-meta';
 import ConvictionScoreBreakdown from './ConvictionScoreBreakdown';
 
 interface Props {
   row: SmartMoneySignalRow;
-  backHref?: string;
-  backLabel?: string;
 }
 
 function Stars({ count }: { count: number }) {
@@ -21,7 +18,7 @@ function Divider() {
   return <hr className="border-surface-200 dark:border-surface-700 my-6" />;
 }
 
-export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Props) {
+export default function SmartMoneySignalDetail({ row }: Props) {
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-surface-900 dark:text-white text-center">{row.stockName}</h1>
@@ -91,15 +88,6 @@ export default function SmartMoneySignalDetail({ row, backHref, backLabel }: Pro
 
       <p className="mt-8 text-center text-xs text-surface-400">
         {stockSignalMetaLine(row)} · Source: AMC monthly portfolio disclosures · Not investment advice.
-      </p>
-
-      <p className="mt-4 text-center">
-        <a
-          href={backHref || stockSignalPath(row.stockSlug)}
-          className="text-sm font-medium text-primary-600 hover:underline"
-        >
-          {backLabel || '← Back to Stock Signal'}
-        </a>
       </p>
     </div>
   );

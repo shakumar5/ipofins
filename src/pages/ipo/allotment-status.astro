@@ -2,6 +2,7 @@
 import IPOLayout from '../../layouts/IPOLayout.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
+import { ipoDetailHref } from '../../lib/list-back-nav';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
 const recentlyClosed = iposData.filter(ipo => ipo.status === 'closed' || ipo.status === 'allotment' || ipo.status === 'listed');
@@ -158,7 +159,7 @@ const registrars = [
     {recentlyClosed.length > 0 ? (
       <div class="space-y-3">
         {recentlyClosed.map(ipo => (
-          <a href={`/ipo/${ipo.slug}`} class="card-compact group block">
+          <a href={ipoDetailHref(ipo.slug, 'allotment')} class="card-compact group block">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>

@@ -4,6 +4,11 @@ import StockSignalPage from '../../../../components/funds/StockSignalPage.tsx';
 import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
 import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
 import { getStockSignalPageMeta, stockSignalPath } from '../../../../lib/stock-signal-meta';
+import {
+  SMART_MONEY_LIST_BACK,
+  stockSignalDetailBackNav,
+} from '../../../../lib/list-back-nav';
+import ListBackLink from '../../../../components/ListBackLink.astro';
 import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
 import {
@@ -30,6 +35,10 @@ const pageMeta = isPlaceholder
   ? getStockSignalPageMeta()
   : getStockSignalPageMeta(stockName, stockSlug);
 const sm = loadSmartMoneyTrackerLinks();
+const defaultBack = stockSignalDetailBackNav(isPlaceholder ? undefined : stockName, isPlaceholder ? undefined : stockSlug);
+const smBackVariants = Object.fromEntries(
+  Object.entries(SMART_MONEY_LIST_BACK).filter(([key]) => key !== 'stock-signal'),
+);
 const signalsIndex = readSignalsIndexFromDisk();
 const latestMonth = signalsIndex?.months[0];
 
@@ -77,6 +86,15 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
+    {!isPlaceholder && (
+      <ListBackLink
+        id="stock-signal-detail-back"
+        defaultHref={defaultBack.href}
+        defaultLabel={defaultBack.label}
+        variants={smBackVariants}
+        class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
+      />
+    )}
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{pageMeta.heading}</h1>
     <p class="mt-1 text-sm text-surface-500">{pageMeta.subtitle}</p>
     <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
@@ -87,7 +105,13 @@ const jsonLd = {
     {isPlaceholder ? (
       <div class="text-center py-12 text-surface-500 text-sm">
         <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate stock signal pages.</p>
-        <a href={stockSignalPath()} class="text-primary-600 mt-2 inline-block">← Back to Stock Signal</a>
+        <ListBackLink
+          id="stock-signal-detail-back-placeholder"
+          defaultHref={stockSignalPath()}
+          defaultLabel="Back to Stock Signal"
+          variants={smBackVariants}
+          class="text-primary-600 mt-2 inline-flex"
+        />
       </div>
     ) : (
       <StockSignalPage client:load initialStockSlug={stockSlug}>

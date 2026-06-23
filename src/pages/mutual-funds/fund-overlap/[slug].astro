@@ -4,6 +4,17 @@ import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holding
 import { getAllFunds, fundHoldingsHref, getFundHoldingsLinkMeta } from '../../../lib/data/funds';
 import { resolveDetailSlug } from '../../../lib/fund-detail-slug';
 import { parsePgTextArray } from '../../../lib/holdings-utils';
+import {
+  defaultFundOverlapBack,
+  fundOverlapDetailHref,
+  MF_LIST_BACK,
+} from '../../../lib/list-back-nav';
+import ListBackLink from '../../../components/ListBackLink.astro';
+
+const defaultBack = defaultFundOverlapBack();
+const overlapBackVariants = Object.fromEntries(
+  Object.entries(MF_LIST_BACK).filter(([key]) => key !== 'fund-overlap'),
+);
 
 export async function getStaticPaths() {
   const funds = await getFundsWithOverlaps();
@@ -58,6 +69,13 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
+    <ListBackLink
+      id="fund-overlap-detail-back"
+      defaultHref={defaultBack.href}
+      defaultLabel={defaultBack.label}
+      variants={overlapBackVariants}
+      class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
+    />
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{fundName}</h1>
     <p class="mt-1 text-sm text-surface-500">Other funds with portfolio holdings that share the most stocks (by weight). Tap a common-stocks count to see the full list.</p>
   </section>
@@ -86,7 +104,7 @@ const jsonLd = {
               return (
               <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30 align-top">
                 <td class="px-4 py-3">
-                  <a href={`/mutual-funds/fund-overlap/${row.slug}`} class="font-medium text-primary-600 hover:underline">{row.name}</a>
+                  <a href={fundOverlapDetailHref(row.slug, 'fund-overlap')} class="font-medium text-primary-600 hover:underline">{row.name}</a>
                   {hasDetailPage && detailSlug && (
                     <span class="text-xs text-surface-400 block">
                       <a href={fundHoldingsHref(detailSlug)} class="hover:underline">View holdings →</a>
@@ -129,7 +147,7 @@ const jsonLd = {
       <p class="text-surface-500 py-12 text-center">No overlap data for this fund.</p>
     )}
     <p class="mt-4">
-      <a href="/mutual-funds/fund-overlap" class="text-sm text-primary-600 hover:underline">← All funds</a>
+      <a href={defaultBack.href} class="text-sm text-primary-600 hover:underline">← {defaultBack.label}</a>
     </p>
   </section>
 </BaseLayout>

@@ -1,4 +1,6 @@
 ---
+import { ipoDetailHref } from '../lib/list-back-nav';
+
 interface Props {
   name: string;
   slug: string;
@@ -12,6 +14,10 @@ interface Props {
   subscription?: number | null;
   aiScore?: number | null;
   sector?: string;
+  /** List page context for contextual back link on detail page */
+  listFrom?: string;
+  sectorSlug?: string;
+  sectorLabel?: string;
 }
 
 const {
@@ -27,6 +33,9 @@ const {
   subscription,
   aiScore,
   sector,
+  listFrom,
+  sectorSlug,
+  sectorLabel,
 } = Astro.props;
 
 const statusConfig = {
@@ -43,9 +52,19 @@ const statusConfig = {
 };
 
 const statusInfo = statusConfig[status as keyof typeof statusConfig] || statusConfig['upcoming'];
+
+const detailHref = listFrom
+  ? ipoDetailHref(
+      slug,
+      listFrom as 'all' | 'mainboard' | 'sme' | 'upcoming' | 'subscription' | 'allotment' | 'performance' | 'sector',
+      listFrom === 'sector' && sectorSlug
+        ? { sector: sectorSlug, ...(sectorLabel ? { sectorLabel } : {}) }
+        : undefined,
+    )
+  : `/ipo/${slug}`;
 ---
 
-<a href={`/ipo/${slug}`} class="card group block">
+<a href={detailHref} class="card group block">
   <!-- Header -->
   <div class="flex items-start justify-between mb-4">
     <div class="flex-1 min-w-0">

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useDeferredValue, useTransition, useCallback } from 'react';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import { catToSlug, categoryFromPath } from '../../lib/fund-category-slug';
+import { fundDetailHref } from '../../lib/list-back-nav';
 import { getFundTablePageMeta, type FundTableKind } from '../../lib/fund-table-meta';
 
 interface Fund {
@@ -410,7 +411,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
           return hasHold && detailSlug ? (
             <a
               key={fund.slug}
-              href={`/mutual-funds/fund/${detailSlug}-holdings`}
+              href={fundDetailHref(detailSlug, table)}
               className={`${rowClass} hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer`}
             >
               {rowInner}

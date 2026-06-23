@@ -9,6 +9,7 @@ import {
   parseStockSignalSlugFromPathname,
   stockSignalPath,
 } from '../../lib/stock-signal-meta';
+import { signalDetailHref } from '../../lib/list-back-nav';
 
 import ConvictionScoreBreakdown from './ConvictionScoreBreakdown';
 
@@ -31,8 +32,10 @@ function Stars({ count }: { count: number }) {
   );
 }
 
-function StockDetail({ row, detailLoading }: { row: SmartMoneySignalRow; detailLoading?: boolean }) {
-  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(row.month)}&category=${encodeURIComponent(row.category)}`;
+function StockDetail({ row, detailLoading, stockSlug }: { row: SmartMoneySignalRow; detailLoading?: boolean; stockSlug?: string | null }) {
+  const detailUrl = signalDetailHref(row.stockSlug, 'stock-signal', row.month, row.category, {
+    ...(stockSlug ? { stockSlug } : {}),
+  });
 
   return (
     <div className="card p-5 md:p-6">
@@ -299,7 +302,7 @@ export default function StockSignalView({
         </div>
       )}
 
-      {selectedRow && <StockDetail row={selectedRow} detailLoading={detailLoading} />}
+      {selectedRow && <StockDetail row={selectedRow} detailLoading={detailLoading} stockSlug={activeSlug} />}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useMemo, useState, useTransition, useDeferredValue } from 'react';
 import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
 
 import { SIGNAL_OPTIONS, stockCapDisplayLabel } from '../../lib/smart-money-signals';
+import { signalDetailHref } from '../../lib/list-back-nav';
 import FilterSelect from './FilterSelect';
 
 
@@ -238,7 +239,7 @@ function SignalCard({
   month: string;
   category: string;
 }) {
-  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(row.category)}`;
+  const detailUrl = signalDetailHref(row.stockSlug, 'signals', month, row.category);
 
   return (
     <div className="card p-3 border border-surface-200 dark:border-surface-700">
@@ -291,7 +292,7 @@ function SignalRow({
 
 }) {
 
-  const detailUrl = `/mutual-funds/smart-money/signal/${row.stockSlug}?month=${encodeURIComponent(month)}&category=${encodeURIComponent(row.category)}`;
+  const detailUrl = signalDetailHref(row.stockSlug, 'signals', month, row.category);
 
 
 
