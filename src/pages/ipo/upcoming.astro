@@ -2,6 +2,7 @@
 import IPOLayout from '../../layouts/IPOLayout.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
+import { ipoDetailHref } from '../../lib/list-back-nav';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
 const openSoonIPOs = iposData.filter(i => i.status === 'upcoming' || i.status === 'open');
@@ -57,7 +58,7 @@ const faqJsonLd = {
       </div>
       <div class="space-y-2">
         {openSoonIPOs.map(ipo => (
-          <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-primary-400">
+          <a href={ipoDetailHref(ipo.slug, 'upcoming')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-primary-400">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">

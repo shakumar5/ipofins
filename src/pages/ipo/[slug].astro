@@ -7,6 +7,8 @@ import { getAllIPOs } from '../../lib/data/ipos';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../lib/affiliate-links';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import { buildShouldApplyFaqAnswer } from '../../lib/ipo-apply-faq';
+import { defaultIpoListBack, IPO_LIST_BACK } from '../../lib/list-back-nav';
+import ListBackLink from '../../components/ListBackLink.astro';
 import type { IPORecord } from '../../types/ipo';
 
 export async function getStaticPaths() {
@@ -33,6 +35,10 @@ const statusConfig = {
 };
 const statusInfo = statusConfig[ipo.status as keyof typeof statusConfig] || statusConfig['upcoming'];
 const shouldApplyAnswer = buildShouldApplyFaqAnswer(ipo, ipo.gmp);
+const defaultBack = defaultIpoListBack(ipo.type);
+const ipoBackVariants = Object.fromEntries(
+  Object.entries(IPO_LIST_BACK).filter(([key]) => key !== 'sector'),
+);
 
 const breadcrumbLd = {
   "@context": "https://schema.org",
@@ -79,10 +85,13 @@ const jsonLd = [financialProductLd, breadcrumbLd];
 >
   <!-- Header -->
   <section class="container-wide pt-6 pb-4">
-    <a href="/ipo" class="text-sm text-primary-600 hover:underline mb-3 inline-flex items-center gap-1">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      Back to IPOs
-    </a>
+    <ListBackLink
+      id="ipo-list-back"
+      defaultHref={defaultBack.href}
+      defaultLabel={defaultBack.label}
+      variants={ipoBackVariants}
+      class="text-sm text-primary-600 hover:underline mb-3 inline-flex items-center gap-1"
+    />
 
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-3">
       <div>

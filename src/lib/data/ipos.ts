@@ -107,9 +107,13 @@ async function queryIPOs(whereClause?: { slug: string }) {
   return rows as IPORow[];
 }
 
+let allIPOsCache: Promise<IPORecord[]> | null = null;
+
 export async function getAllIPOs(): Promise<IPORecord[]> {
-  const rows = await queryIPOs();
-  return rows.map(mapIPORow);
+  if (!allIPOsCache) {
+    allIPOsCache = queryIPOs().then((rows) => rows.map(mapIPORow));
+  }
+  return allIPOsCache;
 }
 
 export async function getIPOBySlug(slug: string): Promise<IPORecord | null> {

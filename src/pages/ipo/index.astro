@@ -3,6 +3,7 @@ import IPOLayout from '../../layouts/IPOLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
+import { ipoDetailHref } from '../../lib/list-back-nav';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
 const upcomingFromDb = iposData.filter(i => ['upcoming', 'drhp-filed'].includes(i.status));
@@ -53,7 +54,7 @@ const faqJsonLd = {
         </h2>
         <div class="space-y-2">
           {liveIPOs.map(ipo => (
-            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-success-500">
+            <a href={ipoDetailHref(ipo.slug, 'all')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-success-500">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -87,7 +88,7 @@ const faqJsonLd = {
         </h2>
         <div class="space-y-2">
           {openIPOs.map(ipo => (
-            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-amber-400">
+            <a href={ipoDetailHref(ipo.slug, 'all')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-amber-400">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -117,7 +118,7 @@ const faqJsonLd = {
         </h2>
         <div class="space-y-2">
           {upcomingIPOs.map(ipo => (
-            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-primary-400">
+            <a href={ipoDetailHref(ipo.slug, 'all')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-primary-400">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -147,7 +148,7 @@ const faqJsonLd = {
         </h2>
         <div class="space-y-2">
           {allotmentIPOs.map(ipo => (
-            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-teal-400">
+            <a href={ipoDetailHref(ipo.slug, 'all')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-teal-400">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -178,7 +179,7 @@ const faqJsonLd = {
         </h2>
         <div class="space-y-2">
           {closedIPOs.map(ipo => (
-            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-surface-300">
+            <a href={ipoDetailHref(ipo.slug, 'all')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-surface-300">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -212,7 +213,7 @@ const faqJsonLd = {
         </h2>
         <div class="space-y-2">
           {listedIPOs.map(ipo => (
-            <a href={`/ipo/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-warning-300">
+            <a href={ipoDetailHref(ipo.slug, 'all')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-warning-300">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">

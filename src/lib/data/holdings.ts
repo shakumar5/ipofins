@@ -6,6 +6,8 @@ import { requireDb } from '../db';
 import {
   monthsFromIndex,
   readFundHoldingsMetaFromDisk,
+  readFundHoldingsRowsFromDisk,
+  readFundPortfolioStockCountFromDisk,
   readFundOverlapIndexFromDisk,
   readFundOverlapsByFundFromDisk,
   readHoldingsCompareIndexFromDisk,
@@ -725,6 +727,9 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
 
 /** Full portfolio stock count for latest month (may exceed top holdings shown on fund page). */
 export async function getFundPortfolioStockCount(fundSlug: string): Promise<number | null> {
+  const diskCount = readFundPortfolioStockCountFromDisk(fundSlug);
+  if (diskCount != null) return diskCount;
+
   const sql = requireDb();
   const rows = await sql`
     WITH target AS (
@@ -764,6 +769,9 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
 }
 
 export async function getFundHoldings(fundSlug: string): Promise<Record<string, unknown>[]> {
+  const diskRows = readFundHoldingsRowsFromDisk(fundSlug);
+  if (diskRows?.length) return diskRows;
+
   const sql = requireDb();
   const rows = await sql`
     WITH target AS (

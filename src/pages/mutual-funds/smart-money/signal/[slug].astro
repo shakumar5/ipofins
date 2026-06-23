@@ -7,9 +7,18 @@ import { BRAND_URL } from '../../../../lib/brand';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
 import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
 import { getSignalDetailPageMeta, signalDetailPath } from '../../../../lib/signal-detail-meta';
-import { stockSignalPath } from '../../../../lib/stock-signal-meta';
+import { smartMoneyTabPath } from '../../../../lib/smart-money-meta';
+import {
+  defaultSignalDetailBack,
+  SMART_MONEY_LIST_BACK,
+} from '../../../../lib/list-back-nav';
+import ListBackLink from '../../../../components/ListBackLink.astro';
 
-const sm = loadSmartMoneyTrackerLinks();
+const defaultBack = defaultSignalDetailBack();
+const smBackVariants = Object.fromEntries(
+  Object.entries(SMART_MONEY_LIST_BACK).filter(([key]) => key !== 'signals'),
+);
+const signalsListHref = smartMoneyTabPath('signals');
 
 export function getStaticPaths() {
   const stocks = loadSmartMoneyStockSlugs();
@@ -21,6 +30,8 @@ export function getStaticPaths() {
     props: { stockSlug: slug, stockName },
   }));
 }
+
+const sm = loadSmartMoneyTrackerLinks();
 
 const { stockSlug, stockName } = Astro.props;
 const isPlaceholder = stockSlug === '_placeholder';
@@ -54,7 +65,7 @@ const jsonLd = isPlaceholder
       <li><span class="mx-1">/</span></li>
       <li><a href={sm.hub} class="hover:text-primary-600 transition-colors">Smart Money</a></li>
       <li><span class="mx-1">/</span></li>
-      <li><a href={stockSignalPath()} class="hover:text-primary-600 transition-colors">Stock Signal</a></li>
+      <li><a href={signalsListHref} class="hover:text-primary-600 transition-colors">Smart Money Signal</a></li>
       {!isPlaceholder && (
         <>
           <li><span class="mx-1">/</span></li>
@@ -67,6 +78,15 @@ const jsonLd = isPlaceholder
   </nav>
 
   <section class="container-wide pt-8 pb-4">
+    {!isPlaceholder && (
+      <ListBackLink
+        id="signal-detail-back"
+        defaultHref={defaultBack.href}
+        defaultLabel={defaultBack.label}
+        variants={smBackVariants}
+        class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
+      />
+    )}
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>
       {isPlaceholder ? 'Smart Money Signal' : pageMeta.heading}
     </h1>
@@ -80,7 +100,13 @@ const jsonLd = isPlaceholder
     {isPlaceholder ? (
       <div class="text-center py-12 text-surface-500 text-sm">
         <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate signal pages.</p>
-        <a href={sm.hub} class="text-primary-600 mt-2 inline-block">← Back to Smart Money</a>
+        <ListBackLink
+          id="signal-detail-back-placeholder"
+          defaultHref={defaultBack.href}
+          defaultLabel={defaultBack.label}
+          variants={smBackVariants}
+          class="text-primary-600 mt-2 inline-flex"
+        />
       </div>
     ) : (
       <SmartMoneySignalDetailPage

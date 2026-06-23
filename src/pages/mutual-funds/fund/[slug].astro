@@ -5,6 +5,9 @@ import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHol
 import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
 import { readFundHoldingsAliasesFromDisk } from '../../../lib/holdings-compare-server';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
+import { catToSlug } from '../../../lib/fund-category-slug';
+import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref } from '../../../lib/list-back-nav';
+import ListBackLink from '../../../components/ListBackLink.astro';
 
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
@@ -37,6 +40,10 @@ const { fund } = Astro.props;
 if (!fund) {
   return Astro.redirect('/mutual-funds/all', 302);
 }
+const categorySlug = catToSlug(fund.category);
+const defaultBack = fundListBackNav('all', fund.category);
+const backVariants = fundListBackVariants(fund.category);
+const categoryListHref = `/mutual-funds/all/${categorySlug}`;
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);
 const relatedFundHref = (f: { slug: string; schemeCode: string }) =>
@@ -113,10 +120,14 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
   jsonLd={jsonLd}
 >
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
-    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
       <li><span class="mx-1">/</span></li>
       <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds/all" class="hover:text-primary-600 transition-colors">All Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={categoryListHref} class="hover:text-primary-600 transition-colors">{fund.category}</a></li>
       <li><span class="mx-1">/</span></li>
       <li class="text-surface-900 dark:text-white font-medium truncate max-w-[200px]">{fund.name}</li>
     </ol>
@@ -124,6 +135,13 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
 
   <!-- Header -->
   <section class="container-wide pt-6 pb-4">
+    <ListBackLink
+      id="fund-list-back"
+      defaultHref={defaultBack.href}
+      defaultLabel={defaultBack.label}
+      variants={backVariants}
+      class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
+    />
     <MfSectionTabs active="all" />
 
     <div class="mt-3 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -274,19 +292,24 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
       <p class="text-sm text-surface-500 mb-4">Funds that share the most stock holdings with {fund.name}.</p>
       <div class="space-y-2">
         {fundOverlaps.map((row) => (
-          <a href={`/mutual-funds/fund-overlap/${row.slug}`} class="card-compact flex items-center justify-between hover:shadow-md transition-shadow">
+          <a href={fundOverlapDetailHref(String(row.slug), 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })} class="card-compact flex items-center justify-between hover:shadow-md transition-shadow">
             <span class="text-sm font-medium text-surface-900 dark:text-white">{row.name}</span>
             <span class="text-sm font-bold text-primary-600">{row.overlap_pct != null ? `${Number(row.overlap_pct).toFixed(1)}% overlap` : '—'}</span>
           </a>
         ))}
       </div>
-      <a href={`/mutual-funds/fund-overlap/${fund.slug}`} class="inline-block mt-3 text-sm text-primary-600 hover:underline">View full overlap analysis →</a>
+      <a href={fundOverlapDetailHref(fund.slug, 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })} class="inline-block mt-3 text-sm text-primary-600 hover:underline">View full overlap analysis →</a>
     </section>
   )}
 
   <!-- More Funds from Same Category -->
   <section class="container-wide py-6">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">More {fund.category} Funds</h2>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white section-accent">More {fund.category} Funds</h2>
+      <a href={categoryListHref} class="text-sm text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap">
+        View all {fund.category} funds →
+      </a>
+    </div>
     <div class="space-y-2">
       {relatedFunds.map(f => (
         <a href={relatedFundHref(f)} class="card-compact group block hover:shadow-md transition-shadow">
@@ -344,7 +367,8 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
   <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
     <div class="nav-btn-group">
       <a href="/mutual-funds/best" class="btn-secondary px-6 py-3">🏆 Best Mutual Funds</a>
-      <a href="/mutual-funds/all" class="btn-secondary px-6 py-3">📊 All Mutual Funds</a>
+      <a href={categoryListHref} class="btn-secondary px-6 py-3">📊 {fund.category} Funds</a>
+      <a href="/mutual-funds/all" class="btn-secondary px-6 py-3">All Mutual Funds</a>
       <a href="/mutual-funds/mutual-fund-holdings-changes" class="btn-secondary px-6 py-3">📋 Holdings Changes</a>
       <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">📈 SIP Calculator</a>
     </div>

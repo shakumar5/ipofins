@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo, useState } from 'react';
+import { fundOverlapDetailHref } from '../../lib/list-back-nav';
 
 interface FundOverlapItem {
   slug: string;
@@ -67,7 +68,7 @@ export default function FundOverlapTab({ funds }: Props) {
         {visible.map((fund) => (
           <a
             key={fund.slug}
-            href={`/mutual-funds/fund-overlap/${fund.slug}`}
+            href={fundOverlapDetailHref(fund.slug, 'fund-overlap')}
             className="card-compact block hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
           >
             <span className="text-sm font-medium text-surface-900 dark:text-white">{fund.name}</span>

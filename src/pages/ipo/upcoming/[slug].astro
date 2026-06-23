@@ -1,6 +1,10 @@
 ---
 import IPOLayout from '../../../layouts/IPOLayout.astro';
 import { getUpcomingIPOs } from '../../../lib/data/ipos';
+import { IPO_LIST_BACK } from '../../../lib/list-back-nav';
+import ListBackLink from '../../../components/ListBackLink.astro';
+
+const upcomingBack = IPO_LIST_BACK.upcoming;
 
 export async function getStaticPaths() {
   const upcomingData = await getUpcomingIPOs();
@@ -28,11 +32,12 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <section class="container-wide py-6">
-    <!-- Back link -->
-    <a href="/ipo/upcoming" class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      Back to Upcoming IPOs
-    </a>
+    <ListBackLink
+      id="ipo-upcoming-detail-back"
+      defaultHref={upcomingBack.href}
+      defaultLabel={upcomingBack.label}
+      class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1"
+    />
 
     <!-- Header -->
     <div class="mt-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4">

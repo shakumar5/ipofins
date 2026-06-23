@@ -4,7 +4,7 @@ import SmartMoneySignalDetail from './SmartMoneySignalDetail';
 
 import type { SmartMoneySignalRow } from '../../lib/smart-money-signals';
 import { findSignalRow, loadSignalsIndex } from '../../lib/smart-money-client';
-import { stockSignalPath } from '../../lib/stock-signal-meta';
+import { smartMoneyTabPath } from '../../lib/smart-money-meta';
 
 interface Props {
   stockSlug: string;
@@ -65,12 +65,12 @@ export default function SmartMoneySignalDetailPage({
     return (
       <div className="py-12 text-center text-red-600 dark:text-red-400">
         <p className="text-sm">{error || 'No data available'}</p>
-        <a href={stockSignalPath(stockSlug)} className="text-primary-600 text-sm mt-2 inline-block">
-          ← Back to Stock Signal
+        <a href={smartMoneyTabPath('signals')} className="text-primary-600 text-sm mt-2 inline-block">
+          ← Back to Smart Money Signal
         </a>
       </div>
     );
   }
 
-  return <SmartMoneySignalDetail row={row} backHref={stockSignalPath(stockSlug)} />;
+  return <SmartMoneySignalDetail row={row} />;
 }
