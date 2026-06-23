@@ -9,6 +9,11 @@ on:
     branches: [main]
 
   workflow_dispatch:
+    inputs:
+      force_export:
+        description: Force full Neon export (use after pipeline:monthly or data changes)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -42,11 +47,36 @@ jobs:
       - name: Type check
         run: npm run check
 
+      - name: Restore exported client data cache
+        uses: actions/cache@v4
+        id: export-cache
+        with:
+          path: public/data
+          key: export-data-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs') }}
+          restore-keys: |
+            export-data-
+
+      - name: Export cache status
+        run: |
+          if [ "${{ steps.export-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "✓ Export cache hit — build will skip Neon export if stamp is fresh"
+          else
+            echo "ℹ Export cache miss — first build will run one full export, then cache for later deploys"
+          fi
+
       - name: Build static site
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          FORCE_EXPORT: '1'
+          EXPORT_MAX_AGE_MINUTES: 10080
+          FORCE_EXPORT: ${{ github.event_name == 'workflow_dispatch' && inputs.force_export && '1' || '' }}
+
+      - name: Save exported client data cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: public/data
+          key: export-data-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs') }}
 
       - name: Deploy prebuilt static site to Vercel
         run: |

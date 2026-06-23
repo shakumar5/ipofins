@@ -9,11 +9,6 @@ import { catToSlug } from '../../../lib/fund-category-slug';
 import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref } from '../../../lib/list-back-nav';
 import ListBackLink from '../../../components/ListBackLink.astro';
 
-const categorySlug = catToSlug(fund.category);
-const defaultBack = fundListBackNav('all', fund.category);
-const backVariants = fundListBackVariants(fund.category);
-const categoryListHref = `/mutual-funds/all/${categorySlug}`;
-
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
   const aliases = readFundHoldingsAliasesFromDisk() ?? {};
@@ -45,6 +40,10 @@ const { fund } = Astro.props;
 if (!fund) {
   return Astro.redirect('/mutual-funds/all', 302);
 }
+const categorySlug = catToSlug(fund.category);
+const defaultBack = fundListBackNav('all', fund.category);
+const backVariants = fundListBackVariants(fund.category);
+const categoryListHref = `/mutual-funds/all/${categorySlug}`;
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);
 const relatedFundHref = (f: { slug: string; schemeCode: string }) =>

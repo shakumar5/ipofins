@@ -30,7 +30,7 @@ const variantsJson = JSON.stringify(variants);
   <span class="back-link-text">{defaultLabel}</span>
 </a>
 
-<script define:vars={{ id, defaultHref, defaultLabel, variantsJson }}>
+<script is:inline define:vars={{ id, defaultHref, defaultLabel, variantsJson }}>
   function resolveContextualBack(params, variants, fallbackHref, fallbackLabel) {
     const from = params.get('from');
     if (!from) {
@@ -100,13 +100,13 @@ const variantsJson = JSON.stringify(variants);
     return { href: fallbackHref, label: fallbackLabel };
   }
 
-  const variants = JSON.parse(variantsJson);
+  const variantMap = JSON.parse(variantsJson);
   const params = new URLSearchParams(window.location.search);
   const el = document.getElementById(id);
   const textEl = el?.querySelector('.back-link-text');
   if (!el || !textEl) return;
 
-  const resolved = resolveContextualBack(params, variants, defaultHref, defaultLabel);
+  const resolved = resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
   el.href = resolved.href;
   textEl.textContent = resolved.label;
 </script>

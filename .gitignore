@@ -9,26 +9,43 @@ dist/
 .env.*
 !.env.example
 
-# editor
+# Vercel CLI (local project link — never commit)
+.vercel/
+
+# editor / IDE
 .vscode/
 .idea/
+.cursor/
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Astro
 .astro/
 
-# Market data — stored in Neon DB, never committed
+# TypeScript
+*.tsbuildinfo
+
+# Logs & local command output
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Market data — stored in Neon DB, never committed (CI exports to public/data)
 src/data/ipos.json
 src/data/mutual-funds.json
 src/data/fund-holdings.json
 src/data/upcoming-ipos.json
 src/data/ipo-performance.json
 src/data/ipos_pretty.json
-data/amfi-excel/
-data/temp/
+src/data/*.bak
+*.bak
+
+# Pipeline working dirs (AMFI Excel, temp parses — local only)
+data/
 
 # Deprecated fetch backups
 scripts/ipos_*.json
@@ -39,9 +56,15 @@ check-output.txt
 scripts/output/
 
 # Local debug / scrape dumps (Groww, HDFC, etc.) — never commit
+_groww*.json
 _groww_detail.json
 tmp-*.json
 **/tmp-*.json
+
+# DB dumps / backups (migrations in db/migrations/ stay tracked)
+*.dump
+*.sql.gz
+neon-backup*/
 
 # Temporary holdings Excel used for local parser tests
 scripts/_tmp*/
@@ -64,6 +87,10 @@ SEO_STRATEGY.md
 public/data/**
 !public/data/.gitkeep
 
-# Sitemaps — regenerated during export / build
-public/sitemap-*.xml
+# Sitemaps — regenerated during export / build (dist/ sitemaps covered by dist/)
+public/sitemap*.xml
 public/sitemap-overlap-staging-*.xml
+
+# Test / coverage artifacts
+coverage/
+.nyc_output/

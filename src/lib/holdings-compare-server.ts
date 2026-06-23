@@ -3,7 +3,7 @@
  * Reads exported static JSON from public/data/.
  */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -216,4 +216,141 @@ export function readFundHoldingsAliasesFromDisk(): Record<string, string> | null
     fundHoldingsAliasesCache = null;
     return null;
   }
+}
+
+interface DiskHoldingStock {
+  name: string;
+  isin?: string;
+  sector: string;
+  pct: number;
+}
+
+interface DiskFundHoldingsEntry {
+  name: string;
+  amc: string;
+  [monthLabel: string]: unknown;
+}
+
+interface DiskAmcHoldingsFile {
+  holdings: Record<string, DiskFundHoldingsEntry>;
+}
+
+interface HoldingsSlugIndexEntry {
+  monthLabel: string;
+  stocks: DiskHoldingStock[];
+}
+
+let holdingsSlugIndexCache: Map<string, HoldingsSlugIndexEntry> | null | undefined;
+
+function monthLabelToDate(monthLabel: string): string {
+  const parsed = Date.parse(`${monthLabel} 1`);
+  if (Number.isFinite(parsed)) {
+    return new Date(parsed).toISOString().slice(0, 10);
+  }
+  return monthLabel;
+}
+
+function latestMonthLabelForFund(
+  fund: DiskFundHoldingsEntry,
+  months: string[],
+): string | null {
+  for (let i = months.length - 1; i >= 0; i--) {
+    const month = months[i];
+    const rows = fund[month];
+    if (Array.isArray(rows) && rows.length) return month;
+  }
+  return null;
+}
+
+function fundSlugCandidates(fundSlug: string): string[] {
+  const aliases = readFundHoldingsAliasesFromDisk() ?? {};
+  const candidates = new Set<string>([fundSlug]);
+  if (aliases[fundSlug]) candidates.add(aliases[fundSlug]);
+  for (const [listable, page] of Object.entries(aliases)) {
+    if (page === fundSlug || listable === fundSlug) {
+      candidates.add(listable);
+      candidates.add(page);
+    }
+  }
+  return [...candidates];
+}
+
+function buildHoldingsSlugIndex(index: HoldingsCompareIndexDisk): Map<string, HoldingsSlugIndexEntry> {
+  const map = new Map<string, HoldingsSlugIndexEntry>();
+  const months = index.months;
+
+  for (const root of projectRoots()) {
+    const amcDir = join(root, 'public', 'data', 'holdings-compare', 'amc');
+    if (!existsSync(amcDir)) continue;
+
+    for (const fileName of readdirSync(amcDir)) {
+      if (!fileName.endsWith('.json')) continue;
+      const filePath = join(amcDir, fileName);
+      let file: DiskAmcHoldingsFile;
+      try {
+        file = JSON.parse(readFileSync(filePath, 'utf-8')) as DiskAmcHoldingsFile;
+      } catch {
+        continue;
+      }
+
+      for (const [slug, fund] of Object.entries(file.holdings || {})) {
+        const monthLabel = latestMonthLabelForFund(fund, months);
+        if (!monthLabel) continue;
+        const stocks = fund[monthLabel] as DiskHoldingStock[];
+        map.set(slug, { monthLabel, stocks });
+      }
+    }
+    break;
+  }
+
+  return map;
+}
+
+function loadHoldingsSlugIndex(): Map<string, HoldingsSlugIndexEntry> | null {
+  if (holdingsSlugIndexCache !== undefined) {
+    return holdingsSlugIndexCache;
+  }
+
+  const index = readHoldingsCompareIndexFromDisk();
+  if (!index?.months?.length) {
+    holdingsSlugIndexCache = null;
+    return null;
+  }
+
+  holdingsSlugIndexCache = buildHoldingsSlugIndex(index);
+  return holdingsSlugIndexCache;
+}
+
+/** Latest-month top holdings for fund detail pages (from export JSON, no Neon). */
+export function readFundHoldingsRowsFromDisk(fundSlug: string): Record<string, unknown>[] | null {
+  const slugIndex = loadHoldingsSlugIndex();
+  if (!slugIndex) return null;
+
+  const monthIso = (monthLabel: string) => monthLabelToDate(monthLabel);
+
+  for (const slug of fundSlugCandidates(fundSlug)) {
+    const hit = slugIndex.get(slug);
+    if (!hit?.stocks?.length) continue;
+    const month = monthIso(hit.monthLabel);
+    return hit.stocks.map((stock) => ({
+      name: stock.name,
+      pct: stock.pct,
+      sector: stock.sector || '',
+      month,
+    }));
+  }
+
+  return null;
+}
+
+export function readFundPortfolioStockCountFromDisk(fundSlug: string): number | null {
+  const meta = readFundHoldingsMetaFromDisk();
+  if (!meta?.stockCounts) return null;
+
+  for (const slug of fundSlugCandidates(fundSlug)) {
+    const count = meta.stockCounts[slug];
+    if (count != null && count > 0) return count;
+  }
+
+  return null;
 }
