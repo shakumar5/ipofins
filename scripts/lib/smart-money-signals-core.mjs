@@ -106,8 +106,37 @@ export function scoreToSignal(score) {
   if (score >= 75) return { signal: 'Strong Accumulation', emoji: '🟢' };
   if (score >= 60) return { signal: 'Moderate Accumulation', emoji: '🟡' };
   if (score >= 40) return { signal: 'Neutral', emoji: '⚪' };
-  if (score >= 25) return { signal: 'Distribution', emoji: '🟠' };
+  if (score >= 25) return { signal: 'Light Distribution', emoji: '🟠' };
   return { signal: 'Strong Distribution', emoji: '🔴' };
+}
+
+export function signalDirection(netFundFlow, netWeightChangePct = 0) {
+  if (netFundFlow > 0) return 'accumulation';
+  if (netFundFlow < 0) return 'distribution';
+  if (netWeightChangePct > 0) return 'accumulation';
+  if (netWeightChangePct < 0) return 'distribution';
+  return 'neutral';
+}
+
+export function deriveSignal(convictionScore, netFundFlow, netWeightChangePct = 0) {
+  const direction = signalDirection(netFundFlow, netWeightChangePct);
+  const s = convictionScore;
+
+  if (direction === 'accumulation') {
+    if (s >= 90) return { signal: 'Aggressive Accumulation', emoji: '🚀' };
+    if (s >= 75) return { signal: 'Strong Accumulation', emoji: '🟢' };
+    if (s >= 50) return { signal: 'Moderate Accumulation', emoji: '🟡' };
+    return { signal: 'Light Accumulation', emoji: '🔵' };
+  }
+
+  if (direction === 'distribution') {
+    if (s >= 75) return { signal: 'Strong Distribution', emoji: '🔴' };
+    if (s >= 50) return { signal: 'Distribution', emoji: '🟠' };
+    if (s >= 25) return { signal: 'Light Distribution', emoji: '🟠' };
+    return { signal: 'Strong Distribution', emoji: '🔴' };
+  }
+
+  return { signal: 'Neutral', emoji: '⚪' };
 }
 
 function amcInstitutionalConfidence(amcCount) {
@@ -125,18 +154,28 @@ function buildInterpretation(stockName, signal, opts = {}) {
   const fresh = opts.freshEntries ?? 0;
   const cap = opts.category && opts.category !== 'All' ? opts.category : 'market-cap';
 
-  if (flow >= 15 && (opts.netWeightChangePct ?? 0) > 0) {
-    if (score >= 75) {
-      return `Fund managers are meaningfully adding to ${shortName} across mutual funds. Institutional interest is clearly positive this month.`;
+  if (flow > 0) {
+    if (flow >= 15 && (opts.netWeightChangePct ?? 0) > 0) {
+      if (score >= 75) {
+        return `Fund managers are meaningfully adding to ${shortName} across mutual funds. Institutional interest is clearly positive this month.`;
+      }
+      if (score >= 50) {
+        return `Mutual funds are net buyers of ${shortName} — including ${fresh} fresh entries and broad weight increases — ranking among active ${cap} peers this month.`;
+      }
+      return `Funds are net adding ${shortName} (${flow} more buy-side fund moves than sells), though activity is lighter than the top ${cap} leaders this month.`;
     }
-    if (score >= 50) {
-      return `Mutual funds are net buyers of ${shortName} — including ${fresh} fresh entries and broad weight increases — ranking among active ${cap} names this month.`;
+    if (signal === 'Light Accumulation') {
+      return `A small number of funds added or initiated positions in ${shortName} this month (${flow} net buy-side moves). Conviction ranks low vs other ${cap} stocks, but flow direction is positive.`;
     }
-    return `Funds are net adding ${shortName} (${flow} more buy-side fund moves than sells), though activity is lighter than the top ${cap} leaders this month.`;
   }
 
-  if (flow <= -10) {
-    return `More funds reduced or exited ${shortName} than added this month. Institutional conviction appears to be fading.`;
+  if (flow < 0) {
+    if (flow <= -10) {
+      return `More funds reduced or exited ${shortName} than added this month. Institutional conviction appears to be fading.`;
+    }
+    if (signal === 'Light Distribution') {
+      return `More funds trimmed or exited ${shortName} than added (${Math.abs(flow)} net sell-side moves), though selling pressure is lighter than the heaviest ${cap} exits this month.`;
+    }
   }
 
   switch (signal) {
@@ -146,8 +185,12 @@ function buildInterpretation(stockName, signal, opts = {}) {
       return `Fund managers are meaningfully adding to ${shortName} across mutual funds. Institutional interest is clearly positive this month.`;
     case 'Moderate Accumulation':
       return `There is steady but measured buying in ${shortName}. Conviction is building without extreme one-sided activity.`;
+    case 'Light Accumulation':
+      return `Funds are net buyers of ${shortName}, but activity is modest compared with the most active ${cap} names this month.`;
     case 'Neutral':
       return `Fund activity in ${shortName} is mixed this month. Increases and reductions largely offset each other.`;
+    case 'Light Distribution':
+      return `Slightly more funds reduced or exited ${shortName} than added this month. Selling is present but not broad-based.`;
     case 'Distribution':
       return `More funds reduced than added to ${shortName} this month. Institutional conviction appears to be fading.`;
     case 'Strong Distribution':
@@ -336,17 +379,17 @@ export function scoreStockInCategory(raw, maxes) {
 
 export function buildSignalRowFromMetrics(raw, maxes) {
   const { convictionScore, factorScores, factorBreakdown } = scoreStockInCategory(raw, maxes);
-  const { signal, emoji } = scoreToSignal(convictionScore);
-  const amcCount = raw.amcIdsAll.size;
-  const conf = amcInstitutionalConfidence(amcCount);
-  const buyingFunds = raw.increasedCount + raw.freshEntries;
-  const fundsHolding = Math.max(0, raw.fundsHolding ?? 0);
   const netFlow = netFundFlow(
     raw.increasedCount,
     raw.decreasedCount,
     raw.freshEntries,
     raw.completeExits,
   );
+  const { signal, emoji } = deriveSignal(convictionScore, netFlow, raw.netWeightChangePct);
+  const amcCount = raw.amcIdsAll.size;
+  const conf = amcInstitutionalConfidence(amcCount);
+  const buyingFunds = raw.increasedCount + raw.freshEntries;
+  const fundsHolding = Math.max(0, raw.fundsHolding ?? 0);
 
   return {
     stockName: raw.stockName,

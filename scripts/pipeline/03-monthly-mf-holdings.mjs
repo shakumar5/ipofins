@@ -53,20 +53,22 @@ async function main() {
 
   run(nodeExecCmd('scripts/export-client-data.mjs'), 'Export client JSON (holdings, smart money)');
 
-  const { neon } = await import('@neondatabase/serverless');
-  const { readFileSync } = await import('fs');
-  const envContent = readFileSync(join(ROOT, '.env'), 'utf-8');
-  const dbUrl = envContent.match(/DATABASE_URL=(.+)/)[1].trim();
-  const sql = neon(dbUrl);
+  const { sql, withDbRetry } = await import('../lib/db.mjs');
 
   if (fullReload) {
-    const monthRows = await sql`SELECT DISTINCT month::text AS month FROM fund_holdings ORDER BY month ASC`;
+    const monthRows = await withDbRetry(
+      () => sql`SELECT DISTINCT month::text AS month FROM fund_holdings ORDER BY month ASC`,
+      { label: 'List holdings months' },
+    );
     for (const row of monthRows) {
       run(nodeExecCmd('db/compute/compute-signals.mjs', `--month=${row.month}`), `Compute signals for ${row.month}`);
     }
   } else {
-    const [latest] = await sql`SELECT month::text AS month FROM fund_holdings ORDER BY month DESC LIMIT 1`;
-    const m = latest?.month;
+    const latest = await withDbRetry(
+      () => sql`SELECT month::text AS month FROM fund_holdings ORDER BY month DESC LIMIT 1`,
+      { label: 'Latest holdings month' },
+    );
+    const m = latest[0]?.month;
     if (!m) {
       console.error('\n  ❌ No holdings in fund_holdings');
       process.exit(1);

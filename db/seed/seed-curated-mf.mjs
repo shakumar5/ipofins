@@ -89,17 +89,33 @@ async function main() {
   const amcIdByName = Object.fromEntries(amcRows.map((r) => [r.name, r.id]));
 
   let inserted = 0;
+  let schemeMigrated = 0;
+  const total = curated.length;
+  console.log(`\n  Seeding ${total} funds to Neon (~1–2 queries each, often 10–15 min with no other output)…`);
+
   for (const fund of curated) {
     const parserAmc = canonicalParserAmc(fund.amc);
     let amcName = parserAmc !== 'Unknown' ? parserAmc : extractAmcFromFundName(fund.name);
     const amcId = amcIdByName[amcName];
     if (!amcId) continue;
 
+    const schemeCode = String(fund.schemeCode || '').trim() || null;
+    if (schemeCode) {
+      const stale = await sql`
+        UPDATE funds
+        SET scheme_code = NULL, is_active = false, updated_at = NOW()
+        WHERE scheme_code = ${schemeCode}
+          AND slug != ${fund.dbSlug}
+        RETURNING slug
+      `;
+      schemeMigrated += stale.length;
+    }
+
     await sql`
       INSERT INTO funds (
         scheme_code, name, slug, amc_id, category, risk_level, rating, aum, is_active
       ) VALUES (
-        ${fund.schemeCode || null},
+        ${schemeCode},
         ${fund.name},
         ${fund.dbSlug},
         ${amcId},
@@ -121,6 +137,9 @@ async function main() {
         updated_at = NOW()
     `;
     inserted++;
+    if (inserted % 25 === 0 || inserted === total) {
+      console.log(`    … funds ${inserted}/${total}`);
+    }
   }
 
   const fundRows = await sql`SELECT id, slug FROM funds`;
@@ -129,7 +148,9 @@ async function main() {
   let returnsCount = 0;
   let navCount = 0;
   const today = new Date().toISOString().slice(0, 10);
+  console.log(`  Writing returns & NAV for ${total} funds…`);
 
+  let returnsNavDone = 0;
   for (const fund of curated) {
     const fundId = fundIdBySlug[fund.dbSlug];
     if (!fundId) continue;
@@ -155,9 +176,16 @@ async function main() {
       `;
       navCount++;
     }
+    returnsNavDone++;
+    if (returnsNavDone % 50 === 0 || returnsNavDone === total) {
+      console.log(`    … returns/NAV ${returnsNavDone}/${total}`);
+    }
   }
 
   console.log(`\n  ✅ Funds inserted/updated: ${inserted}`);
+  if (schemeMigrated) {
+    console.log(`  ℹ️  Stale scheme_code rows deactivated: ${schemeMigrated}`);
+  }
   console.log(`  ✅ Fund returns:          ${returnsCount}`);
   console.log(`  ✅ Fund NAVs:             ${navCount}`);
   console.log('═══════════════════════════════════════════════════════════\n');

@@ -317,7 +317,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
         {paginatedFunds.map((fund, i) => {
           const hasHold = fund.hasHoldings === true;
           const stockCount = fund.stockCount;
-          const detailSlug = fund.detailSlug || fund.slug;
+          const detailSlug = fund.detailSlug;
           const rank = startIdx + i + 1;
           const rowClass =
             'block p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-all list-accent-hover';
@@ -407,7 +407,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
             </div>
             </>
           );
-          return hasHold ? (
+          return hasHold && detailSlug ? (
             <a
               key={fund.slug}
               href={`/mutual-funds/fund/${detailSlug}-holdings`}

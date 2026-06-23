@@ -38,6 +38,23 @@ build-log.txt
 check-output.txt
 scripts/output/
 
+# Local debug / scrape dumps (Groww, HDFC, etc.) — never commit
+_groww_detail.json
+tmp-*.json
+**/tmp-*.json
+
+# Temporary holdings Excel used for local parser tests
+scripts/_tmp*/
+**/_tmp*/
+
+# Local UI test screenshots
+test-screenshots/
+
+# Holdings source Excel (lives on disk at HOLDINGS_INPUT_DIR, not in git)
+**/*.xlsx
+**/*.xls
+!data/amfi-excel/**
+
 # Internal specs & SEO audit notes (not needed for prod build)
 .kiro/
 SEO_AUDIT_FINAL.md

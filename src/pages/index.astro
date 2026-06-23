@@ -62,7 +62,7 @@ const jsonLd = {
       "name": BRAND_NAME,
       "url": "https://ipofins.com",
       "logo": "https://ipofins.com/favicon.svg",
-      "description": "IPO analytics, mutual fund holdings tracking, smart money signals, and investment calculators for Indian investors.",
+      "description": "IPO analytics, mutual fund holdings tracking, smart money signals, and investment planning tools for Indian investors.",
       "sameAs": ["https://x.com/ipofins", "https://youtube.com/@ipofins"]
     },
     {
@@ -89,7 +89,7 @@ const faqJsonLd = {
       "name": "What is IPOFins?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "IPOFins is a free financial intelligence platform for Indian investors. It tracks IPOs, mutual fund portfolio changes from official AMC disclosures, smart money signals, sector rotation, and offers free investment calculators — no login required."
+        "text": "IPOFins is a free financial intelligence platform for Indian investors. It tracks IPOs, mutual fund portfolio changes from official AMC disclosures, smart money signals, sector rotation, and offers free investment planning tools — no login required."
       }
     },
     {
@@ -105,7 +105,7 @@ const faqJsonLd = {
       "name": "Is IPOFins free to use?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. IPOFins is completely free with no login, no premium plans, and no paywalls. All calculators run in your browser and we do not store personal data."
+        "text": "Yes. IPOFins is completely free with no login, no premium plans, and no paywalls. All tools run in your browser and we do not store personal data."
       }
     },
     {
@@ -122,7 +122,7 @@ const faqJsonLd = {
 
 <BaseLayout
   title="IPOFins - IPO Analytics, Smart Money Tracker & Mutual Fund Tools India"
-  description="Track what mutual funds are buying, analyze IPOs, check portfolio overlap, and use free SIP & tax calculators. Data-driven research for Indian investors — no login required."
+  description="Track what mutual funds are buying, analyze IPOs, check portfolio overlap, and plan investments with free SIP and tax tools. Data-driven research for Indian investors — no login required."
   jsonLd={jsonLd}
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
@@ -190,7 +190,7 @@ const faqJsonLd = {
           </a>
           <a href="/tools" class="card-compact hover:shadow-md transition-shadow">
             <p class="text-3xl font-extrabold text-surface-900 dark:text-white tabular-nums">{toolsData.length}</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Free Calculators</p>
+            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Finance Tools</p>
           </a>
         </div>
       </div>
@@ -301,15 +301,11 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-wide">
-    <AdUnit slot="3456789012" format="auto" />
-  </section>
-
   <!-- Featured tools — not the full list -->
   <section class="container-wide py-10 lg:py-12">
     <div class="flex items-end justify-between mb-8">
       <div>
-        <h2 class="section-title">Popular Calculators</h2>
+        <h2 class="section-title">Popular Tools</h2>
         <p class="section-subtitle">Free tools that run in your browser — no data stored</p>
       </div>
       <a href="/tools" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors hidden sm:inline-flex items-center gap-1">
@@ -330,13 +326,20 @@ const faqJsonLd = {
     </div>
   </section>
 
+  <section class="container-wide py-8 lg:py-10" aria-label="Sponsored">
+    <p class="text-sm text-surface-600 dark:text-surface-300 max-w-2xl mb-6 leading-relaxed">
+      IPOFins is built for long-term Indian investors — from tracking AMC portfolio changes to planning SIPs and comparing brokers. Explore the guides below or browse our full tool library.
+    </p>
+    <AdUnit slot="3456789012" format="auto" />
+  </section>
+
   <!-- FAQ — SEO -->
   <section class="container-wide py-10 lg:py-12">
     <h2 class="section-title mb-6">Frequently Asked Questions</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl">
       <div class="card-compact">
         <h3 class="font-semibold text-surface-900 dark:text-white text-sm">What is IPOFins?</h3>
-        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400 leading-relaxed">A free platform for Indian investors covering IPO analytics, mutual fund smart money tracking, portfolio overlap, and investment calculators — built on official AMFI &amp; SEBI disclosures.</p>
+        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400 leading-relaxed">A free platform for Indian investors covering IPO analytics, mutual fund smart money tracking, portfolio overlap, and investment planning — built on official AMFI &amp; SEBI disclosures.</p>
       </div>
       <div class="card-compact">
         <h3 class="font-semibold text-surface-900 dark:text-white text-sm">What is Smart Money Tracker?</h3>
@@ -344,7 +347,7 @@ const faqJsonLd = {
       </div>
       <div class="card-compact">
         <h3 class="font-semibold text-surface-900 dark:text-white text-sm">Is IPOFins free?</h3>
-        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400 leading-relaxed">Yes — no login, no premium plans, no paywalls. Calculators run entirely in your browser and we don't store personal data.</p>
+        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400 leading-relaxed">Yes — no login, no premium plans, no paywalls. Tools run entirely in your browser and we don't store personal data.</p>
       </div>
       <div class="card-compact">
         <h3 class="font-semibold text-surface-900 dark:text-white text-sm">Where does the data come from?</h3>

@@ -1,6 +1,6 @@
-import { getAllFunds, getHoldingsStats } from './data/funds';
-import { getFundHoldingsMeta } from './data/holdings';
+import { getAllFunds, getHoldingsStats, getFundHoldingsLinkMeta } from './data/funds';
 import { selectBestFunds } from './best-funds';
+import { resolveDetailSlug } from './fund-detail-slug';
 
 export interface MfHubFundRow {
   name: string;
@@ -30,10 +30,12 @@ function toTableRow(
     rating?: number | null;
     aum?: string | null;
     riskLevel: string;
+    schemeCode?: string;
   },
   holdingSlugs: Set<string>,
   holdingStockCounts: Record<string, number>,
 ): MfHubFundRow {
+  const detailSlug = resolveDetailSlug(f.slug, f.schemeCode ?? '', holdingSlugs, holdingStockCounts);
   return {
     name: f.name,
     slug: f.slug,
@@ -45,15 +47,15 @@ function toTableRow(
     rating: f.rating,
     aum: f.aum,
     riskLevel: f.riskLevel,
-    hasHoldings: holdingSlugs.has(f.slug),
-    stockCount: holdingStockCounts[f.slug] ?? 0,
-    detailSlug: holdingSlugs.has(f.slug) ? f.slug : null,
+    hasHoldings: detailSlug != null,
+    stockCount: detailSlug ? (holdingStockCounts[detailSlug] ?? 0) : 0,
+    detailSlug,
   };
 }
 
 export async function getMfHubBuildData() {
   const fundsData = await getAllFunds();
-  const { slugs: holdingSlugs, stockCounts: holdingStockCounts } = await getFundHoldingsMeta();
+  const { slugs: holdingSlugs, stockCounts: holdingStockCounts } = await getFundHoldingsLinkMeta();
   const { amcCount, fundsCovered: fundCount, latestMonth } = await getHoldingsStats();
 
   const categories = [...new Set(fundsData.map((f) => f.category))].sort((a, b) => a.localeCompare(b));

@@ -46,6 +46,14 @@ const organizationSchema = {
 <!doctype html>
 <html lang="en-IN">
   <head>
+    <!-- Google tag (gtag.js) — single install per Google / AdSense guidance -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18230401074"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-18230401074');
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
@@ -216,14 +224,9 @@ const organizationSchema = {
               return delay(2500);
             })
             .then(function() {
-              return loadScript('https://www.googletagmanager.com/gtag/js?id=G-VRXGEC8RTG');
-            })
-            .then(function() {
-              window.dataLayer = window.dataLayer || [];
-              function gtag() { window.dataLayer.push(arguments); }
-              window.gtag = gtag;
-              gtag('js', new Date());
-              gtag('config', 'G-VRXGEC8RTG');
+              if (typeof window.gtag === 'function') {
+                window.gtag('config', 'G-VRXGEC8RTG');
+              }
               if (window.__markAnalyticsReady) window.__markAnalyticsReady();
               return delay(3000);
             })

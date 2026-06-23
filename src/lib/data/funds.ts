@@ -5,10 +5,13 @@
 import { requireDb } from '../db';
 import {
   holdingsStatsFromIndex,
+  readFundHoldingsIndexFromDisk,
   readHoldingsCompareIndexFromDisk,
+  readPortfolioOverlapFromDisk,
 } from '../holdings-compare-server';
 import { LISTABLE_EQUITY_CATEGORIES } from '../holdings-utils';
-import { getFundSlugsWithHoldings } from './holdings';
+import { fundHoldingsPath, resolveDetailSlug, enrichLinkMetaWithOverlap } from '../fund-detail-slug';
+import { getFundHoldingsMeta, getFundSlugsWithHoldings } from './holdings';
 
 export interface FundRecord {
   name: string;
@@ -112,8 +115,32 @@ async function loadAllFunds(): Promise<FundRecord[]> {
 
 /** Funds with holdings — builds detail pages for listable Direct Plan funds. */
 export async function getFundsWithHoldings(): Promise<FundRecord[]> {
+  const disk = readFundHoldingsIndexFromDisk();
+  if (disk?.length) {
+    return disk.map((f) => ({
+      name: f.name,
+      slug: f.slug,
+      category: f.category,
+      nav: f.nav,
+      returns1y: f.returns1y,
+      returns3y: f.returns3y,
+      returns5y: f.returns5y,
+      aum: f.aum,
+      riskLevel: f.riskLevel,
+      rating: f.rating,
+      schemeCode: f.schemeCode,
+      lastUpdated: f.lastUpdated,
+      expenseRatio: f.expenseRatio,
+      expenseRatioRegular: f.expenseRatioRegular,
+    }));
+  }
+
   const sql = requireDb();
-  const slugs = await getFundSlugsWithHoldings();
+  const slugs = new Set(await getFundSlugsWithHoldings());
+  const overlap = readPortfolioOverlapFromDisk();
+  for (const f of overlap?.funds ?? []) {
+    if (f.slug) slugs.add(f.slug);
+  }
   if (slugs.size === 0) return [];
 
   const rows = await sql`
@@ -298,4 +325,30 @@ export async function getHoldingsStats(): Promise<{
   } catch {
     throw new Error('Holdings stats unavailable — run npm run export:client-data');
   }
+}
+
+export interface FundHoldingsLinkMeta {
+  slugs: Set<string>;
+  stockCounts: Record<string, number>;
+}
+
+/** Holdings metadata for resolving fund detail page URLs at build time. */
+export async function getFundHoldingsLinkMeta(): Promise<FundHoldingsLinkMeta> {
+  const { slugs, stockCounts } = await getFundHoldingsMeta();
+  const overlap = readPortfolioOverlapFromDisk();
+  const overlapSlugs = (overlap?.funds ?? []).map((f) => f.slug).filter(Boolean);
+  if (!overlapSlugs.length) return { slugs, stockCounts };
+  return enrichLinkMetaWithOverlap({ slugs, stockCounts }, overlapSlugs);
+}
+
+/** Static holdings page slug for a listable fund row (falls back to fund.slug). */
+export function resolveFundDetailSlug(
+  fund: Pick<FundRecord, 'slug' | 'schemeCode'>,
+  meta: FundHoldingsLinkMeta,
+): string {
+  return resolveDetailSlug(fund.slug, fund.schemeCode, meta.slugs, meta.stockCounts) ?? fund.slug;
+}
+
+export function fundHoldingsHref(detailSlug: string): string {
+  return fundHoldingsPath(detailSlug);
 }

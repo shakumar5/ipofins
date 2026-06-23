@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { resolveMfFundHoldings } from './mf-hub-holdings-meta.mjs';
+import { resolveMfFundHoldings, enrichHoldingsMetaWithOverlap } from './mf-hub-holdings-meta.mjs';
 
 function toTableRow(f, meta) {
   const holdings = resolveMfFundHoldings(f, meta);
@@ -55,6 +55,12 @@ export function loadMutualFundsJson(root) {
 }
 
 export function buildMfHubExports(funds, holdingsMeta, stats = {}) {
+  const overlapSlugs = stats.overlapSlugs ?? [];
+  const pageSlugSet = stats.pageSlugSet ?? null;
+  const baseMeta = overlapSlugs.length
+    ? enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs)
+    : holdingsMeta;
+  const meta = pageSlugSet?.size ? { ...baseMeta, pageSlugSet } : baseMeta;
   const categories = [...new Set(funds.map((f) => f.category))].sort((a, b) => a.localeCompare(b));
   const bestFunds = selectBestFunds(funds);
   const latestUpdate = funds.reduce((latest, f) => {
@@ -65,7 +71,7 @@ export function buildMfHubExports(funds, holdingsMeta, stats = {}) {
     ? new Date(latestUpdate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'N/A';
 
-  const withHoldings = funds.filter((f) => resolveMfFundHoldings(f, holdingsMeta).hasHoldings);
+  const withHoldings = funds.filter((f) => resolveMfFundHoldings(f, meta).hasHoldings);
 
   return {
     meta: {
@@ -78,7 +84,7 @@ export function buildMfHubExports(funds, holdingsMeta, stats = {}) {
       fundCount: stats.fundCount ?? withHoldings.length,
       latestMonth: stats.latestMonth ?? '',
     },
-    best: bestFunds.map((f) => toTableRow(f, holdingsMeta)),
-    all: funds.map((f) => toTableRow(f, holdingsMeta)),
+    best: bestFunds.map((f) => toTableRow(f, meta)),
+    all: funds.map((f) => toTableRow(f, meta)),
   };
 }

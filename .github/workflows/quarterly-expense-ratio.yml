@@ -53,6 +53,7 @@ jobs:
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FORCE_EXPORT: '1'
 
       - name: Deploy prebuilt static site to Vercel
         run: |

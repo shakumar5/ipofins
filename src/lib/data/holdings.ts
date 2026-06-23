@@ -5,7 +5,11 @@
 import { requireDb } from '../db';
 import {
   monthsFromIndex,
+  readFundHoldingsMetaFromDisk,
+  readFundOverlapIndexFromDisk,
+  readFundOverlapsByFundFromDisk,
   readHoldingsCompareIndexFromDisk,
+  readPortfolioOverlapFromDisk,
 } from '../holdings-compare-server';
 import {
   computeTrackerStockWeights,
@@ -555,7 +559,12 @@ export async function getSmartMoneyTrackerData(): Promise<SmartMoneyTrackerData>
 
 export async function getFundSlugsWithHoldings(): Promise<Set<string>> {
   const meta = await loadFundHoldingsMeta();
-  return meta.slugs;
+  const slugs = new Set(meta.slugs);
+  const overlap = readPortfolioOverlapFromDisk();
+  for (const f of overlap?.funds ?? []) {
+    if (f.slug) slugs.add(f.slug);
+  }
+  return slugs;
 }
 
 /** Latest-month distinct stock count per listable fund slug (for All Funds table). */
@@ -586,15 +595,23 @@ async function loadFundHoldingsMeta(): Promise<FundHoldingsMeta> {
 }
 
 async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
+  const disk = readFundHoldingsMetaFromDisk();
+  if (disk?.slugs?.length) {
+    return {
+      slugs: new Set(disk.slugs),
+      stockCounts: disk.stockCounts,
+    };
+  }
+
   const sql = requireDb();
   const rows = await sql`
-    WITH latest AS (
-      SELECT MAX(month) AS m FROM fund_holdings
+    WITH fund_latest AS (
+      SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
     ),
     portfolio_stats AS (
-      SELECT fund_id, total_stocks
-      FROM fund_portfolio_stats
-      WHERE month = (SELECT m FROM latest)
+      SELECT ps.fund_id, ps.total_stocks
+      FROM fund_portfolio_stats ps
+      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
     ),
     holders AS (
       SELECT
@@ -609,8 +626,8 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
         MAX(ps.total_stocks)::int AS portfolio_total
       FROM fund_holdings fh
       JOIN funds f ON f.id = fh.fund_id
+      INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
       LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
-      WHERE fh.month = (SELECT m FROM latest)
       GROUP BY f.id, f.amc_id, f.scheme_code, holder_base
     ),
     listable AS (
@@ -668,12 +685,40 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
     ) h
     WHERE COALESCE(h.portfolio_total, h.stored_stock_count) > 0
   `;
+  const directRows = await sql`
+    WITH fund_latest AS (
+      SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
+    ),
+    portfolio_stats AS (
+      SELECT ps.fund_id, ps.total_stocks
+      FROM fund_portfolio_stats ps
+      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
+    )
+    SELECT
+      f.slug,
+      COALESCE(MAX(ps.total_stocks), COUNT(DISTINCT fh.stock_id)::int) AS stock_count
+    FROM fund_holdings fh
+    JOIN funds f ON f.id = fh.fund_id
+    INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
+    LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
+      AND f.is_active = true
+      AND f.slug LIKE '%-direct-plan'
+      AND f.category = ANY(${LISTABLE_EQUITY_CATEGORIES})
+      AND f.name NOT ILIKE '%IDCW%'
+      AND f.name NOT ILIKE '%dividend payout%'
+      AND f.name NOT ILIKE '%dividend plan%'
+      AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
+    GROUP BY f.slug
+    HAVING COALESCE(MAX(ps.total_stocks), COUNT(DISTINCT fh.stock_id)::int) > 0
+  `;
   const slugs = new Set<string>();
   const stockCounts: Record<string, number> = {};
-  for (const row of rows as Record<string, unknown>[]) {
+  for (const row of [...(rows as Record<string, unknown>[]), ...(directRows as Record<string, unknown>[])] as Record<string, unknown>[]) {
     const slug = String(row.slug);
+    const count = Number(row.stock_count);
+    if (!count) continue;
     slugs.add(slug);
-    stockCounts[slug] = Number(row.stock_count);
+    stockCounts[slug] = Math.max(stockCounts[slug] ?? 0, count);
   }
   return { slugs, stockCounts };
 }
@@ -844,6 +889,11 @@ export async function getAMCHoldingsComparison(
 }
 
 export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Record<string, unknown>[]> {
+  const disk = readFundOverlapsByFundFromDisk();
+  if (disk?.bySlug?.[fundSlug]) {
+    return disk.bySlug[fundSlug].slice(0, limit).map((row) => ({ ...row })) as Record<string, unknown>[];
+  }
+
   const sql = requireDb();
   const rows = await sql`
     SELECT
@@ -878,6 +928,11 @@ export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Rec
 }
 
 export async function getFundsWithOverlaps(): Promise<{ slug: string; name: string }[]> {
+  const disk = readFundOverlapIndexFromDisk();
+  if (disk?.length) {
+    return disk.map((f) => ({ slug: f.slug, name: f.name }));
+  }
+
   const sql = requireDb();
   const rows = await sql`
     SELECT DISTINCT f.slug, f.name
