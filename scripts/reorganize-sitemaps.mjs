@@ -47,7 +47,7 @@ function collectOverlapStagingUrls() {
   if (!existsSync(DIST)) return urls;
 
   for (const name of readdirSync(DIST)) {
-    if (!/^sitemap-overlap-staging-\d+\.xml$/.test(name)) continue;
+    if (!/^sitemap-overlap-staging(-\w+)?\.xml$/.test(name)) continue;
     const xml = readFileSync(join(DIST, name), 'utf8');
     urls.push(...parseUrlsetLocs(xml));
   }
@@ -158,7 +158,7 @@ function removeLegacyFiles() {
       unlinkSync(join(DIST, name));
       continue;
     }
-    if (/^sitemap-overlap-staging-\d+\.xml$/.test(name)) {
+    if (/^sitemap-overlap-staging(-\w+)?\.xml$/.test(name)) {
       unlinkSync(join(DIST, name));
     }
   }

@@ -19,7 +19,7 @@ export default defineConfig({
     react(),
     sitemap({
       changefreq: 'weekly',
-      filter: (page) => !page.includes('/dashboard') && !page.includes('/search'),
+      filter: (page) => !page.includes('/dashboard'),
     }),
   ],
   output: 'static',

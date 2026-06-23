@@ -1,5 +1,5 @@
 /**
- * Real-user Core Web Vitals → GA4 + Plausible (after cookie consent).
+ * Real-user Core Web Vitals → GA4 (after cookie consent).
  * web-vitals is dynamically imported so it does not block first paint.
  */
 type Metric = {
@@ -11,12 +11,10 @@ type Metric = {
 };
 
 type GtagFn = (...args: unknown[]) => void;
-type PlausibleFn = (event: string, options?: { props?: Record<string, string | number> }) => void;
 
 declare global {
   interface Window {
     gtag?: GtagFn;
-    plausible?: PlausibleFn;
     __startWebVitals?: () => void;
     __markAnalyticsReady?: () => void;
     __webVitalsPending?: boolean;
@@ -29,7 +27,6 @@ declare global {
 let started = false;
 let analyticsReady = false;
 const pendingGa: Metric[] = [];
-const pendingPlausible: Metric[] = [];
 
 function metricValue(metric: Metric): number {
   return Math.round(metric.name === 'CLS' ? metric.delta * 1000 : metric.delta);
@@ -52,32 +49,16 @@ function sendToGoogleAnalytics(metric: Metric): void {
   });
 }
 
-function sendToPlausible(metric: Metric): void {
-  if (typeof window.plausible !== 'function') {
-    pendingPlausible.push(metric);
-    return;
-  }
-  window.plausible('Web Vitals', {
-    props: {
-      name: metric.name,
-      value: String(metricValue(metric)),
-      rating: metric.rating,
-    },
-  });
-}
-
 function reportMetric(metric: Metric): void {
   sendToGoogleAnalytics(metric);
-  sendToPlausible(metric);
 }
 
 function flushPending(): void {
   if (!analyticsReady) return;
   while (pendingGa.length) sendToGoogleAnalytics(pendingGa.shift()!);
-  while (pendingPlausible.length) sendToPlausible(pendingPlausible.shift()!);
 }
 
-/** Call from BaseLayout once gtag + Plausible scripts have initialized. */
+/** Call from BaseLayout once the gtag script has initialized. */
 export function markAnalyticsReady(): void {
   analyticsReady = true;
   flushPending();

@@ -42,6 +42,7 @@ scripts/output/
 _groww_detail.json
 tmp-*.json
 **/tmp-*.json
+*.bak
 
 # Temporary holdings Excel used for local parser tests
 scripts/_tmp*/
@@ -66,4 +67,5 @@ public/data/**
 
 # Sitemaps — regenerated during export / build
 public/sitemap-*.xml
-public/sitemap-overlap-staging-*.xml
+public/sitemap-overlap-staging*.xml
+!public/sitemap-overlap-staging-curated.xml

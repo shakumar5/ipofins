@@ -72,6 +72,13 @@
   }
 }
 
+/* Accessibility: small muted text must meet WCAG AA contrast on light backgrounds.
+   text-surface-500 (#64748b) is ~4.6:1 on white — borderline for text-xs/text-sm.
+   Promote small muted text to surface-600 (#475569, ~7.6:1) on light mode. */
+:where(.text-xs, .text-sm).text-surface-500:not(.dark *):not(.dark) {
+  color: var(--color-surface-600);
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -83,7 +90,7 @@
   --color-surface: #f8fafc;
   --color-border: #e2e8f0;
   --color-text: #0f172a;
-  --color-text-muted: #64748b;
+  --color-text-muted: #475569;
   --color-accent: #338dff;
 }
 

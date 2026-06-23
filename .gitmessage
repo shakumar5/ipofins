@@ -1,0 +1,13 @@
+# Conventional Commits format — replace the lines below.
+#
+# <type>(<scope>): <short, imperative summary>
+#
+# <body: what changed and why — wrap at 72 chars>
+#
+# Types: feat | fix | perf | refactor | docs | chore | test | ci
+# Scopes: ipo | mf | smart-money | overlap | tools | broker | seo | infra
+#
+# Examples:
+#   feat(mf): add conviction score breakdown table
+#   fix(seo): remove SearchAction schema blocked by robots.txt
+#   perf(overlap): replace 143K staging URLs with 780 curated pairs
