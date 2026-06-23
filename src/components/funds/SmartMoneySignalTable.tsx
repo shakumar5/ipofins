@@ -15,8 +15,8 @@ interface Props {
   loading?: boolean;
 }
 
-const INITIAL_ROWS = 50;
-const ROWS_PAGE = 50;
+const INITIAL_ROWS = 20;
+const ROWS_PAGE = 20;
 
 export default function SmartMoneySignalTable({ data, month: monthProp, onMonthChange, onCategoryChange, loading }: Props) {
   const [monthLocal, setMonthLocal] = useState(data.months[0] || '');

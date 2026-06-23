@@ -262,20 +262,14 @@ html.dark {
   color: #fca5a5;
 }
 
-/* Fixed-height shell outside the React island — inner content swaps without shifting layout below */
+/* Reserve min-height while the React island hydrates — page scrolls normally (no inner scroll box) */
 .smart-money-app-shell {
   min-height: 36rem;
-  max-height: 54rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 768px) {
   .smart-money-app-shell {
     min-height: 28rem;
-    max-height: 36rem;
   }
 }
 

@@ -20,8 +20,8 @@ type ViewType = TrackerViewType;
 type SortKey = 'fundCount' | 'weightAvg' | 'weightTotal' | 'stockName';
 type SortDir = 'asc' | 'desc';
 
-const TRACKER_INITIAL_ROWS = 12;
-const TRACKER_MAX_ROWS = 50;
+const TRACKER_INITIAL_ROWS = 20;
+const TRACKER_ROWS_PAGE = 20;
 
 interface Props {
   data: SmartMoneyTrackerData;
@@ -114,7 +114,7 @@ export default function SmartMoneyTracker({
   const [sortKey, setSortKey] = useState<SortKey>(() => sortKeyForView(initialView || 'most_bought'));
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [showAllRows, setShowAllRows] = useState(false);
+  const [visibleLimit, setVisibleLimit] = useState(TRACKER_INITIAL_ROWS);
   const [isPending, startTransition] = useTransition();
 
   const deferredView = useDeferredValue(view);
@@ -162,7 +162,7 @@ export default function SmartMoneyTracker({
     startTransition(() => {
       setView(next);
       setExpanded(null);
-      setShowAllRows(false);
+      setVisibleLimit(TRACKER_INITIAL_ROWS);
       setSortKey(sortKeyForView(next));
       setSortDir('desc');
     });
@@ -260,9 +260,8 @@ export default function SmartMoneyTracker({
 
   const colSpan = 6;
 
-  const visibleRowLimit = showAllRows ? TRACKER_MAX_ROWS : TRACKER_INITIAL_ROWS;
-  const displayRows = rows.slice(0, visibleRowLimit);
-  const hiddenRowCount = Math.max(0, Math.min(rows.length, TRACKER_MAX_ROWS) - TRACKER_INITIAL_ROWS);
+  const displayRows = rows.slice(0, visibleLimit);
+  const remainingRowCount = Math.max(0, rows.length - visibleLimit);
   const mobileSortKeys: { key: SortKey; label: string }[] = [
     { key: 'fundCount', label: 'Funds' },
     { key: 'weightAvg', label: 'Avg Wt' },
@@ -293,7 +292,7 @@ export default function SmartMoneyTracker({
             name="sm-tracker-category"
             label="Category"
             value={category}
-            onChange={(e) => startTransition(() => { setCategory(e.target.value); setExpanded(null); setShowAllRows(false); })}
+            onChange={(e) => startTransition(() => { setCategory(e.target.value); setExpanded(null); setVisibleLimit(TRACKER_INITIAL_ROWS); })}
           >
             {data.categories.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -305,7 +304,7 @@ export default function SmartMoneyTracker({
             name="sm-tracker-sector"
             label="Sector"
             value={sector}
-            onChange={(e) => startTransition(() => { setSector(e.target.value); setExpanded(null); setShowAllRows(false); })}
+            onChange={(e) => startTransition(() => { setSector(e.target.value); setExpanded(null); setVisibleLimit(TRACKER_INITIAL_ROWS); })}
           >
             {sectorOptions.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -322,7 +321,7 @@ export default function SmartMoneyTracker({
               startTransition(() => {
                 setMonth(next);
                 setExpanded(null);
-                setShowAllRows(false);
+                setVisibleLimit(TRACKER_INITIAL_ROWS);
               });
               onMonthChange?.(next);
               syncTrackerUrl(view, next);
@@ -454,18 +453,6 @@ export default function SmartMoneyTracker({
             })}
           </div>
 
-          {!showAllRows && hiddenRowCount > 0 && (
-            <div className="md:hidden mt-3 text-center">
-              <button
-                type="button"
-                onClick={() => setShowAllRows(true)}
-                className="btn-secondary px-4 py-2 text-sm"
-              >
-                Show {hiddenRowCount} more stocks
-              </button>
-            </div>
-          )}
-
           <div className="hidden md:block overflow-x-auto card p-0">
           <table className="w-full text-sm">
             <thead className="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
@@ -572,14 +559,14 @@ export default function SmartMoneyTracker({
           </table>
         </div>
 
-          {!showAllRows && hiddenRowCount > 0 && (
-            <div className="hidden md:block mt-3 text-center">
+          {remainingRowCount > 0 && (
+            <div className="mt-3 text-center">
               <button
                 type="button"
-                onClick={() => setShowAllRows(true)}
+                onClick={() => setVisibleLimit((n) => n + TRACKER_ROWS_PAGE)}
                 className="btn-secondary px-4 py-2 text-sm"
               >
-                Show {hiddenRowCount} more stocks
+                Show more ({remainingRowCount} remaining)
               </button>
             </div>
           )}

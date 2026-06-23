@@ -19,6 +19,9 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 const MOBILE_SORT_KEYS: SortKey[] = ['conviction', 'aum', 'weight', 'trend', 'funds'];
 
+const INITIAL_ROWS = 20;
+const ROWS_PAGE = 20;
+
 const SEARCH_INPUT_CLASS =
   'w-full pl-7 pr-7 py-1.5 text-xs font-normal normal-case tracking-normal border border-surface-200 dark:border-surface-600 rounded-md bg-white dark:bg-surface-900 text-surface-900 dark:text-white placeholder:text-surface-400 focus:outline-none focus:ring-1 focus:ring-primary-500';
 
@@ -126,6 +129,7 @@ export default function SectorIntelligenceTable({ data }: Props) {
   const [signalSearch, setSignalSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('conviction');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [visibleLimit, setVisibleLimit] = useState(INITIAL_ROWS);
   const [, startTransition] = useTransition();
   const deferredSectorSearch = useDeferredValue(sectorSearch);
   const deferredSignalSearch = useDeferredValue(signalSearch);
@@ -137,6 +141,7 @@ export default function SectorIntelligenceTable({ data }: Props) {
         setSortBy(col);
         setSortDir('desc');
       }
+      setVisibleLimit(INITIAL_ROWS);
     });
   };
 
@@ -185,6 +190,13 @@ export default function SectorIntelligenceTable({ data }: Props) {
     });
     return sortRows(filtered, sortBy, sortDir);
   }, [rows, normalizedSectorSearch, normalizedSignalSearch, sortBy, sortDir]);
+
+  const displayRows = useMemo(
+    () => filteredRows.slice(0, visibleLimit),
+    [filteredRows, visibleLimit],
+  );
+
+  const remainingRowCount = Math.max(0, filteredRows.length - visibleLimit);
 
   const topAccumulating = useMemo(() => rows.filter((r) => r.convictionScore >= 75).slice(0, 3), [rows]);
   const topDistributing = useMemo(
@@ -252,7 +264,8 @@ export default function SectorIntelligenceTable({ data }: Props) {
       )}
 
       <p className="text-xs text-surface-500 mb-3 tabular-nums">
-        Showing {filteredRows.length} of {rows.length} sectors
+        Showing {Math.min(visibleLimit, filteredRows.length)} of {filteredRows.length} sectors
+        {filteredRows.length !== rows.length ? ` (${rows.length} total)` : ''}
         {hasActiveFilter ? ' (filtered)' : ''}
         {' • '}
         Sorted by {SORT_LABELS[sortBy]} ({sortDir === 'desc' ? 'high to low' : 'low to high'})
@@ -287,7 +300,10 @@ export default function SectorIntelligenceTable({ data }: Props) {
           <ColumnSearch
             id="sector-search-mobile"
             value={sectorSearch}
-            onChange={setSectorSearch}
+            onChange={(v) => {
+              setSectorSearch(v);
+              setVisibleLimit(INITIAL_ROWS);
+            }}
             placeholder="Search sector…"
           />
         </div>
@@ -298,7 +314,10 @@ export default function SectorIntelligenceTable({ data }: Props) {
           <ColumnSearch
             id="signal-search-mobile"
             value={signalSearch}
-            onChange={setSignalSearch}
+            onChange={(v) => {
+              setSignalSearch(v);
+              setVisibleLimit(INITIAL_ROWS);
+            }}
             placeholder="Search signal…"
           />
         </div>
@@ -313,7 +332,7 @@ export default function SectorIntelligenceTable({ data }: Props) {
       ) : (
         <>
           <div className="md:hidden space-y-2">
-            {filteredRows.map((row, index) => (
+            {displayRows.map((row, index) => (
               <div
                 key={row.sector}
                 className="card p-3 border border-surface-200 dark:border-surface-700"
@@ -368,7 +387,10 @@ export default function SectorIntelligenceTable({ data }: Props) {
                 <ColumnSearch
                   id="sector-search-desktop"
                   value={sectorSearch}
-                  onChange={setSectorSearch}
+                  onChange={(v) => {
+              setSectorSearch(v);
+              setVisibleLimit(INITIAL_ROWS);
+            }}
                   placeholder="Search sector…"
                   className="hidden md:block"
                 />
@@ -382,7 +404,10 @@ export default function SectorIntelligenceTable({ data }: Props) {
                 <ColumnSearch
                   id="signal-search-desktop"
                   value={signalSearch}
-                  onChange={setSignalSearch}
+                  onChange={(v) => {
+              setSignalSearch(v);
+              setVisibleLimit(INITIAL_ROWS);
+            }}
                   placeholder="Search signal…"
                   className="hidden md:block"
                 />
@@ -414,7 +439,7 @@ export default function SectorIntelligenceTable({ data }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-100 dark:divide-surface-700">
-              {filteredRows.map((row, index) => (
+              {displayRows.map((row, index) => (
                 <tr key={row.sector} className="hover:bg-surface-50 dark:hover:bg-surface-800/40">
                   <td className="px-4 py-3 text-surface-400 tabular-nums">{index + 1}</td>
                   <td className="px-4 py-3">
@@ -449,6 +474,18 @@ export default function SectorIntelligenceTable({ data }: Props) {
           </tbody>
         </table>
       </div>
+
+          {remainingRowCount > 0 && (
+            <div className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={() => setVisibleLimit((n) => n + ROWS_PAGE)}
+                className="btn-secondary px-4 py-2 text-sm"
+              >
+                Show more ({remainingRowCount} remaining)
+              </button>
+            </div>
+          )}
         </>
       )}
 
