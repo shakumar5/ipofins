@@ -24,6 +24,8 @@ import { fileURLToPath } from 'url';
 import { sql, upsertMany } from '../lib/db.mjs';
 import { requireDb } from '../lib/db-writers.mjs';
 import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
+import { fetchPMSHoldings } from '../lib/pms-sources.mjs';
+import { loadOverrides } from '../lib/si-overrides.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -35,19 +37,11 @@ const quarterOverride = (args.find((a) => a.startsWith('--quarter=')) || '').spl
 /**
  * Fetch PMS holdings for a single provider + strategy.
  *
- * TODO: Implement actual provider-site fetches.
- *   - Marcellus: https://marcellus.in/strategy/<slug> (or similar)
- *   - Ask: provider disclosure page
- *   - Motilal: PMS disclosure page
- *   - Each has a different format — per-provider parsers needed.
- *
- * Returns array of:
- *   { stockName, nseSymbol, shares, pctOfCompany, sourceUrl }
+ * Implemented in scripts/lib/pms-sources.mjs — one fetcher per provider
+ * (Marcellus, ASK, Motilal Oswal, Helios, Equity Intelligence, WhiteOak),
+ * each handling its own HTML/PDF format. Returns [] on failure. See
+ * DATA_PIPELINE.md for the provider-coverage + override model.
  */
-async function fetchPMSHoldings(provider, strategy, quarter) {
-  // ── STUB ──────────────────────────────────────────────────────
-  return [];
-}
 
 async function main() {
   console.log('');
@@ -133,6 +127,38 @@ async function main() {
           totalHoldings++;
         }
       }
+    }
+
+    // ── 3b. Merge hand-curated overrides (provider sites may have failed) ──
+    ctx.log('Checking for JSON overrides...');
+    const overrides = loadOverrides('pms', quarter);
+    let overrideCount = 0;
+    if (overrides.length > 0) {
+      const providerBySlug = new Map();
+      for (const [, p] of byProvider) providerBySlug.set(p.entity.slug, p.entity);
+      for (const o of overrides) {
+        const provider = providerBySlug.get(o.providerSlug);
+        if (!provider) continue;
+        const stock = stockBySymbol.get((o.nseSymbol || '').toUpperCase())
+          || stockByName.get((o.stockName || '').toUpperCase().trim());
+        if (!stock) continue;
+        ehRows.push({
+          entity_id: provider.id,
+          strategy_id: null,
+          stock_id: stock.id,
+          quarter,
+          shares_held: o.shares,
+          pct_of_company: o.pctOfCompany,
+          market_value_cr: null,
+          is_encumbered: false,
+          source: 'override',
+          source_url: o.sourceUrl || null,
+          is_preliminary: false,
+        });
+        overrideCount++;
+        totalHoldings++;
+      }
+      ctx.log(`  +${overrideCount} override rows merged`);
     }
 
     ctx.log(`Total PMS holdings parsed: ${totalHoldings}`);

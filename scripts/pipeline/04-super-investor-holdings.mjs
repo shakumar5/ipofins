@@ -26,6 +26,8 @@ import { sql, upsertMany } from '../lib/db.mjs';
 import { requireDb } from '../lib/db-writers.mjs';
 import { buildEntityResolver } from '../lib/entity-name-resolver.mjs';
 import { startRun, endRun, qualityGateRowCount } from '../lib/pipeline-run-logger.mjs';
+import { fetchShareholdingPattern, closeSIBrowser } from '../lib/si-sources.mjs';
+import { loadOverrides } from '../lib/si-overrides.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -68,24 +70,14 @@ function inferLatestQuarter(now = new Date()) {
 }
 
 /**
- * Fetch Shareholding Pattern XML/CSV for a single stock from NSE.
- * Returns array of { holderName, holderType, shares, pctOfCompany }.
+ * Fetch Shareholding Pattern for a single stock from BSE (primary) / NSE (fallback).
+ * Returns array of { holderName, holderType, shares, pctOfCompany, sourceUrl }.
  *
- * TODO: Implement actual NSE/BSE fetch. This stub returns empty for now;
- * the real implementation will be added when NSE endpoints are validated.
+ * Implemented in scripts/lib/si-sources.mjs — BSE plain-HTTP parse first, NSE
+ * Puppeteer fallback. See DATA_PIPELINE.md for the source + override model.
  */
-async function fetchShareholdingPattern(stock, quarter) {
-  // ── STUB ──────────────────────────────────────────────────────
-  // Real implementation will:
-  // 1. Call NSE corporate filings API:
-  //    https://www1.nseindia.com/corporates/corporateResults.html
-  //    or the newer NSE API at /api/corporate-filings
-  // 2. Parse the Shareholding Pattern Excel/XML for the stock + quarter.
-  // 3. Extract rows where pctOfCompany >= 1.0.
-  // 4. Classify holder_type: promoter/public/fii/dii/individual.
-  //
-  // For now, return empty — schema + pipeline plumbing is the deliverable.
-  return [];
+async function fetchSHP(stock, quarter) {
+  return fetchShareholdingPattern(stock, quarter);
 }
 
 /**
@@ -157,7 +149,7 @@ async function main() {
     let reviewQueue = [];    // low-confidence matches for output/
 
     for (const stock of stocks) {
-      const holders = await fetchShareholdingPattern(stock, quarter);
+      const holders = await fetchSHP(stock, quarter);
 
       for (const h of holders) {
         if (h.pctOfCompany < 1.0) continue; // Only ≥1%
@@ -211,6 +203,50 @@ async function main() {
           match_confidence: match ? match.confidence : null,
         });
       }
+    }
+
+    // ── 3b. Merge hand-curated overrides (BSE/NSE may have yielded nothing) ──
+    ctx.log('Checking for JSON overrides...');
+    const overrides = loadOverrides('superinvestor', quarter);
+    let overrideMatched = 0;
+    if (overrides.length > 0) {
+      const stockBySlug = new Map(stocks.map((s) => [s.slug, s]));
+      for (const o of overrides) {
+        const stock = stockBySlug.get(o.stockSlug);
+        if (!stock) continue;
+        const { isPromoter, holderType } = classifyHolder({ holderName: o.holderName, holderType: o.holderType });
+        const match = isPromoter ? null : resolver.resolve(o.holderName);
+        if (match) {
+          overrideMatched++;
+          ehRows.push({
+            entity_id: match.entityId,
+            strategy_id: null,
+            stock_id: stock.id,
+            quarter,
+            shares_held: o.shares,
+            pct_of_company: o.pctOfCompany,
+            market_value_cr: null,
+            is_encumbered: false,
+            source: 'override',
+            source_url: o.sourceUrl || null,
+            is_preliminary: false,
+          });
+        }
+        sphRows.push({
+          stock_id: stock.id,
+          quarter,
+          holder_name: o.holderName,
+          holder_type: holderType,
+          shares: o.shares,
+          pct_of_company: o.pctOfCompany,
+          source: 'override',
+          source_url: o.sourceUrl || null,
+          is_promoter: isPromoter,
+          entity_id: match ? match.entityId : null,
+          match_confidence: match ? match.confidence : null,
+        });
+      }
+      ctx.log(`  +${overrides.length} override rows (${overrideMatched} matched to entities)`);
     }
 
     ctx.log(`Parsed ${sphRows.length} ≥1% holder rows across ${stocks.length} stocks`);
@@ -296,6 +332,9 @@ async function main() {
     });
     console.error('\n  ❌ Pipeline 4 failed:', err);
     process.exit(1);
+  } finally {
+    // Release the Puppeteer browser if NSE fallback was used.
+    await closeSIBrowser().catch(() => {});
   }
 }
 

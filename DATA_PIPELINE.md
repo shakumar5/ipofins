@@ -267,27 +267,92 @@ psql $DATABASE_URL -f db/migrations/006_super_investor_views.sql
 npm run db:seed-superinvestors   # load curated rosters from src/data/*.json
 ```
 
-### Pipelines (automated via GitHub Actions — no manual .bat files)
+### Pipelines (manual — same model as the IPO/MF pipelines above)
 
-| # | Pipeline | Cadence | Source | Writes to |
-|---|----------|---------|--------|-----------|
-| 4 | `pipeline:superinvestor` | Quarterly (qtr-end +25d) | NSE/BSE Shareholding Pattern | `shareholding_pattern_holders`, `entity_holdings` |
-| — | `pipeline:1pc-club` | (shared fetch with #4) | Same | `shareholding_pattern_holders` raw parse |
-| 6 | `pipeline:pms` | Quarterly + monthly catch-up | Provider disclosures | `entity_holdings` (with `strategy_id`) |
-| 7 | `pipeline:altfunds` | Quarterly | SEBI AIF/SIF + SAST | `entity_holdings`, `sast_filings` |
-| 8 | `pipeline:sast-sweep` | Weekly (Monday 3 AM UTC) | NSE/BSE corporate announcements | `sast_filings`, `entity_holdings` (preliminary) |
+These four pipelines follow the same manual-local philosophy as `pipeline:ipo`
+and `pipeline:daily`: you run them locally, verify the output, then deploy.
+There is **no GitHub Actions automation for these pipelines today** — the only
+scheduled workflows are `quarterly-expense-ratio.yml` (TER) and the push-to-main
+build/deploy (`update-data.yml`). Automation is a documented future task (see
+"Roadmap" below).
 
-Each run is wrapped with two automatic gates:
-- **Quality gate** — row-count delta vs prior quarter; aborts + alerts if <70%.
-- **Build gate** — export-count check; no deploy if it fails.
+| # | Command | Cadence | Source | Writes to |
+|---|---------|---------|--------|-----------|
+| 4 | `npm run pipeline:superinvestor` | Quarterly | NSE/BSE Shareholding Pattern | `shareholding_pattern_holders`, `entity_holdings` |
+| 6 | `npm run pipeline:pms` | Quarterly + monthly catch-up | Provider disclosures (6 PMS sites) | `entity_holdings` (with `strategy_id`) |
+| 7 | `npm run pipeline:altfunds` | Quarterly | SAST cross-reference + AIF/SIF provider disclosures | `entity_holdings`, `sast_filings` |
+| 8 | `npm run pipeline:sast-sweep` | Weekly | NSE/BSE corporate announcements | `sast_filings`, `entity_holdings` (`is_preliminary`) |
 
-### Quarterly cadence (fixed SEBI calendar — Apr/Jul/Oct/Jan +25d)
+> **1% Club** is not a separate pipeline. `/1-percent-club` reads the raw
+> `shareholding_pattern_holders` rows that pipeline 04 parses but does **not**
+> match to a curated entity — so running `pipeline:superinvestor` refreshes both
+> the curated super-investor views *and* the 1% Club in one pass.
 
-The full quarterly workflow runs unattended in GitHub Actions:
-fetch → quality gate → compute changes/signals/conviction/overlaps → refresh
-materialized views → generate SEO reports → build → deploy. The site keeps
-serving last-known-good data if any gate fails; the next scheduled run
-self-heals.
+#### Common flags
+
+| Flag | Pipelines | Effect |
+|------|-----------|--------|
+| `--dry-run` | 4, 6, 7, 8 | Fetch + match + log only; **no DB writes** (SAST promotions, upserts, and quality gates are skipped). |
+| `--quarter=YYYY-MM-DD` | 4, 6, 7 | Process a specific quarter instead of the inferred current quarter. |
+| `--days=N` | 8 | SAST lookback window (default 7). |
+
+```bash
+# Example — verify a quarter before writing:
+npm run pipeline:superinvestor -- --dry-run --quarter=2026-04-01
+```
+
+#### The compute step (run after every holdings refresh)
+
+Each of pipelines 4/6/7 writes raw `entity_holdings` rows. Deriving changes,
+signals, conviction, overlaps, and refreshing materialized views is a separate
+step you run afterward:
+
+```bash
+npm run db:compute-si          # changes + signals + conviction + overlaps + view refresh
+npm run db:refresh-si-views    # view refresh only (cheap, safe to re-run anytime)
+```
+
+`db:compute-si` is idempotent for a given quarter — re-running it after a
+partial fix recomputes that quarter's derived tables cleanly.
+
+#### Overrides (resilience layer)
+
+When NSE/BSE endpoints change or a provider's site breaks, a fetcher returns
+`[]`. To keep the products serving data while you investigate, drop a
+hand-curated JSON file into `src/data/si-overrides/` and the pipeline merges it
+(overrides win on conflict). Supported by pipelines 4, 6, 7 (SAST is
+event-driven — an empty result means "no events", so no override):
+
+| Pipeline | File | Row shape |
+|----------|------|-----------|
+| 4 | `superinvestor-{quarter}.json` | `{ stockSlug, holderName, holderType, shares, pctOfCompany, sourceUrl }` |
+| 6 | `pms-{quarter}.json` | `{ providerSlug, strategyName, stockName, nseSymbol, shares, pctOfCompany, sourceUrl }` |
+| 7 | `altfunds-{quarter}.json` | `{ entitySlug, stockName, nseSymbol, shares, pctOfCompany, sourceUrl }` |
+
+See `src/data/si-overrides/README.md` for full examples.
+
+### Quality gates
+
+Pipeline 4 (`superinvestor`) is wrapped with a **row-count quality gate**: it
+compares this run's `shareholding_pattern_holders` count against the prior
+successful run and **aborts (writes nothing)** if the ratio falls below 70%.
+The site keeps serving last-known-good data; you investigate and re-run.
+
+Pipelines 6, 7, and 8 currently report `qualityGate: 'skipped'` — they have no
+row-count baseline because provider disclosure volumes fluctuate legitimately
+between quarters. A consistency check (not a hard abort) is the planned middle
+ground. Every run, gated or not, is logged to `pipeline_runs` with status,
+counts, and a message for the `/health` dashboard.
+
+### Quarterly cadence (SEBI calendar — Apr/Jul/Oct/Jan, ~25 days after quarter-end)
+
+The intended unattended flow is: fetch → quality gate → compute
+changes/signals/conviction/overlaps → refresh views → build → deploy, keeping
+the site on last-known-good data if any gate fails. **The GitHub Actions
+workflow that orchestrates this is not yet wired** — today the quarterly run is
+performed manually by chaining the commands above. Adding the workflow (cron
+trigger + the same command chain + quality-gate abort) is a documented roadmap
+item, not a regression.
 
 See `/health` dashboard for live run-state, row counts, and staleness alerts.
 

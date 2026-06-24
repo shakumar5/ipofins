@@ -3,15 +3,20 @@
  * Pipeline 7 — Alternative Funds Holdings (AIF + SIF)
  *
  * Fetches holdings data for AIF (Cat I/II/III) and SIF (2024 vehicle) entities.
- * Sources:
- *   - SAST Form B filings (from pipeline 08 — this pipeline cross-references them).
- *   - SEBI AIF database (if available).
- *   - Provider voluntary disclosures.
+ * Sources, in priority order:
+ *   1. SAST Form B filings (from pipeline 08 — this pipeline cross-references
+ *      them). Most AIFs (Cat II/III) holding >2% MUST file SAST within 2 trading
+ *      days, so this is the PRIMARY data path.
+ *   2. Provider voluntary disclosures (Westbridge, Nalanda, Abakkus, …) — the
+ *      SECONDARY path; implemented in scripts/lib/aif-sources.mjs. Many AIFs
+ *      publish no public page; SAST covers them.
+ *   3. Hand-curated `altfunds-{quarter}.json` overrides (see si-overrides.mjs).
  *
  * AIFs often take long-term strategic stakes (PE-style). The pipeline:
  *   1. Cross-references sast_filings for AIF/SIF entities.
- *   2. Promotes any is_preliminary=false SAST matches to entity_holdings.
- *   3. Fetches provider disclosures if available.
+ *   2. Promotes any is_preliminary=true SAST matches to confirmed entity_holdings.
+ *   3. Fetches provider disclosures (per strategy, for SIFs that have them).
+ *   4. Merges JSON overrides as a last resort.
  *
  * Flags:
  *   --quarter=2026-04-01    Process a specific quarter
@@ -26,6 +31,8 @@ import { fileURLToPath } from 'url';
 import { sql, upsertMany } from '../lib/db.mjs';
 import { requireDb } from '../lib/db-writers.mjs';
 import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
+import { fetchAIFDisclosures } from '../lib/aif-sources.mjs';
+import { loadOverrides } from '../lib/si-overrides.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -34,14 +41,15 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const quarterOverride = (args.find((a) => a.startsWith('--quarter=')) || '').split('=')[1] || null;
 
-async function fetchAIFDisclosures(entity, quarter) {
-  // ── STUB ──────────────────────────────────────────────────────
-  // Real implementation will:
-  // 1. Check SEBI AIF database for any voluntary disclosures.
-  // 2. Parse provider sites (Westbridge, Nalanda, ChrysCap, etc.).
-  // 3. Return holdings array.
-  return [];
-}
+/**
+ * Fetch voluntary AIF/SIF provider disclosures.
+ *
+ * Implemented in scripts/lib/aif-sources.mjs — one fetcher per entity slug
+ * (Westbridge, Nalanda, ChrysCap, Abakkus, Malabar, Stealview, Schweitzer,
+ * UTI-SIF, HDFC-SIF), each handling its own HTML/PDF format and returning []
+ * on failure or when a fund has no public page (SAST cross-reference covers
+ * it). See DATA_PIPELINE.md for the AIF coverage + override model.
+ */
 
 async function main() {
   console.log('');
@@ -99,7 +107,15 @@ async function main() {
     const stockRows = await sql`
       SELECT id, name, slug, nse_symbol, isin FROM stocks WHERE nse_symbol IS NOT NULL
     `;
+    // SAST rows already carry stock_id — keep a fast lookup to validate them.
     const stockById = new Map(stockRows.map((s) => [s.id, s]));
+    // Provider disclosures + overrides carry names/symbols — resolve to a stock.
+    const stockBySymbol = new Map();
+    const stockByName = new Map();
+    for (const s of stockRows) {
+      if (s.nse_symbol) stockBySymbol.set(s.nse_symbol.toUpperCase(), s);
+      stockByName.set(s.name.toUpperCase().trim(), s);
+    }
 
     // ── 4. Build entity_holdings from SAST + provider disclosures ─
     const ehRows = [];
@@ -129,25 +145,65 @@ async function main() {
       }
     }
 
-    // 4b. From provider disclosures.
+    // 4b. From provider disclosures (SIF strategies get their own strategy_id).
+    let disclosureCount = 0;
     for (const [, entityObj] of byEntity) {
-      ctx.log(`Fetching ${entityObj.entity.name} disclosures...`);
-      const holdings = await fetchAIFDisclosures(entityObj.entity, quarter);
-      for (const h of holdings) {
+      const strategies = entityObj.strategies.length > 0 ? entityObj.strategies : [{ strategy_id: null }];
+      for (const strategy of strategies) {
+        ctx.log(`Fetching ${entityObj.entity.name}${strategy.strategy_name ? ` / ${strategy.strategy_name}` : ''} disclosures...`);
+        const holdings = await fetchAIFDisclosures(entityObj.entity, quarter);
+        for (const h of holdings) {
+          const stock = stockBySymbol.get((h.nseSymbol || '').toUpperCase())
+            || stockByName.get((h.stockName || '').toUpperCase().trim());
+          if (!stock) continue;
+
+          ehRows.push({
+            entity_id: entityObj.entity.id,
+            strategy_id: strategy.strategy_id || null,
+            stock_id: stock.id,
+            quarter,
+            shares_held: h.shares,
+            pct_of_company: h.pctOfCompany,
+            market_value_cr: null,
+            is_encumbered: false,
+            source: 'aif_disclosure',
+            source_url: h.sourceUrl || null,
+            is_preliminary: false,
+          });
+          disclosureCount++;
+        }
+      }
+    }
+
+    // 4c. Merge hand-curated overrides (provider sites may have failed).
+    ctx.log('Checking for JSON overrides...');
+    const overrides = loadOverrides('altfunds', quarter);
+    let overrideCount = 0;
+    if (overrides.length > 0) {
+      const entityBySlug = new Map();
+      for (const [, e] of byEntity) entityBySlug.set(e.entity.slug, e.entity);
+      for (const o of overrides) {
+        const entity = entityBySlug.get(o.entitySlug);
+        if (!entity) continue;
+        const stock = stockBySymbol.get((o.nseSymbol || '').toUpperCase())
+          || stockByName.get((o.stockName || '').toUpperCase().trim());
+        if (!stock) continue;
         ehRows.push({
-          entity_id: entityObj.entity.id,
+          entity_id: entity.id,
           strategy_id: null,
-          stock_id: h.stock_id,
+          stock_id: stock.id,
           quarter,
-          shares_held: h.shares,
-          pct_of_company: h.pctOfCompany,
+          shares_held: o.shares,
+          pct_of_company: o.pctOfCompany,
           market_value_cr: null,
           is_encumbered: false,
-          source: 'aif_disclosure',
-          source_url: h.sourceUrl || null,
+          source: 'override',
+          source_url: o.sourceUrl || null,
           is_preliminary: false,
         });
+        overrideCount++;
       }
+      ctx.log(`  +${overrideCount} override rows merged`);
     }
 
     ctx.log(`Total alternative-fund holdings: ${ehRows.length}`);
@@ -168,12 +224,12 @@ async function main() {
       status: 'success',
       rowsUpserted: ehRows.length,
       qualityGate: 'skipped',
-      message: `Alt-funds Q${quarter}: ${ehRows.length} holdings (${sastMatches.length} from SAST, ${ehRows.length - sastMatches.length} from disclosures)`,
-      counts: { holdings: ehRows.length, sast: sastMatches.length },
+      message: `Alt-funds Q${quarter}: ${ehRows.length} holdings (${sastMatches.length} SAST, ${disclosureCount} disclosures, ${overrideCount} overrides)`,
+      counts: { holdings: ehRows.length, sast: sastMatches.length, disclosures: disclosureCount, overrides: overrideCount },
     });
 
     console.log('\n  ✅ Pipeline 7 (Alternative Funds) complete');
-    console.log(`     ${ehRows.length} holdings written`);
+    console.log(`     ${ehRows.length} holdings (${sastMatches.length} from SAST, ${disclosureCount} from disclosures, ${overrideCount} overrides)`);
     console.log(`\n     Next: run db:compute-si to derive changes, signals, conviction.\n`);
 
   } catch (err) {

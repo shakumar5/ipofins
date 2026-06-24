@@ -28,6 +28,7 @@ import { sql, upsertMany } from '../lib/db.mjs';
 import { requireDb } from '../lib/db-writers.mjs';
 import { buildEntityResolver } from '../lib/entity-name-resolver.mjs';
 import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
+import { fetchSASTFilings, closeSIBrowser } from '../lib/si-sources.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -39,26 +40,15 @@ const lookbackDays = parseInt((args.find((a) => a.startsWith('--days=')) || '').
 // ─── Helpers ───────────────────────────────────────────────────
 
 /**
- * Fetch recent SAST Form B filings from NSE/BSE corporate announcements.
- *
- * TODO: Implement actual NSE/BSE fetch.
- *   - NSE: https://www1.nseindia.com/marketinfo/company_info/corpInfo_equities.html
- *   - BSE: https://www.bseindia.com/corporates/corporate.html
- *   - Filter by announcement type: SAST (Substantial Acquisition of Shares and Takeovers)
- *
+ * Fetch recent SAST Form B filings from BSE (primary) + NSE (Puppeteer fallback).
  * Returns array of:
  *   { stockName, nseSymbol, filingDate, filerName, filerType,
  *     prePct, postPct, postShares, transactionNature, sourceUrl }
+ *
+ * Implemented in scripts/lib/si-sources.mjs — fetches both exchanges in parallel,
+ * dedupes by (symbol, date, subject), and extracts filer + pre/post % from the
+ * subject line where possible. See DATA_PIPELINE.md.
  */
-async function fetchSASTFilings(daysBack) {
-  // ── STUB ──────────────────────────────────────────────────────
-  // Real implementation will:
-  // 1. Query NSE corporate announcements API for SAST-type filings.
-  // 2. Parse each filing XML/HTML for holder details.
-  // 3. Match stockName to stocks table via nse_symbol.
-  // 4. Return structured array.
-  return [];
-}
 
 // ─── Main ──────────────────────────────────────────────────────
 
@@ -217,6 +207,9 @@ async function main() {
     });
     console.error('\n  ❌ SAST sweep failed:', err);
     process.exit(1);
+  } finally {
+    // Release the Puppeteer browser if the NSE fallback was used.
+    await closeSIBrowser().catch(() => {});
   }
 }
 
