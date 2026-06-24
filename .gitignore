@@ -21,6 +21,8 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+nul
+NUL
 
 # Astro
 .astro/
