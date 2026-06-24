@@ -44,12 +44,10 @@ const XLSX = require('xlsx');
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INPUT_DIR = process.env.HOLDINGS_INPUT_DIR || 'C:/Users/shaik/Downloads/Holdings/';
 const OUTPUT_FILE = join(__dirname, '..', 'src', 'data', 'fund-holdings.json');
-const TOP_HOLDINGS_LIMIT = 20;
-
 function packMonthHoldings(holdings) {
   const sorted = [...holdings].sort((a, b) => b.pct - a.pct);
   return {
-    stocks: sorted.slice(0, TOP_HOLDINGS_LIMIT),
+    stocks: sorted,
     totalStocks: sorted.length,
   };
 }
