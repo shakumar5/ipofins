@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { BRAND_NAME } from '../../lib/brand';
 import brokersData from '../../data/brokers.json';
 
 export function getStaticPaths() {
@@ -17,8 +18,12 @@ const jsonLd = {
   "name": `${broker.name} Review 2026`,
   "description": `Detailed review of ${broker.name} - trading fees, platforms, features, pros and cons.`,
   "url": `https://ipofins.com/broker/${broker.slug}`,
+  "author": {
+    "@type": "Organization",
+    "name": BRAND_NAME,
+  },
   "itemReviewed": {
-    "@type": "FinancialProduct",
+    "@type": "Organization",
     "name": broker.name,
   },
   "reviewRating": {
