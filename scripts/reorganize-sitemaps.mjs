@@ -19,6 +19,12 @@ import {
   writeSitemapIndexSync,
   writeUrlsetSync,
 } from './lib/sitemap-utils.mjs';
+import {
+  buildOverlapUrls,
+  collectStagingUrlsFromDir,
+  findPrebuiltOverlapSitemaps,
+  loadFundsFromPortfolioJson,
+} from './lib/portfolio-overlap-sitemap.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -43,15 +49,14 @@ function collectAstroUrls() {
 }
 
 function collectOverlapStagingUrls() {
-  const urls = [];
-  if (!existsSync(DIST)) return urls;
+  const fromDist = collectStagingUrlsFromDir(DIST);
+  const fromPublic = collectStagingUrlsFromDir(join(ROOT, 'public'));
+  return [...new Set([...fromDist, ...fromPublic])];
+}
 
-  for (const name of readdirSync(DIST)) {
-    if (!/^sitemap-overlap-staging-\d+\.xml$/.test(name)) continue;
-    const xml = readFileSync(join(DIST, name), 'utf8');
-    urls.push(...parseUrlsetLocs(xml));
-  }
-  return urls;
+function collectOverlapUrlsFromJson() {
+  const funds = loadFundsFromPortfolioJson(ROOT);
+  return funds ? buildOverlapUrls(funds) : [];
 }
 
 function bucketUrls(allLocs) {
@@ -171,8 +176,8 @@ function main() {
   }
 
   const astroUrls = collectAstroUrls();
-  const overlapUrls = collectOverlapStagingUrls();
-  const allLocs = [...new Set([...astroUrls, ...overlapUrls])];
+  const overlapStagingUrls = collectOverlapStagingUrls();
+  const allLocs = [...new Set([...astroUrls, ...overlapStagingUrls])];
 
   if (!allLocs.length) {
     console.warn('  ⚠ reorganize-sitemaps: no URLs found — skip');
@@ -181,7 +186,27 @@ function main() {
 
   const buckets = bucketUrls(allLocs);
   writeBucketSitemaps(buckets);
-  const overlapEntries = writePortfolioOverlapSitemap(buckets.get('sitemap-portfolio-overlap.xml') || overlapUrls);
+
+  const prebuilt = findPrebuiltOverlapSitemaps(DIST);
+  let overlapEntries;
+  if (prebuilt.length) {
+    overlapEntries = prebuilt;
+    console.log(`  ✓ using ${prebuilt.length} prebuilt portfolio overlap sitemap(s) from public/`);
+  } else {
+    const overlapUrls = [
+      ...new Set([
+        ...(buckets.get('sitemap-portfolio-overlap.xml') || []),
+        ...collectOverlapStagingUrls(),
+        ...collectOverlapUrlsFromJson(),
+      ]),
+    ];
+    if (!overlapUrls.length) {
+      console.error('  ❌ No portfolio overlap URLs found (staging + JSON both empty)');
+      process.exit(1);
+    }
+    overlapEntries = writePortfolioOverlapSitemap(overlapUrls);
+  }
+
   removeStaleOverlapSitemaps(overlapEntries);
 
   const indexEntries = buildSitemapIndexEntries(overlapEntries);

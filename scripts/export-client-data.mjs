@@ -36,6 +36,7 @@ import {
   serializeHoldingsMetaForDisk,
 } from './lib/fund-holdings-export.mjs';
 import { enrichHoldingsMetaWithOverlap } from './lib/mf-hub-holdings-meta.mjs';
+import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'data');
@@ -178,37 +179,8 @@ function buildPortfolioOverlapExport(holdings) {
   return { month, funds, holdings: holdingsBySlug };
 }
 
-const PORTFOLIO_OVERLAP_SITEMAP_BASE = 'https://ipofins.com/mutual-funds/portfolio-overlap-checker';
-const SITEMAP_URLS_PER_FILE = 45_000;
-
 function writePortfolioOverlapSitemaps(funds) {
-  const slugs = funds.map((f) => f.slug).sort();
-  const urls = [PORTFOLIO_OVERLAP_SITEMAP_BASE];
-  for (let i = 0; i < slugs.length; i += 1) {
-    for (let j = i + 1; j < slugs.length; j += 1) {
-      urls.push(`${PORTFOLIO_OVERLAP_SITEMAP_BASE}/${slugs[i]}-vs-${slugs[j]}`);
-    }
-  }
-
-  const escapeXml = (v) =>
-    v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-  const chunks = [];
-  for (let i = 0; i < urls.length; i += SITEMAP_URLS_PER_FILE) {
-    chunks.push(urls.slice(i, i + SITEMAP_URLS_PER_FILE));
-  }
-
-  chunks.forEach((chunk, idx) => {
-    const name = `sitemap-overlap-staging-${idx}.xml`;
-    const body = chunk
-      .map((loc) => `  <url><loc>${escapeXml(loc)}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`)
-      .join('\n');
-    writeFileSync(
-      join(PUBLIC_DIR, name),
-      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
-    );
-    console.log(`  ✓ ${name} (${chunk.length} overlap URLs, staging)`);
-  });
+  writeOverlapStagingFiles(buildOverlapUrls(funds), PUBLIC_DIR);
 }
 
 function loadHoldingsFromJson() {

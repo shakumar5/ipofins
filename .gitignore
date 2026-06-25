@@ -87,8 +87,9 @@ SEO_STRATEGY.md
 public/data/**
 !public/data/.gitkeep
 
-# Sitemaps — regenerated during export / build (dist/ sitemaps covered by dist/)
+# Sitemaps — staging regenerated during export; final overlap urlsets committed for CI
 public/sitemap*.xml
+!public/sitemap-portfolio-overlap*.xml
 public/sitemap-overlap-staging-*.xml
 
 # Test / coverage artifacts

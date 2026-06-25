@@ -37,6 +37,12 @@ function shouldSkip() {
 }
 
 if (shouldSkip()) {
+  const ensure = spawnSync(
+    process.execPath,
+    [...nodeExtraArgs(), join(ROOT, 'scripts', 'ensure-portfolio-overlap-sitemaps.mjs')],
+    { stdio: 'inherit', cwd: ROOT, env: process.env },
+  );
+  if ((ensure.status ?? 1) !== 0) process.exit(ensure.status ?? 1);
   process.exit(0);
 }
 
