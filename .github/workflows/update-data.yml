@@ -14,6 +14,10 @@ on:
         description: Force full Neon export (use after pipeline:monthly or data changes)
         type: boolean
         default: false
+      run_data_pipelines:
+        description: Run NAV + IPO + subscription pipelines before build (one-shot data refresh)
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -64,12 +68,18 @@ jobs:
             echo "ℹ Export cache miss — first build will run one full export, then cache for later deploys"
           fi
 
+      - name: Run pre-deploy data pipelines (NAV + IPO + subscription)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_data_pipelines
+        run: npm run pipeline:predeploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Build static site
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           EXPORT_MAX_AGE_MINUTES: 10080
-          FORCE_EXPORT: ${{ github.event_name == 'workflow_dispatch' && inputs.force_export && '1' || '' }}
+          FORCE_EXPORT: ${{ (github.event_name == 'workflow_dispatch' && (inputs.force_export || inputs.run_data_pipelines)) && '1' || '' }}
 
       - name: Save exported client data cache
         if: success()
