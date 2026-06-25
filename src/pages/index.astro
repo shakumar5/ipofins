@@ -122,7 +122,7 @@ const faqJsonLd = {
 
 <BaseLayout
   title="IPOFins - IPO Analytics, Smart Money Tracker & Mutual Fund Tools India"
-  description="Track what mutual funds are buying, analyze IPOs, check portfolio overlap, and plan investments with free SIP and tax tools. Data-driven research for Indian investors — no login required."
+  description="Track what mutual funds and super investors are buying, analyze IPOs, check portfolio overlap, and plan investments with free SIP and tax tools. Data-driven research for Indian investors — no login required."
   jsonLd={jsonLd}
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
@@ -141,11 +141,11 @@ const faqJsonLd = {
           </div>
 
           <h1 class="text-4xl lg:text-[2.75rem] font-extrabold text-surface-900 dark:text-white tracking-tighter leading-[1.1]">
-            See what funds are buying.<br />
-            <span class="text-gradient">Track every IPO.</span>
+            Track what funds<br />
+            <span class="text-gradient">and super investors buy.</span>
           </h1>
           <p class="mt-5 text-lg text-surface-600 dark:text-surface-300 max-w-xl leading-relaxed">
-            IPOFins turns SEBI &amp; AMFI disclosures into actionable intelligence — smart money signals, holdings changes, sector rotation, and IPO analytics for Indian investors.
+            IPOFins turns SEBI &amp; AMFI disclosures into actionable intelligence — MF smart money signals, super-investor holdings, the 1% Club, and IPO analytics for Indian investors.
           </p>
 
           <div class="mt-8 flex flex-wrap gap-3">
@@ -153,13 +153,16 @@ const faqJsonLd = {
               Smart Money Tracker
               <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </a>
+            <a href="/super-investors" class="btn-secondary px-6 py-3 text-base">
+              Super Investors
+            </a>
             <a href="/ipo" class="btn-secondary px-6 py-3 text-base">
               {liveIPOs.length > 0 ? `${liveIPOs.length} Live IPOs` : 'Browse IPOs'}
             </a>
           </div>
 
           <div class="mt-6 nav-btn-group">
-            <a href={sm.mostBought} class="btn-secondary px-6 py-3">Most Bought Stocks</a>
+            <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
             <a href={sm.stockSignal} class="btn-secondary px-6 py-3">Stock Signal</a>
             <a href="/mutual-funds/portfolio-overlap-checker" class="btn-secondary px-6 py-3">Portfolio Overlap</a>
             <a href="/mutual-funds/best" class="btn-secondary px-6 py-3">Best Funds</a>

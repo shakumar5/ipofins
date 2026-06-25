@@ -1,0 +1,349 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
+import {
+  getSuperInvestors,
+  getEntityWithLive,
+  getEntityHoldings,
+  getTrackedSnapshot,
+  superInvestorUrl,
+  onePercentStockUrl,
+  tierLabel,
+  typeLabel,
+  formatCr,
+  formatPct,
+  formatQuarter,
+  canonicalFor,
+  SUPER_INVESTORS_HUB,
+  ONE_PERCENT_CLUB_HUB,
+} from '../../lib/tracked-entities';
+
+function changePill(type: string | null): { label: string; class: string } | null {
+  if (!type || type === 'unchanged') return null;
+  switch (type) {
+    case 'fresh_entry':
+      return { label: 'New', class: 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300' };
+    case 'complete_exit':
+      return { label: 'Exit', class: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300' };
+    case 'increased':
+      return { label: '↑', class: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300' };
+    case 'decreased':
+      return { label: '↓', class: 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300' };
+    default:
+      return { label: type, class: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300' };
+  }
+}
+
+export function getStaticPaths() {
+  const entities = getSuperInvestors();
+  if (!entities.length) {
+    return [{ params: { slug: '_placeholder' }, props: { slug: '_placeholder' } }];
+  }
+  return entities.map((e) => ({ params: { slug: e.slug }, props: { slug: e.slug } }));
+}
+
+const { slug } = Astro.props;
+const isPlaceholder = slug === '_placeholder';
+const entity = isPlaceholder ? undefined : await getEntityWithLive(slug);
+
+if (!isPlaceholder && !entity) {
+  return Astro.redirect('/404');
+}
+
+const snapshot = await getTrackedSnapshot();
+const holdings = isPlaceholder ? [] : await getEntityHoldings(slug);
+const topMoves = holdings.filter((h) => h.changeType && h.changeType !== 'unchanged').slice(0, 8);
+const path = isPlaceholder ? SUPER_INVESTORS_HUB : superInvestorUrl(slug);
+const canonical = canonicalFor(path);
+
+// SEO meta with sensible fallbacks so the placeholder page still renders.
+const title = isPlaceholder
+  ? 'Super Investors'
+  : `${entity!.displayName} Portfolio \u2014 Latest Holdings & Conviction | IPOFins`;
+const description = isPlaceholder
+  ? 'Track India\u2019s top super investors.'
+  : `${entity!.displayName} latest portfolio \u2014 top holdings, fresh entries, exits, conviction score and style. ${entity!.focus ?? ''}`;
+
+const live = entity?.live;
+const hasLive = !!live;
+
+const jsonLd = isPlaceholder
+  ? null
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: entity!.name,
+      alternateName: entity!.aliases.length ? entity!.aliases : undefined,
+      description: entity!.bio ?? entity!.focus,
+      url: canonical,
+      jobTitle: 'Investor',
+      knowsAbout: entity!.tags,
+      ...(entity!.location ? { address: { '@type': 'PostalAddress', addressLocality: entity!.location } } : {}),
+    };
+
+const breadcrumbJsonLd = isPlaceholder
+  ? null
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+        { '@type': 'ListItem', position: 2, name: 'Super Investors', item: canonicalFor(SUPER_INVESTORS_HUB) },
+        { '@type': 'ListItem', position: 3, name: entity!.displayName, item: canonical },
+      ],
+    };
+
+// Related: other super investors of the same tier or type.
+const peers = isPlaceholder
+  ? []
+  : getSuperInvestors()
+      .filter((e) => e.slug !== slug && (e.tier === entity!.tier || e.type === entity!.type))
+      .slice(0, 6);
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd ?? undefined}
+>
+  {breadcrumbJsonLd && (
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  )}
+
+  {isPlaceholder ? (
+    <section class="container-wide py-20 text-center">
+      <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Super Investors</h1>
+      <p class="mt-2 text-surface-600 dark:text-surface-300">Curated roster coming soon.</p>
+      <a href={SUPER_INVESTORS_HUB} class="btn-primary px-6 py-3 mt-6 inline-block">Back to hub</a>
+    </section>
+  ) : (
+    <>
+      <!-- Breadcrumb -->
+      <nav class="container-wide pt-6" aria-label="Breadcrumb">
+        <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+          <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+          <li><span class="mx-1">/</span></li>
+          <li><a href={SUPER_INVESTORS_HUB} class="hover:text-primary-600 transition-colors">Super Investors</a></li>
+          <li><span class="mx-1">/</span></li>
+          <li class="text-surface-900 dark:text-white font-medium">{entity!.displayName}</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <section class="container-wide pt-8 pb-6">
+        <div class="flex flex-col md:flex-row md:items-start gap-6">
+          <div class="w-20 h-20 shrink-0 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+            <span class="text-white font-bold text-3xl">{entity!.displayName.charAt(0)}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+                {entity!.displayName}
+              </h1>
+              {entity!.tier && (
+                <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                  {tierLabel(entity!.tier)}
+                </span>
+              )}
+            </div>
+            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
+              {typeLabel(entity!.type)}{entity!.location && ` \u00b7 ${entity!.location}`}
+            </p>
+            {entity!.focus && (
+              <p class="mt-3 text-surface-700 dark:text-surface-200 max-w-2xl">{entity!.focus}</p>
+            )}
+            {entity!.bio && (
+              <p class="mt-2 text-sm text-surface-600 dark:text-surface-300 max-w-2xl">{entity!.bio}</p>
+            )}
+            {entity!.tags.length > 0 && (
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                {entity!.tags.map((tag) => (
+                  <span class="px-2 py-0.5 text-xs bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            {entity!.website && (
+              <a href={entity!.website} rel="nofollow sponsored noopener noreferrer" target="_blank"
+                class="inline-block mt-3 text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                Official website &rarr;
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <!-- Live stats -->
+      {hasLive && (
+        <section class="container-wide pb-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">
+                {live!.totalHoldings ?? '\u2014'}
+              </p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Holdings (Q-o-Q)</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-surface-900 dark:text-white">{formatCr(live!.portfolioValueCr)}</p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Disclosed value</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-success-600 dark:text-success-400">
+                {(live!.freshEntries ?? 0) + (live!.adds ?? 0) > 0 ? `+${(live!.freshEntries ?? 0) + (live!.adds ?? 0)}` : '\u2014'}
+              </p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Adds this quarter</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-extrabold text-warning-600 dark:text-warning-400">
+                {(live!.exits ?? 0) + (live!.trims ?? 0) > 0 ? `\u2212${(live!.exits ?? 0) + (live!.trims ?? 0)}` : '\u2014'}
+              </p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Trims this quarter</p>
+            </div>
+          </div>
+          <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-3">
+            Latest disclosure: {formatQuarter(live!.quarter)} \u00b7 Top-5 concentration {formatPct(live!.top5Concentration)}
+          </p>
+        </section>
+      )}
+
+      {!hasLive && holdings.length === 0 && (
+        <section class="container-wide pb-6">
+          <div class="card bg-primary-50/60 dark:bg-primary-950/20 text-center">
+            <p class="text-sm text-surface-700 dark:text-surface-200">
+              Detailed quarterly holdings for {entity!.displayName} populate after the next Shareholding Pattern pipeline run.
+              In the meantime, {entity!.aliases.length > 0 ? `this investor files under ${entity!.aliases.length + 1} known name variants; ` : ''}
+              see <a href="/1-percent-club" class="text-primary-600 hover:underline">the 1% Club</a> for raw \u22651% disclosures.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {topMoves.length > 0 && (
+        <section class="container-wide pb-6">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Top moves this quarter</h2>
+          <div class="flex flex-wrap gap-2">
+            {topMoves.map((h) => {
+              const pill = changePill(h.changeType);
+              return (
+                <a href={onePercentStockUrl(h.stockSlug)} class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 text-sm hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors">
+                  {pill && <span class={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${pill.class}`}>{pill.label}</span>}
+                  <span class="text-surface-900 dark:text-white font-medium">{h.stockName}</span>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {holdings.length > 0 && (
+        <section class="container-wide pb-10">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Holdings (latest quarter)</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">
+                  <th class="py-2 pr-4 font-medium">Stock</th>
+                  <th class="py-2 px-4 font-medium text-right">% of co.</th>
+                  <th class="py-2 px-4 font-medium text-right">Value</th>
+                  <th class="py-2 px-4 font-medium text-center">QoQ</th>
+                  <th class="py-2 pl-4 font-medium text-right">Shares</th>
+                </tr>
+              </thead>
+              <tbody>
+                {holdings.map((h) => {
+                  const pill = changePill(h.changeType);
+                  return (
+                    <tr class="border-b border-surface-100 dark:border-surface-800">
+                      <td class="py-3 pr-4">
+                        <a href={onePercentStockUrl(h.stockSlug)} class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">
+                          {h.stockName}
+                        </a>
+                        {h.nseSymbol && <span class="block text-xs text-surface-500">{h.nseSymbol}</span>}
+                      </td>
+                      <td class="py-3 px-4 text-right font-semibold">{formatPct(h.pctOfCompany)}</td>
+                      <td class="py-3 px-4 text-right">{formatCr(h.marketValueCr)}</td>
+                      <td class="py-3 px-4 text-center">
+                        {pill ? (
+                          <span class={`px-2 py-0.5 text-[11px] font-semibold rounded ${pill.class}`}>{pill.label}</span>
+                        ) : (
+                          <span class="text-surface-400">—</span>
+                        )}
+                      </td>
+                      <td class="py-3 pl-4 text-right text-surface-600 dark:text-surface-300">
+                        {h.shares != null ? Number(h.shares).toLocaleString('en-IN') : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      <!-- Aliases / matching note (transparency / E-E-A-T) -->
+      {entity!.aliases.length > 0 && (
+        <section class="container-wide pb-8">
+          <div class="card">
+            <h2 class="text-sm font-semibold text-surface-900 dark:text-white mb-2">Files under these names</h2>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="px-2 py-0.5 text-xs bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-200 rounded">{entity!.name}</span>
+              {entity!.aliases.map((a) => (
+                <span class="px-2 py-0.5 text-xs bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-200 rounded">{a}</span>
+              ))}
+            </div>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mt-2">
+              These name variants are resolved to a single tracked entity at ingest time so no position is double-counted.
+            </p>
+          </div>
+        </section>
+      )}
+
+      <!-- Disclaimer -->
+      <section class="container-wide pb-8 max-w-3xl">
+        <div class="card bg-warning-50/60 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-900/40">
+          <p class="text-xs text-surface-700 dark:text-surface-300">
+            <strong>Disclosure:</strong> Holdings data is sourced from public regulatory filings (NSE/BSE Shareholding Pattern, SAST).
+            This is not investment advice. {entity!.displayName} may have different risk capacity, cost bases, and holding periods.
+            See our <a href="/disclaimer" class="text-primary-600 hover:underline">full disclaimer</a> and
+            <a href="/methodology" class="text-primary-600 hover:underline">methodology</a>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Peers -->
+      {peers.length > 0 && (
+        <section class="container-wide py-8">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Other tracked {typeLabel(entity!.type).toLowerCase()}s</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {peers.map((peer) => (
+              <a href={superInvestorUrl(peer.slug)} class="card group block">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+                    <span class="text-white font-bold">{peer.displayName.charAt(0)}</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{peer.displayName}</h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 truncate">{peer.focus ?? typeLabel(peer.type)}</p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Cross-links -->
+      <section class="container-wide py-8">
+        <div class="nav-btn-group">
+          <a href={SUPER_INVESTORS_HUB} class="btn-secondary px-6 py-3">All Super Investors</a>
+          <a href={ONE_PERCENT_CLUB_HUB} class="btn-secondary px-6 py-3">1% Club</a>
+          <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
+        </div>
+      </section>
+    </>
+  )}
+</BaseLayout>

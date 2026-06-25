@@ -1,0 +1,101 @@
+---
+/**
+ * EntityCard — shared card for the four tracked-entity route families.
+ * Renders a curated entity with optional live stats from migration 005.
+ * Falls back gracefully to a static roster card when no live data exists.
+ */
+import type { Entity, EntityLiveStats } from '../../lib/tracked-entities';
+import { tierLabel, typeLabel, formatCr, formatPct } from '../../lib/tracked-entities';
+
+interface Props {
+  entity: Entity & { live?: EntityLiveStats };
+  href: string;
+  /** Which stat to feature in the card header strip. */
+  accent?: 'portfolio' | 'holdings' | 'strategies';
+}
+
+const { entity, href, accent = 'portfolio' } = Astro.props;
+const { live } = entity;
+const hasLive = !!live;
+
+// Tier badge colour (legendary / active / emerging / generic)
+const tierClass =
+  entity.tier === 'legendary'
+    ? 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300'
+    : entity.tier === 'active'
+      ? 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300'
+      : entity.tier === 'emerging'
+        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300'
+        : 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300';
+
+const featuredStat =
+  accent === 'strategies'
+    ? { label: 'Strategies', value: String(entity.strategies.length || '—') }
+    : accent === 'holdings'
+      ? { label: 'Holdings', value: hasLive && live!.totalHoldings != null ? String(live!.totalHoldings) : '—' }
+      : { label: 'Portfolio', value: hasLive ? formatCr(live!.portfolioValueCr) : '—' };
+---
+
+<a href={href} class="card group block">
+  <div class="flex items-start justify-between gap-3 mb-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+        <span class="text-white font-bold text-base">{entity.displayName.charAt(0)}</span>
+      </div>
+      <div class="min-w-0">
+        <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+          {entity.displayName}
+        </h3>
+        <p class="text-xs text-surface-500 dark:text-surface-400 truncate">{typeLabel(entity.type)}</p>
+      </div>
+    </div>
+    {entity.tier && (
+      <span class={`shrink-0 px-2 py-0.5 text-[11px] font-medium rounded-full ${tierClass}`}>
+        {tierLabel(entity.tier)}
+      </span>
+    )}
+  </div>
+
+  {entity.focus && (
+    <p class="text-sm text-surface-600 dark:text-surface-300 line-clamp-2 mb-3">{entity.focus}</p>
+  )}
+
+  <div class="grid grid-cols-2 gap-3 mb-3">
+    <div>
+      <p class="text-[11px] uppercase tracking-wide text-surface-500 dark:text-surface-400">{featuredStat.label}</p>
+      <p class="text-sm font-semibold text-surface-800 dark:text-surface-100">{featuredStat.value}</p>
+    </div>
+    <div>
+      <p class="text-[11px] uppercase tracking-wide text-surface-500 dark:text-surface-400">Latest moves</p>
+      <p class="text-sm font-semibold text-surface-800 dark:text-surface-100">
+        {hasLive && (live!.freshEntries || live!.exits || live!.adds || live!.trims) != null
+          ? `${(live!.freshEntries ?? 0) + (live!.adds ?? 0)}▲ / ${(live!.exits ?? 0) + (live!.trims ?? 0)}▼`
+          : '—'}
+      </p>
+    </div>
+  </div>
+
+  {hasLive && live!.largeCapPct != null && (
+    <div class="flex flex-wrap gap-1.5 mb-3">
+      <span class="px-2 py-0.5 text-[11px] bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">
+        Large {formatPct(live!.largeCapPct)}
+      </span>
+      <span class="px-2 py-0.5 text-[11px] bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">
+        Mid {formatPct(live!.midCapPct)}
+      </span>
+      <span class="px-2 py-0.5 text-[11px] bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">
+        Small {formatPct(live!.smallCapPct)}
+      </span>
+    </div>
+  )}
+
+  {entity.tags.length > 0 && (
+    <div class="flex flex-wrap gap-1.5">
+      {entity.tags.slice(0, 4).map((tag) => (
+        <span class="px-2 py-0.5 text-[11px] bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded">
+          {tag}
+        </span>
+      ))}
+    </div>
+  )}
+</a>

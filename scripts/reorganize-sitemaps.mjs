@@ -133,6 +133,8 @@ function writeBucketSitemaps(buckets) {
     'sitemap-funds.xml': 'weekly',
     'sitemap-stocks.xml': 'monthly',
     'sitemap-smart-money.xml': 'monthly',
+    'sitemap-super-investors.xml': 'weekly',
+    'sitemap-one-percent-club.xml': 'weekly',
     'sitemap-tools.xml': 'monthly',
     'sitemap-blog.xml': 'monthly',
     'sitemap-learn.xml': 'monthly',

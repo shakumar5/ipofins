@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import {
+  getDistinctHolderSlugs,
+  getHoldingsByHolderSlug,
+  onePercentStockUrl,
+  formatPct,
+  canonicalFor,
+  ONE_PERCENT_CLUB_HUB,
+  SUPER_INVESTORS_HUB,
+} from '../../../lib/tracked-entities';
+
+export async function getStaticPaths() {
+  const holders = await getDistinctHolderSlugs();
+  if (!holders.length) return [];
+  return holders
+    .filter((h) => !h.entitySlug)
+    .map((h) => ({ params: { holderSlug: h.holderSlug }, props: { holderSlug: h.holderSlug } }));
+}
+
+const { holderSlug } = Astro.props;
+const data = await getHoldingsByHolderSlug(holderSlug);
+
+if (!data.rows.length) {
+  return Astro.redirect('/404');
+}
+
+const path = `${ONE_PERCENT_CLUB_HUB}/holder/${holderSlug}`;
+const canonical = canonicalFor(path);
+const title = `${data.holderName} — Stocks with ≥1% Shareholding | IPOFins`;
+const description = `Stocks where ${data.holderName} holds 1% or more per latest NSE/BSE shareholding pattern disclosure. ${data.rows.length} positions.`;
+---
+
+<BaseLayout title={title} description={description} canonicalUrl={canonical}>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={ONE_PERCENT_CLUB_HUB} class="hover:text-primary-600 transition-colors">1% Club</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium truncate max-w-[200px]">{data.holderName}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      {data.holderName}
+    </h1>
+    <p class="mt-2 text-surface-600 dark:text-surface-300">
+      {data.rows.length} stock{data.rows.length === 1 ? '' : 's'} with ≥1% disclosed stake (latest quarter).
+    </p>
+  </section>
+
+  <section class="container-wide pb-10">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">
+            <th class="py-2 pr-4 font-medium">Stock</th>
+            <th class="py-2 px-4 font-medium">Type</th>
+            <th class="py-2 px-4 font-medium text-right">% of company</th>
+            <th class="py-2 pl-4 font-medium text-right">Shares</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.rows.map((row) => (
+            <tr class="border-b border-surface-100 dark:border-surface-800">
+              <td class="py-3 pr-4">
+                <a href={onePercentStockUrl(row.stockSlug)} class="font-medium text-primary-600 hover:underline">
+                  {row.stockName}
+                </a>
+              </td>
+              <td class="py-3 px-4 capitalize text-surface-600 dark:text-surface-300">{row.holderType.replace('_', ' ')}</td>
+              <td class="py-3 px-4 text-right font-semibold">{formatPct(row.pctOfCompany)}</td>
+              <td class="py-3 pl-4 text-right text-surface-600 dark:text-surface-300">
+                {row.shares != null ? Number(row.shares).toLocaleString('en-IN') : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="container-wide pb-10 max-w-3xl">
+    <div class="card bg-warning-50/60 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-900/40">
+      <p class="text-xs text-surface-700 dark:text-surface-300">
+        Data from quarterly shareholding pattern filings. Only stakes ≥1% are disclosed. Not investment advice.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-wide py-6">
+    <div class="nav-btn-group">
+      <a href={ONE_PERCENT_CLUB_HUB} class="btn-secondary px-6 py-3">1% Club</a>
+      <a href={SUPER_INVESTORS_HUB} class="btn-secondary px-6 py-3">Super Investors</a>
+    </div>
+  </section>
+</BaseLayout>

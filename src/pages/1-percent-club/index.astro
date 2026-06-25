@@ -1,0 +1,258 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import OnePercentSearch from '../../components/tracked/OnePercentSearch.tsx';
+import {
+  getOnePercentSnapshot,
+  getOnePercentTopStocks,
+  getOnePercentSearchIndex,
+  onePercentStockUrl,
+  formatPct,
+  formatQuarter,
+  canonicalFor,
+  getTrackedSnapshot,
+  ONE_PERCENT_CLUB_HUB,
+} from '../../lib/tracked-entities';
+
+// 1% Club is Neon-driven. When the 005 tables are empty/absent, all queries
+// return empty arrays / nulls and the page renders a graceful "curated roster"
+// message pointing at /super-investors.
+const snap = await getOnePercentSnapshot();
+const topStocks = await getOnePercentTopStocks(60);
+const searchIndex = await getOnePercentSearchIndex();
+const trackedSnapshot = await getTrackedSnapshot();
+
+const hasData = topStocks.length > 0;
+const path = '/1-percent-club';
+const canonical = canonicalFor(path);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: '1% Club \u2014 Every \u22651% Shareholder in Indian Stocks',
+  description:
+    'The 1% Club lists every non-promoter shareholder owning 1% or more of every NSE/BSE-listed company \u2014 parsed raw from quarterly Shareholding Pattern filings, including mystery holders not yet mapped to a tracked super investor.',
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: '1% Club', item: canonical },
+    ],
+  },
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is the 1% Club?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The 1% Club is the discovery layer over India\u2019s quarterly Shareholding Pattern filings. Every listed company must disclose every shareholder owning 1% or more. We aggregate those raw holders across 1,700+ stocks \u2014 including holders not yet mapped to a curated super investor.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why are some holders marked as mystery?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A mystery holder is a ≥1% stake that hasn’t yet been resolved to a curated super-investor profile or known DII/FII. The same person often files under slightly different name spellings across companies; our name-resolution step maps variants together. Unresolved names are surfaced so you can spot unknown smart money early.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Are promoters included in the 1% Club?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Promoters are excluded from the 1% Club by design. They are tracked separately so we can show "% held by promoters" on stock pages, but they are never treated as conviction signals.',
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="1% Club \u2014 Every \u22651% Shareholder in Indian Stocks | IPOFins"
+  description="The 1% Club lists every non-promoter shareholder owning 1%+ of every NSE/BSE listed company \u2014 raw quarterly Shareholding Pattern data, including mystery holders not yet mapped to tracked super investors."
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">1% Club</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      The 1% Club \u2014 Every \u22651% Shareholder, Surfaced
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
+      The discovery layer under our curated super-investor tracker. Every listed company must disclose every
+      non-promoter shareholder owning 1% or more, every quarter. We aggregate those raw holders across
+      1,700+ stocks \u2014 including <strong>mystery holders</strong> not yet mapped to a tracked name.
+    </p>
+    <div class="nav-btn-group mt-6">
+      <a href="/super-investors" class="btn-primary px-6 py-3">Curated Super Investors</a>
+      <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
+      <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
+    </div>
+  </section>
+
+  <section class="container-wide pb-8 max-w-3xl">
+    <OnePercentSearch
+      client:load
+      stocks={searchIndex.stocks}
+      holders={searchIndex.holders}
+      stockBase={ONE_PERCENT_CLUB_HUB}
+      holderBase={`${ONE_PERCENT_CLUB_HUB}/holder`}
+      superInvestorBase="/super-investors"
+    />
+  </section>
+
+  {hasData ? (
+    <>
+      <section class="container-wide pb-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="card text-center">
+            <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">
+              {(snap.totalRows ?? 0).toLocaleString('en-IN')}
+            </p>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">\u22651% disclosures</p>
+          </div>
+          <div class="card text-center">
+            <p class="text-2xl font-extrabold text-surface-900 dark:text-white">
+              {(snap.distinctHolders ?? 0).toLocaleString('en-IN')}
+            </p>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Distinct holders</p>
+          </div>
+          <div class="card text-center">
+            <p class="text-2xl font-extrabold text-surface-900 dark:text-white">
+              {(snap.distinctStocks ?? 0).toLocaleString('en-IN')}
+            </p>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Stocks covered</p>
+          </div>
+          <div class="card text-center">
+            <p class="text-2xl font-extrabold text-warning-600 dark:text-warning-400">
+              {snap.unmatchedPct != null ? formatPct(snap.unmatchedPct * 100) : '\u2014'}
+            </p>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Unmapped (mystery)</p>
+          </div>
+        </div>
+        <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-3">
+          Latest disclosure quarter: {formatQuarter(snap.latestQuarter)}
+        </p>
+      </section>
+
+      <section class="container-wide py-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-surface-900 dark:text-white">Most-held stocks by \u22651% non-promoter investors</h2>
+          <span class="text-sm text-surface-500 dark:text-surface-400">{topStocks.length} shown</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">
+                <th class="py-2 pr-4 font-medium">Stock</th>
+                <th class="py-2 px-4 font-medium text-right">\u22651% holders</th>
+                <th class="py-2 px-4 font-medium text-right">Curated</th>
+                <th class="py-2 px-4 font-medium text-right">Mystery</th>
+                <th class="py-2 pl-4 font-medium text-right">Top stake</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topStocks.map((row) => (
+                <tr class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/50">
+                  <td class="py-3 pr-4">
+                    <a href={onePercentStockUrl(row.stockSlug)} class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">
+                      {row.stockName}
+                    </a>
+                  </td>
+                  <td class="py-3 px-4 text-right font-semibold text-surface-800 dark:text-surface-100">{row.holders}</td>
+                  <td class="py-3 px-4 text-right text-success-600 dark:text-success-400">{row.curatedCount}</td>
+                  <td class="py-3 px-4 text-right text-warning-600 dark:text-warning-400">{row.mysteryCount}</td>
+                  <td class="py-3 pl-4 text-right text-surface-600 dark:text-surface-300">{formatPct(row.topPct)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  ) : (
+    <section class="container-wide py-10">
+      <div class="card bg-primary-50/60 dark:bg-primary-950/20 text-center max-w-2xl mx-auto">
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Quarterly Shareholding Pattern data lands here first</h2>
+        <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">
+          Once the super-investor pipeline ingests the latest quarter, every \u22651% non-promoter holder across
+          1,700+ stocks appears here \u2014 including mystery holders. In the meantime, browse the curated rosters:
+        </p>
+        <div class="nav-btn-group justify-center">
+          <a href="/super-investors" class="btn-primary px-6 py-3">Super Investors</a>
+          <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
+        </div>
+      </div>
+      <div class="mt-6 max-w-2xl mx-auto">
+        <OnePercentSearch
+          client:load
+          stocks={searchIndex.stocks}
+          holders={searchIndex.holders}
+          stockBase={ONE_PERCENT_CLUB_HUB}
+          holderBase={`${ONE_PERCENT_CLUB_HUB}/holder`}
+          superInvestorBase="/super-investors"
+        />
+      </div>
+    </section>
+  )}
+
+  <!-- SEO content -->
+  <section class="container-wide py-10 max-w-3xl">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-3">What the 1% Club reveals</h2>
+    <div class="text-surface-600 dark:text-surface-300 space-y-3">
+      <p>
+        SEBI mandates that every listed company disclose its Shareholding Pattern each quarter, listing every
+        shareholder \u2014 promoter or public \u2014 that owns 1% or more. That single filing is the richest
+        public signal of where smart money is concentrating in Indian equities.
+      </p>
+      <p>
+        The 1% Club indexes those filings across the entire listed universe. Each row maps to either a
+        <a href="/super-investors" class="text-primary-600 hover:underline">curated tracked entity</a> (a known
+        curated super-investor profile, FII or DII) or a mystery holder we haven\u2019t resolved yet. Watching the
+        mystery column is how new breakout investors get discovered.
+      </p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="container-wide py-12">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-4 max-w-3xl">
+      <details class="card group" open>
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the 1% Club?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">The discovery layer over quarterly Shareholding Pattern filings \u2014 every non-promoter \u22651% shareholder aggregated across 1,700+ stocks, including holders not yet mapped to a curated entity.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why are some holders marked as mystery?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A mystery holder is a \u22651% stake not yet resolved to a curated entity. The same person often files under slightly different name spellings; our name-resolution step maps variants together. Unresolved names are surfaced so you can spot unknown smart money early.</p>
+      </details>
+      <details class="card group">
+        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Are promoters included?</summary>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">No. Promoters are excluded from the 1% Club by design and shown only as "% held by promoters" on stock pages.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container-wide py-8">
+    <div class="nav-btn-group">
+      <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+      <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">Smart Money Tracker</a>
+    </div>
+  </section>
+</BaseLayout>

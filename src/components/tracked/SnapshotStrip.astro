@@ -1,0 +1,48 @@
+---
+/**
+ * SnapshotStrip — headline-stats row for tracked-entity landing pages.
+ * Shows curated roster size plus live Neon counts when migration 005 data
+ * is present; otherwise degrades to a "roster only" message.
+ */
+import type { TrackedSnapshot } from '../../lib/tracked-entities';
+import { formatCr, formatQuarter } from '../../lib/tracked-entities';
+
+interface Props {
+  snapshot: TrackedSnapshot;
+  noun: string; // "super investors" / "PMS providers" / "alternative funds"
+}
+
+const { snapshot, noun } = Astro.props;
+const hasLive = snapshot.latestQuarter != null;
+---
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div class="card text-center">
+    <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">{snapshot.entityCount}</p>
+    <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Tracked {noun}</p>
+  </div>
+  <div class="card text-center">
+    <p class="text-2xl font-extrabold text-surface-900 dark:text-white">
+      {snapshot.stocksHeld != null ? snapshot.stocksHeld.toLocaleString('en-IN') : '—'}
+    </p>
+    <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Stocks held</p>
+  </div>
+  <div class="card text-center">
+    <p class="text-2xl font-extrabold text-surface-900 dark:text-white">
+      {formatCr(snapshot.totalValueCr)}
+    </p>
+    <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Disclosed portfolio value</p>
+  </div>
+  <div class="card text-center">
+    <p class="text-2xl font-extrabold text-surface-900 dark:text-white">
+      {hasLive ? formatQuarter(snapshot.latestQuarter) : 'Curated'}
+    </p>
+    <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Latest disclosure quarter</p>
+  </div>
+</div>
+
+{!hasLive && (
+  <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-3">
+    Live quarterly Shareholding Pattern data populates here after the first pipeline run. Showing the curated roster below.
+  </p>
+)}

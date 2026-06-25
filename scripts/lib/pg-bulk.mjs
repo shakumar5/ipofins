@@ -119,6 +119,70 @@ export async function bulkUpsertStocks(rows, chunkSize = 500) {
 }
 
 /**
+ * Bulk upsert NSE listed equities (name, slug, isin, nse_symbol).
+ * Used by Super Investors / 1% Club — independent of MF holdings universe.
+ */
+export async function bulkUpsertListedEquities(rows, chunkSize = 500) {
+  if (!rows.length) return 0;
+  const pool = getPgPool();
+  let upserted = 0;
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const isins = chunk.map((r) => r.isin);
+    const names = chunk.map((r) => r.name);
+    const slugs = chunk.map((r) => r.slug);
+    const symbols = chunk.map((r) => r.nse_symbol);
+
+    await pool.query(
+      `INSERT INTO stocks (isin, name, slug, nse_symbol)
+       SELECT u.isin, u.name, u.slug, u.nse_symbol
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[]) AS u(isin, name, slug, nse_symbol)
+       ON CONFLICT (slug) DO UPDATE SET
+         isin = COALESCE(stocks.isin, EXCLUDED.isin),
+         nse_symbol = COALESCE(EXCLUDED.nse_symbol, stocks.nse_symbol),
+         updated_at = NOW()`,
+      [isins, names, slugs, symbols],
+    );
+    upserted += chunk.length;
+  }
+
+  return upserted;
+}
+
+/**
+ * Bulk upsert BSE-only listed equities (name, slug, isin, bse_code).
+ * Skips rows whose ISIN already has an NSE symbol (dual-listed stay on NSE path).
+ */
+export async function bulkUpsertBseOnlyEquities(rows, chunkSize = 500) {
+  if (!rows.length) return 0;
+  const pool = getPgPool();
+  let upserted = 0;
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const isins = chunk.map((r) => r.isin);
+    const names = chunk.map((r) => r.name);
+    const slugs = chunk.map((r) => r.slug);
+    const codes = chunk.map((r) => r.bse_code);
+
+    await pool.query(
+      `INSERT INTO stocks (isin, name, slug, bse_code)
+       SELECT u.isin, u.name, u.slug, u.bse_code
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[]) AS u(isin, name, slug, bse_code)
+       ON CONFLICT (slug) DO UPDATE SET
+         isin = COALESCE(stocks.isin, EXCLUDED.isin),
+         bse_code = COALESCE(EXCLUDED.bse_code, stocks.bse_code),
+         updated_at = NOW()`,
+      [isins, names, slugs, codes],
+    );
+    upserted += chunk.length;
+  }
+
+  return upserted;
+}
+
+/**
  * Bulk upsert full portfolio stock counts (parsed before top-N trim).
  */
 export async function bulkUpsertFundPortfolioStats(rows, chunkSize = 2000) {

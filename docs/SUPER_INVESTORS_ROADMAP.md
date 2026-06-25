@@ -1,6 +1,6 @@
 # Super Investors & 1% Club — Product Roadmap
 
-**Status:** Planning (discussion locked, implementation not started on `main`)  
+**Status:** In progress on `feature/super-investors-v1`  
 **Last updated:** 2026-06-24  
 **Branch strategy:** Fresh feature branch from `main` (staging Neon in `.env`, prod in `.env.prod-backup`)
 
@@ -25,7 +25,7 @@
 | Decision | Choice |
 |----------|--------|
 | Super investor roster | **30 curated** profiles at launch |
-| 1% Club coverage | **All stocks** with SHP data in DB |
+| 1% Club coverage | **All NSE-listed equities** scanned via SHP (not MF holdings subset); MF overlap linked later |
 | 1% Club hub search | **By stock** + **By name** |
 | Portfolio value | **₹ Cr** on profiles (price × shares at build) |
 | Homepage message | “Track what MFs **and** super investors are buying” |
@@ -64,14 +64,14 @@
 **Goal:** Clean slate from `main`, staging DB, spec frozen.
 
 ### Engineering
-- [ ] Create branch `feature/super-investors-v1` from `main`
-- [ ] Confirm `.env` → staging Neon; `.env.prod-backup` → prod (never run SI pipelines on prod until Phase 6)
+- [x] Create branch `feature/super-investors-v1` from `main`
+- [x] Confirm `.env` → staging Neon; `.env.prod-backup` → prod (never run SI pipelines on prod until Phase 6)
 - [ ] Document env switch procedure in team notes
-- [ ] Add this roadmap to project tracking (GitHub Project / issues optional)
+- [x] Add this roadmap to project tracking (GitHub Project / issues optional)
 
 ### Product / content
-- [ ] Finalize list of **30 super investors** (names, slugs, aliases, bios, focus, tier)
-- [ ] Expand `super-investors.json` from 15 → 30 (currently 15 in `my-future-feature` only)
+- [x] Finalize list of **30 super investors** (names, slugs, aliases, bios, focus, tier)
+- [x] Expand `super-investors.json` from 15 → 30 (currently 15 in `my-future-feature` only)
 - [ ] Define alias rules doc (e.g. Kedia vs Kedia Securities Pvt Ltd)
 
 ### Competitive baseline
@@ -104,12 +104,13 @@
 - [ ] Materialized views — only if query perf needs it at build time
 
 ### DB tasks
-- [ ] Write / adopt `005_super_investors.sql` (minimal v1 subset if trimming from `my-future-feature`)
-- [ ] Write / adopt `006_super_investor_views.sql` (only views needed for hub stats)
-- [ ] Apply migrations on **staging Neon**
-- [ ] `npm run db:seed-superinvestors` — load 30 roster entries
-- [ ] Update `db/verify-schema.mjs` — 005 tables warn on prod, pass on staging
-- [ ] `scripts/check-tracked-status.mjs` — QA script for row counts
+- [x] Write / adopt `005_super_investors.sql` (minimal v1 subset if trimming from `my-future-feature`)
+- [x] Write / adopt `006_super_investor_views.sql` (only views needed for hub stats)
+- [x] Apply migrations on **staging Neon**
+- [x] `npm run db:seed-superinvestors` — load 30 roster entries
+- [x] `npm run db:seed-listed-equities` — NSE EQUITY_L.csv → full listed-equity universe in `stocks`
+- [x] Update `db/verify-schema.mjs` — 005 tables warn on prod, pass on staging
+- [x] `scripts/check-tracked-status.mjs` — QA script for row counts
 
 ### Pipeline — quarterly SHP (P0)
 - [ ] `pipeline:superinvestor` — fetch NSE/BSE SHP for all covered stocks
@@ -125,7 +126,7 @@
 - [ ] Re-run compute after roster JSON edits (no re-scrape needed)
 
 ### Overrides (resilience)
-- [ ] Create `src/data/si-overrides/` + README
+- [x] Create `src/data/si-overrides/` + README
 - [ ] Merge override JSON when exchange fetch fails
 
 ### SEO (data layer)
@@ -169,23 +170,23 @@
 - [ ] Empty state if entity in roster but no SHP match yet
 
 ### 1% Club hub `/1-percent-club`
-- [ ] Stats: stocks tracked, curated holder count, mystery count, quarter
-- [ ] **Search by stock** — autocomplete → stock page
-- [ ] **Search by name** — fuzzy match → holder results page
-- [ ] Browse table: Stock | # holders | top holder % | curated count
-- [ ] FAQ + JSON-LD
-- [ ] Empty state before first pipeline run
+- [~] Stats: stocks tracked, curated holder count, mystery count, quarter
+- [x] **Search by stock** — autocomplete → stock page
+- [x] **Search by name** — fuzzy match → holder results page
+- [~] Browse table: Stock | # holders | top holder % | curated count
+- [x] FAQ + JSON-LD
+- [x] Empty state before first pipeline run
 
 ### 1% Club stock page `/1-percent-club/[stock-slug]`
-- [ ] Stock name + quarter
+- [x] Stock name + quarter
 - [ ] Promoter % separate (not in conviction table)
-- [ ] Holders table: Name | Type | % | Shares | Curated link
-- [ ] Curated → correct URL by type (`/super-investors/…` only in v1)
-- [ ] Mystery holders — name only, no broken links
-- [ ] **Do not** build page if zero non-promoter ≥1% holders (`noindex` or skip path)
+- [x] Holders table: Name | Type | % | Shares | Curated link
+- [x] Curated → correct URL by type (`/super-investors/…` only in v1)
+- [x] Mystery holders — name only, no broken links
+- [x] **Do not** build page if zero non-promoter ≥1% holders (`noindex` or skip path)
 
 ### 1% Club name results `/1-percent-club/holder/[slug]`
-- [ ] Table of all stocks where name holds ≥1%
+- [x] Table of all stocks where name holds ≥1%
 - [ ] Banner if matches curated super investor → link to full profile
 - [ ] Group legal entity variants under one heading when possible
 - [ ] `noindex` on thin result pages (&lt;1 holding)
@@ -215,16 +216,16 @@
 - [ ] Canonical URLs — no duplicate `?q=` indexed; canonical to slug URLs
 
 ### Sitemap
-- [ ] Add bucket `sitemap-super-investors.xml` (30 + hub + leaderboard)
-- [ ] Add bucket `sitemap-one-percent-club.xml` (stock pages only — not empty)
+- [x] Add bucket `sitemap-super-investors.xml` (30 + hub + leaderboard)
+- [x] Add bucket `sitemap-one-percent-club.xml` (stock pages only — not empty)
 - [ ] Exclude `/1-percent-club/holder/*` with &lt;2 stocks or use noindex
 - [ ] `lastmod` = quarter end date or pipeline run date
 - [ ] **Do not** dump 130k overlap URLs with this launch
 
 ### Internal linking
-- [ ] Homepage hero + feature cards (MFs + super investors)
-- [ ] Footer: Super Investors + 1% Club links
-- [ ] Header: add “Super Investors” (1% Club in footer or sub-nav)
+- [x] Homepage hero + feature cards (MFs + super investors)
+- [x] Footer: Super Investors + 1% Club links
+- [x] Header: add “Super Investors” (1% Club in footer or sub-nav)
 - [ ] MF stock signal pages → “Super investors also hold this (N)”
 - [ ] Super investor stock row → 1% Club + MF signal
 - [ ] Methodology page section: SHP/SAST data model + disclaimers
