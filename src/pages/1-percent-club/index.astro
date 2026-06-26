@@ -13,6 +13,7 @@ import {
   getTrackedSnapshot,
   ONE_PERCENT_CLUB_HUB,
 } from '../../lib/tracked-entities';
+import { loadSmartMoneyStockSlugs } from '../../lib/smart-money-stock-slugs';
 
 // 1% Club is Neon-driven. When the 005 tables are empty/absent, all queries
 // return empty arrays / nulls and the page renders a graceful "curated roster"
@@ -21,6 +22,7 @@ const snap = await getOnePercentSnapshot();
 const topStocks = await getOnePercentTopStocks(60);
 const searchIndex = await getOnePercentSearchIndex();
 const trackedSnapshot = await getTrackedSnapshot();
+const mfStocks = loadSmartMoneyStockSlugs();
 
 const hasData = topStocks.length > 0;
 const path = '/1-percent-club';
@@ -107,10 +109,9 @@ const faqJsonLd = {
     <OnePercentSearch
       client:load
       stocks={searchIndex.stocks}
+      mfStocks={mfStocks}
       holders={searchIndex.holders}
       stockBase={ONE_PERCENT_CLUB_HUB}
-      holderBase={`${ONE_PERCENT_CLUB_HUB}/holder`}
-      superInvestorBase="/super-investors"
     />
   </section>
 
@@ -200,10 +201,9 @@ const faqJsonLd = {
         <OnePercentSearch
           client:load
           stocks={searchIndex.stocks}
+          mfStocks={mfStocks}
           holders={searchIndex.holders}
           stockBase={ONE_PERCENT_CLUB_HUB}
-          holderBase={`${ONE_PERCENT_CLUB_HUB}/holder`}
-          superInvestorBase="/super-investors"
         />
       </div>
     </section>

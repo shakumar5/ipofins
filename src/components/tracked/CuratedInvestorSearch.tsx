@@ -9,13 +9,12 @@ export interface HolderOption {
   slug: string;
   name: string;
   entitySlug: string | null;
+  profileUrl: string;
 }
 
 interface Props {
   curated: CuratedOption[];
   holders: HolderOption[];
-  superInvestorBase: string;
-  holderBase: string;
 }
 
 function norm(s: string) {
@@ -23,14 +22,12 @@ function norm(s: string) {
 }
 
 type Result =
-  | { kind: 'curated'; name: string; slug: string }
-  | { kind: 'holder'; name: string; slug: string; entitySlug: string | null };
+  | { kind: 'curated'; name: string; profileUrl: string }
+  | { kind: 'holder'; name: string; profileUrl: string; entitySlug: string | null };
 
 export default function CuratedInvestorSearch({
   curated,
   holders,
-  superInvestorBase,
-  holderBase,
 }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -48,7 +45,7 @@ export default function CuratedInvestorSearch({
       const key = `c:${c.slug}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ kind: 'curated', name: c.name, slug: c.slug });
+      out.push({ kind: 'curated', name: c.name, profileUrl: `/super-investors/${c.slug}` });
     }
 
     for (const h of holders) {
@@ -57,22 +54,14 @@ export default function CuratedInvestorSearch({
       const key = h.entitySlug ? `c:${h.entitySlug}` : `h:${h.slug}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ kind: 'holder', name: h.name, slug: h.slug, entitySlug: h.entitySlug });
+      out.push({ kind: 'holder', name: h.name, profileUrl: h.profileUrl, entitySlug: h.entitySlug });
     }
 
     return out.slice(0, 12);
   }, [q, curated, holders]);
 
   function go(result: Result) {
-    if (result.kind === 'curated') {
-      window.location.href = `${superInvestorBase}/${result.slug}`;
-      return;
-    }
-    if (result.entitySlug) {
-      window.location.href = `${superInvestorBase}/${result.entitySlug}`;
-      return;
-    }
-    window.location.href = `${holderBase}/${result.slug}`;
+    window.location.href = result.profileUrl;
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -105,7 +94,7 @@ export default function CuratedInvestorSearch({
             role="listbox"
           >
             {results.map((r) => (
-              <li key={`${r.kind}-${r.kind === 'curated' ? r.slug : r.slug}-${r.name}`}>
+              <li key={`${r.kind}-${r.profileUrl}-${r.name}`}>
                 <button
                   type="button"
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-surface-800 text-surface-900 dark:text-white flex items-center justify-between gap-2"

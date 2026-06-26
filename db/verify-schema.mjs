@@ -34,6 +34,7 @@ const superInvestorTables = [
   'shareholding_pattern_holders',
   'sast_filings',
   'entity_holdings',
+  'stock_quarter_prices',
   'entity_changes',
   'entity_stock_signals',
   'entity_quarterly_stats',

@@ -8,6 +8,10 @@ const NAME_RE = /<in-bse-shp:NameOfTheShareholder contextRef="([^"]+)">([^<]+)<\
 function holderTypeFromContext(ctx, category) {
   const c = `${ctx} ${category || ''}`.toLowerCase();
   if (/promoter/.test(c)) return 'promoter';
+  // Promoter-group individuals/HUFs use IndividualsOrHUF axis (distinct from public retail buckets).
+  if (/individualsorhuf/.test(c) && !/residentindividual|otherindian|otherforeign|nonresident/.test(c)) {
+    return 'promoter';
+  }
   if (/foreign|fii|fpi/.test(c)) return 'fii';
   if (/mutual|insurance|dii|bank|institution/.test(c)) return 'dii';
   if (/individual|huf|director/.test(c)) return 'individual';
@@ -62,10 +66,11 @@ export function parseShareholdingXbrl(xml, sourceUrl = '') {
       || fields.CategoryOfOtherForeignShareholders
       || fields.CategoryOfShareholder
       || '';
-    const promoterType = fields.TypeOfPromoterShareholding || '';
+    const nameFields = byContext.get(nameCtx) || {};
+    const hasPromoterShareholdingField = 'TypeOfPromoterShareholding' in nameFields;
 
     let holderType = holderTypeFromContext(nameCtx, category);
-    if (/promoter/i.test(promoterType) || /promoter/i.test(category)) holderType = 'promoter';
+    if (hasPromoterShareholdingField || /promoter/i.test(category)) holderType = 'promoter';
 
     rows.push({
       holderName: name,
@@ -77,4 +82,52 @@ export function parseShareholdingXbrl(xml, sourceUrl = '') {
   }
 
   return rows;
+}
+
+const CATEGORY_CTX_MAP = {
+  ShareholdingOfPromoterAndPromoterGroup_ContextI: 'promoterPct',
+  MutualFundsOrUTI_ContextI: 'mfPct',
+  InstitutionsDomestic_ContextI: 'diiTotalPct',
+  InstitutionsForeign_ContextI: 'fiiPct',
+  PublicShareholding_ContextI: 'publicPct',
+  ShareholdingPattern_ContextI: 'totalPct',
+};
+
+const PCT_FIELD_TAGS = [
+  'ShareholdingAsAPercentageOfTotalNumberOfShares',
+  'ShareholdingAsAPercentageOfTotalNumberOfSharesCalculatedAsPerSCRR1957AsAPercentageOfABPlusC2',
+  'ShareholdingAsAPercentageOfTotalNumberOfSharesOfTheCompany',
+];
+
+/**
+ * Parse category-level totals from SHP XBRL (instant contexts ending in _ContextI).
+ * @returns {{ promoterPct?: number, diiPct?: number, fiiPct?: number, publicPct?: number, totalPct?: number }}
+ */
+export function parseShareholdingCategorySummary(xml) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const [ctxSuffix, key] of Object.entries(CATEGORY_CTX_MAP)) {
+    const fields = {};
+    const re = new RegExp(
+      `<in-bse-shp:([A-Za-z0-9]+)[^>]*contextRef="${ctxSuffix}"[^>]*>([^<]*)</in-bse-shp:\\1>`,
+      'g',
+    );
+    let m;
+    while ((m = re.exec(xml)) !== null) fields[m[1]] = m[2].trim();
+    const pctTag = PCT_FIELD_TAGS.find((t) => fields[t]);
+    const pct = pctTag ? parsePct(fields[pctTag]) : null;
+    if (pct != null) out[key] = pct;
+  }
+  const mf = out.mfPct ?? 0;
+  const diiTotal = out.diiTotalPct ?? 0;
+  if (diiTotal > 0) out.diiExMfPct = Math.max(0, Math.round((diiTotal - mf) * 1000) / 1000);
+  return out;
+}
+
+/** @returns {{ holders: ReturnType<typeof parseShareholdingXbrl>, summary: ReturnType<typeof parseShareholdingCategorySummary> }} */
+export function parseShareholdingXbrlBundle(xml, sourceUrl = '') {
+  return {
+    holders: parseShareholdingXbrl(xml, sourceUrl),
+    summary: parseShareholdingCategorySummary(xml),
+  };
 }

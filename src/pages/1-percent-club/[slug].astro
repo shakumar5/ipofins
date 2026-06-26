@@ -1,20 +1,18 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
+import OnePercentStockDetail from '../../components/tracked/OnePercentStockDetail';
 import {
   getOnePercentStockSlugs,
-  getOnePercentHoldersForStock,
-  curatedEntityUrl,
-  formatPct,
-  formatCr,
+  getStockShareholdingDetail,
   formatQuarter,
   buildOnePercentStockSeo,
   canonicalFor,
   ONE_PERCENT_CLUB_HUB,
-  SUPER_INVESTORS_HUB,
 } from '../../lib/tracked-entities';
 import StockCrossLinks from '../../components/tracked/StockCrossLinks.astro';
 import { loadSmartMoneyStockSlugs } from '../../lib/smart-money-stock-slugs';
+import { stockSignalPath } from '../../lib/stock-signal-meta';
 
 export async function getStaticPaths() {
   const stocks = await getOnePercentStockSlugs();
@@ -23,27 +21,36 @@ export async function getStaticPaths() {
 
 const { slug, stockName } = Astro.props;
 
-const holders = await getOnePercentHoldersForStock(slug);
-const hasData = holders.length > 0;
-
-if (!hasData) {
+const detail = await getStockShareholdingDetail(slug);
+if (!detail) {
   return Astro.redirect('/404');
 }
 
 const path = `${ONE_PERCENT_CLUB_HUB}/${slug}`;
 const canonical = canonicalFor(path);
 
-const curatedCount = holders.filter((h) => h.entitySlug).length;
-const mysteryCount = holders.length - curatedCount;
+const allNamed = [
+  ...detail.promoters,
+  ...detail.fii,
+  ...detail.mutualFunds,
+  ...detail.dii,
+  ...detail.superInvestors,
+  ...detail.onePercentClub,
+];
+const curatedCount = detail.superInvestors.length;
+const mysteryCount = detail.onePercentClub.length;
 
-const seo = buildOnePercentStockSeo(stockName, holders, curatedCount, mysteryCount);
+const seo = buildOnePercentStockSeo(stockName, allNamed, curatedCount, mysteryCount);
 const title = seo.title;
 const description = seo.description;
 
 const mfSlugs = new Set(loadSmartMoneyStockSlugs().map((s) => s.slug));
-const curatedInvestors = holders
-  .filter((h) => h.entitySlug)
-  .map((h) => ({ slug: h.entitySlug!, name: h.holderName, pct: h.pctOfCompany }));
+const mfStockSignalUrl = mfSlugs.has(slug) ? stockSignalPath(slug) : null;
+const curatedInvestors = detail.superInvestors.map((h) => ({
+  slug: h.entitySlug!,
+  name: h.holderName,
+  pct: h.pctOfCompany,
+}));
 
 const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
@@ -55,7 +62,7 @@ const breadcrumbJsonLd = {
   ],
 };
 
-const latestQuarter = holders[0]?.quarter ?? null;
+const latestQuarter = detail.summary.quarter;
 ---
 
 <BaseLayout
@@ -66,125 +73,76 @@ const latestQuarter = holders[0]?.quarter ?? null;
   jsonLd={breadcrumbJsonLd}
 >
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
-        <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
-          <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
-          <li><span class="mx-1">/</span></li>
-          <li><a href={ONE_PERCENT_CLUB_HUB} class="hover:text-primary-600 transition-colors">1% Club</a></li>
-          <li><span class="mx-1">/</span></li>
-          <li class="text-surface-900 dark:text-white font-medium">{stockName}</li>
-        </ol>
-      </nav>
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={ONE_PERCENT_CLUB_HUB} class="hover:text-primary-600 transition-colors">1% Club</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{stockName}</li>
+    </ol>
+  </nav>
 
-      <section class="container-wide pt-8 pb-6">
-        <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-          {stockName} — ≥1% Shareholders
-        </h1>
-        <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
-          Every non-promoter shareholder owning 1% or more of {stockName}, parsed from the latest quarterly
-          Shareholding Pattern filing. Curated holders link to a tracked profile; mystery holders are flagged.
-        </p>
-        {hasData && (
-          <div class="flex flex-wrap gap-3 mt-4 text-sm">
-            <span class="px-3 py-1 bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300 rounded-full">
-              {curatedCount} curated
-            </span>
-            <span class="px-3 py-1 bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300 rounded-full">
-              {mysteryCount} mystery
-            </span>
-            {latestQuarter && (
-              <span class="px-3 py-1 bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300 rounded-full">
-                Quarter: {formatQuarter(latestQuarter)}
-              </span>
-            )}
-          </div>
-        )}
-        <SuperInvestorsSubNav active="club" />
-      </section>
-
-      <StockCrossLinks
-        stockName={stockName}
-        stockSlug={slug}
-        curatedInvestors={curatedInvestors}
-        showMfStockSignal={mfSlugs.has(slug)}
-        showOnePercentClub={false}
-        latestQuarter={latestQuarter}
-      />
-
-      {hasData ? (
-        <section class="container-wide py-4">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">
-                  <th class="py-2 pr-4 font-medium">Holder</th>
-                  <th class="py-2 px-4 font-medium">Type</th>
-                  <th class="py-2 px-4 font-medium text-right">% of company</th>
-                  <th class="py-2 px-4 font-medium text-right">Shares</th>
-                  <th class="py-2 pl-4 font-medium text-right">Value (₹ Cr)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holders.map((h) => {
-                  const isCurated = !!h.entitySlug;
-                  return (
-                    <tr class="border-b border-surface-100 dark:border-surface-800">
-                      <td class="py-3 pr-4 font-medium text-surface-900 dark:text-white">
-                        {isCurated ? (
-                          <a
-                            href={curatedEntityUrl(h.entitySlug)!}
-                            class="hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
-                            title={h.filingNames?.join('\n')}
-                          >
-                            {h.holderName}
-                            {h.filingCount && h.filingCount > 1 && (
-                              <span class="block text-[11px] font-normal text-surface-500 dark:text-surface-400 mt-0.5">
-                                {h.filingCount} related filings combined
-                              </span>
-                            )}
-                          </a>
-                        ) : (
-                          h.holderName
-                        )}
-                      </td>
-                      <td class="py-3 px-4 text-surface-600 dark:text-surface-300 capitalize">{h.holderType.replace('_', ' ')}</td>
-                      <td class="py-3 px-4 text-right font-semibold text-surface-800 dark:text-surface-100">{formatPct(h.pctOfCompany)}</td>
-                      <td class="py-3 px-4 text-right text-surface-600 dark:text-surface-300">
-                        {h.shares != null ? Number(h.shares).toLocaleString('en-IN') : '—'}
-                      </td>
-                      <td class="py-3 pl-4 text-right font-medium tabular-nums">{formatCr(h.marketValueCr)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : (
-        <section class="container-wide py-10">
-          <div class="card text-center max-w-xl mx-auto">
-            <p class="text-sm text-surface-600 dark:text-surface-300">
-              No ≥1% non-promoter holders disclosed for {stockName} in the latest quarter. This can happen when
-              the only ≥1% holders are promoters (excluded by design).
-            </p>
-          </div>
-        </section>
+  <section class="container-wide pt-8 pb-6">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      {stockName} — Shareholding Pattern
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
+      Official ownership breakdown from the latest quarterly Shareholding Pattern filing — promoters, FII, mutual funds,
+      DII, curated super investors, and ≥1% individual holders. Retail includes all holders below the 1% disclosure threshold.
+    </p>
+    <div class="flex flex-wrap gap-3 mt-4 text-sm">
+      {curatedCount > 0 && (
+        <span class="px-3 py-1 bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300 rounded-full">
+          {curatedCount} super investor{curatedCount === 1 ? '' : 's'}
+        </span>
       )}
+      {mysteryCount > 0 && (
+        <span class="px-3 py-1 bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300 rounded-full">
+          {mysteryCount} other ≥1% holders
+        </span>
+      )}
+      {latestQuarter && (
+        <span class="px-3 py-1 bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300 rounded-full">
+          Quarter: {formatQuarter(latestQuarter)}
+        </span>
+      )}
+      {detail.summary.dataQuality === 'verified' && (
+        <span class="px-3 py-1 bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 rounded-full">
+          Filing totals verified
+        </span>
+      )}
+    </div>
+    <SuperInvestorsSubNav active="club" />
+  </section>
 
-      <!-- Disclaimer -->
-      <section class="container-wide py-8 max-w-3xl">
-        <div class="card bg-warning-50/60 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-900/40">
-          <p class="text-xs text-surface-700 dark:text-surface-300">
-            Shareholding data sourced from NSE/BSE regulatory filings. Not investment advice. See our
-            <a href="/disclaimer" class="text-primary-600 hover:underline">disclaimer</a> and
-            <a href="/methodology" class="text-primary-600 hover:underline">methodology</a>.
-          </p>
-        </div>
-      </section>
+  <StockCrossLinks
+    stockName={stockName}
+    stockSlug={slug}
+    curatedInvestors={curatedInvestors}
+    showMfStockSignal={mfSlugs.has(slug)}
+    showOnePercentClub={false}
+    latestQuarter={latestQuarter}
+  />
 
-      <section class="container-wide py-4">
-        <div class="nav-btn-group">
-          <a href={ONE_PERCENT_CLUB_HUB} class="btn-secondary px-6 py-3">All 1% Club stocks</a>
-          <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
-        </div>
-      </section>
+  <section class="container-wide py-4 pb-10">
+    <OnePercentStockDetail client:load detail={detail} mfStockSignalUrl={mfStockSignalUrl} />
+  </section>
+
+  <section class="container-wide py-8 max-w-3xl">
+    <div class="card bg-warning-50/60 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-900/40">
+      <p class="text-xs text-surface-700 dark:text-surface-300">
+        Shareholding data sourced from NSE/BSE regulatory filings. Category chart uses official filing totals;
+        named holder lists include every disclosed ≥1% position. Not investment advice. See our
+        <a href="/disclaimer" class="text-primary-600 hover:underline">disclaimer</a> and
+        <a href="/methodology" class="text-primary-600 hover:underline">methodology</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-wide py-4">
+    <div class="nav-btn-group">
+      <a href={ONE_PERCENT_CLUB_HUB} class="btn-secondary px-6 py-3">All 1% Club stocks</a>
+      <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
+    </div>
+  </section>
 </BaseLayout>

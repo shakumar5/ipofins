@@ -70,9 +70,12 @@
     "displayName": "Sunil Singhania",
     "type": "individual",
     "tier": "legendary",
-    "aliases": ["Singhania Sunil", "Singhania Sunil Bhageerathy"],
-    "focus": "Growth-oriented broad portfolio; runs Abakkus Asset Manager (AIF)",
-    "bio": "Former head of equities at Reliance Mutual Fund. Now runs Abakkus — appears both as an individual and via the Abakkus AIF.",
+    "aliases": [
+      "Singhania Sunil",
+      "Singhania Sunil Bhageerathy"
+    ],
+    "focus": "Personal public-equity holdings (excludes Abakkus AIF pooled funds)",
+    "bio": "Former head of equities at Reliance Mutual Fund. Personal stakes are tracked separately from Abakkus Asset Manager AIF vehicles, which pool external capital.",
     "location": "Mumbai",
     "tags": ["growth", "large-cap", "mid-cap"]
   },
@@ -178,7 +181,14 @@
     "displayName": "Madhusudan Kela",
     "type": "individual",
     "tier": "legendary",
-    "aliases": ["Kela Madhusudan", "Kela Madhusudan Shankarlal", "MK Ventures"],
+    "aliases": [
+      "Kela Madhusudan",
+      "Kela Madhusudan Shankarlal",
+      "MK Ventures",
+      "Madhuri Madhusudan Kela",
+      "Madhusudan Murlidhar Kela",
+      "Mahi Madhusudan Kela"
+    ],
     "focus": "Financials, mid-cap compounders",
     "bio": "Veteran markets strategist; known for high-conviction bets in financials and consumer.",
     "location": "Mumbai",

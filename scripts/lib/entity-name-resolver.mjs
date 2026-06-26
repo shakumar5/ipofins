@@ -20,6 +20,20 @@ const MIN_CONFIDENCE_ALIAS_EXACT = 1.0;
 const MIN_CONFIDENCE_TOKEN_OVERLAP = 0.85;
 const MIN_CONFIDENCE_PARTIAL = 0.70;
 
+/** Pooled vehicles (AIF/MF/trust) must not match individual super-investor profiles. */
+const POOLED_VEHICLE_RE =
+  /\b(fund|scheme|aif|mutual\s*fund|unit\s+trust|pms|portfolio\s+manag|investment\s+manager|asset\s+manager|alternate\s+investment|cat\s+[i123])\b/i;
+
+export function isPooledVehicleName(name) {
+  if (!name) return false;
+  return POOLED_VEHICLE_RE.test(String(name));
+}
+
+export function blocksIndividualEntityMatch(entity, filingName) {
+  if (!entity || entity.type !== 'individual') return false;
+  return isPooledVehicleName(filingName);
+}
+
 /**
  * Normalize a name for comparison:
  *   - lowercase
@@ -107,6 +121,7 @@ export function buildEntityResolver(entities, opts = {}) {
     // Fast path: exact match on normalized name or any alias.
     const exact = exactMap.get(normalized) || exactMap.get(filingLower);
     if (exact) {
+      if (blocksIndividualEntityMatch(exact.entity, filingName)) return null;
       return {
         entityId: exact.entity.id,
         entityName: exact.entity.name,
@@ -140,12 +155,28 @@ export function buildEntityResolver(entities, opts = {}) {
     }
 
     if (bestMatch && bestScore >= minConfidence) {
+      if (blocksIndividualEntityMatch(bestMatch.entity, filingName)) return null;
       return {
         entityId: bestMatch.entity.id,
         entityName: bestMatch.entity.name,
         confidence: Math.round(bestScore * 1000) / 1000,
         matchedVariant: bestMatch.rawName,
       };
+    }
+
+    // Fund / trust filings often contain a short distinctive alias (e.g. "Abakkus … Fund").
+    for (const entry of index) {
+      if (blocksIndividualEntityMatch(entry.entity, filingName)) continue;
+      const key = entry.normalized;
+      if (key.length < 6) continue;
+      if (filingLower.includes(key)) {
+        return {
+          entityId: entry.entity.id,
+          entityName: entry.entity.name,
+          confidence: 0.9,
+          matchedVariant: entry.rawName,
+        };
+      }
     }
 
     return null;
