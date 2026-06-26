@@ -7,6 +7,12 @@ import brokersData from '../data/brokers.json';
 import toolsData from '../data/tools.json';
 import { getAllIPOs } from './data/ipos';
 import {
+  getAllFunds,
+  getFundHoldingsLinkMeta,
+  fundHoldingsHref,
+  resolveFundDetailSlug,
+} from './data/funds';
+import {
   getSuperInvestors,
   getOnePercentStockSlugs,
   superInvestorUrl,
@@ -25,17 +31,26 @@ export interface SiteSearchItem {
   k?: string;
 }
 
-const MF_HUB_PAGES: SiteSearchItem[] = [
-  { t: 'Smart Money Tracker', u: '/mutual-funds/smart-money', y: 'Page', m: 'MF institutional activity', k: 'smart money mutual funds' },
-  { t: 'Mutual Fund Holdings Changes', u: '/mutual-funds/mutual-fund-holdings-changes', y: 'Page', m: 'AMC portfolio diffs', k: 'holdings changes amc' },
-  { t: 'Portfolio Overlap Checker', u: '/mutual-funds/portfolio-overlap-checker', y: 'Page', m: 'Compare fund overlap', k: 'overlap' },
-  { t: 'Stock Signal', u: '/mutual-funds/smart-money/stock-signal', y: 'Page', m: 'Per-stock MF conviction', k: 'stock signal' },
-  { t: 'Super Investors', u: SUPER_INVESTORS_HUB, y: 'Page', m: 'Curated investor portfolios', k: 'super investors dolly khanna' },
-  { t: '1% Club', u: ONE_PERCENT_CLUB_HUB, y: 'Page', m: '≥1% shareholders from SHP', k: 'one percent club shareholding' },
+const HUB_PAGES: SiteSearchItem[] = [
+  { t: 'Mutual Funds', u: '/mutual-funds', y: 'Page', m: 'MF hub', k: 'mutual funds mf amc' },
+  { t: 'Smart Money Tracker', u: '/mutual-funds/smart-money', y: 'Page', m: 'MF institutional activity', k: 'smart money tracker conviction institutional mutual funds amc buying selling' },
+  { t: 'Sector Intelligence', u: '/mutual-funds/smart-money/sector-intelligence', y: 'Page', m: 'MF sector rotation', k: 'smart money sector intelligence mutual funds' },
+  { t: 'Stock Signal', u: '/mutual-funds/smart-money/stock-signal', y: 'Page', m: 'Per-stock MF conviction', k: 'stock signal smart money conviction mutual funds' },
+  { t: 'Best Mutual Funds', u: '/mutual-funds/best', y: 'Fund', m: 'Top rated funds', k: 'best mutual fund top rated hdfc icici sbi' },
+  { t: 'All Mutual Funds', u: '/mutual-funds/all', y: 'Fund', m: 'Compare all funds', k: 'all mutual funds compare list hdfc icici' },
+  { t: 'Mutual Fund Holdings Changes', u: '/mutual-funds/mutual-fund-holdings-changes', y: 'Fund', m: 'AMC portfolio diffs', k: 'holdings changes portfolio buy sell fund manager amc' },
+  { t: 'Portfolio Overlap Checker', u: '/mutual-funds/portfolio-overlap-checker', y: 'Fund', m: 'Compare fund overlap', k: 'portfolio overlap checker common holdings duplicate exposure' },
+  { t: 'Fund Overlap', u: '/mutual-funds/fund-overlap', y: 'Fund', m: 'Pairwise fund overlap', k: 'fund overlap pairwise portfolio concentration' },
+  { t: 'Super Investors', u: SUPER_INVESTORS_HUB, y: 'Page', m: 'Curated investor portfolios', k: 'super investors dolly khanna portfolio shareholding' },
+  { t: '1% Club', u: ONE_PERCENT_CLUB_HUB, y: 'Page', m: '≥1% shareholders from SHP', k: 'one percent club shareholding pattern' },
+  { t: 'IPO Subscription Status', u: '/ipo/subscription-status', y: 'IPO', m: 'Live oversubscription', k: 'ipo subscription status oversubscribed today' },
+  { t: 'Upcoming IPOs', u: '/ipo/upcoming', y: 'IPO', m: 'DRHP & SEBI Approved', k: 'upcoming ipo drhp sebi new' },
+  { t: 'IPO Allotment Status', u: '/ipo/allotment-status', y: 'IPO', m: 'Check registrar', k: 'ipo allotment status check result' },
+  { t: 'Compare Brokers', u: '/broker/compare', y: 'Broker', m: 'Side by side', k: 'compare broker best cheapest zerodha groww' },
 ];
 
 export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
-  const items: SiteSearchItem[] = [...MF_HUB_PAGES];
+  const items: SiteSearchItem[] = [...HUB_PAGES];
 
   for (const e of getSuperInvestors()) {
     const aliases = [e.name, e.displayName, ...(e.aliases ?? [])].join(' ');
@@ -48,7 +63,12 @@ export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
     });
   }
 
-  const onePercentStocks = await getOnePercentStockSlugs();
+  const [onePercentStocks, fundsData, holdingsMeta] = await Promise.all([
+    getOnePercentStockSlugs().catch(() => [] as Awaited<ReturnType<typeof getOnePercentStockSlugs>>),
+    getAllFunds().catch(() => []),
+    getFundHoldingsLinkMeta().catch(() => ({ slugs: new Set<string>(), stockCounts: {} as Record<string, number> })),
+  ]);
+
   const mfSlugs = new Set(loadSmartMoneyStockSlugs().map((s) => s.slug));
 
   for (const { slug, stockName } of onePercentStocks) {
@@ -65,20 +85,31 @@ export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
         u: stockSignalPath(slug),
         y: 'Stock',
         m: 'Mutual fund institutional activity',
-        k: `${stockName} smart money conviction`,
+        k: `${stockName} smart money conviction stock signal`,
       });
     }
+  }
+
+  for (const f of fundsData) {
+    const detailSlug = resolveFundDetailSlug(f, holdingsMeta);
+    items.push({
+      t: f.name,
+      u: fundHoldingsHref(detailSlug),
+      y: 'Fund',
+      m: f.category,
+      k: `${f.name} ${f.category} mutual fund mf`,
+    });
   }
 
   try {
     const ipos = await getAllIPOs();
     for (const ipo of ipos) {
       items.push({
-        t: ipo.name,
+        t: `${ipo.name} IPO`,
         u: `/ipo/${ipo.slug}`,
         y: 'IPO',
         m: `${ipo.status} · ${ipo.type}`,
-        k: `${ipo.name} ${ipo.sector} ipo`,
+        k: `${ipo.name} ${ipo.sector} ${ipo.type} ipo`,
       });
     }
   } catch {
@@ -97,11 +128,11 @@ export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
 
   for (const broker of brokersData) {
     items.push({
-      t: broker.name,
+      t: `${broker.name} Review`,
       u: `/broker/${broker.slug}`,
       y: 'Broker',
       m: `${broker.type} broker`,
-      k: `${broker.name} brokerage`,
+      k: `${broker.name} ${broker.type} broker review trading demat`,
     });
   }
 
@@ -112,7 +143,7 @@ export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
       u: `/learn/${article.slug}`,
       y: 'Learn',
       m: article.excerpt?.slice(0, 80),
-      k: `${article.title} ${article.category}`,
+      k: `${article.title} ${article.category} learn guide`,
     });
   }
 
