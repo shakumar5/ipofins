@@ -4,7 +4,7 @@
  */
 
 import { sql, isDbConfigured } from './db.mjs';
-import { slugify } from './ipo-utils.mjs';
+import { slugify, ipoCanonicalKey, pickPreferredSlug } from './ipo-utils.mjs';
 import { buildFundMatcher } from './fund-match.mjs';
 import {
   indexTerRecords,
@@ -168,12 +168,96 @@ function parsePriceRange(priceRange) {
   return { min: single || null, max: single || null };
 }
 
+function scoreIpoRow(row) {
+  let s = 0;
+  if (row.sector?.trim()) s += 4;
+  if (row.last_updated) s += 2;
+  if (row.status === 'live' || row.status === 'open') s += 1;
+  if (!row.slug.includes('-company')) s += 1;
+  return s;
+}
+
+async function mergeIpoChildRows(winnerId, loserId) {
+  await sql`
+    UPDATE ipo_gmp_history SET ipo_id = ${winnerId}
+    WHERE ipo_id = ${loserId}
+  `;
+  await sql`
+    UPDATE ipo_subscriptions SET ipo_id = ${winnerId}
+    WHERE ipo_id = ${loserId}
+      AND date NOT IN (SELECT date FROM ipo_subscriptions WHERE ipo_id = ${winnerId})
+  `;
+  await sql`DELETE FROM ipo_subscriptions WHERE ipo_id = ${loserId}`;
+  const [winnerPerf] = await sql`SELECT ipo_id FROM ipo_performance WHERE ipo_id = ${winnerId}`;
+  if (winnerPerf) {
+    await sql`DELETE FROM ipo_performance WHERE ipo_id = ${loserId}`;
+  } else {
+    await sql`UPDATE ipo_performance SET ipo_id = ${winnerId} WHERE ipo_id = ${loserId}`;
+  }
+}
+
+/** Merge duplicate ipos rows (same company, different slugs from broker sources). */
+export async function dedupeIPODuplicatesInDb() {
+  requireDb();
+  const rows = await sql`
+    SELECT id, slug, name, sector, status, last_updated
+    FROM ipos
+    ORDER BY id
+  `;
+  const groups = new Map();
+  for (const row of rows) {
+    const key = ipoCanonicalKey(row.name);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+
+  let removed = 0;
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+
+    let winner = group[0];
+    for (let i = 1; i < group.length; i++) {
+      winner = scoreIpoRow(group[i]) > scoreIpoRow(winner) ? group[i] : winner;
+    }
+
+    const preferredSlug = pickPreferredSlug(...group.map((g) => g.slug));
+    if (winner.slug !== preferredSlug) {
+      const [conflict] = await sql`SELECT id FROM ipos WHERE slug = ${preferredSlug} AND id <> ${winner.id}`;
+      if (!conflict) {
+        await sql`UPDATE ipos SET slug = ${preferredSlug} WHERE id = ${winner.id}`;
+        winner = { ...winner, slug: preferredSlug };
+      }
+    }
+
+    for (const loser of group) {
+      if (loser.id === winner.id) continue;
+      await mergeIpoChildRows(winner.id, loser.id);
+      await sql`DELETE FROM ipos WHERE id = ${loser.id}`;
+      removed++;
+      console.log(`    🔀 Merged IPO duplicate: ${loser.slug} → ${winner.slug} (${winner.name})`);
+    }
+  }
+
+  if (removed > 0) console.log(`    ✅ Removed ${removed} duplicate IPO row(s)`);
+  return removed;
+}
+
 export async function upsertIPOs(ipoList) {
   requireDb();
+  await dedupeIPODuplicatesInDb();
+
+  const existingRows = await sql`SELECT slug, name FROM ipos`;
+  const canonicalSlugFor = (name, fallbackSlug) => {
+    const key = ipoCanonicalKey(name);
+    const match = existingRows.find((r) => ipoCanonicalKey(r.name) === key);
+    return match ? pickPreferredSlug(match.slug, fallbackSlug) : fallbackSlug;
+  };
+
   let count = 0;
 
   for (const ipo of ipoList) {
     if (!ipo.name || !ipo.slug) continue;
+    ipo.slug = canonicalSlugFor(ipo.name, ipo.slug);
     const priceMin = ipo.priceMin ?? parsePriceRange(ipo.priceRange).min;
     const priceMax = ipo.priceMax ?? parsePriceRange(ipo.priceRange).max;
     const drhpUrl =

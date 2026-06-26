@@ -3,7 +3,7 @@
  * Missing fields on either side are filled from the other source.
  */
 
-import { fuzzyMatch, strictMatch, slugify, coalesce, parseDateToISO } from './ipo-utils.mjs';
+import { fuzzyMatch, strictMatch, slugify, coalesce, parseDateToISO, ipoCanonicalKey } from './ipo-utils.mjs';
 import { mergeGrowwDetailInto } from './groww-sources.mjs';
 
 const STATUS_RANK = { live: 5, open: 4, upcoming: 3, closed: 2, allotment: 2, listed: 1, 'drhp-filed': 0 };
@@ -59,6 +59,11 @@ function findExisting(list, record) {
       (r) => r.growwSlug === record.growwSlug || r.slug === gSlug
     );
     if (byGroww) return byGroww;
+  }
+  const key = ipoCanonicalKey(record.name);
+  if (key) {
+    const byKey = list.find((r) => ipoCanonicalKey(r.name) === key);
+    if (byKey) return byKey;
   }
   return list.find((r) => strictMatch(r.name, record.name));
 }

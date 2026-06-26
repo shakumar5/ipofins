@@ -8,14 +8,17 @@ export function slugify(text) {
     .substring(0, 80);
 }
 
+/** Normalize IPO company name for deduplication (Zerodha vs Groww naming). */
+export function ipoCanonicalKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/\s*(limited|ltd|\.|ipo|india|pvt|private|company|technologies|industries|corporation|corp)\s*/gi, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 export function fuzzyMatch(name1, name2) {
-  const normalize = (s) =>
-    String(s || '')
-      .toLowerCase()
-      .replace(/\s*(limited|ltd|ipo|india|pvt|private|company|technologies|industries)\s*/gi, '')
-      .replace(/[^a-z0-9]/g, '');
-  const n1 = normalize(name1);
-  const n2 = normalize(name2);
+  const n1 = ipoCanonicalKey(name1);
+  const n2 = ipoCanonicalKey(name2);
   if (!n1 || !n2) return false;
   if (n1 === n2) return true;
   if (n1.length >= 8 && n2.length >= 8 && (n1.includes(n2) || n2.includes(n1))) return true;
@@ -25,19 +28,13 @@ export function fuzzyMatch(name1, name2) {
 
 /** Stricter match for deduplication — avoids merging different companies */
 export function strictMatch(name1, name2) {
-  const normalize = (s) =>
-    String(s || '')
-      .toLowerCase()
-      .replace(/\s*(limited|ltd|\.|ipo)\s*/gi, '')
-      .replace(/[^a-z0-9]/g, '');
-  const n1 = normalize(name1);
-  const n2 = normalize(name2);
+  const n1 = ipoCanonicalKey(name1);
+  const n2 = ipoCanonicalKey(name2);
   if (!n1 || !n2) return false;
   if (n1 === n2) return true;
-  // One is a prefix of the other only if the shorter is >= 12 chars
   const short = n1.length < n2.length ? n1 : n2;
   const long = n1.length < n2.length ? n2 : n1;
-  if (short.length >= 12 && long.startsWith(short)) return true;
+  if (short.length >= 10 && long.startsWith(short)) return true;
   return false;
 }
 
@@ -122,6 +119,14 @@ export function parsePriceRange(priceRange) {
   }
   const single = parseFloat(String(priceRange).replace(/[^\d.]/g, ''));
   return { min: single || null, max: single || null };
+}
+
+export function pickPreferredSlug(a, b) {
+  const slugs = [a, b].filter(Boolean);
+  if (slugs.length <= 1) return slugs[0] ?? a;
+  const noCompany = slugs.find((s) => !s.includes('-company'));
+  if (noCompany) return noCompany;
+  return [...slugs].sort((x, y) => x.length - y.length)[0];
 }
 
 export function sleep(ms) {

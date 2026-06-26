@@ -4,6 +4,7 @@
 
 import { requireDb } from '../db';
 import type { IPORecord, IPOStatus, IPOType, SubscriptionDetails } from '../../types/ipo';
+import { ipoCanonicalKey, pickPreferredIPO } from '../ipo-canonical';
 
 type IPORow = Record<string, unknown>;
 
@@ -107,18 +108,35 @@ async function queryIPOs(whereClause?: { slug: string }) {
   return rows as IPORow[];
 }
 
+function dedupeIPORecords(records: IPORecord[]): IPORecord[] {
+  const byKey = new Map<string, IPORecord>();
+  for (const ipo of records) {
+    const key = ipoCanonicalKey(ipo.name);
+    const existing = byKey.get(key);
+    byKey.set(key, existing ? pickPreferredIPO(existing, ipo) : ipo);
+  }
+  return [...byKey.values()];
+}
+
 let allIPOsCache: Promise<IPORecord[]> | null = null;
 
 export async function getAllIPOs(): Promise<IPORecord[]> {
   if (!allIPOsCache) {
-    allIPOsCache = queryIPOs().then((rows) => rows.map(mapIPORow));
+    allIPOsCache = queryIPOs().then((rows) => dedupeIPORecords(rows.map(mapIPORow)));
   }
   return allIPOsCache;
 }
 
 export async function getIPOBySlug(slug: string): Promise<IPORecord | null> {
+  const all = await getAllIPOs();
+  const direct = all.find((i) => i.slug === slug);
+  if (direct) return direct;
+
   const rows = await queryIPOs({ slug });
-  return rows.length > 0 ? mapIPORow(rows[0]) : null;
+  if (rows.length === 0) return null;
+  const candidate = mapIPORow(rows[0]);
+  const key = ipoCanonicalKey(candidate.name);
+  return all.find((i) => ipoCanonicalKey(i.name) === key) ?? candidate;
 }
 
 export async function getUpcomingIPOs(): Promise<IPORecord[]> {
