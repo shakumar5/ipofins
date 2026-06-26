@@ -1,8 +1,8 @@
-﻿/**
+/**
  * Client-side lazy load for 1% Club holder positions (build export JSON).
  */
 
-import { fetchJsonCached } from '../client-data';
+import { fetchJsonCached } from './client-data';
 
 export interface HolderPosition {
   stockSlug: string;
@@ -32,6 +32,6 @@ let loadPromise: Promise<HolderPositionsMap> | null = null;
 
 export function loadHolderPositionsMap(): Promise<HolderPositionsMap> {
   if (loadPromise) return loadPromise;
-  loadPromise = fetchJsonCached<HolderPositionsMap>(ONE_PERCENT_HOLDER_POSITIONS_URL).catch(() => ({}));
+  loadPromise = fetchJsonCached<HolderPositionsMap>(ONE_PERCENT_HOLDER_POSITIONS_URL).catch(() => ({} as HolderPositionsMap));
   return loadPromise;
 }
