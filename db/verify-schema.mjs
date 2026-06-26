@@ -22,10 +22,29 @@ const host = parsed.hostname;
 const dbName = parsed.pathname.replace(/^\//, '') || '?';
 
 const sql = neon(url);
+// Core 001 tables — required for build to proceed.
 const required = ['ipos', 'funds', 'fund_navs', 'fund_holdings', 'stocks', 'amcs'];
+// 005 super-investor tables — required for the super-investor / 1%-club / PMS /
+// alternative-funds features. Build still works without them (the routes 404
+// gracefully), so these are flagged as warnings, not hard failures.
+const superInvestorTables = [
+  'tracked_entities',
+  'tracked_entity_tags',
+  'entity_strategies',
+  'shareholding_pattern_holders',
+  'sast_filings',
+  'entity_holdings',
+  'entity_changes',
+  'entity_stock_signals',
+  'entity_quarterly_stats',
+  'entity_overlaps',
+  'entity_conviction',
+  'corporate_actions',
+  'pipeline_runs',
+];
 const rows = await sql`
   SELECT tablename FROM pg_tables
-  WHERE schemaname = 'public' AND tablename = ANY(${required})
+  WHERE schemaname = 'public' AND tablename = ANY(${[...required, ...superInvestorTables]})
 `;
 const found = new Set(rows.map((r) => r.tablename));
 const missing = required.filter((t) => !found.has(t));
@@ -42,6 +61,14 @@ if (missing.length) {
   console.error('  psql $DATABASE_URL -f db/migrations/003_materialized_views.sql');
   console.error('\nOr point Vercel/GitHub DATABASE_URL to your populated Neon project.');
   process.exit(1);
+}
+
+const missingSuperInvestor = superInvestorTables.filter((t) => !found.has(t));
+if (missingSuperInvestor.length) {
+  console.warn(`\n⚠️  Super-investor tables not found: ${missingSuperInvestor.join(', ')}`);
+  console.warn('Optional. To enable /super-investors, /1-percent-club, /pms, /alternative-funds:');
+  console.warn('  psql $DATABASE_URL -f db/migrations/005_super_investors.sql');
+  console.warn('  psql $DATABASE_URL -f db/migrations/006_super_investor_views.sql');
 }
 
 const [counts] = await sql`
@@ -61,6 +88,28 @@ console.log(`  Funds:          ${counts.funds}`);
 console.log(`  Fund NAVs:      ${counts.fund_navs}`);
 console.log(`  Fund holdings:  ${counts.fund_holdings}`);
 console.log(`  Stocks:         ${counts.stocks}`);
+
+// Super-investor counts — only queried if the tables exist (graceful skip).
+if (!missingSuperInvestor.length) {
+  const [siCounts] = await sql`
+    SELECT
+      (SELECT COUNT(*)::int FROM tracked_entities)               AS entities,
+      (SELECT COUNT(*)::int FROM entity_holdings)                AS holdings,
+      (SELECT COUNT(*)::int FROM shareholding_pattern_holders)   AS sph,
+      (SELECT COUNT(*)::int FROM sast_filings)                   AS sast,
+      (SELECT COUNT(*)::int FROM entity_changes)                 AS changes,
+      (SELECT COUNT(*)::int FROM entity_stock_signals)           AS signals,
+      (SELECT COUNT(*)::int FROM pipeline_runs)                  AS pipeline_runs
+  `;
+  console.log('\nSuper-investor / 1%-club / PMS / alt-funds:');
+  console.log(`  Tracked entities:      ${siCounts.entities}`);
+  console.log(`  Entity holdings:       ${siCounts.holdings}`);
+  console.log(`  ≥1% pattern holders:   ${siCounts.sph}`);
+  console.log(`  SAST filings:          ${siCounts.sast}`);
+  console.log(`  Entity changes:        ${siCounts.changes}`);
+  console.log(`  Stock signals:         ${siCounts.signals}`);
+  console.log(`  Pipeline run log:      ${siCounts.pipeline_runs}`);
+}
 
 const warnings = [];
 if (counts.funds > 0 && counts.funds < 50) warnings.push('funds table looks sparse (curated rebuild may be needed)');

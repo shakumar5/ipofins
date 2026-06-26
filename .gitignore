@@ -61,6 +61,11 @@ _groww_detail.json
 tmp-*.json
 **/tmp-*.json
 
+# Local SI debug / one-off scripts (not used in Vercel build or CI)
+scripts/tmp-*.mjs
+scripts/test-*.mjs
+scripts/fix-shp-pct-100.mjs
+
 # DB dumps / backups (migrations in db/migrations/ stay tracked)
 *.dump
 *.sql.gz

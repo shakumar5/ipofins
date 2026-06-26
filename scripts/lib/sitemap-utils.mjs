@@ -73,6 +73,8 @@ export function chunkUrls(urls, limit = SITEMAP_URL_LIMIT) {
 export function classifySitemapBucket(pathname) {
   const path = pathname || '/';
 
+  if (path.startsWith('/super-investors')) return 'sitemap-super-investors.xml';
+  if (path.startsWith('/1-percent-club')) return 'sitemap-one-percent-club.xml';
   if (path.startsWith('/ipo')) return 'sitemap-ipos.xml';
   if (path.includes('/stock-signal/') || /^\/mutual-funds\/smart-money\/signal\//.test(path)) {
     return 'sitemap-stocks.xml';
@@ -96,6 +98,8 @@ export const CANONICAL_SITEMAP_INDEX = [
   'sitemap-funds.xml',
   'sitemap-stocks.xml',
   'sitemap-smart-money.xml',
+  'sitemap-super-investors.xml',
+  'sitemap-one-percent-club.xml',
   'sitemap-portfolio-overlap.xml', // placeholder — expanded to urlset(s) in reorganize-sitemaps.mjs
   'sitemap-tools.xml',
   'sitemap-blog.xml',

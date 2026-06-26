@@ -111,10 +111,23 @@ export function isDbConfigured() {
  * @param {Object[]} rows - Array of row objects
  * @param {string} conflictKey - Column(s) for ON CONFLICT (comma-separated)
  * @param {string[]} updateCols - Columns to update on conflict
+ * @param {{ touchUpdatedAt?: boolean }} [options]
  * @returns {Promise<number>} Number of rows affected
  */
-export async function upsertMany(table, rows, conflictKey, updateCols) {
+function dedupeRowsByConflictKey(rows, conflictKey) {
+  const keys = conflictKey.split(',').map((k) => k.trim());
+  const seen = new Map();
+  for (const row of rows) {
+    const key = keys.map((k) => String(row[k] ?? '')).join('\0');
+    seen.set(key, row);
+  }
+  return [...seen.values()];
+}
+
+export async function upsertMany(table, rows, conflictKey, updateCols, { touchUpdatedAt = false } = {}) {
   if (!sql || rows.length === 0) return 0;
+
+  rows = dedupeRowsByConflictKey(rows, conflictKey);
 
   // Build column list from first row
   const cols = Object.keys(rows[0]);
@@ -140,7 +153,7 @@ export async function upsertMany(table, rows, conflictKey, updateCols) {
     }
 
     const updateClause = updateCols.length > 0
-      ? `ON CONFLICT (${conflictKey}) DO UPDATE SET ${updateCols.map(c => `${c} = EXCLUDED.${c}`).join(', ')}, updated_at = NOW()`
+      ? `ON CONFLICT (${conflictKey}) DO UPDATE SET ${updateCols.map(c => `${c} = EXCLUDED.${c}`).join(', ')}${touchUpdatedAt ? ', updated_at = NOW()' : ''}`
       : `ON CONFLICT (${conflictKey}) DO NOTHING`;
 
     const query = `
@@ -150,10 +163,14 @@ export async function upsertMany(table, rows, conflictKey, updateCols) {
     `;
 
     try {
-      const result = await sql(query, params);
+      await withDbRetry(
+        () => sql.query(query, params),
+        { label: `${table} upsert batch ${Math.floor(i / BATCH_SIZE) + 1}`, retries: 5 },
+      );
       totalAffected += batch.length;
     } catch (err) {
-      console.error(`    ❌ DB upsert error (${table}, batch ${Math.floor(i/BATCH_SIZE)+1}):`, err.message);
+      console.error(`    ❌ DB upsert error (${table}, batch ${Math.floor(i / BATCH_SIZE) + 1}):`, err.message);
+      throw err;
     }
   }
 

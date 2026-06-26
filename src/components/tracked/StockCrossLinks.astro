@@ -1,0 +1,96 @@
+---
+/**
+ * Cross-links between MF Stock Signal, 1% Club, and curated Super Investors for one stock.
+ */
+import {
+  formatPct,
+  onePercentStockUrl,
+  superInvestorUrl,
+  formatQuarter,
+} from '../../lib/tracked-entities';
+import { stockSignalPath } from '../../lib/stock-signal-meta';
+
+export interface CuratedInvestorLink {
+  slug: string;
+  name: string;
+  pct: number | null;
+}
+
+interface Props {
+  stockName: string;
+  stockSlug: string;
+  curatedInvestors?: CuratedInvestorLink[];
+  showMfStockSignal?: boolean;
+  showOnePercentClub?: boolean;
+  latestQuarter?: string | null;
+}
+
+const {
+  stockName,
+  stockSlug,
+  curatedInvestors = [],
+  showMfStockSignal = false,
+  showOnePercentClub = false,
+  latestQuarter = null,
+} = Astro.props;
+
+const hasLinks = showMfStockSignal || showOnePercentClub || curatedInvestors.length > 0;
+const quarterLabel = latestQuarter ? formatQuarter(latestQuarter) : null;
+---
+
+{hasLinks && (
+  <section class="container-wide pb-6">
+    <div class="card bg-primary-50/40 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900/40">
+      <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-1">
+        Institutional intelligence for {stockName}
+      </h2>
+      <p class="text-xs text-surface-600 dark:text-surface-400 mb-4">
+        Cross-view mutual fund activity and super-investor shareholding{quarterLabel ? ` · ${quarterLabel} SHP` : ''}.
+      </p>
+
+      <div class="flex flex-wrap gap-2 mb-4">
+        {showMfStockSignal && (
+          <a
+            href={stockSignalPath(stockSlug)}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
+          >
+            MF Stock Signal
+            <span class="text-surface-400">→</span>
+          </a>
+        )}
+        {showOnePercentClub && (
+          <a
+            href={onePercentStockUrl(stockSlug)}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
+          >
+            1% Club holders
+            <span class="text-surface-400">→</span>
+          </a>
+        )}
+      </div>
+
+      {curatedInvestors.length > 0 && (
+        <div>
+          <p class="text-[11px] uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-2">
+            Tracked super investors holding ≥1%
+          </p>
+          <ul class="flex flex-wrap gap-2">
+            {curatedInvestors.map((inv) => (
+              <li>
+                <a
+                  href={superInvestorUrl(inv.slug)}
+                  class="inline-flex items-center gap-2 px-2.5 py-1 text-xs rounded-full bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
+                >
+                  <span class="font-medium text-surface-900 dark:text-white">{inv.name}</span>
+                  {inv.pct != null && (
+                    <span class="text-surface-500 tabular-nums">{formatPct(inv.pct)}</span>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </section>
+)}

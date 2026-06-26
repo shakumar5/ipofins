@@ -4,37 +4,37 @@ import BrandLogo from './BrandLogo.astro';
 
 const navLinks = [
   { label: 'IPOs', href: '/ipo' },
-  { label: 'Mutual Funds', href: '/mutual-funds' },
-  { label: 'Smart Money', href: '/mutual-funds/smart-money' },
+  { label: 'Mutual Funds', href: '/mutual-funds', shortLabel: 'MF' },
+  { label: 'Smart Money', href: '/mutual-funds/smart-money', shortLabel: 'SM' },
+  { label: 'Super Investors', href: '/super-investors', shortLabel: 'SI' },
+  { label: '1% Club', href: '/1-percent-club', shortLabel: '1%' },
   { label: 'Brokers', href: '/broker' },
   { label: 'Tools', href: '/tools' },
   { label: 'Blogs', href: '/blogs' },
   { label: 'Learn', href: '/learn' },
 ];
+
+const { pathname } = Astro.url;
+
+function isNavActive(href: string): boolean {
+  if (href === '/') return pathname === '/';
+  if (pathname === href) return true;
+  if (!pathname.startsWith(`${href}/`)) return false;
+  if (href === '/mutual-funds' && pathname.startsWith('/mutual-funds/smart-money')) return false;
+  return true;
+}
 ---
 
-<header class="sticky top-0 z-50 bg-white/95 dark:bg-surface-900/95 border-b border-surface-200/80 dark:border-surface-700/80">
+<header class="site-header sticky top-0 z-50 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700 shadow-sm backdrop-blur-md">
   <div class="container-wide">
-    <div class="flex items-center justify-between h-16">
+    <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
       <!-- Logo -->
       <a href="/" class="flex items-center group" aria-label={`${BRAND_NAME} home`}>
         <BrandLogo class="group-hover:text-primary-600 transition-colors" />
       </a>
 
-      <!-- Desktop Nav -->
-      <nav class="hidden lg:flex items-center gap-1 flex-1 justify-center min-w-0 mx-4" aria-label="Main navigation">
-        {navLinks.map((link) => (
-          <a
-            href={link.href}
-            class="px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors whitespace-nowrap"
-          >
-            {link.label}
-          </a>
-        ))}
-      </nav>
-
       <!-- Actions -->
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <!-- Search — visible pill on sm+; icon-only on xs -->
         <button
           id="search-trigger"
@@ -73,22 +73,48 @@ const navLinks = [
         <button
           id="mobile-menu-btn"
           type="button"
-          class="lg:hidden p-2 text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-          aria-label="Open menu"
+          class="lg:hidden flex items-center gap-1.5 px-2.5 py-2 text-surface-800 dark:text-surface-100 font-semibold text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors border border-surface-200 dark:border-surface-600"
+          aria-label="Open full menu"
           aria-expanded="false"
+          aria-controls="mobile-menu"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
+          <span class="hidden sm:inline">Menu</span>
         </button>
       </div>
     </div>
 
-    <!-- Mobile Nav -->
+    <!-- Section nav — always visible; horizontal scroll on narrow viewports -->
+    <div class="site-header-nav-wrap relative border-t border-surface-200/90 dark:border-surface-700/90">
+      <div class="site-header-nav-fade site-header-nav-fade--left" aria-hidden="true"></div>
+      <div class="site-header-nav-fade site-header-nav-fade--right" aria-hidden="true"></div>
+      <nav class="site-header-nav" aria-label="Main navigation">
+        {navLinks.map((link) => {
+          const active = isNavActive(link.href);
+          return (
+            <a
+              href={link.href}
+              class:list={[
+                'site-header-nav-link',
+                active && 'site-header-nav-link--active',
+              ]}
+              aria-current={active ? 'page' : undefined}
+            >
+              <span class="sm:hidden">{link.shortLabel ?? link.label}</span>
+              <span class="hidden sm:inline">{link.label}</span>
+            </a>
+          );
+        })}
+      </nav>
+    </div>
+
+    <!-- Mobile Nav (expanded list) -->
     <nav
       id="mobile-menu"
-      class="hidden lg:hidden pb-4 border-t border-surface-200 dark:border-surface-700 mt-2 pt-4"
-      aria-label="Mobile navigation"
+      class="hidden lg:hidden pt-3 pb-4 border-t border-surface-200 dark:border-surface-700"
+      aria-label="Mobile menu"
     >
       <div class="flex flex-col gap-1">
         <button
@@ -102,14 +128,23 @@ const navLinks = [
           <span class="flex-1">Search</span>
           <kbd class="text-[10px] font-medium text-surface-400 border border-surface-300 dark:border-surface-600 px-1.5 py-0.5 rounded">Ctrl K</kbd>
         </button>
-        {navLinks.map((link) => (
-          <a
-            href={link.href}
-            class="px-3 py-3 text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-          >
-            {link.label}
-          </a>
-        ))}
+        {navLinks.map((link) => {
+          const active = isNavActive(link.href);
+          return (
+            <a
+              href={link.href}
+              class:list={[
+                'px-3 py-3 text-sm font-semibold rounded-lg transition-colors',
+                active
+                  ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/40'
+                  : 'text-surface-800 dark:text-surface-100 hover:text-primary-600 hover:bg-surface-100 dark:hover:bg-surface-800',
+              ]}
+              aria-current={active ? 'page' : undefined}
+            >
+              {link.label}
+            </a>
+          );
+        })}
       </div>
     </nav>
   </div>

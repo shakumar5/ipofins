@@ -12,7 +12,7 @@ interface Props {
   description?: string;
   ogImage?: string;
   canonicalUrl?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
   robots?: string;
 }
 
@@ -207,29 +207,15 @@ const organizationSchema = {
           }
         }
 
-        /** Plausible → pause → GA → pause → (optional) AdSense when visible → pause → Web Vitals */
+        /** GA4 analytics → pause → (optional) AdSense when visible → pause → Web Vitals */
         window.loadThirdPartyScripts = function() {
           if (analyticsStarted) return;
           analyticsStarted = true;
-          loadScript('https://plausible.io/js/pa-TzNuTbQbTb4FXM9xfpK3x.js')
-            .then(function() {
-              window.plausible = window.plausible || function() {
-                (window.plausible.q = window.plausible.q || []).push(arguments);
-              };
-              window.plausible.init = window.plausible.init || function(i) {
-                window.plausible.o = i || {};
-              };
-              window.plausible.init();
-              if (window.__markAnalyticsReady) window.__markAnalyticsReady();
-              return delay(2500);
-            })
-            .then(function() {
-              if (typeof window.gtag === 'function') {
-                window.gtag('config', 'G-VRXGEC8RTG');
-              }
-              if (window.__markAnalyticsReady) window.__markAnalyticsReady();
-              return delay(3000);
-            })
+          if (typeof window.gtag === 'function') {
+            window.gtag('config', 'G-VRXGEC8RTG');
+          }
+          if (window.__markAnalyticsReady) window.__markAnalyticsReady();
+          delay(1500)
             .then(function() {
               loadAdsenseWhenNeeded();
               return delay(6000);
