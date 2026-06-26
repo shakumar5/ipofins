@@ -1,11 +1,15 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SuperInvestorsSubNav from '../../../components/tracked/SuperInvestorsSubNav.astro';
 import {
   getDistinctHolderSlugs,
   getHoldingsByHolderSlug,
   onePercentStockUrl,
   formatPct,
   canonicalFor,
+  isHolderPageIndexable,
+  HOLDER_PAGE_MIN_INDEXABLE_STOCKS,
+  superInvestorUrl,
   ONE_PERCENT_CLUB_HUB,
   SUPER_INVESTORS_HUB,
 } from '../../../lib/tracked-entities';
@@ -14,8 +18,11 @@ export async function getStaticPaths() {
   const holders = await getDistinctHolderSlugs();
   if (!holders.length) return [];
   return holders
-    .filter((h) => !h.entitySlug)
-    .map((h) => ({ params: { holderSlug: h.holderSlug }, props: { holderSlug: h.holderSlug } }));
+    .filter((h) => !h.entitySlug && h.stockCount >= 1)
+    .map((h) => ({
+      params: { holderSlug: h.holderSlug },
+      props: { holderSlug: h.holderSlug },
+    }));
 }
 
 const { holderSlug } = Astro.props;
@@ -25,13 +32,22 @@ if (!data.rows.length) {
   return Astro.redirect('/404');
 }
 
+if (data.entitySlug) {
+  return Astro.redirect(superInvestorUrl(data.entitySlug));
+}
+
+const indexable = isHolderPageIndexable(data.rows.length);
+const robots = indexable
+  ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+  : 'noindex, follow';
+
 const path = `${ONE_PERCENT_CLUB_HUB}/holder/${holderSlug}`;
 const canonical = canonicalFor(path);
 const title = `${data.holderName} — Stocks with ≥1% Shareholding | IPOFins`;
 const description = `Stocks where ${data.holderName} holds 1% or more per latest NSE/BSE shareholding pattern disclosure. ${data.rows.length} positions.`;
 ---
 
-<BaseLayout title={title} description={description} canonicalUrl={canonical}>
+<BaseLayout title={title} description={description} canonicalUrl={canonical} robots={robots}>
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
       <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
@@ -49,6 +65,16 @@ const description = `Stocks where ${data.holderName} holds 1% or more per latest
     <p class="mt-2 text-surface-600 dark:text-surface-300">
       {data.rows.length} stock{data.rows.length === 1 ? '' : 's'} with ≥1% disclosed stake (latest quarter).
     </p>
+  {!indexable && (
+    <p class="mt-3 text-xs text-surface-500 dark:text-surface-400 max-w-2xl">
+      This is a single-position holder view from 1% Club search. For full institutional context, see the stock’s{' '}
+      <a href={onePercentStockUrl(data.rows[0]!.stockSlug)} class="text-primary-600 dark:text-primary-400 hover:underline">
+        ≥1% shareholders page
+      </a>
+      . Pages with fewer than {HOLDER_PAGE_MIN_INDEXABLE_STOCKS} disclosed positions are not indexed.
+    </p>
+  )}
+    <SuperInvestorsSubNav active="club" />
   </section>
 
   <section class="container-wide pb-10">
@@ -85,7 +111,8 @@ const description = `Stocks where ${data.holderName} holds 1% or more per latest
   <section class="container-wide pb-10 max-w-3xl">
     <div class="card bg-warning-50/60 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-900/40">
       <p class="text-xs text-surface-700 dark:text-surface-300">
-        Data from quarterly shareholding pattern filings. Only stakes ≥1% are disclosed. Not investment advice.
+        Data from quarterly shareholding pattern filings. Only stakes ≥1% are disclosed. Not investment advice.{' '}
+        <a href="/methodology" class="text-primary-600 dark:text-primary-400 hover:underline">Methodology →</a>
       </p>
     </div>
   </section>

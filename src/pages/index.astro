@@ -9,8 +9,11 @@ import { getHoldingsStats } from '../lib/data/funds';
 import { withCorrectStatuses } from '../utils/ipo-status';
 import { BRAND_NAME } from '../lib/brand';
 import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
+import { getTrackedSnapshot, getOnePercentStockSlugs } from '../lib/tracked-entities';
 
 const sm = loadSmartMoneyTrackerLinks();
+const trackedSnapshot = await getTrackedSnapshot();
+const onePercentStocks = await getOnePercentStockSlugs();
 const iposData = withCorrectStatuses(await getAllIPOs());
 const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
 const featuredLiveIPOs = [...liveIPOs]
@@ -74,7 +77,9 @@ const jsonLd = {
         { "@type": "ListItem", "position": 3, "name": "Stock Signal", "url": "https://ipofins.com/mutual-funds/smart-money/stock-signal" },
         { "@type": "ListItem", "position": 4, "name": "Sector Intelligence", "url": "https://ipofins.com/mutual-funds/smart-money/sector-intelligence" },
         { "@type": "ListItem", "position": 5, "name": "Portfolio Overlap Checker", "url": "https://ipofins.com/mutual-funds/portfolio-overlap-checker" },
-        { "@type": "ListItem", "position": 6, "name": "IPO Performance", "url": "https://ipofins.com/ipo/performance/2026" }
+        { "@type": "ListItem", "position": 6, "name": "IPO Performance", "url": "https://ipofins.com/ipo/performance/2026" },
+        { "@type": "ListItem", "position": 7, "name": "Super Investors", "url": "https://ipofins.com/super-investors" },
+        { "@type": "ListItem", "position": 8, "name": "1% Club", "url": "https://ipofins.com/1-percent-club" }
       ]
     }
   ]
@@ -195,6 +200,14 @@ const faqJsonLd = {
             <p class="text-3xl font-extrabold text-surface-900 dark:text-white tabular-nums">{toolsData.length}</p>
             <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Finance Tools</p>
           </a>
+          <a href="/super-investors" class="card-compact hover:shadow-md transition-shadow">
+            <p class="text-3xl font-extrabold text-teal-600 dark:text-teal-400 tabular-nums">{trackedSnapshot.entityCount}</p>
+            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Super Investors</p>
+          </a>
+          <a href="/1-percent-club" class="card-compact hover:shadow-md transition-shadow">
+            <p class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tabular-nums">{onePercentStocks.length}</p>
+            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">1% Club Stocks</p>
+          </a>
         </div>
       </div>
     </div>
@@ -230,6 +243,22 @@ const faqJsonLd = {
         href={sm.stockSignal}
         badge="900+ stocks"
         icon="📡"
+        accent="primary"
+      />
+      <PlatformFeatureCard
+        title="Super Investors"
+        description={`Curated portfolios for ${trackedSnapshot.entityCount} well-known investors — quarter-on-quarter adds, exits, and conviction from SHP filings.`}
+        href="/super-investors"
+        badge="SHP data"
+        icon="🎯"
+        accent="success"
+      />
+      <PlatformFeatureCard
+        title="1% Club"
+        description={`Every ≥1% non-promoter shareholder on ${onePercentStocks.length}+ stocks — curated super investors and mystery holders from shareholding patterns.`}
+        href="/1-percent-club"
+        badge="Quarterly"
+        icon="👥"
         accent="primary"
       />
       <PlatformFeatureCard

@@ -9,6 +9,7 @@ import {
   stockSignalDetailBackNav,
 } from '../../../../lib/list-back-nav';
 import ListBackLink from '../../../../components/ListBackLink.astro';
+import { BRAND_URL } from '../../../../lib/brand';
 import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
 import {
@@ -16,7 +17,8 @@ import {
   SIGNALS_INDEX_PUBLIC_PATH,
   signalSearchPublicUrl,
 } from '../../../../lib/smart-money-signals-server';
-import { BRAND_URL } from '../../../../lib/brand';
+import { getCuratedInvestorsForStock, getOnePercentHoldersForStock } from '../../../../lib/tracked-entities';
+import StockCrossLinks from '../../../../components/tracked/StockCrossLinks.astro';
 
 export function getStaticPaths() {
   const stocks = loadSmartMoneyStockSlugs();
@@ -41,6 +43,12 @@ const smBackVariants = Object.fromEntries(
 );
 const signalsIndex = readSignalsIndexFromDisk();
 const latestMonth = signalsIndex?.months[0];
+
+const onePercentHolders = isPlaceholder ? [] : await getOnePercentHoldersForStock(stockSlug);
+const curatedInvestors = onePercentHolders
+  .filter((h) => h.entitySlug)
+  .map((h) => ({ slug: h.entitySlug!, name: h.holderName, pct: h.pctOfCompany }));
+const latestQuarter = onePercentHolders[0]?.quarter ?? null;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -100,6 +108,17 @@ const jsonLd = {
     <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
     {!isPlaceholder && <SmartMoneySubNav active="stock-signal-hub" />}
   </section>
+
+  {!isPlaceholder && (
+    <StockCrossLinks
+      stockName={stockName}
+      stockSlug={stockSlug}
+      curatedInvestors={curatedInvestors}
+      showMfStockSignal={false}
+      showOnePercentClub={onePercentHolders.length > 0}
+      latestQuarter={latestQuarter}
+    />
+  )}
 
   <section class="container-wide pb-12">
     {isPlaceholder ? (

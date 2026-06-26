@@ -19,6 +19,7 @@
 import { existsSync } from 'fs';
 import { sleep } from './ipo-utils.mjs';
 import { parseShareholdingXbrl } from './shp-xbrl-parser.mjs';
+import { nseQuarterEndLabel } from './si-quarters.mjs';
 
 // ─── HTTP layer (mirrors authorized-sources.mjs) ────────────
 
@@ -34,19 +35,40 @@ const HEADERS = {
 /** ms between per-stock requests (matches the existing Zerodha cadence). */
 let fetchThrottleMs = 800;
 
+/** Skip Puppeteer fallback (parallel backfill — one browser cannot serve 80 workers). */
+let skipPuppeteerFallback = false;
+
+/** Per-request HTTP timeout; 0 = no limit. */
+let fetchTimeoutMs = 20_000;
+
 /** Reduce/remove throttle when running parallel fetches (pipeline sets this). */
 export function setSiFetchThrottle(ms) {
   fetchThrottleMs = Math.max(0, ms);
 }
 
+/** Tune fetch behaviour for bulk backfill vs single-quarter runs. */
+export function setSiFetchOptions({ throttle, skipPuppeteer, timeoutMs } = {}) {
+  if (throttle !== undefined) fetchThrottleMs = Math.max(0, throttle);
+  if (skipPuppeteer !== undefined) skipPuppeteerFallback = skipPuppeteer;
+  if (timeoutMs !== undefined) fetchTimeoutMs = Math.max(0, timeoutMs);
+}
+
+async function fetchTimed(url, init = {}) {
+  const opts = { ...init, headers: { ...HEADERS, ...init.headers } };
+  if (fetchTimeoutMs > 0) {
+    opts.signal = AbortSignal.timeout(fetchTimeoutMs);
+  }
+  return fetch(url, opts);
+}
+
 async function fetchText(url, extraHeaders = {}) {
-  const response = await fetch(url, { headers: { ...HEADERS, ...extraHeaders } });
+  const response = await fetchTimed(url, { headers: extraHeaders });
   if (!response.ok) throw new Error(`HTTP ${response.status} from ${url}`);
   return response.text();
 }
 
 async function fetchBuffer(url, extraHeaders = {}) {
-  const response = await fetch(url, { headers: { ...HEADERS, ...extraHeaders } });
+  const response = await fetchTimed(url, { headers: extraHeaders });
   if (!response.ok) throw new Error(`HTTP ${response.status} from ${url}`);
   return Buffer.from(await response.arrayBuffer());
 }
@@ -135,23 +157,10 @@ export async function resolveBseCode(stock) {
 
 // ─── NSE XBRL Shareholding Pattern (primary) ─────────────────
 
-const NSE_MONTH = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
-
-function parseNseFilingDate(s) {
-  const parts = String(s || '').trim().split('-');
-  if (parts.length !== 3) return null;
-  const d = new Date(parseInt(parts[2], 10), NSE_MONTH[parts[1]] ?? 0, parseInt(parts[0], 10));
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 function filingMatchesQuarter(filing, quarter) {
-  const fd = parseNseFilingDate(filing?.date);
-  if (!fd || !quarter) return false;
-  const qStart = new Date(quarter);
-  const qEnd = new Date(qStart);
-  qEnd.setMonth(qEnd.getMonth() + 3);
-  qEnd.setDate(qEnd.getDate() - 1);
-  return fd >= qStart && fd <= qEnd;
+  const label = nseQuarterEndLabel(quarter);
+  if (!label) return false;
+  return String(filing?.date || '').trim().toUpperCase() === label;
 }
 
 /**
@@ -163,7 +172,7 @@ export async function fetchNSEShareholdingViaXbrl(stock, quarter) {
   const api = `https://www.nseindia.com/api/corporate-share-holdings-master?index=equities&symbol=${encodeURIComponent(stock.nse_symbol)}`;
   let filings;
   try {
-    const res = await fetch(api, { headers: { ...HEADERS, Accept: 'application/json' } });
+    const res = await fetchTimed(api, { headers: { Accept: 'application/json' } });
     if (!res.ok) return [];
     filings = await res.json();
   } catch {
@@ -171,14 +180,11 @@ export async function fetchNSEShareholdingViaXbrl(stock, quarter) {
   }
   if (!Array.isArray(filings) || !filings.length) return [];
 
-  const match =
-    filings.find((f) => filingMatchesQuarter(f, quarter) && f.xbrl)
-    || filings.find((f) => f.xbrl)
-    || null;
+  const match = filings.find((f) => filingMatchesQuarter(f, quarter) && f.xbrl) || null;
   if (!match?.xbrl) return [];
 
   try {
-    const xbrlRes = await fetch(match.xbrl, { headers: HEADERS });
+    const xbrlRes = await fetchTimed(match.xbrl);
     if (!xbrlRes.ok) return [];
     const xml = await xbrlRes.text();
     const rows = parseShareholdingXbrl(xml, match.xbrl);
@@ -236,7 +242,7 @@ function parseBseShpNgJson(json, sourceUrl) {
 async function fetchBseShpNgEndpoint(endpoint, scripCode, qtrCode) {
   const qtr = qtrCode.includes('.') ? qtrCode : `${qtrCode}.00`;
   const url = `https://api.bseindia.com/BseIndiaAPI/api/${endpoint}/w?SCRIPCODE=${encodeURIComponent(scripCode)}&QtrCode=${encodeURIComponent(qtr)}`;
-  const res = await fetch(url, { headers: { ...HEADERS, Accept: 'application/json', Referer: 'https://www.bseindia.com/' } });
+  const res = await fetchTimed(url, { headers: { Accept: 'application/json', Referer: 'https://www.bseindia.com/' } });
   if (!res.ok) return [];
   const json = await res.json();
   return parseBseShpNgJson(json, url);
@@ -252,9 +258,9 @@ export async function fetchBSEShareholdingViaApi(stock, quarter) {
 
   let declarations = [];
   try {
-    const res = await fetch(
+    const res = await fetchTimed(
       `https://api.bseindia.com/BseIndiaAPI/api/shpDecleraction/w?scripcode=${encodeURIComponent(scripCode)}&qtrid=`,
-      { headers: { ...HEADERS, Accept: 'application/json', Referer: 'https://www.bseindia.com/' } },
+      { headers: { Accept: 'application/json', Referer: 'https://www.bseindia.com/' } },
     );
     if (res.ok) declarations = await res.json();
   } catch {
@@ -468,11 +474,13 @@ export async function fetchNSEShareholdingPatternPuppeteer(stock, quarter) {
 
 // ─── Orchestrator: Shareholding Pattern ────────────────────
 
+const TASK_TIMEOUT_MS = 30_000;
+
 /**
- * Fetch shareholding pattern for one stock. BSE first (cheap, plain HTTP),
- * NSE Puppeteer fallback only when BSE yields nothing.
+ * Fetch shareholding pattern for one stock. NSE XBRL first, then BSE API/HTML.
+ * Puppeteer is last resort (disabled during parallel backfill).
  */
-export async function fetchShareholdingPattern(stock, quarter) {
+async function fetchShareholdingPatternInner(stock, quarter) {
   if (stock.nse_symbol) {
     try {
       const xbrlRows = await fetchNSEShareholdingViaXbrl(stock, quarter);
@@ -499,7 +507,7 @@ export async function fetchShareholdingPattern(stock, quarter) {
     // fall through
   }
 
-  if (stock.nse_symbol) {
+  if (stock.nse_symbol && !skipPuppeteerFallback) {
     try {
       return await fetchNSEShareholdingPatternPuppeteer(stock, quarter);
     } catch {
@@ -508,6 +516,21 @@ export async function fetchShareholdingPattern(stock, quarter) {
   }
 
   return [];
+}
+
+export async function fetchShareholdingPattern(stock, quarter) {
+  const budget = fetchTimeoutMs > 0 ? Math.max(fetchTimeoutMs + 10_000, TASK_TIMEOUT_MS) : TASK_TIMEOUT_MS;
+  let timer;
+  try {
+    return await Promise.race([
+      fetchShareholdingPatternInner(stock, quarter),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve([]), budget);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 // ─── BSE SAST / corporate announcements ────────────────────

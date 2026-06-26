@@ -14,7 +14,7 @@
  *
  * Run after pipeline:superinvestor (and optionally pipeline:pms, pipeline:altfunds):
  *   node scripts/node-with-ca.mjs db/compute/compute-super-investor-signals.mjs
- *   node scripts/node-with-ca.mjs db/compute/compute-super-investor-signals.mjs --quarter=2026-04-01
+ *   node scripts/node-with-ca.mjs db/compute/compute-super-investor-signals.mjs --all-quarters
  *
  * Usage:
  *   npm run db:compute-si
@@ -28,6 +28,7 @@ import { sql, isDbConfigured } from '../../scripts/lib/db.mjs';
 
 const args = process.argv.slice(2);
 let targetQuarter = null;
+const allQuarters = args.includes('--all-quarters');
 
 for (const arg of args) {
   if (arg.startsWith('--quarter=')) {
@@ -62,8 +63,15 @@ async function computeEntityChanges(quarter) {
         'fresh_entry',
         0, shares_held, shares_held,
         pct_of_company, 0
-      FROM entity_holdings
-      WHERE quarter = ${quarter}::DATE
+      FROM (
+        SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+          eh.entity_id, eh.strategy_id, eh.stock_id, eh.quarter, eh.shares_held, eh.pct_of_company
+        FROM entity_holdings eh
+        JOIN stocks s ON s.id = eh.stock_id
+        WHERE eh.quarter = ${quarter}::DATE
+        ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+          eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
+      ) eh
       ON CONFLICT (entity_id, strategy_id, stock_id, quarter) DO UPDATE SET
         prev_quarter   = EXCLUDED.prev_quarter,
         change_type    = EXCLUDED.change_type,
@@ -79,7 +87,7 @@ async function computeEntityChanges(quarter) {
   const prevQuarter = prevResult[0].quarter;
   console.log(`    Previous quarter: ${prevQuarter}`);
 
-  // FULL OUTER JOIN — same pattern as compute-signals.mjs.
+  // FULL OUTER JOIN — dedupe holdings first (pipeline may have residual duplicate rows).
   await sql`
     INSERT INTO entity_changes (entity_id, strategy_id, stock_id, quarter, prev_quarter, change_type, prev_shares, new_shares, qty_change, pct_change, value_change_cr)
     SELECT
@@ -100,15 +108,31 @@ async function computeEntityChanges(quarter) {
       COALESCE(curr.shares_held, 0) - COALESCE(prev.shares_held, 0),
       COALESCE(curr.pct_of_company, 0) - COALESCE(prev.pct_of_company, 0),
       COALESCE(curr.market_value_cr, 0) - COALESCE(prev.market_value_cr, 0)
-    FROM entity_holdings curr
-    FULL OUTER JOIN entity_holdings prev
+    FROM (
+      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+        eh.entity_id, eh.strategy_id, eh.stock_id,
+        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug) AS stock_key,
+        eh.shares_held, eh.pct_of_company, eh.market_value_cr
+      FROM entity_holdings eh
+      JOIN stocks s ON s.id = eh.stock_id
+      WHERE eh.quarter = ${quarter}::DATE
+      ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+        eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
+    ) curr
+    FULL OUTER JOIN (
+      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+        eh.entity_id, eh.strategy_id, eh.stock_id,
+        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug) AS stock_key,
+        eh.shares_held, eh.pct_of_company, eh.market_value_cr
+      FROM entity_holdings eh
+      JOIN stocks s ON s.id = eh.stock_id
+      WHERE eh.quarter = ${prevQuarter}::DATE
+      ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+        eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
+    ) prev
       ON curr.entity_id    = prev.entity_id
-     AND curr.strategy_id  = prev.strategy_id
-     AND curr.stock_id     = prev.stock_id
-     AND curr.quarter      = ${quarter}::DATE
-     AND prev.quarter      = ${prevQuarter}::DATE
-    WHERE curr.quarter = ${quarter}::DATE
-       OR (prev.quarter = ${prevQuarter}::DATE AND curr.stock_id IS NULL)
+     AND curr.strategy_id IS NOT DISTINCT FROM prev.strategy_id
+     AND curr.stock_key    = prev.stock_key
     ON CONFLICT (entity_id, strategy_id, stock_id, quarter) DO UPDATE SET
       prev_quarter   = EXCLUDED.prev_quarter,
       change_type    = EXCLUDED.change_type,
@@ -207,6 +231,16 @@ async function computeEntityQuarterlyStats(quarter) {
 
   await sql`
     INSERT INTO entity_quarterly_stats (entity_id, strategy_id, quarter, total_holdings, portfolio_value_cr, top5_concentration, hhi, turnover_ratio, large_cap_pct, mid_cap_pct, small_cap_pct)
+    WITH deduped AS (
+      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+        eh.entity_id, eh.strategy_id, eh.stock_id, eh.quarter,
+        eh.shares_held, eh.pct_of_company, eh.market_value_cr
+      FROM entity_holdings eh
+      JOIN stocks s ON s.id = eh.stock_id
+      WHERE eh.quarter = ${quarter}::DATE
+      ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+        eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
+    )
     SELECT
       eh.entity_id,
       eh.strategy_id,
@@ -219,10 +253,9 @@ async function computeEntityQuarterlyStats(quarter) {
           SELECT SUM(pct_of_company)
           FROM (
             SELECT pct_of_company
-            FROM entity_holdings h2
+            FROM deduped h2
             WHERE h2.entity_id = eh.entity_id
-              AND h2.strategy_id = eh.strategy_id
-              AND h2.quarter = ${quarter}::DATE
+              AND h2.strategy_id IS NOT DISTINCT FROM eh.strategy_id
             ORDER BY pct_of_company DESC
             LIMIT 5
           ) t
@@ -239,34 +272,33 @@ async function computeEntityQuarterlyStats(quarter) {
           COUNT(CASE WHEN ec.change_type IN ('fresh_entry', 'complete_exit', 'increased', 'decreased') THEN 1 END)::NUMERIC
           / NULLIF(COUNT(*), 0)
         FROM entity_changes ec
-        WHERE ec.entity_id = eh.entity_id AND ec.strategy_id = eh.strategy_id
+        WHERE ec.entity_id = eh.entity_id AND ec.strategy_id IS NOT DISTINCT FROM eh.strategy_id
           AND ec.quarter = ${quarter}::DATE
         ), 0
       ) AS turnover_ratio,
       -- Market cap splits (join to stocks table).
       COALESCE(
         ROUND((SELECT COUNT(*)::NUMERIC / NULLIF(COUNT(*), 0) * 100
-          FROM entity_holdings h3
+          FROM deduped h3
           JOIN stocks s3 ON s3.id = h3.stock_id
-          WHERE h3.entity_id = eh.entity_id AND h3.strategy_id = eh.strategy_id
-            AND h3.quarter = ${quarter}::DATE AND s3.market_cap_category = 'large'
+          WHERE h3.entity_id = eh.entity_id AND h3.strategy_id IS NOT DISTINCT FROM eh.strategy_id
+            AND s3.market_cap_category = 'large'
         ), 2), 0) AS large_cap_pct,
       COALESCE(
         ROUND((SELECT COUNT(*)::NUMERIC / NULLIF(COUNT(*), 0) * 100
-          FROM entity_holdings h4
+          FROM deduped h4
           JOIN stocks s4 ON s4.id = h4.stock_id
-          WHERE h4.entity_id = eh.entity_id AND h4.strategy_id = eh.strategy_id
-            AND h4.quarter = ${quarter}::DATE AND s4.market_cap_category = 'mid'
+          WHERE h4.entity_id = eh.entity_id AND h4.strategy_id IS NOT DISTINCT FROM eh.strategy_id
+            AND s4.market_cap_category = 'mid'
         ), 2), 0) AS mid_cap_pct,
       COALESCE(
         ROUND((SELECT COUNT(*)::NUMERIC / NULLIF(COUNT(*), 0) * 100
-          FROM entity_holdings h5
+          FROM deduped h5
           JOIN stocks s5 ON s5.id = h5.stock_id
-          WHERE h5.entity_id = eh.entity_id AND h5.strategy_id = eh.strategy_id
-            AND h5.quarter = ${quarter}::DATE AND s5.market_cap_category = 'small'
+          WHERE h5.entity_id = eh.entity_id AND h5.strategy_id IS NOT DISTINCT FROM eh.strategy_id
+            AND s5.market_cap_category = 'small'
         ), 2), 0) AS small_cap_pct
-    FROM entity_holdings eh
-    WHERE eh.quarter = ${quarter}::DATE
+    FROM deduped eh
     GROUP BY eh.entity_id, eh.strategy_id
     ON CONFLICT (entity_id, strategy_id, quarter) DO UPDATE SET
       total_holdings     = EXCLUDED.total_holdings,
@@ -422,6 +454,15 @@ async function refreshViews() {
 // MAIN
 // ═══════════════════════════════════════════════════════════════
 
+async function computeForQuarter(quarter) {
+  console.log(`\n  📅 Target quarter: ${quarter}`);
+  await computeEntityChanges(quarter);
+  await computeEntityStockSignals(quarter);
+  await computeEntityQuarterlyStats(quarter);
+  await computeEntityOverlaps(quarter);
+  await computeEntityConviction(quarter);
+}
+
 async function main() {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
@@ -433,7 +474,26 @@ async function main() {
     process.exit(1);
   }
 
-  // Determine target quarter.
+  if (allQuarters) {
+    const quarterRows = await sql`
+      SELECT DISTINCT quarter::text AS q FROM entity_holdings ORDER BY q ASC
+    `;
+    if (!quarterRows.length) {
+      console.error('\n  ❌ No entity_holdings data found. Run pipeline:superinvestor first.');
+      process.exit(1);
+    }
+    console.log(`  📚 Computing ${quarterRows.length} quarter(s) in chronological order`);
+    for (const { q } of quarterRows) {
+      await computeForQuarter(q);
+    }
+    await refreshViews();
+    console.log('\n───────────────────────────────────────────────────────────');
+    console.log('  ✅ Super investor signal computation complete (all quarters)!');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('');
+    return;
+  }
+
   let quarter = targetQuarter;
   if (!quarter) {
     const latestResult = await sql`
@@ -446,13 +506,7 @@ async function main() {
     quarter = latestResult[0].latest;
   }
 
-  console.log(`  📅 Target quarter: ${quarter}`);
-
-  await computeEntityChanges(quarter);
-  await computeEntityStockSignals(quarter);
-  await computeEntityQuarterlyStats(quarter);
-  await computeEntityOverlaps(quarter);
-  await computeEntityConviction(quarter);
+  await computeForQuarter(quarter);
   await refreshViews();
 
   console.log('\n───────────────────────────────────────────────────────────');

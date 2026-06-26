@@ -1,0 +1,28 @@
+---
+import { SUPER_INVESTORS_HUB, ONE_PERCENT_CLUB_HUB } from '../../lib/tracked-entities';
+
+type ActiveTab = 'individual' | 'club';
+
+interface Props {
+  active: ActiveTab;
+}
+
+const { active } = Astro.props;
+
+const tabs: { id: ActiveTab; label: string; href: string }[] = [
+  { id: 'individual', label: 'Individual Investors', href: SUPER_INVESTORS_HUB },
+  { id: 'club', label: '1% Club', href: ONE_PERCENT_CLUB_HUB },
+];
+---
+
+<nav class="nav-btn-group mt-6" aria-label="Super Investors sections">
+  {tabs.map((tab) => (
+    active === tab.id ? (
+      <span class="btn-primary px-6 py-3 cursor-default" aria-current="page">{tab.label}</span>
+    ) : (
+      <a href={tab.href} class="btn-secondary px-6 py-3">{tab.label}</a>
+    )
+  ))}
+  <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
+  <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
+</nav>

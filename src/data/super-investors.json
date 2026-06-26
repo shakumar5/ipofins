@@ -125,7 +125,16 @@
     "displayName": "Rekha Jhunjhunwala",
     "type": "individual",
     "tier": "legendary",
-    "aliases": ["Jhunjhunwala Rekha", "Jhunjhunwala Rekha Rajeshkumar", "Rekha Rajeshkumar Jhunjhunwala"],
+    "aliases": [
+      "Jhunjhunwala Rekha",
+      "Jhunjhunwala Rekha Rajeshkumar",
+      "Rekha Rajeshkumar Jhunjhunwala",
+      "Rekha Rakesh Jhunjhunwala",
+      "Aryaman Jhunjhunwala Discretionary Trust",
+      "Aryavir Jhunjhunwala Discretionary Trust",
+      "Nishtha Jhunjhunwala Discretionary Trust",
+      "Nistha Jhunjhunwala Discretionary Trust"
+    ],
     "focus": "Continuation of Rakesh Jhunjhunwala's portfolio (Titan, Star Health, etc.)",
     "bio": "Inherits and continues the public-market portfolio built with the late Rakesh Jhunjhunwala.",
     "location": "Mumbai",

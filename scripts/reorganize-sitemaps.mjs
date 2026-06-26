@@ -65,6 +65,7 @@ function bucketUrls(allLocs) {
   for (const loc of allLocs) {
     const path = pathnameFromLoc(loc);
     if (!path || path === '/404') continue;
+    if (path.startsWith('/1-percent-club/holder/')) continue;
     const bucket = classifySitemapBucket(path);
     if (!buckets.has(bucket)) buckets.set(bucket, []);
     buckets.get(bucket).push(loc.startsWith('http') ? loc : `${SITE}${path}`);

@@ -52,6 +52,16 @@ function tokenOverlap(a, b) {
   return union === 0 ? 0 : intersection / union;
 }
 
+/** Collapse XBRL quirks: missing spaces, trustee suffixes. */
+function normalizeFilingName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/([a-z])discretionary/g, '$1 discretionary')
+    .replace(/\(\s*trustee\s*[-–].*\)\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
  * Build an entity resolver index from tracked_entity rows.
  *
@@ -82,72 +92,82 @@ export function buildEntityResolver(entities, opts = {}) {
   // Also build a quick exact-match map (normalized → entity) for fast path.
   const exactMap = new Map();
   for (const entry of index) {
-    if (!exactMap.has(entry.normalized)) {
-      exactMap.set(entry.normalized, entry);
+    const keys = new Set([entry.normalized, normalizeFilingName(entry.rawName)]);
+    for (const key of keys) {
+      if (key && !exactMap.has(key)) exactMap.set(key, entry);
     }
   }
 
+  /** @param {string} filingName */
+  function resolveCore(filingName) {
+    if (!filingName) return null;
+    const normalized = filingName.toLowerCase().trim();
+    const filingLower = normalizeFilingName(filingName);
+
+    // Fast path: exact match on normalized name or any alias.
+    const exact = exactMap.get(normalized) || exactMap.get(filingLower);
+    if (exact) {
+      return {
+        entityId: exact.entity.id,
+        entityName: exact.entity.name,
+        confidence: MIN_CONFIDENCE_EXACT,
+        matchedVariant: exact.rawName,
+      };
+    }
+
+    // Slower path: token overlap (handles word-order flips, extra initials).
+    const filingTokens = normalizeTokens(filingName);
+    if (filingTokens.length === 0) return null;
+
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const entry of index) {
+      if (filingTokens.length < 2 && entry.tokens.length < 2) continue;
+
+      const score = tokenOverlap(filingTokens, entry.tokens);
+      const substringBonus =
+        normalized.includes(entry.normalized) || entry.normalized.includes(normalized) ? 0.05 : 0;
+      const allContained =
+        entry.tokens.length > 0 && filingTokens.every((t) => entry.tokens.includes(t));
+      const containBonus = allContained ? 0.03 : 0;
+      const totalScore = Math.min(1.0, score + substringBonus + containBonus);
+
+      if (totalScore > bestScore) {
+        bestScore = totalScore;
+        bestMatch = entry;
+      }
+    }
+
+    if (bestMatch && bestScore >= minConfidence) {
+      return {
+        entityId: bestMatch.entity.id,
+        entityName: bestMatch.entity.name,
+        confidence: Math.round(bestScore * 1000) / 1000,
+        matchedVariant: bestMatch.rawName,
+      };
+    }
+
+    return null;
+  }
+
   return {
-    /**
-     * Resolve a raw filing name to a tracked entity.
-     *
-     * @param {string} filingName — raw holder name from Shareholding Pattern
-     * @returns {{ entityId: number, entityName: string, confidence: number, matchedVariant: string|null }}
-     */
     resolve(filingName) {
       if (!filingName) return null;
-      const normalized = filingName.toLowerCase().trim();
 
-      // Fast path: exact match on normalized name or any alias.
-      const exact = exactMap.get(normalized);
-      if (exact) {
-        return {
-          entityId: exact.entity.id,
-          entityName: exact.entity.name,
-          confidence: MIN_CONFIDENCE_EXACT,
-          matchedVariant: exact.rawName,
-        };
-      }
-
-      // Slower path: token overlap (handles word-order flips, extra initials).
-      const filingTokens = normalizeTokens(filingName);
-      if (filingTokens.length === 0) return null;
-
-      let bestMatch = null;
-      let bestScore = 0;
-
-      for (const entry of index) {
-        // Skip short filing names (e.g. "RBI" matching "LIC") — too risky.
-        if (filingTokens.length < 2 && entry.tokens.length < 2) continue;
-
-        const score = tokenOverlap(filingTokens, entry.tokens);
-
-        // Bonus for exact substring containment (handles "Khanna Dolly Chhaganlal" matching "Khanna Dolly").
-        const substringBonus = (normalized.includes(entry.normalized) || entry.normalized.includes(normalized)) ? 0.05 : 0;
-
-        // Bonus for token containment (all filing tokens appear in entry).
-        const allContained = entry.tokens.length > 0 && filingTokens.every((t) => entry.tokens.includes(t));
-        const containBonus = allContained ? 0.03 : 0;
-
-        const totalScore = Math.min(1.0, score + substringBonus + containBonus);
-
-        if (totalScore > bestScore) {
-          bestScore = totalScore;
-          bestMatch = entry;
+      const trustee = String(filingName).match(/\(\s*trustee\s*[-–]\s*(.+?)\s*\)\s*$/i);
+      if (trustee) {
+        const inner = resolveCore(trustee[1].trim());
+        if (inner) {
+          return {
+            ...inner,
+            confidence: Math.min(1, inner.confidence),
+            matchedVariant: `trustee:${trustee[1].trim()}`,
+          };
         }
       }
 
-      if (bestMatch && bestScore >= minConfidence) {
-        return {
-          entityId: bestMatch.entity.id,
-          entityName: bestMatch.entity.name,
-          confidence: Math.round(bestScore * 1000) / 1000,
-          matchedVariant: bestMatch.rawName,
-        };
-      }
-
-      // No confident match — this holder stays in 1% Club only.
-      return null;
+      return resolveCore(filingName);
     },
 
     /** Diagnostic: how many entities + aliases are indexed. */

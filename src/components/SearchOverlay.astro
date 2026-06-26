@@ -17,14 +17,14 @@
         <input
           id="search-input"
           type="search"
-          placeholder="Search IPOs, mutual funds, brokers, tools..."
+          placeholder="Search IPOs, super investors, stocks, tools..."
           class="flex-1 bg-transparent text-surface-900 dark:text-white text-sm outline-none placeholder:text-surface-400"
           autocomplete="off"
         />
         <button id="search-close" type="button" class="text-xs text-surface-400 border border-surface-300 dark:border-surface-600 px-2 py-0.5 rounded">ESC</button>
       </div>
       <div id="search-results" class="max-h-80 overflow-y-auto p-2 overscroll-contain" role="listbox" aria-live="polite">
-        <p class="text-xs text-surface-400 text-center py-6">Start typing to search across IPOs, mutual funds, brokers, tools...</p>
+        <p class="text-xs text-surface-400 text-center py-6">Start typing to search IPOs, super investors, 1% Club stocks, tools…</p>
       </div>
       <div class="px-4 py-2 border-t border-surface-100 dark:border-surface-700 flex items-center justify-between">
         <span class="text-[10px] text-surface-400">Type 2+ characters • Matches name &amp; keywords</span>
@@ -54,7 +54,10 @@
     Fund: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     Broker: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
     Tool: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    Learn: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+    Learn: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    Investor: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+    Stock: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+    Page: 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300'
   };
 
   function init() {

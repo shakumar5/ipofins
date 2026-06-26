@@ -2,21 +2,29 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntityCard from '../../components/tracked/EntityCard.astro';
 import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
+import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
+import CuratedInvestorSearch from '../../components/tracked/CuratedInvestorSearch.tsx';
 import {
   getSuperInvestors,
   withLiveStats,
   getTrackedSnapshot,
+  getOnePercentSearchIndex,
+  getCuratedInvestorSearchOptions,
   superInvestorUrl,
   tierRank,
   tierLabel,
   typeLabel,
   canonicalFor,
+  SUPER_INVESTORS_HUB,
+  ONE_PERCENT_CLUB_HUB,
 } from '../../lib/tracked-entities';
 
 // Curated roster is always present; enrich with live Neon stats when 005 is populated.
 const all = getSuperInvestors().sort((a, b) => tierRank(a.tier) - tierRank(b.tier));
 const entities = await withLiveStats(all);
 const snapshot = await getTrackedSnapshot();
+const searchIndex = await getOnePercentSearchIndex();
+const curatedSearchOptions = getCuratedInvestorSearchOptions(all);
 
 const byType = new Map<string, typeof entities>();
 for (const e of entities) {
@@ -89,8 +97,8 @@ const faqJsonLd = {
 ---
 
 <BaseLayout
-  title="Top Super Investors in India 2026 \u2014 Tracked Portfolios | IPOFins"
-  description="Track India\u2019s top super investors \u2014 Dolly Khanna, Vijay Kedia, Ashish Kacholia, Rakesh Jhunjhunwala portfolio, Mohnish Pabrai & more. Latest holdings, fresh entries, exits & conviction scores from NSE/BSE filings."
+  title="Top Super Investors in India 2026 — Tracked Portfolios | IPOFins"
+  description="Track India's top super investors — Dolly Khanna, Vijay Kedia, Ashish Kacholia, Rakesh Jhunjhunwala portfolio, Mohnish Pabrai & more. Latest holdings, fresh entries, exits & conviction scores from NSE/BSE filings."
   canonicalUrl={canonical}
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
@@ -109,22 +117,28 @@ const faqJsonLd = {
   <!-- Hero -->
   <section class="container-wide pt-8 pb-6">
     <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Super Investors \u2014 Track India\u2019s Best Public-Market Investors
+      Super Investors — Track India's Best Public-Market Investors
     </h1>
     <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
-      Quarter-on-quarter portfolios of legendary individual investors, family offices, FIIs and DIIs \u2014 sourced
+      Quarter-on-quarter portfolios of legendary individual investors, family offices, FIIs and DIIs — sourced
       directly from NSE/BSE Shareholding Pattern filings and SAST disclosures. See what they buy, sell, and hold.
     </p>
-    <div class="nav-btn-group mt-6">
-      <a href="/1-percent-club" class="btn-primary px-6 py-3">Explore the 1% Club</a>
-      <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
-      <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
-    </div>
+    <SuperInvestorsSubNav active="individual" />
   </section>
 
   <!-- Snapshot -->
   <section class="container-wide pb-4">
     <SnapshotStrip snapshot={snapshot} noun="super investors" />
+  </section>
+
+  <section class="container-wide pb-8">
+    <CuratedInvestorSearch
+      client:load
+      curated={curatedSearchOptions}
+      holders={searchIndex.holders}
+      superInvestorBase={SUPER_INVESTORS_HUB}
+      holderBase={`${ONE_PERCENT_CLUB_HUB}/holder`}
+    />
   </section>
 
   <!-- Sections per entity type -->
@@ -147,22 +161,22 @@ const faqJsonLd = {
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-3">How to track super investors in India</h2>
     <div class="text-sm text-surface-600 dark:text-surface-300 space-y-3">
       <p>
-        India\u2019s top investors are required to disclose their public-market holdings every quarter through the
+        India's top investors are required to disclose their public-market holdings every quarter through the
         Shareholding Pattern filed by each listed company. This filing lists every shareholder owning 1% or more of
-        the company \u2014 making it possible to reconstruct the portfolios of marquee names like
+        the company — making it possible to reconstruct the portfolios of marquee names like
         <a href={superInvestorUrl('dolly-khanna')} class="text-primary-600 hover:underline">Dolly Khanna</a>,
         <a href={superInvestorUrl('vijay-kedia')} class="text-primary-600 hover:underline">Vijay Kedia</a>, and
         <a href={superInvestorUrl('ashish-kacholia')} class="text-primary-600 hover:underline">Ashish Kacholia</a>.
       </p>
       <p>
         IPOFins aggregates these filings across 1,700+ stocks, resolves the many name variants a single investor
-        files under (\u201cKhanna Dolly\u201d, \u201cDolly Khanna HUF\u201d, \u201cKhanna Dolly Chhaganlal\u201d all roll
+        files under ("Khanna Dolly", "Dolly Khanna HUF", "Khanna Dolly Chhaganlal" all roll
         up to one entity), and computes fresh entries, complete exits, conviction scores, and pairwise overlaps
         every quarter. <a href="/methodology" class="text-primary-600 hover:underline">Read the full methodology</a>.
       </p>
       <p>
-        Promoters are deliberately excluded from these curated views \u2014 they appear only on individual stock pages
-        as \u201c% held by promoters\u201d, never as conviction signals.
+        Promoters are deliberately excluded from these curated views — they appear only on individual stock pages
+        as "% held by promoters", never as conviction signals.
       </p>
     </div>
   </section>
@@ -173,7 +187,7 @@ const faqJsonLd = {
     <div class="space-y-4 max-w-3xl">
       <details class="card group" open>
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Who are super investors in India?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">High-profile individual investors, family offices, FIIs and DIIs whose public-market portfolios are tracked for their long-term track record \u2014 Dolly Khanna, Vijay Kedia, Ashish Kacholia, Radhakishan Damani, Sunil Singhania, Mohnish Pabrai and others.</p>
+        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">High-profile individual investors, family offices, FIIs and DIIs whose public-market portfolios are tracked for their long-term track record — Dolly Khanna, Vijay Kedia, Ashish Kacholia, Radhakishan Damani, Sunil Singhania, Mohnish Pabrai and others.</p>
       </details>
       <details class="card group">
         <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How often is the data updated?</summary>

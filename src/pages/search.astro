@@ -39,7 +39,7 @@ const jsonLd = {
           name="q"
           type="search"
           value={query}
-          placeholder="Search IPOs, mutual funds, brokers, tools..."
+          placeholder="Search IPOs, super investors, stocks, tools..."
           class="flex-1 px-4 py-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500"
           autocomplete="off"
           autofocus
@@ -80,6 +80,8 @@ const jsonLd = {
         Broker: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
         Tool: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
         Learn: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+        Investor: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+        Stock: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
         Page: 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
       };
 
@@ -144,7 +146,7 @@ const jsonLd = {
         if (!items.length) {
           var empty = document.createElement('p');
           empty.className = 'text-sm text-surface-500 dark:text-surface-400 py-4';
-          empty.textContent = 'No results for “' + q + '”. Try IPO names, fund categories, or tool names.';
+          empty.textContent = 'No results for “' + q + '”. Try super investor names, stock names, IPOs, or tools.';
           container.appendChild(empty);
           return;
         }

@@ -15,7 +15,7 @@ const args = process.argv.slice(2);
 
 if (!args.includes('--confirm')) {
   console.error('\n  ⚠️  This deletes ALL mutual-fund rows (funds, holdings, signals, overlaps, NAV).');
-  console.error('  IPO tables are preserved.');
+  console.error('  IPO + Super Investor / listed-equity stocks are preserved.');
   console.error('  Re-run with --confirm to proceed.\n');
   process.exit(1);
 }
@@ -29,7 +29,39 @@ if (!dbUrl) {
 
 const sql = neon(dbUrl);
 
-console.log('\n  🗑️  Purging mutual-fund data (IPOs preserved)...\n');
+/** Drop MF-only stock rows; keep IPO, SI-linked, and NSE/BSE listed-equity universe. */
+async function deleteMfOnlyStocks() {
+  const [row] = await sql`
+    SELECT to_regclass('public.shareholding_pattern_holders') IS NOT NULL AS si_schema
+  `;
+
+  if (!row.si_schema) {
+    await sql`
+      DELETE FROM stocks
+      WHERE id NOT IN (SELECT stock_id FROM ipos WHERE stock_id IS NOT NULL)
+    `;
+    return 'stocks (MF-only, IPOs kept)';
+  }
+
+  await sql`
+    DELETE FROM stocks s
+    WHERE s.id NOT IN (SELECT stock_id FROM ipos WHERE stock_id IS NOT NULL)
+      AND s.id NOT IN (
+        SELECT stock_id FROM shareholding_pattern_holders WHERE stock_id IS NOT NULL
+        UNION SELECT stock_id FROM sast_filings WHERE stock_id IS NOT NULL
+        UNION SELECT stock_id FROM entity_holdings WHERE stock_id IS NOT NULL
+        UNION SELECT stock_id FROM entity_changes WHERE stock_id IS NOT NULL
+        UNION SELECT stock_id FROM entity_stock_signals
+        UNION SELECT stock_id FROM entity_conviction
+        UNION SELECT stock_id FROM corporate_actions WHERE stock_id IS NOT NULL
+      )
+      AND NULLIF(TRIM(s.nse_symbol), '') IS NULL
+      AND NULLIF(TRIM(s.bse_code), '') IS NULL
+  `;
+  return 'stocks (MF-only; IPO + SI + listed equities kept)';
+}
+
+console.log('\n  🗑️  Purging mutual-fund data (IPOs + SI stocks preserved)...\n');
 
 const steps = [
   ['fund_overlaps', sql`DELETE FROM fund_overlaps`],
@@ -43,16 +75,15 @@ const steps = [
   ['fund_navs', sql`DELETE FROM fund_navs`],
   ['funds', sql`DELETE FROM funds`],
   ['amcs', sql`DELETE FROM amcs`],
-  [
-    'stocks (non-IPO)',
-    sql`DELETE FROM stocks WHERE id NOT IN (SELECT stock_id FROM ipos WHERE stock_id IS NOT NULL)`,
-  ],
 ];
 
 for (const [label, query] of steps) {
   await query;
   console.log(`    ✓ cleared ${label}`);
 }
+
+const stockLabel = await deleteMfOnlyStocks();
+console.log(`    ✓ cleared ${stockLabel}`);
 
 const [counts] = await sql`
   SELECT

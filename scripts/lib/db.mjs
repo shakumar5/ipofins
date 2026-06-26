@@ -163,10 +163,14 @@ export async function upsertMany(table, rows, conflictKey, updateCols, { touchUp
     `;
 
     try {
-      await sql.query(query, params);
+      await withDbRetry(
+        () => sql.query(query, params),
+        { label: `${table} upsert batch ${Math.floor(i / BATCH_SIZE) + 1}`, retries: 5 },
+      );
       totalAffected += batch.length;
     } catch (err) {
-      console.error(`    ❌ DB upsert error (${table}, batch ${Math.floor(i/BATCH_SIZE)+1}):`, err.message);
+      console.error(`    ❌ DB upsert error (${table}, batch ${Math.floor(i / BATCH_SIZE) + 1}):`, err.message);
+      throw err;
     }
   }
 

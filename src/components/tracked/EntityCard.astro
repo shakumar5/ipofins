@@ -5,7 +5,7 @@
  * Falls back gracefully to a static roster card when no live data exists.
  */
 import type { Entity, EntityLiveStats } from '../../lib/tracked-entities';
-import { tierLabel, typeLabel, formatCr, formatPct } from '../../lib/tracked-entities';
+import { tierLabel, typeLabel, formatCr, formatPct, toNum } from '../../lib/tracked-entities';
 
 interface Props {
   entity: Entity & { live?: EntityLiveStats };
@@ -34,6 +34,19 @@ const featuredStat =
     : accent === 'holdings'
       ? { label: 'Holdings', value: hasLive && live!.totalHoldings != null ? String(live!.totalHoldings) : '—' }
       : { label: 'Portfolio', value: hasLive ? formatCr(live!.portfolioValueCr) : '—' };
+
+const upCount = hasLive ? (live!.freshEntries ?? 0) + (live!.adds ?? 0) : 0;
+const downCount = hasLive ? (live!.exits ?? 0) + (live!.trims ?? 0) : 0;
+const hasMoveData =
+  hasLive &&
+  (live!.freshEntries != null ||
+    live!.adds != null ||
+    live!.exits != null ||
+    live!.trims != null);
+
+const capMixTotal =
+  (toNum(live?.largeCapPct) ?? 0) + (toNum(live?.midCapPct) ?? 0) + (toNum(live?.smallCapPct) ?? 0);
+const hasCapMix = hasLive && capMixTotal > 0;
 ---
 
 <a href={href} class="card group block">
@@ -67,15 +80,19 @@ const featuredStat =
     </div>
     <div>
       <p class="text-[11px] uppercase tracking-wide text-surface-500 dark:text-surface-400">Latest moves</p>
-      <p class="text-sm font-semibold text-surface-800 dark:text-surface-100">
-        {hasLive && (live!.freshEntries || live!.exits || live!.adds || live!.trims) != null
-          ? `${(live!.freshEntries ?? 0) + (live!.adds ?? 0)}▲ / ${(live!.exits ?? 0) + (live!.trims ?? 0)}▼`
-          : '—'}
-      </p>
+      {hasMoveData ? (
+        <p class="text-sm font-semibold flex items-center gap-1.5">
+          <span class="text-success-600 dark:text-success-400">{upCount}▲</span>
+          <span class="text-surface-400 dark:text-surface-500" aria-hidden="true">/</span>
+          <span class="text-danger-600 dark:text-danger-400">{downCount}▼</span>
+        </p>
+      ) : (
+        <p class="text-sm font-semibold text-surface-800 dark:text-surface-100">—</p>
+      )}
     </div>
   </div>
 
-  {hasLive && live!.largeCapPct != null && (
+  {hasCapMix && (
     <div class="flex flex-wrap gap-1.5 mb-3">
       <span class="px-2 py-0.5 text-[11px] bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">
         Large {formatPct(live!.largeCapPct)}

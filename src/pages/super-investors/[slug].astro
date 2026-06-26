@@ -1,10 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
+import QuarterTrajectory from '../../components/tracked/QuarterTrajectory';
+import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
 import {
   getSuperInvestors,
   getEntityWithLive,
   getEntityHoldings,
+  getEntityQuarterHistory,
+  getEntityQuarterChangeDetails,
+  summarizeQuarterTrend,
   getTrackedSnapshot,
   superInvestorUrl,
   onePercentStockUrl,
@@ -13,24 +18,28 @@ import {
   formatCr,
   formatPct,
   formatQuarter,
+  formatQoQDisplay,
+  toNum,
   canonicalFor,
+  buildInvestorPageSeo,
   SUPER_INVESTORS_HUB,
   ONE_PERCENT_CLUB_HUB,
 } from '../../lib/tracked-entities';
 
-function changePill(type: string | null): { label: string; class: string } | null {
-  if (!type || type === 'unchanged') return null;
-  switch (type) {
-    case 'fresh_entry':
-      return { label: 'New', class: 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300' };
-    case 'complete_exit':
-      return { label: 'Exit', class: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300' };
-    case 'increased':
-      return { label: '↑', class: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300' };
-    case 'decreased':
-      return { label: '↓', class: 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300' };
+function qoqToneClass(tone: string): string {
+  switch (tone) {
+    case 'new':
+      return 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300';
+    case 'exit':
+      return 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300';
+    case 'up':
+      return 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300';
+    case 'down':
+      return 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300';
+    case 'flat':
+      return 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300';
     default:
-      return { label: type, class: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300' };
+      return 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300';
   }
 }
 
@@ -52,17 +61,36 @@ if (!isPlaceholder && !entity) {
 
 const snapshot = await getTrackedSnapshot();
 const holdings = isPlaceholder ? [] : await getEntityHoldings(slug);
-const topMoves = holdings.filter((h) => h.changeType && h.changeType !== 'unchanged').slice(0, 8);
+const quarterHistory = isPlaceholder ? [] : await getEntityQuarterHistory(slug, 4);
+const quarterDetails = isPlaceholder
+  ? []
+  : await getEntityQuarterChangeDetails(
+      slug,
+      quarterHistory.map((q) => q.quarter),
+    );
+const trendSummary = summarizeQuarterTrend(quarterHistory);
+const latestQuarterLabel = holdings[0]?.quarter ? formatQuarter(holdings[0].quarter) : null;
+const quarterLabels = Object.fromEntries([
+  ...quarterHistory.map((q) => [q.quarter, formatQuarter(q.quarter)] as const),
+  ...quarterDetails.flatMap((d) => {
+    const entries: [string, string][] = [];
+    if (d.prevQuarter) entries.push([d.prevQuarter, formatQuarter(d.prevQuarter)]);
+    return entries;
+  }),
+]);
+const topMoves = holdings
+  .map((h) => ({ h, qoq: formatQoQDisplay(h) }))
+  .filter(({ qoq }) => qoq.tone !== 'flat' && qoq.tone !== 'none')
+  .slice(0, 8);
 const path = isPlaceholder ? SUPER_INVESTORS_HUB : superInvestorUrl(slug);
 const canonical = canonicalFor(path);
 
-// SEO meta with sensible fallbacks so the placeholder page still renders.
-const title = isPlaceholder
-  ? 'Super Investors'
-  : `${entity!.displayName} Portfolio \u2014 Latest Holdings & Conviction | IPOFins`;
-const description = isPlaceholder
-  ? 'Track India\u2019s top super investors.'
-  : `${entity!.displayName} latest portfolio \u2014 top holdings, fresh entries, exits, conviction score and style. ${entity!.focus ?? ''}`;
+// SEO meta with quarter-aware titles when live data is available.
+const seo = isPlaceholder
+  ? { title: 'Super Investors', description: 'Track India\u2019s top super investors.' }
+  : buildInvestorPageSeo(entity!.displayName, entity?.live, holdings);
+const title = seo.title;
+const description = seo.description;
 
 const live = entity?.live;
 const hasLive = !!live;
@@ -131,6 +159,10 @@ const peers = isPlaceholder
         </ol>
       </nav>
 
+      <section class="container-wide pt-4 pb-2">
+        <SuperInvestorsSubNav active="individual" />
+      </section>
+
       <!-- Header -->
       <section class="container-wide pt-8 pb-6">
         <div class="flex flex-col md:flex-row md:items-start gap-6">
@@ -192,20 +224,47 @@ const peers = isPlaceholder
             </div>
             <div class="card text-center">
               <p class="text-2xl font-extrabold text-success-600 dark:text-success-400">
-                {(live!.freshEntries ?? 0) + (live!.adds ?? 0) > 0 ? `+${(live!.freshEntries ?? 0) + (live!.adds ?? 0)}` : '\u2014'}
+                {(() => {
+                  const adds = (toNum(live!.freshEntries) ?? 0) + (toNum(live!.adds) ?? 0);
+                  return adds > 0 ? `+${adds}` : '—';
+                })()}
               </p>
               <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Adds this quarter</p>
             </div>
             <div class="card text-center">
               <p class="text-2xl font-extrabold text-warning-600 dark:text-warning-400">
-                {(live!.exits ?? 0) + (live!.trims ?? 0) > 0 ? `\u2212${(live!.exits ?? 0) + (live!.trims ?? 0)}` : '\u2014'}
+                {(() => {
+                  const trims = (toNum(live!.exits) ?? 0) + (toNum(live!.trims) ?? 0);
+                  return trims > 0 ? `−${trims}` : '—';
+                })()}
               </p>
               <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Trims this quarter</p>
             </div>
           </div>
           <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-3">
-            Latest disclosure: {formatQuarter(live!.quarter)} \u00b7 Top-5 concentration {formatPct(live!.top5Concentration)}
+            Latest disclosure: {formatQuarter(live!.quarter)} · Top-5 concentration {formatPct(live!.top5Concentration)}
           </p>
+        </section>
+      )}
+
+      {quarterHistory.length > 0 && (
+        <section class="container-wide pb-6">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Quarterly trajectory</h2>
+          {trendSummary && (
+            <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">{trendSummary}</p>
+          )}
+          {quarterHistory.length === 1 && (
+            <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">
+              Only one quarter loaded so far. Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run pipeline:superinvestor:backfill</code> to ingest the last 4 quarters, then <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run db:compute-si:all</code>.
+            </p>
+          )}
+          <QuarterTrajectory
+            client:load
+            history={quarterHistory}
+            details={quarterDetails}
+            quarterLabels={quarterLabels}
+            stockBase={ONE_PERCENT_CLUB_HUB}
+          />
         </section>
       )}
 
@@ -215,7 +274,7 @@ const peers = isPlaceholder
             <p class="text-sm text-surface-700 dark:text-surface-200">
               Detailed quarterly holdings for {entity!.displayName} populate after the next Shareholding Pattern pipeline run.
               In the meantime, {entity!.aliases.length > 0 ? `this investor files under ${entity!.aliases.length + 1} known name variants; ` : ''}
-              see <a href="/1-percent-club" class="text-primary-600 hover:underline">the 1% Club</a> for raw \u22651% disclosures.
+              see <a href="/1-percent-club" class="text-primary-600 hover:underline">the 1% Club</a> for raw ≥1% disclosures.
             </p>
           </div>
         </section>
@@ -225,54 +284,68 @@ const peers = isPlaceholder
         <section class="container-wide pb-6">
           <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Top moves this quarter</h2>
           <div class="flex flex-wrap gap-2">
-            {topMoves.map((h) => {
-              const pill = changePill(h.changeType);
-              return (
-                <a href={onePercentStockUrl(h.stockSlug)} class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 text-sm hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors">
-                  {pill && <span class={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${pill.class}`}>{pill.label}</span>}
-                  <span class="text-surface-900 dark:text-white font-medium">{h.stockName}</span>
-                </a>
-              );
-            })}
+            {topMoves.map(({ h, qoq }) => (
+              <a href={onePercentStockUrl(h.stockSlug)} class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 text-sm hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" title={qoq.hint}>
+                <span class={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${qoqToneClass(qoq.tone)}`}>{qoq.label}</span>
+                <span class="text-surface-900 dark:text-white font-medium">{h.stockName}</span>
+                <span class="text-xs text-surface-500">{formatPct(h.pctOfCompany)}</span>
+                <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{formatCr(h.marketValueCr)}</span>
+              </a>
+            ))}
           </div>
         </section>
       )}
 
       {holdings.length > 0 && (
         <section class="container-wide pb-10">
-          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Holdings (latest quarter)</h2>
-          <div class="overflow-x-auto">
+          <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-lg font-bold text-surface-900 dark:text-white">Holdings</h2>
+              {latestQuarterLabel && (
+                <p class="text-sm text-surface-500 dark:text-surface-400">
+                  {latestQuarterLabel} disclosure · {holdings.length} stocks ≥1%
+                  {hasLive && live!.portfolioValueCr != null ? ` · ${formatCr(live!.portfolioValueCr)} total` : ''}
+                </p>
+              )}
+            </div>
+            <p class="text-xs text-surface-500 dark:text-surface-400 max-w-md">
+              Value = shares × quarter-end close. QoQ compares stake % vs prior quarter.
+            </p>
+          </div>
+          <div class="overflow-x-auto card p-0">
             <table class="w-full text-sm">
               <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">
-                  <th class="py-2 pr-4 font-medium">Stock</th>
-                  <th class="py-2 px-4 font-medium text-right">% of co.</th>
-                  <th class="py-2 px-4 font-medium text-right">Value</th>
-                  <th class="py-2 px-4 font-medium text-center">QoQ</th>
-                  <th class="py-2 pl-4 font-medium text-right">Shares</th>
+                  <th class="py-3 px-4 font-medium">Stock</th>
+                  <th class="py-3 px-4 font-medium text-right">Stake</th>
+                  <th class="py-3 px-4 font-medium text-right">Prior stake</th>
+                  <th class="py-3 px-4 font-medium text-center">QoQ</th>
+                  <th class="py-3 px-4 font-medium text-right">Value (₹ Cr)</th>
+                  <th class="py-3 px-4 font-medium text-right">Shares</th>
                 </tr>
               </thead>
               <tbody>
                 {holdings.map((h) => {
-                  const pill = changePill(h.changeType);
+                  const qoq = formatQoQDisplay(h);
                   return (
                     <tr class="border-b border-surface-100 dark:border-surface-800">
-                      <td class="py-3 pr-4">
+                      <td class="py-3 px-4">
                         <a href={onePercentStockUrl(h.stockSlug)} class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">
                           {h.stockName}
                         </a>
                         {h.nseSymbol && <span class="block text-xs text-surface-500">{h.nseSymbol}</span>}
                       </td>
-                      <td class="py-3 px-4 text-right font-semibold">{formatPct(h.pctOfCompany)}</td>
-                      <td class="py-3 px-4 text-right">{formatCr(h.marketValueCr)}</td>
-                      <td class="py-3 px-4 text-center">
-                        {pill ? (
-                          <span class={`px-2 py-0.5 text-[11px] font-semibold rounded ${pill.class}`}>{pill.label}</span>
-                        ) : (
-                          <span class="text-surface-400">—</span>
-                        )}
+                      <td class="py-3 px-4 text-right font-semibold tabular-nums">{formatPct(h.pctOfCompany)}</td>
+                      <td class="py-3 px-4 text-right tabular-nums text-surface-600 dark:text-surface-300">
+                        {h.changeType === 'fresh_entry' ? '—' : formatPct(h.prevPct)}
                       </td>
-                      <td class="py-3 pl-4 text-right text-surface-600 dark:text-surface-300">
+                      <td class="py-3 px-4 text-center">
+                        <span class={`inline-block px-2 py-0.5 text-[11px] font-semibold rounded ${qoqToneClass(qoq.tone)}`} title={qoq.hint}>
+                          {qoq.label}
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-right tabular-nums font-medium">{formatCr(h.marketValueCr)}</td>
+                      <td class="py-3 px-4 text-right tabular-nums text-surface-600 dark:text-surface-300">
                         {h.shares != null ? Number(h.shares).toLocaleString('en-IN') : '—'}
                       </td>
                     </tr>

@@ -17,7 +17,12 @@ function holderTypeFromContext(ctx, category) {
 function parsePct(raw) {
   const n = parseFloat(String(raw || '').replace(/[%,\s]/g, ''));
   if (!Number.isFinite(n) || n <= 0) return null;
-  return n <= 1 ? n * 100 : n;
+  // Already percent points (e.g. 2.57 = 2.57%, 51.89 = 51.89%).
+  if (n > 1) return n;
+  // 0 < n <= 1: decimal fraction (0.013) or whole percent stored as 1.0 (= 1%, not 100%).
+  const scaled = n * 100;
+  if (scaled > 100) return n;
+  return scaled;
 }
 
 /** @returns {Array<{holderName:string,holderType:string,shares:number|null,pctOfCompany:number,sourceUrl:string}>} */
@@ -43,7 +48,10 @@ export function parseShareholdingXbrl(xml, sourceUrl = '') {
       fields.ShareholdingAsAPercentageOfTotalNumberOfShares
         || fields.ShareholdingAsAPercentageOfTotalNumberOfSharesCalculatedAsPerSCRR1957AsAPercentageOfABPlusC2,
     );
-    const sharesRaw = fields.TotalNumberOfSharesHeld
+    const sharesRaw = fields.NumberOfFullyPaidUpEquityShares
+      || fields.NumberOfShares
+      || fields.NumberOfEquitySharesHeldInDematerializedForm
+      || fields.TotalNumberOfSharesHeld
       || fields.NumberOfFullyPaidUpEquitySharesHeld
       || fields.TotalNoOfSharesHeld;
     const shares = parseInt(String(sharesRaw || '').replace(/,/g, ''), 10);
