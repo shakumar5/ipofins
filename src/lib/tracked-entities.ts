@@ -328,12 +328,24 @@ export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldi
             CASE
               WHEN b.shares_held > 0 AND sqp.close_price IS NOT NULL
                 THEN ROUND((b.shares_held::numeric * sqp.close_price) / 1e7, 2)
+              WHEN b.shares_held > 0 AND px.price_per_share IS NOT NULL
+                THEN ROUND((b.shares_held::numeric * px.price_per_share) / 1e7, 2)
               ELSE NULL
             END
           ) AS market_value_cr
         FROM base b
         LEFT JOIN stock_quarter_prices sqp
           ON sqp.stock_id = b.stock_id AND sqp.quarter = b.quarter
+        LEFT JOIN LATERAL (
+          SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
+          FROM entity_holdings eh
+          WHERE eh.stock_id = b.stock_id
+            AND eh.quarter = b.quarter
+            AND eh.strategy_id IS NULL
+            AND eh.market_value_cr > 0
+            AND eh.shares_held > 0
+          LIMIT 1
+        ) px ON TRUE
       )
       SELECT
         s.name AS stock_name,
@@ -412,8 +424,32 @@ export async function getEntityQuarterChangeDetails(
           WHEN ec.change_type = 'complete_exit' THEN prev_eh.pct_of_company
           ELSE COALESCE(prev_eh.pct_of_company, GREATEST(0, COALESCE(curr.pct_of_company, 0) - COALESCE(ec.pct_change, 0)))
         END AS prev_pct,
-        curr.market_value_cr AS new_value_cr,
-        prev_eh.market_value_cr AS prev_value_cr
+        COALESCE(
+          curr.market_value_cr,
+          CASE
+            WHEN COALESCE(curr.shares_held, sph_curr.shares) > 0
+              AND COALESCE(sqp_curr.close_price, px_curr.price_per_share) IS NOT NULL
+              THEN ROUND(
+                (COALESCE(curr.shares_held, sph_curr.shares)::numeric
+                  * COALESCE(sqp_curr.close_price, px_curr.price_per_share)) / 1e7,
+                2
+              )
+            ELSE NULL
+          END
+        ) AS new_value_cr,
+        COALESCE(
+          prev_eh.market_value_cr,
+          CASE
+            WHEN COALESCE(prev_eh.shares_held, sph_prev.shares) > 0
+              AND COALESCE(sqp_prev.close_price, px_prev.price_per_share) IS NOT NULL
+              THEN ROUND(
+                (COALESCE(prev_eh.shares_held, sph_prev.shares)::numeric
+                  * COALESCE(sqp_prev.close_price, px_prev.price_per_share)) / 1e7,
+                2
+              )
+            ELSE NULL
+          END
+        ) AS prev_value_cr
       FROM entity_changes ec
       JOIN tracked_entities te ON te.id = ec.entity_id
       JOIN stocks s ON s.id = ec.stock_id
@@ -427,6 +463,40 @@ export async function getEntityQuarterChangeDetails(
        AND prev_eh.stock_id = ec.stock_id
        AND prev_eh.quarter = ec.prev_quarter
        AND prev_eh.strategy_id IS NULL
+      LEFT JOIN shareholding_pattern_holders sph_curr
+        ON sph_curr.entity_id = ec.entity_id
+       AND sph_curr.stock_id = ec.stock_id
+       AND sph_curr.quarter = ec.quarter
+       AND sph_curr.is_promoter = FALSE
+      LEFT JOIN shareholding_pattern_holders sph_prev
+        ON sph_prev.entity_id = ec.entity_id
+       AND sph_prev.stock_id = ec.stock_id
+       AND sph_prev.quarter = ec.prev_quarter
+       AND sph_prev.is_promoter = FALSE
+      LEFT JOIN stock_quarter_prices sqp_curr
+        ON sqp_curr.stock_id = ec.stock_id AND sqp_curr.quarter = ec.quarter
+      LEFT JOIN stock_quarter_prices sqp_prev
+        ON sqp_prev.stock_id = ec.stock_id AND sqp_prev.quarter = ec.prev_quarter
+      LEFT JOIN LATERAL (
+        SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
+        FROM entity_holdings eh
+        WHERE eh.stock_id = ec.stock_id
+          AND eh.quarter = ec.quarter
+          AND eh.strategy_id IS NULL
+          AND eh.market_value_cr > 0
+          AND eh.shares_held > 0
+        LIMIT 1
+      ) px_curr ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
+        FROM entity_holdings eh
+        WHERE eh.stock_id = ec.stock_id
+          AND eh.quarter = ec.prev_quarter
+          AND eh.strategy_id IS NULL
+          AND eh.market_value_cr > 0
+          AND eh.shares_held > 0
+        LIMIT 1
+      ) px_prev ON TRUE
       WHERE te.slug = ${entitySlug}
         AND ec.strategy_id IS NULL
         AND ec.quarter = ANY(${quarters}::date[])
@@ -555,12 +625,24 @@ async function loadEntityHoldingsSnapshots(
             CASE
               WHEN b.shares_held > 0 AND sqp.close_price IS NOT NULL
                 THEN ROUND((b.shares_held::numeric * sqp.close_price) / 1e7, 2)
+              WHEN b.shares_held > 0 AND px.price_per_share IS NOT NULL
+                THEN ROUND((b.shares_held::numeric * px.price_per_share) / 1e7, 2)
               ELSE NULL
             END
           ) AS market_value_cr
         FROM base b
         LEFT JOIN stock_quarter_prices sqp
           ON sqp.stock_id = b.stock_id AND sqp.quarter = b.quarter
+        LEFT JOIN LATERAL (
+          SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
+          FROM entity_holdings eh
+          WHERE eh.stock_id = b.stock_id
+            AND eh.quarter = b.quarter
+            AND eh.strategy_id IS NULL
+            AND eh.market_value_cr > 0
+            AND eh.shares_held > 0
+          LIMIT 1
+        ) px ON TRUE
       )
       SELECT
         v.quarter,
@@ -646,6 +728,8 @@ export async function getEntityQuarterHistory(
               CASE
                 WHEN eh.shares_held > 0 AND sqp.close_price IS NOT NULL
                   THEN (eh.shares_held::numeric * sqp.close_price) / 1e7
+                WHEN eh.shares_held > 0 AND px.price_per_share IS NOT NULL
+                  THEN (eh.shares_held::numeric * px.price_per_share) / 1e7
                 ELSE NULL
               END
             )
@@ -653,6 +737,16 @@ export async function getEntityQuarterHistory(
         FROM entity_holdings eh
         LEFT JOIN stock_quarter_prices sqp
           ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
+        LEFT JOIN LATERAL (
+          SELECT (eh2.market_value_cr * 1e7 / NULLIF(eh2.shares_held, 0))::numeric AS price_per_share
+          FROM entity_holdings eh2
+          WHERE eh2.stock_id = eh.stock_id
+            AND eh2.quarter = eh.quarter
+            AND eh2.strategy_id IS NULL
+            AND eh2.market_value_cr > 0
+            AND eh2.shares_held > 0
+          LIMIT 1
+        ) px ON TRUE
         WHERE eh.entity_id = te.id
           AND eh.strategy_id IS NULL
           AND eh.quarter = eqs.quarter
@@ -1323,6 +1417,7 @@ export async function getHoldingsByHolderSlug(
     stockSlug: string;
     pctOfCompany: number | null;
     shares: number | null;
+    marketValueCr: number | null;
     holderType: string;
   }>;
 }> {
@@ -1368,11 +1463,20 @@ export async function getHoldingsByHolderSlug(
             s.slug AS stock_slug,
             SUM(sph.pct_of_company)::numeric AS pct_of_company,
             SUM(sph.shares)::bigint AS shares,
+            ROUND(SUM(
+              CASE
+                WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                  THEN (sph.shares::numeric * sqp.close_price) / 1e7
+                ELSE NULL
+              END
+            ), 2) AS market_value_cr,
             MAX(sph.holder_type) AS holder_type,
             MAX(te.slug) AS entity_slug
           FROM shareholding_pattern_holders sph
           JOIN stocks s ON s.id = sph.stock_id
           LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
           WHERE sph.entity_id = ${entityId}
             AND sph.quarter = (SELECT q FROM latest)
             AND sph.is_promoter = FALSE
@@ -1389,11 +1493,18 @@ export async function getHoldingsByHolderSlug(
             s.slug AS stock_slug,
             sph.pct_of_company,
             sph.shares,
+            CASE
+              WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
+              ELSE NULL
+            END AS market_value_cr,
             sph.holder_type,
             te.slug AS entity_slug
           FROM shareholding_pattern_holders sph
           JOIN stocks s ON s.id = sph.stock_id
           LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
           WHERE sph.holder_name = ${holderName}
             AND sph.quarter = (SELECT q FROM latest)
             AND sph.is_promoter = FALSE
@@ -1409,6 +1520,7 @@ export async function getHoldingsByHolderSlug(
         stockSlug: r.stock_slug,
         pctOfCompany: r.pct_of_company ?? null,
         shares: r.shares ?? null,
+        marketValueCr: toNum(r.market_value_cr),
         holderType: r.holder_type,
       })),
     };
@@ -1527,7 +1639,8 @@ export async function getOnePercentSearchIndex(): Promise<{
         entitySlug: h.entitySlug,
         profileUrl,
         stockCount: Math.max(h.stockCount, positions.length),
-        positions,
+        // Positions are lazy-loaded from /data/one-percent-holder-positions.json on the client.
+        positions: [],
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -2010,6 +2123,7 @@ interface HolderStockDbRow {
   stock_slug: string;
   pct_of_company: number | null;
   shares: number | null;
+  market_value_cr: unknown;
   holder_type: string;
   entity_slug: string | null;
 }

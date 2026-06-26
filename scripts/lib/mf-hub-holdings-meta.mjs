@@ -160,7 +160,7 @@ export async function loadHoldingsMetaFromDb(sql) {
         AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     )
     SELECT l.slug, TRIM(l.scheme_code) AS scheme_code, l.base_slug,
-           COALESCE(h.portfolio_total, h.stored_stock_count) AS stock_count
+           COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) AS stock_count
     FROM listable l
     CROSS JOIN LATERAL (
       SELECT h.portfolio_total, h.stored_stock_count
@@ -189,10 +189,10 @@ export async function loadHoldingsMetaFromDb(sql) {
           AND h.holder_scheme = l.scheme_code
         ) DESC,
         (h.holder_base = l.base_slug) DESC,
-        COALESCE(h.portfolio_total, h.stored_stock_count) DESC
+        COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) DESC
       LIMIT 1
     ) h
-    WHERE COALESCE(h.portfolio_total, h.stored_stock_count) > 0
+    WHERE COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) > 0
   `;
 
   const directRows = await sql`
@@ -211,7 +211,7 @@ export async function loadHoldingsMetaFromDb(sql) {
         regexp_replace(f.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
         '-growth-option$', ''
       ) AS base_slug,
-      COALESCE(MAX(ps.total_stocks), COUNT(DISTINCT fh.stock_id)::int) AS stock_count
+      COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) AS stock_count
     FROM fund_holdings fh
     JOIN funds f ON f.id = fh.fund_id
     INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
@@ -224,7 +224,7 @@ export async function loadHoldingsMetaFromDb(sql) {
       AND f.name NOT ILIKE '%dividend plan%'
       AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     GROUP BY f.slug, f.scheme_code
-    HAVING COALESCE(MAX(ps.total_stocks), COUNT(DISTINCT fh.stock_id)::int) > 0
+    HAVING COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) > 0
   `;
 
   const stockCounts = {};

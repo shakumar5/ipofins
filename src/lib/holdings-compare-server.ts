@@ -250,14 +250,29 @@ function monthLabelToDate(monthLabel: string): string {
   return monthLabel;
 }
 
+function unpackMonthHoldings(monthData: unknown): { stocks: DiskHoldingStock[]; totalStocks: number } {
+  if (!monthData) return { stocks: [], totalStocks: 0 };
+  if (Array.isArray(monthData)) {
+    return { stocks: monthData as DiskHoldingStock[], totalStocks: monthData.length };
+  }
+  const packed = monthData as { stocks?: DiskHoldingStock[]; totalStocks?: number };
+  const stocks = packed.stocks || [];
+  return { stocks, totalStocks: packed.totalStocks ?? stocks.length };
+}
+
 function latestMonthLabelForFund(
   fund: DiskFundHoldingsEntry,
   months: string[],
 ): string | null {
   for (let i = months.length - 1; i >= 0; i--) {
     const month = months[i];
-    const rows = fund[month];
-    if (Array.isArray(rows) && rows.length) return month;
+    const { totalStocks } = unpackMonthHoldings(fund[month]);
+    if (totalStocks > 0) return month;
+  }
+  for (const key of Object.keys(fund)) {
+    if (key === 'name' || key === 'amc') continue;
+    const { totalStocks } = unpackMonthHoldings(fund[key]);
+    if (totalStocks > 0) return key;
   }
   return null;
 }
@@ -296,7 +311,8 @@ function buildHoldingsSlugIndex(index: HoldingsCompareIndexDisk): Map<string, Ho
       for (const [slug, fund] of Object.entries(file.holdings || {})) {
         const monthLabel = latestMonthLabelForFund(fund, months);
         if (!monthLabel) continue;
-        const stocks = fund[monthLabel] as DiskHoldingStock[];
+        const { stocks } = unpackMonthHoldings(fund[monthLabel]);
+        if (!stocks.length) continue;
         map.set(slug, { monthLabel, stocks });
       }
     }
@@ -319,6 +335,41 @@ function loadHoldingsSlugIndex(): Map<string, HoldingsSlugIndexEntry> | null {
 
   holdingsSlugIndexCache = buildHoldingsSlugIndex(index);
   return holdingsSlugIndexCache;
+}
+
+interface PerFundHoldingsDisk {
+  slug: string;
+  month?: string;
+  stocks: DiskHoldingStock[];
+}
+
+function readPerFundHoldingsFile(fundSlug: string): PerFundHoldingsDisk | null {
+  for (const root of projectRoots()) {
+    const path = join(root, 'public', 'data', 'fund-holdings-by-slug', `${fundSlug}.json`);
+    if (!existsSync(path)) continue;
+    try {
+      return JSON.parse(readFileSync(path, 'utf-8')) as PerFundHoldingsDisk;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** Full latest-month holdings from per-fund export (preferred over AMC index chunks). */
+export function readFundHoldingsBySlugFromDisk(fundSlug: string): Record<string, unknown>[] | null {
+  for (const slug of fundSlugCandidates(fundSlug)) {
+    const file = readPerFundHoldingsFile(slug);
+    if (!file?.stocks?.length) continue;
+    const month = file.month ? monthLabelToDate(file.month) : undefined;
+    return file.stocks.map((stock) => ({
+      name: stock.name,
+      pct: stock.pct,
+      sector: stock.sector || '',
+      month,
+    }));
+  }
+  return null;
 }
 
 /** Latest-month top holdings for fund detail pages (from export JSON, no Neon). */

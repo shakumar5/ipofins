@@ -1,15 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatPct } from '../../lib/tracked-display';
+import {
+  holderPositionsKey,
+  loadHolderPositionsMap,
+  type HolderPosition,
+  type HolderPositionsMap,
+} from '../../lib/one-percent-holder-positions';
 
 export interface CuratedOption {
   name: string;
   slug: string;
-}
-
-export interface HolderPosition {
-  stockSlug: string;
-  stockName: string;
-  pct: number | null;
 }
 
 export interface HolderOption {
@@ -18,7 +18,6 @@ export interface HolderOption {
   entitySlug: string | null;
   profileUrl: string | null;
   stockCount?: number;
-  positions?: HolderPosition[];
 }
 
 interface Props {
@@ -41,12 +40,13 @@ type Result = {
 
 function HolderPositionsPanel({
   holder,
+  positions,
   stockBase,
 }: {
   holder: HolderOption;
+  positions: HolderPosition[];
   stockBase: string;
 }) {
-  const positions = holder.positions ?? [];
   if (!positions.length) {
     return (
       <p className="text-sm text-surface-600 dark:text-surface-300 px-4 py-3">
@@ -84,6 +84,23 @@ export default function CuratedInvestorSearch({
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [expandedHolder, setExpandedHolder] = useState<HolderOption | null>(null);
+  const [positionsMap, setPositionsMap] = useState<HolderPositionsMap | null>(null);
+
+  useEffect(() => {
+    if (positionsMap) return;
+    let cancelled = false;
+    loadHolderPositionsMap().then((map) => {
+      if (!cancelled) setPositionsMap(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [positionsMap]);
+
+  function positionsFor(holder: HolderOption): HolderPosition[] {
+    if (!positionsMap) return [];
+    return positionsMap[holderPositionsKey(holder.name, holder.entitySlug)] ?? [];
+  }
 
   const q = norm(query);
 
@@ -105,7 +122,7 @@ export default function CuratedInvestorSearch({
           name: c.name,
           entitySlug: c.slug,
           profileUrl: `/super-investors/${c.slug}`,
-          positions: [],
+          stockCount: 0,
         } satisfies HolderOption);
       out.push({ kind: 'curated', name: c.name, profileUrl: `/super-investors/${c.slug}`, entitySlug: c.slug, holder });
     }
@@ -191,7 +208,11 @@ export default function CuratedInvestorSearch({
           <p className="px-4 py-2 text-sm font-medium text-surface-900 dark:text-white border-b border-surface-100 dark:border-surface-800">
             {expandedHolder.name}
           </p>
-          <HolderPositionsPanel holder={expandedHolder} stockBase={stockBase} />
+          <HolderPositionsPanel
+            holder={expandedHolder}
+            positions={positionsFor(expandedHolder)}
+            stockBase={stockBase}
+          />
         </div>
       )}
       <p className="mt-2 text-xs text-surface-500 dark:text-surface-400">

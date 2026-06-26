@@ -1,6 +1,6 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { OnePercentRow, ShpCategorySummary, StockShareholdingDetail } from '../../lib/tracked-entities';
-import { curatedEntityUrl, hasCuratedSuperInvestorInterest, hasSmartMoneyRadarInterest } from '../../lib/tracked-entities';
+import { curatedEntityUrl, hasCuratedSuperInvestorInterest, hasSmartMoneyRadarInterest } from '../../lib/tracked-client';
 import { formatCr, formatPct } from '../../lib/tracked-display';
 import StockNotOnRadarCard from './StockNotOnRadarCard';
 
@@ -147,22 +147,19 @@ function Section({
   hasData: boolean;
   children?: ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
   const count = rows?.length ?? 0;
   const styles = SECTION_STYLES[id];
 
   return (
-    <div
-      className={`card p-0 overflow-hidden border-l-4 transition-opacity ${
+    <details
+      id={`section-${id}`}
+      className={`shp-holder-section card p-0 overflow-hidden border-l-4 transition-opacity ${
         hasData ? styles.border : 'border-l-transparent opacity-55'
       }`}
+      open={defaultOpen || undefined}
     >
-      <button
-        type="button"
-        id={`section-${id}`}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors ${
+      <summary
+        className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors cursor-pointer ${
           hasData ? styles.headerBg : 'hover:bg-surface-50 dark:hover:bg-surface-800/50'
         }`}
       >
@@ -196,15 +193,15 @@ function Section({
           {!hasData && !rows && pct != null && pct <= 0.01 && (
             <span className="text-xs text-surface-400">No data</span>
           )}
-          <span className="text-surface-400 text-sm" aria-hidden>{open ? '▲' : '▼'}</span>
+          <span className="shp-section-chevron text-surface-400 text-sm" aria-hidden>
+            ▼
+          </span>
         </div>
-      </button>
-      {open && (
-        <div className="px-4 pb-4 border-t border-surface-100 dark:border-surface-800">
-          {children ?? (rows ? <HolderTable rows={rows} /> : null)}
-        </div>
-      )}
-    </div>
+      </summary>
+      <div className="px-4 pb-4 border-t border-surface-100 dark:border-surface-800">
+        {children ?? (rows ? <HolderTable rows={rows} /> : null)}
+      </div>
+    </details>
   );
 }
 

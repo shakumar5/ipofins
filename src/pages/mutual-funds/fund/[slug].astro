@@ -206,7 +206,8 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 section-accent">Top Holdings</h2>
     {holdings.length > 0 ? (
       <FundHoldingsTable
-        client:visible
+        client:load
+        fundSlug={fund.slug}
         holdings={holdings.map((h: Record<string, unknown>) => ({
           name: String(h.name || ''),
           sector: String(h.sector || ''),

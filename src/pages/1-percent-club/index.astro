@@ -106,7 +106,7 @@ const faqJsonLd = {
     <SuperInvestorsSubNav active="club" />
   </section>
 
-  <section id="search" class="container-wide pb-8 max-w-3xl">
+  <section id="search" class="container-wide pb-8 max-w-3xl scroll-mt-28">
     <OnePercentSearch
       client:load
       stocks={searchIndex.stocks}
@@ -196,14 +196,8 @@ const faqJsonLd = {
           <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
         </div>
       </div>
-      <div class="mt-6 max-w-2xl mx-auto">
-        <OnePercentSearch
-          client:load
-          stocks={searchIndex.stocks}
-          mfStocks={mfStocks}
-          holders={searchIndex.holders}
-          stockBase={ONE_PERCENT_CLUB_HUB}
-        />
+      <div class="mt-6 max-w-2xl mx-auto text-center">
+        <a href="#search" class="btn-primary px-6 py-3">Search holders above</a>
       </div>
     </section>
   )}
