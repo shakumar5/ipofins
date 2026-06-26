@@ -1,0 +1,88 @@
+---
+import { ipoDetailHref, type IpoListFrom } from '../lib/list-back-nav';
+import { ipoRowMeta, type IPOListItem } from '../lib/ipo-list-sections';
+
+interface Props {
+  ipo: IPOListItem;
+  listFrom: IpoListFrom;
+  borderClass?: string;
+  showTypeBadge?: boolean;
+  showIssueSize?: boolean;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const {
+  ipo,
+  listFrom,
+  borderClass = '',
+  showTypeBadge = false,
+  showIssueSize = false,
+  headingLevel = 'h3',
+} = Astro.props;
+
+const TitleTag = headingLevel;
+const meta = showIssueSize && ipo.issueSize
+  ? `${ipoRowMeta(ipo)} • ${ipo.issueSize}`
+  : ipoRowMeta(ipo);
+
+const badgeLabel =
+  ipo.status === 'open'
+    ? 'open'
+    : ipo.status === 'allotment'
+      ? 'allotment'
+      : ipo.status;
+---
+
+<a
+  href={ipoDetailHref(ipo.slug, listFrom)}
+  class={`card-compact group block hover:shadow-md transition-shadow border-l-4 ${borderClass}`}
+>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <TitleTag class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">
+          {ipo.name}
+        </TitleTag>
+        <span class={`badge text-xs ${
+          ipo.status === 'live' ? 'badge-live'
+          : ipo.status === 'open' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+          : ipo.status === 'listed' ? 'badge-listed'
+          : ipo.status === 'allotment' ? 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
+          : ipo.status === 'drhp-filed' ? 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
+          : ipo.status === 'upcoming' ? 'badge-upcoming'
+          : 'badge-closed'
+        }`}>
+          {badgeLabel}
+        </span>
+        {showTypeBadge && (
+          <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
+        )}
+      </div>
+      <p class="text-xs ipo-meta mt-0.5">{meta}</p>
+    </div>
+    <div class="flex items-center gap-5 text-xs flex-shrink-0">
+      <div>
+        <span class="ipo-label">Price </span>
+        <span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span>
+      </div>
+      <div>
+        <span class="ipo-label">Lot </span>
+        <span class="font-semibold">{ipo.lotSize}</span>
+      </div>
+      {ipo.subscription != null && ipo.subscription > 0 && (
+        <div>
+          <span class="ipo-label">Sub </span>
+          <span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span>
+        </div>
+      )}
+      {ipo.aiScore != null && ipo.aiScore > 0 && (
+        <div>
+          <span class="ipo-label">Score </span>
+          <span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>
+            {ipo.aiScore}/10
+          </span>
+        </div>
+      )}
+    </div>
+  </div>
+</a>

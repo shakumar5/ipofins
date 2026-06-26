@@ -1,16 +1,15 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
-import { ipoDetailHref } from '../../lib/list-back-nav';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
-const openSoonIPOs = iposData.filter(i => i.status === 'upcoming' || i.status === 'open');
-const drhpFiled = iposData.filter(ipo => ipo.status === 'drhp-filed');
-const sebiApproved = iposData.filter(ipo => ipo.status === 'upcoming' && ipo.drhpUrl);
-const generalUpcoming = openSoonIPOs;
+const drhpFiled = iposData.filter((ipo) => ipo.status === 'drhp-filed');
+const sebiApproved = iposData.filter((ipo) => ipo.status === 'upcoming' && ipo.drhpUrl);
 
-const totalUpcoming = openSoonIPOs.length + drhpFiled.length;
+const totalUpcoming =
+  iposData.filter((i) => ['live', 'open', 'upcoming', 'drhp-filed'].includes(i.status)).length;
 
 const today = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
@@ -45,128 +44,59 @@ const faqJsonLd = {
   <!-- Header -->
   <section class="container-wide pt-6 pb-4">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Upcoming IPOs India 2026</h1>
-    <p class="mt-1 text-sm text-surface-500">{totalUpcoming} upcoming IPOs — {openSoonIPOs.length} opening soon, {sebiApproved.length} SEBI approved, {drhpFiled.length} DRHP filed, {generalUpcoming.length} announced.</p>
+    <p class="mt-1 text-sm text-surface-500">{totalUpcoming} upcoming IPOs — {sebiApproved.length} SEBI approved, {drhpFiled.length} DRHP filed.</p>
   </section>
 
-  <!-- Opening Soon (from main IPO data with future open dates) -->
-  {openSoonIPOs.length > 0 && (
-    <section class="container-wide py-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-        <h2 class="text-lg font-bold text-surface-900 dark:text-white">Opening Soon — Dates Announced</h2>
-        <span class="badge badge-upcoming">{openSoonIPOs.length}</span>
-      </div>
-      <div class="space-y-2">
-        {openSoonIPOs.map(ipo => (
-          <a href={ipoDetailHref(ipo.slug, 'upcoming')} class="card-compact group block hover:shadow-md transition-shadow border-l-4 border-primary-400">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                  <span class="badge text-xs badge-upcoming">Opening Soon</span>
-                  <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
-                </div>
-                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • Opens: {ipo.openDate} – {ipo.closeDate}</p>
-              </div>
-              <div class="flex items-center gap-5 text-xs">
-                <div><span class="ipo-label">Price </span><span class="font-bold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span></div>
-                <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
-    </section>
-  )}
+  <section class="container-wide py-4">
+    <IPOStatusSections
+      ipos={iposData}
+      listFrom="upcoming"
+      statuses={['live', 'open', 'upcoming']}
+      showTypeBadge
+      emptyMessage="No IPOs with announced dates right now. Check DRHP filed below."
+    />
+  </section>
 
-  <!-- SEBI Approved -->
   {sebiApproved.length > 0 && (
     <section class="container-wide py-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-2 h-2 bg-success-500 rounded-full"></div>
-        <h2 class="text-lg font-bold text-surface-900 dark:text-white">SEBI Approved — Expected Soon</h2>
-        <span class="badge bg-success-50 text-success-600">{sebiApproved.length}</span>
-      </div>
-      <div class="space-y-2">
-        {sebiApproved.map(ipo => (
-          <a href={`/ipo/upcoming/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                  <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-success-50 text-success-600">Approved</span>
+      <details class="ipo-status-section rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 overflow-hidden" open>
+        <summary class="cursor-pointer list-none px-4 py-3 flex items-center gap-2 bg-surface-50/80 dark:bg-surface-800/50">
+          <span class="w-2 h-2 bg-success-500 rounded-full flex-shrink-0" aria-hidden="true"></span>
+          <span class="text-base font-bold text-surface-900 dark:text-white">SEBI Approved — Expected Soon</span>
+          <span class="badge text-xs bg-success-50 text-success-600 dark:bg-success-900/30 dark:text-success-400 ml-1">{sebiApproved.length}</span>
+          <span class="ml-auto text-surface-400 text-xs ipo-section-chevron" aria-hidden="true">▼</span>
+        </summary>
+        <div class="p-3 pt-1 space-y-2 border-t border-surface-100 dark:border-surface-800">
+          {sebiApproved.map((ipo) => (
+            <a href={`/ipo/upcoming/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
+                    <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-success-50 text-success-600 dark:bg-success-900/30 dark:text-success-400">Approved</span>
+                  </div>
+                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
                 </div>
-                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
+                <div class="flex items-center gap-5 text-xs">
+                  {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
+                  {ipo.drhpDate && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
+                </div>
               </div>
-              <div class="flex items-center gap-5 text-xs">
-                {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
-                {ipo.drhpDate && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
+            </a>
+          ))}
+        </div>
+      </details>
     </section>
   )}
 
-  <!-- DRHP Filed -->
   {drhpFiled.length > 0 && (
     <section class="container-wide py-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-2 h-2 bg-warning-500 rounded-full"></div>
-        <h2 class="text-lg font-bold text-surface-900 dark:text-white">DRHP Filed — Awaiting SEBI Approval</h2>
-        <span class="badge bg-warning-50 text-warning-600">{drhpFiled.length}</span>
-      </div>
-      <div class="space-y-2">
-        {drhpFiled.map(ipo => (
-          <a href={`/ipo/upcoming/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                  <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-warning-50 text-warning-600">DRHP Filed</span>
-                </div>
-                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
-              </div>
-              <div class="flex items-center gap-5 text-xs">
-                {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
-                {ipo.drhpDate && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
-                <div><span class="ipo-label">Expected </span><span class="font-medium text-primary-700 dark:text-primary-400">2-4 months</span></div>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
-    </section>
-  )}
-
-  <!-- General Upcoming (announced but no DRHP/SEBI status specified) -->
-  {generalUpcoming.length > 0 && (
-    <section class="container-wide py-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-2 h-2 bg-surface-400 rounded-full"></div>
-        <h2 class="text-lg font-bold text-surface-900 dark:text-white">Announced — Expected to File</h2>
-        <span class="badge bg-surface-100 text-surface-600">{generalUpcoming.length}</span>
-      </div>
-      <div class="space-y-2">
-        {generalUpcoming.map(ipo => (
-          <a href={`/ipo/upcoming/${ipo.slug}`} class="card-compact group block hover:shadow-md transition-shadow">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                  <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300">Upcoming</span>
-                  <span class="text-xs text-surface-600 dark:text-surface-400 uppercase font-medium">{ipo.type}</span>
-                </div>
-                <p class="text-xs ipo-meta mt-0.5">{ipo.sector}</p>
-              </div>
-              <div class="flex items-center gap-5 text-xs">
-                {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
+      <IPOStatusSections
+        ipos={iposData}
+        listFrom="upcoming"
+        statuses={['drhp-filed']}
+        emptyMessage=""
+      />
     </section>
   )}
 

@@ -1,0 +1,63 @@
+---
+import IPOListRow from './IPOListRow.astro';
+import {
+  buildIPOStatusSections,
+  DEFAULT_TAB_STATUSES,
+  type IPOListItem,
+} from '../lib/ipo-list-sections';
+import type { IpoListFrom } from '../lib/list-back-nav';
+import type { IPOStatus } from '../utils/ipo-status';
+
+interface Props {
+  ipos: IPOListItem[];
+  listFrom: IpoListFrom;
+  type?: 'mainboard' | 'sme';
+  statuses?: IPOStatus[];
+  showTypeBadge?: boolean;
+  showIssueSize?: boolean;
+  emptyMessage?: string;
+}
+
+const {
+  ipos,
+  listFrom,
+  type,
+  statuses = DEFAULT_TAB_STATUSES,
+  showTypeBadge = false,
+  showIssueSize = false,
+  emptyMessage = 'No IPOs available currently.',
+} = Astro.props;
+
+const sections = buildIPOStatusSections(ipos, { type, statuses });
+---
+
+{sections.length > 0 ? (
+  <div class="space-y-3">
+    {sections.map((section) => (
+      <details
+        class="ipo-status-section rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 overflow-hidden"
+        open={section.defaultOpen}
+      >
+        <summary class="cursor-pointer list-none px-4 py-3 flex items-center gap-2 bg-surface-50/80 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+          <span class={`w-2 h-2 rounded-full flex-shrink-0 ${section.dotClass}`} aria-hidden="true" />
+          <span class="text-base font-bold text-surface-900 dark:text-white">{section.title}</span>
+          <span class={`badge text-xs ml-1 ${section.badgeClass}`}>{section.ipos.length}</span>
+          <span class="ml-auto text-surface-400 text-xs ipo-section-chevron" aria-hidden="true">▼</span>
+        </summary>
+        <div class="p-3 pt-1 space-y-2 border-t border-surface-100 dark:border-surface-800">
+          {section.ipos.map((ipo) => (
+            <IPOListRow
+              ipo={ipo}
+              listFrom={listFrom}
+              borderClass={section.borderClass}
+              showTypeBadge={showTypeBadge}
+              showIssueSize={showIssueSize}
+            />
+          ))}
+        </div>
+      </details>
+    ))}
+  </div>
+) : (
+  <p class="text-surface-500 py-8 text-center">{emptyMessage}</p>
+)}

@@ -1,13 +1,12 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
-import { ipoDetailHref } from '../../lib/list-back-nav';
+import { formatIpoTabSubtitle } from '../../lib/ipo-list-sections';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
-const activeStatuses = ['live', 'open', 'upcoming', 'closed', 'allotment'];
-const mainboardIPOs = iposData.filter(ipo => ipo.type === 'mainboard' && activeStatuses.includes(ipo.status));
-const liveCount = mainboardIPOs.filter(i => i.status === 'live').length;
+const subtitle = formatIpoTabSubtitle(iposData, { type: 'mainboard', totalLabel: 'mainboard IPOs' });
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -21,33 +20,15 @@ const jsonLd = {
 <IPOLayout title="Mainboard IPOs India 2026 | IPOFins" description="All mainboard IPOs in India 2026. Track large-cap IPOs with price bands, subscription data, and analysis." activeTab="mainboard" jsonLd={jsonLd}>
   <section class="container-wide py-6">
     <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">Mainboard IPOs — 2026</h1>
-    <p class="text-sm text-surface-500 mb-6">{mainboardIPOs.length} mainboard IPOs • {liveCount} live now</p>
+    <p class="text-sm text-surface-500 mb-6">{subtitle}</p>
 
-    {mainboardIPOs.length > 0 ? (
-      <div class="space-y-2">
-        {mainboardIPOs.map(ipo => (
-          <a href={ipoDetailHref(ipo.slug, 'mainboard')} class="card-compact group block hover:shadow-md transition-shadow">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h2 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">{ipo.name}</h2>
-          <span class={`badge text-xs ${ipo.status === 'live' ? 'badge-live' : ipo.status === 'open' ? 'bg-amber-50 text-amber-700' : ipo.status === 'listed' ? 'badge-listed' : ipo.status === 'allotment' ? 'bg-teal-50 text-teal-700' : 'badge-closed'}`}>{ipo.status}</span>
-                </div>
-                <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.issueSize} • {ipo.openDate} – {ipo.closeDate}</p>
-              </div>
-              <div class="flex items-center gap-5 text-xs">
-                <div><span class="ipo-label">Price </span><span class="font-semibold">₹{ipo.priceRange}</span></div>
-                <div><span class="ipo-label">Lot </span><span class="font-semibold">{ipo.lotSize}</span></div>
-                {ipo.subscription && <div><span class="ipo-label">Sub </span><span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span></div>}
-                {ipo.aiScore && <div><span class="ipo-label">Score </span><span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>{ipo.aiScore}/10</span></div>}
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
-    ) : (
-      <p class="text-surface-500 py-8 text-center">No mainboard IPOs available currently.</p>
-    )}
+    <IPOStatusSections
+      ipos={iposData}
+      listFrom="mainboard"
+      type="mainboard"
+      showIssueSize
+      emptyMessage="No mainboard IPOs available currently."
+    />
   </section>
 
   <!-- SEO Content -->
