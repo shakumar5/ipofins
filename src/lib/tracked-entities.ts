@@ -657,6 +657,11 @@ export function isHolderPageIndexable(stockCount: number): boolean {
   return stockCount >= HOLDER_PAGE_MIN_INDEXABLE_STOCKS;
 }
 
+/** Holder static paths are opt-in — tens of thousands of pages, each was re-scanning all holders. */
+export function shouldBuildHolderPages(): boolean {
+  return process.env.SI_BUILD_HOLDER_PAGES === '1';
+}
+
 export function superInvestorUrl(slug: string): string {
   return `${SUPER_INVESTORS_HUB}/${slug}`;
 }
@@ -882,7 +887,10 @@ export async function getDistinctHolderSlugs(): Promise<
 }
 
 /** All ≥1% positions for a holder name slug (latest quarter). */
-export async function getHoldingsByHolderSlug(holderSlug: string): Promise<{
+export async function getHoldingsByHolderSlug(
+  holderSlug: string,
+  knownHolder?: { holderName: string; entitySlug?: string | null },
+): Promise<{
   holderName: string;
   entitySlug: string | null;
   rows: Array<{
@@ -895,9 +903,15 @@ export async function getHoldingsByHolderSlug(holderSlug: string): Promise<{
 }> {
   if (!sql) return { holderName: holderSlug, entitySlug: null, rows: [] };
   try {
-    const holders = await getDistinctHolderSlugs();
-    const match = holders.find((h) => h.holderSlug === holderSlug);
-    if (!match) return { holderName: holderSlug, entitySlug: null, rows: [] };
+    let holderName = knownHolder?.holderName;
+    let entitySlug = knownHolder?.entitySlug ?? null;
+    if (!holderName) {
+      const holders = await getDistinctHolderSlugs();
+      const match = holders.find((h) => h.holderSlug === holderSlug);
+      if (!match) return { holderName: holderSlug, entitySlug: null, rows: [] };
+      holderName = match.holderName;
+      entitySlug = match.entitySlug;
+    }
 
     const rows = (await sql!`
       WITH latest AS (
@@ -913,7 +927,7 @@ export async function getHoldingsByHolderSlug(holderSlug: string): Promise<{
       FROM shareholding_pattern_holders sph
       JOIN stocks s ON s.id = sph.stock_id
       LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-      WHERE sph.holder_name = ${match.holderName}
+      WHERE sph.holder_name = ${holderName}
         AND sph.quarter = (SELECT q FROM latest)
         AND sph.is_promoter = FALSE
         AND sph.pct_of_company >= 1.0
@@ -921,8 +935,8 @@ export async function getHoldingsByHolderSlug(holderSlug: string): Promise<{
     `) as HolderStockDbRow[];
 
     return {
-      holderName: match.holderName,
-      entitySlug: match.entitySlug ?? rows[0]?.entity_slug ?? null,
+      holderName,
+      entitySlug: entitySlug ?? rows[0]?.entity_slug ?? null,
       rows: rows.map((r) => ({
         stockName: r.stock_name,
         stockSlug: r.stock_slug,
