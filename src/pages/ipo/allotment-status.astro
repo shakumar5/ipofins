@@ -1,11 +1,10 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
-import { ipoDetailHref } from '../../lib/list-back-nav';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
-const recentlyClosed = iposData.filter(ipo => ipo.status === 'closed' || ipo.status === 'allotment' || ipo.status === 'listed');
 const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
 const jsonLd = {
@@ -156,27 +155,13 @@ const registrars = [
   <!-- Recent IPO Allotment Timeline -->
   <section class="container-wide py-6">
     <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Recent IPOs — Allotment Timeline</h2>
-    {recentlyClosed.length > 0 ? (
-      <div class="space-y-3">
-        {recentlyClosed.map(ipo => (
-          <a href={ipoDetailHref(ipo.slug, 'allotment')} class="card-compact group block">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
-                <p class="text-xs text-surface-500 mt-0.5">{ipo.type.toUpperCase()} • Closed: {ipo.closeDate}</p>
-              </div>
-              <span class={`badge ${ipo.status === 'listed' ? 'badge-listed' : 'badge-closed'}`}>
-                {ipo.status === 'listed' ? 'Listed' : 'Allotment Pending'}
-              </span>
-            </div>
-          </a>
-        ))}
-      </div>
-    ) : (
-      <div class="card-compact text-center py-6">
-        <p class="text-surface-500">No recently closed IPOs. Check <a href="/ipo" class="text-primary-600 hover:underline">live IPOs</a> for currently open subscriptions.</p>
-      </div>
-    )}
+    <IPOStatusSections
+      ipos={iposData}
+      listFrom="allotment"
+      statuses={['allotment', 'closed', 'listed']}
+      showTypeBadge
+      emptyMessage="No recently closed IPOs. Check live IPOs for currently open subscriptions."
+    />
   </section>
 
   <!-- SEO Content -->

@@ -240,6 +240,18 @@ html.dark {
   color: var(--color-surface-400);
 }
 
+.ipo-status-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ipo-status-section > summary .ipo-section-chevron {
+  transition: transform 0.15s ease;
+}
+
+.ipo-status-section[open] > summary .ipo-section-chevron {
+  transform: rotate(180deg);
+}
+
 .cookie-consent-banner {
   transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }

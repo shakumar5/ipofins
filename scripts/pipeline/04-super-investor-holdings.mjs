@@ -16,6 +16,7 @@
  *   --quarter=2026-04-01    Process a specific quarter (default: latest)
  *   --dry-run                Fetch + match only, no DB writes
  *   --stock-count=N          Limit to top N stocks (for testing)
+ *   --stock-slug=SLUG        Process a single stock by slug (for targeted re-fetch)
  *   --bse-only               Process BSE-only listings (no nse_symbol) only
  *   --missing-only           Re-fetch stocks with no SHP rows for this quarter
  *   --backfill-quarters=N    Backfill last N quarters (parallel cross-quarter fetch)
@@ -32,7 +33,7 @@ import { sql, upsertMany } from '../lib/db.mjs';
 import { requireDb } from '../lib/db-writers.mjs';
 import { buildEntityResolver } from '../lib/entity-name-resolver.mjs';
 import { startRun, endRun, qualityGateRowCount } from '../lib/pipeline-run-logger.mjs';
-import { fetchShareholdingPattern, closeSIBrowser, setSiFetchThrottle, setSiFetchOptions } from '../lib/si-sources.mjs';
+import { fetchShareholdingPatternBundle, closeSIBrowser, setSiFetchThrottle, setSiFetchOptions } from '../lib/si-sources.mjs';
 import { loadOverrides } from '../lib/si-overrides.mjs';
 import { mapPool } from '../lib/pool.mjs';
 import { inferLatestQuarter, recentCalendarQuarters } from '../lib/si-quarters.mjs';
@@ -45,6 +46,7 @@ const dryRun = args.includes('--dry-run');
 const bseOnly = args.includes('--bse-only');
 const missingOnly = args.includes('--missing-only');
 const stockCountLimit = parseInt((args.find((a) => a.startsWith('--stock-count=')) || '').split('=')[1] || '0', 10) || null;
+const stockSlugFilter = (args.find((a) => a.startsWith('--stock-slug=')) || '').split('=')[1] || null;
 const quarterOverride = (args.find((a) => a.startsWith('--quarter=')) || '').split('=')[1] || null;
 const backfillQuarters = Math.max(0, parseInt((args.find((a) => a.startsWith('--backfill-quarters=')) || '').split('=')[1] || '0', 10) || 0);
 const concurrencyArg = parseInt((args.find((a) => a.startsWith('--concurrency=')) || '').split('=')[1] || '0', 10) || 0;
@@ -58,7 +60,39 @@ const SEC_PER_FETCH_ESTIMATE = 1.2;
 // ─── Helpers ───────────────────────────────────────────────────
 
 async function fetchSHP(stock, quarter) {
-  return fetchShareholdingPattern(stock, quarter);
+  return fetchShareholdingPatternBundle(stock, quarter);
+}
+
+function buildSummaryRow(stock, quarter, summary, holders, sourceUrl) {
+  if (!summary || summary.promoterPct == null) return null;
+
+  let individualsGte1 = 0;
+  for (const h of holders) {
+    if (h.pctOfCompany == null || h.pctOfCompany < 1) continue;
+    const { isPromoter, holderType } = classifyHolder(h);
+    if (!isPromoter && holderType === 'individual') individualsGte1 += h.pctOfCompany;
+  }
+
+  const promoter = Number(summary.promoterPct ?? 0);
+  const fii = Number(summary.fiiPct ?? 0);
+  const mf = Number(summary.mfPct ?? 0);
+  const diiTotal = Number(summary.diiTotalPct ?? 0);
+  const diiExMf = Number(summary.diiExMfPct ?? Math.max(0, diiTotal - mf));
+  const retail = Math.max(0, Math.round((100 - promoter - fii - mf - diiExMf) * 1000) / 1000);
+
+  return {
+    stock_id: stock.id,
+    quarter,
+    promoter_pct: summary.promoterPct ?? null,
+    fii_pct: summary.fiiPct ?? null,
+    mf_pct: summary.mfPct ?? null,
+    dii_ex_mf_pct: diiExMf || null,
+    public_pct: summary.publicPct ?? null,
+    individuals_gte1_pct: Math.round(individualsGte1 * 1000) / 1000,
+    retail_pct: retail,
+    total_pct: summary.totalPct ?? null,
+    source_url: sourceUrl ?? null,
+  };
 }
 
 function classifyHolder(holderRow) {
@@ -74,7 +108,7 @@ function classifyHolder(holderRow) {
   if (/^fii|foreign\s/i.test(holderType)) holderType = 'fii';
   if (/^dii|mutual\s+fund|insurance|lic/i.test(holderType)) holderType = 'dii';
   if (holderType === 'individuals' || holderType === 'individual') holderType = 'individual';
-  if (holderType === 'public' || holderType === 'body corporate') holderType = 'individual';
+  if (holderType === 'body corporate') holderType = 'public';
 
   return { isPromoter, holderType };
 }
@@ -188,12 +222,16 @@ async function loadResolver(ctx) {
 }
 
 async function loadStocksForQuarter(quarter) {
+  const slugFilter = stockSlugFilter
+    ? sql`AND s.slug = ${stockSlugFilter}`
+    : sql``;
   return bseOnly
     ? sql`
         SELECT id, name, slug, nse_symbol, bse_code, isin
         FROM stocks s
         WHERE NULLIF(TRIM(bse_code), '') IS NOT NULL
           AND NULLIF(TRIM(nse_symbol), '') IS NULL
+          ${slugFilter}
           ${missingOnly ? sql`AND NOT EXISTS (
             SELECT 1 FROM shareholding_pattern_holders sph
             WHERE sph.stock_id = s.id AND sph.quarter = ${quarter}::DATE
@@ -204,8 +242,9 @@ async function loadStocksForQuarter(quarter) {
     : sql`
         SELECT id, name, slug, nse_symbol, bse_code, isin
         FROM stocks s
-        WHERE NULLIF(TRIM(nse_symbol), '') IS NOT NULL
-           OR NULLIF(TRIM(bse_code), '') IS NOT NULL
+        WHERE (NULLIF(TRIM(nse_symbol), '') IS NOT NULL
+           OR NULLIF(TRIM(bse_code), '') IS NOT NULL)
+          ${slugFilter}
           ${missingOnly ? sql`AND NOT EXISTS (
             SELECT 1 FROM shareholding_pattern_holders sph
             WHERE sph.stock_id = s.id AND sph.quarter = ${quarter}::DATE
@@ -218,6 +257,9 @@ async function loadStocksForQuarter(quarter) {
 /** Flat (stock × quarter) task list for parallel backfill. */
 async function loadBackfillTasks(quarters) {
   const quarterDates = quarters.map((q) => q);
+  const slugFilter = stockSlugFilter
+    ? sql`AND s.slug = ${stockSlugFilter}`
+    : sql``;
   return bseOnly
     ? sql`
         SELECT s.id, s.name, s.slug, s.nse_symbol, s.bse_code, s.isin, t.quarter::text AS quarter
@@ -225,6 +267,7 @@ async function loadBackfillTasks(quarters) {
         CROSS JOIN unnest(${quarterDates}::date[]) AS t(quarter)
         WHERE NULLIF(TRIM(s.bse_code), '') IS NOT NULL
           AND NULLIF(TRIM(s.nse_symbol), '') IS NULL
+          ${slugFilter}
           ${missingOnly ? sql`AND NOT EXISTS (
             SELECT 1 FROM shareholding_pattern_holders sph
             WHERE sph.stock_id = s.id AND sph.quarter = t.quarter
@@ -236,8 +279,9 @@ async function loadBackfillTasks(quarters) {
         SELECT s.id, s.name, s.slug, s.nse_symbol, s.bse_code, s.isin, t.quarter::text AS quarter
         FROM stocks s
         CROSS JOIN unnest(${quarterDates}::date[]) AS t(quarter)
-        WHERE NULLIF(TRIM(s.nse_symbol), '') IS NOT NULL
-           OR NULLIF(TRIM(s.bse_code), '') IS NOT NULL
+        WHERE (NULLIF(TRIM(s.nse_symbol), '') IS NOT NULL
+           OR NULLIF(TRIM(bse_code), '') IS NOT NULL)
+          ${slugFilter}
           ${missingOnly ? sql`AND NOT EXISTS (
             SELECT 1 FROM shareholding_pattern_holders sph
             WHERE sph.stock_id = s.id AND sph.quarter = t.quarter
@@ -250,36 +294,42 @@ async function loadBackfillTasks(quarters) {
 async function aggregateFetchResults(fetchResults, quarter, resolver) {
   const sphRows = [];
   const ehRows = [];
+  const summaryRows = [];
   let matchedCount = 0;
   let unmatchedCount = 0;
   let promoterCount = 0;
 
-  for (const { stock, holders } of fetchResults) {
+  for (const { stock, holders, summary, sourceUrl } of fetchResults) {
     const parsed = processStockHolders(stock, holders, quarter, resolver);
     sphRows.push(...parsed.sphRows);
     ehRows.push(...parsed.ehRows);
     matchedCount += parsed.matchedCount;
     unmatchedCount += parsed.unmatchedCount;
     promoterCount += parsed.promoterCount;
+    const summaryRow = buildSummaryRow(stock, quarter, summary, holders, sourceUrl);
+    if (summaryRow) summaryRows.push(summaryRow);
   }
 
   return {
     sphRows: dedupeRows(sphRows, (r) => `${r.stock_id}\0${r.holder_name}\0${r.quarter}`),
     ehRows: aggregateEntityHoldings(ehRows),
+    summaryRows: dedupeRows(summaryRows, (r) => `${r.stock_id}\0${r.quarter}`),
     matchedCount,
     unmatchedCount,
     promoterCount,
   };
 }
 
-async function upsertQuarterRows(sphRows, ehRows) {
-  if (dryRun || sphRows.length === 0) return;
-  await upsertMany(
-    'shareholding_pattern_holders',
-    sphRows,
-    'stock_id, holder_name, quarter',
-    ['holder_type', 'shares', 'pct_of_company', 'source', 'source_url', 'is_promoter', 'entity_id', 'match_confidence'],
-  );
+async function upsertQuarterRows(sphRows, ehRows, summaryRows = []) {
+  if (dryRun) return;
+  if (sphRows.length > 0) {
+    await upsertMany(
+      'shareholding_pattern_holders',
+      sphRows,
+      'stock_id, holder_name, quarter',
+      ['holder_type', 'shares', 'pct_of_company', 'source', 'source_url', 'is_promoter', 'entity_id', 'match_confidence'],
+    );
+  }
   if (ehRows.length > 0) {
     await upsertMany(
       'entity_holdings',
@@ -288,20 +338,33 @@ async function upsertQuarterRows(sphRows, ehRows) {
       ['shares_held', 'pct_of_company', 'market_value_cr', 'is_encumbered', 'source', 'source_url', 'is_preliminary'],
     );
   }
+  if (summaryRows.length > 0) {
+    await upsertMany(
+      'stock_shp_summary',
+      summaryRows,
+      'stock_id, quarter',
+      ['promoter_pct', 'fii_pct', 'mf_pct', 'dii_ex_mf_pct', 'public_pct', 'individuals_gte1_pct', 'retail_pct', 'total_pct', 'source_url'],
+    );
+  }
 }
 
 async function upsertBatchResults(batchResults, resolver) {
   const byQuarter = new Map();
   for (const row of batchResults) {
     if (!byQuarter.has(row.quarter)) byQuarter.set(row.quarter, []);
-    byQuarter.get(row.quarter).push({ stock: row.stock, holders: row.holders });
+    byQuarter.get(row.quarter).push({
+      stock: row.stock,
+      holders: row.holders,
+      summary: row.summary,
+      sourceUrl: row.sourceUrl,
+    });
   }
 
   let sph = 0;
   let eh = 0;
   for (const [quarter, results] of byQuarter) {
     const agg = await aggregateFetchResults(results, quarter, resolver);
-    await upsertQuarterRows(agg.sphRows, agg.ehRows);
+    await upsertQuarterRows(agg.sphRows, agg.ehRows, agg.summaryRows);
     sph += agg.sphRows.length;
     eh += agg.ehRows.length;
   }
@@ -332,7 +395,9 @@ async function finalizeQuarter(ctx, quarter, fetchResults, resolver) {
   let promoterCount = 0;
   const reviewQueue = [];
 
-  for (const { stock, holders } of fetchResults) {
+  const summaryRows = [];
+
+  for (const { stock, holders, summary, sourceUrl } of fetchResults) {
     const parsed = processStockHolders(stock, holders, quarter, resolver);
     sphRows.push(...parsed.sphRows);
     ehRows.push(...parsed.ehRows);
@@ -340,6 +405,8 @@ async function finalizeQuarter(ctx, quarter, fetchResults, resolver) {
     unmatchedCount += parsed.unmatchedCount;
     promoterCount += parsed.promoterCount;
     reviewQueue.push(...parsed.reviewQueue);
+    const summaryRow = buildSummaryRow(stock, quarter, summary, holders, sourceUrl);
+    if (summaryRow) summaryRows.push(summaryRow);
   }
 
   ctx.log(`Checking overrides for ${quarter}...`);
@@ -390,7 +457,7 @@ async function finalizeQuarter(ctx, quarter, fetchResults, resolver) {
   const dedupedSph = dedupeRows(sphRows, (r) => `${r.stock_id}\0${r.holder_name}\0${r.quarter}`);
   const dedupedEh = aggregateEntityHoldings(ehRows);
 
-  await upsertQuarterRows(dedupedSph, dedupedEh);
+  await upsertQuarterRows(dedupedSph, dedupedEh, dedupeRows(summaryRows, (r) => `${r.stock_id}\0${r.quarter}`));
   await runQuarterQualityGate(ctx, quarter, dedupedSph.length);
 
   return {
@@ -453,16 +520,22 @@ async function runParallelBackfill(quarters) {
       ctx.log(`Batch ${batchNum}/${batchTotal}: fetching ${chunk.length} tasks...`);
 
       const batchResults = await mapPool(chunk, workers, async ({ stock, quarter }) => {
-        const holders = await fetchSHP(stock, quarter);
+        const bundle = await fetchSHP(stock, quarter);
         completed++;
-        if (!holders.length) emptyResults++;
+        if (!bundle.holders.length) emptyResults++;
         if (completed % 250 === 0 || completed === tasks.length) {
           const elapsed = (Date.now() - started) / 1000;
           const rate = completed / Math.max(elapsed, 1);
           const eta = Math.round((tasks.length - completed) / Math.max(rate, 0.01));
           ctx.log(`  … ${completed}/${tasks.length} fetched (${elapsed.toFixed(0)}s elapsed, ~${eta}s left, ${workers} workers, ${emptyResults} empty)`);
         }
-        return { stock, quarter, holders };
+        return {
+          stock,
+          quarter,
+          holders: bundle.holders,
+          summary: bundle.summary,
+          sourceUrl: bundle.sourceUrl,
+        };
       });
 
       const written = await upsertBatchResults(batchResults, resolver);
@@ -528,13 +601,18 @@ async function runPipelineQuarter(quarter) {
     let completed = 0;
 
     const fetchResults = await mapPool(stocks, workers, async (stock) => {
-      const holders = await fetchSHP(stock, quarter);
+      const bundle = await fetchSHP(stock, quarter);
       completed++;
       if (completed % 50 === 0 || completed === stocks.length) {
         const elapsed = ((Date.now() - fetchStarted) / 1000).toFixed(0);
         ctx.log(`  … ${completed}/${stocks.length} stocks (${elapsed}s)`);
       }
-      return { stock, holders };
+      return {
+        stock,
+        holders: bundle.holders,
+        summary: bundle.summary,
+        sourceUrl: bundle.sourceUrl,
+      };
     });
 
     const stats = await finalizeQuarter(ctx, quarter, fetchResults, resolver);

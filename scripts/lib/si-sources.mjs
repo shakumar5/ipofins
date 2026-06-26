@@ -18,7 +18,7 @@
 
 import { existsSync } from 'fs';
 import { sleep } from './ipo-utils.mjs';
-import { parseShareholdingXbrl } from './shp-xbrl-parser.mjs';
+import { parseShareholdingXbrl, parseShareholdingCategorySummary } from './shp-xbrl-parser.mjs';
 import { nseQuarterEndLabel } from './si-quarters.mjs';
 
 // ─── HTTP layer (mirrors authorized-sources.mjs) ────────────
@@ -167,31 +167,32 @@ function filingMatchesQuarter(filing, quarter) {
  * Fetch SHP via NSE filing index + XBRL download. No Puppeteer required.
  */
 export async function fetchNSEShareholdingViaXbrl(stock, quarter) {
-  if (!stock?.nse_symbol) return [];
+  if (!stock?.nse_symbol) return { holders: [], summary: null, sourceUrl: null };
 
   const api = `https://www.nseindia.com/api/corporate-share-holdings-master?index=equities&symbol=${encodeURIComponent(stock.nse_symbol)}`;
   let filings;
   try {
     const res = await fetchTimed(api, { headers: { Accept: 'application/json' } });
-    if (!res.ok) return [];
+    if (!res.ok) return { holders: [], summary: null, sourceUrl: null };
     filings = await res.json();
   } catch {
-    return [];
+    return { holders: [], summary: null, sourceUrl: null };
   }
-  if (!Array.isArray(filings) || !filings.length) return [];
+  if (!Array.isArray(filings) || !filings.length) return { holders: [], summary: null, sourceUrl: null };
 
   const match = filings.find((f) => filingMatchesQuarter(f, quarter) && f.xbrl) || null;
-  if (!match?.xbrl) return [];
+  if (!match?.xbrl) return { holders: [], summary: null, sourceUrl: null };
 
   try {
     const xbrlRes = await fetchTimed(match.xbrl);
-    if (!xbrlRes.ok) return [];
+    if (!xbrlRes.ok) return { holders: [], summary: null, sourceUrl: null };
     const xml = await xbrlRes.text();
-    const rows = parseShareholdingXbrl(xml, match.xbrl);
-    if (rows.length && fetchThrottleMs) await sleep(fetchThrottleMs);
-    return rows;
+    const holders = parseShareholdingXbrl(xml, match.xbrl);
+    const summary = parseShareholdingCategorySummary(xml);
+    if (holders.length && fetchThrottleMs) await sleep(fetchThrottleMs);
+    return { holders, summary, sourceUrl: match.xbrl };
   } catch {
-    return [];
+    return { holders: [], summary: null, sourceUrl: null };
   }
 }
 
@@ -217,7 +218,7 @@ function holderTypeFromBseRow(row) {
   return 'public';
 }
 
-function parseBseShpNgJson(json, sourceUrl) {
+function parseBseShpNgJson(json, sourceUrl, { forcePromoter = false } = {}) {
   const rows = [];
   for (const table of Object.values(json || {})) {
     if (!Array.isArray(table)) continue;
@@ -229,7 +230,7 @@ function parseBseShpNgJson(json, sourceUrl) {
       const shares = parseInt(row.Fld_TotalNoOfShares, 10);
       rows.push({
         holderName: name,
-        holderType: holderTypeFromBseRow(row),
+        holderType: forcePromoter ? 'promoter' : holderTypeFromBseRow(row),
         shares: Number.isFinite(shares) ? shares : null,
         pctOfCompany: pct,
         sourceUrl,
@@ -245,7 +246,8 @@ async function fetchBseShpNgEndpoint(endpoint, scripCode, qtrCode) {
   const res = await fetchTimed(url, { headers: { Accept: 'application/json', Referer: 'https://www.bseindia.com/' } });
   if (!res.ok) return [];
   const json = await res.json();
-  return parseBseShpNgJson(json, url);
+  const forcePromoter = /promoter/i.test(endpoint);
+  return parseBseShpNgJson(json, url, { forcePromoter });
 }
 
 /**
@@ -481,11 +483,15 @@ const TASK_TIMEOUT_MS = 30_000;
  * Puppeteer is last resort (disabled during parallel backfill).
  */
 async function fetchShareholdingPatternInner(stock, quarter) {
+  let sourceUrl = null;
   if (stock.nse_symbol) {
     try {
-      const xbrlRows = await fetchNSEShareholdingViaXbrl(stock, quarter);
-      const valid = xbrlRows.filter((r) => r.pctOfCompany != null && r.pctOfCompany > 0);
-      if (valid.length > 0) return valid;
+      const xbrl = await fetchNSEShareholdingViaXbrl(stock, quarter);
+      const valid = xbrl.holders.filter((r) => r.pctOfCompany != null && r.pctOfCompany > 0);
+      if (valid.length > 0) {
+        return { holders: valid, summary: xbrl.summary, sourceUrl: xbrl.sourceUrl };
+      }
+      sourceUrl = xbrl.sourceUrl;
     } catch {
       // fall through
     }
@@ -494,7 +500,7 @@ async function fetchShareholdingPatternInner(stock, quarter) {
   try {
     const bseApiRows = await fetchBSEShareholdingViaApi(stock, quarter);
     const validApi = bseApiRows.filter((r) => r.pctOfCompany != null && r.pctOfCompany > 0);
-    if (validApi.length > 0) return validApi;
+    if (validApi.length > 0) return { holders: validApi, summary: null, sourceUrl };
   } catch {
     // fall through
   }
@@ -502,35 +508,41 @@ async function fetchShareholdingPatternInner(stock, quarter) {
   try {
     const bseRows = await fetchBSEShareholdingPattern(stock, quarter);
     const valid = bseRows.filter((r) => r.pctOfCompany != null && r.pctOfCompany > 0);
-    if (valid.length > 0) return valid;
+    if (valid.length > 0) return { holders: valid, summary: null, sourceUrl };
   } catch {
     // fall through
   }
 
   if (stock.nse_symbol && !skipPuppeteerFallback) {
     try {
-      return await fetchNSEShareholdingPatternPuppeteer(stock, quarter);
+      const holders = await fetchNSEShareholdingPatternPuppeteer(stock, quarter);
+      return { holders, summary: null, sourceUrl };
     } catch {
-      return [];
+      return { holders: [], summary: null, sourceUrl: null };
     }
   }
 
-  return [];
+  return { holders: [], summary: null, sourceUrl: null };
 }
 
-export async function fetchShareholdingPattern(stock, quarter) {
+export async function fetchShareholdingPatternBundle(stock, quarter) {
   const budget = fetchTimeoutMs > 0 ? Math.max(fetchTimeoutMs + 10_000, TASK_TIMEOUT_MS) : TASK_TIMEOUT_MS;
   let timer;
   try {
     return await Promise.race([
       fetchShareholdingPatternInner(stock, quarter),
       new Promise((resolve) => {
-        timer = setTimeout(() => resolve([]), budget);
+        timer = setTimeout(() => resolve({ holders: [], summary: null, sourceUrl: null }), budget);
       }),
     ]);
   } finally {
     if (timer) clearTimeout(timer);
   }
+}
+
+export async function fetchShareholdingPattern(stock, quarter) {
+  const bundle = await fetchShareholdingPatternBundle(stock, quarter);
+  return bundle.holders;
 }
 
 // ─── BSE SAST / corporate announcements ────────────────────

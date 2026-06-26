@@ -836,7 +836,6 @@ export async function getFundHoldings(fundSlug: string): Promise<Record<string, 
     LEFT JOIN sectors sec ON sec.id = s.sector_id
     WHERE fh.month = (SELECT MAX(month) FROM fund_holdings WHERE fund_id = h.id)
     ORDER BY fh.pct_to_nav DESC NULLS LAST
-    LIMIT 50
   `;
   return rows as Record<string, unknown>[];
 }
