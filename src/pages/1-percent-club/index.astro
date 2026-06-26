@@ -23,7 +23,7 @@ const snap = await getOnePercentSnapshot();
 const topStocks = await getOnePercentTopStocks(60);
 const searchIndex = await getOnePercentSearchIndex();
 const trackedSnapshot = await getTrackedSnapshot();
-const mfStocks = loadSmartMoneyStockSlugs();
+const mfStocks = loadSmartMoneyStockSlugs().map((s) => ({ slug: s.slug, name: s.stockName }));
 
 const hasData = topStocks.length > 0;
 const path = '/1-percent-club';
