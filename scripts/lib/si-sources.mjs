@@ -17,6 +17,7 @@
  */
 
 import { existsSync } from 'fs';
+import https from 'https';
 import { sleep } from './ipo-utils.mjs';
 import { parseShareholdingXbrl, parseShareholdingCategorySummary } from './shp-xbrl-parser.mjs';
 import { nseQuarterEndLabel } from './si-quarters.mjs';
@@ -547,10 +548,84 @@ export async function fetchShareholdingPattern(stock, quarter) {
 
 // ─── BSE SAST / corporate announcements ────────────────────
 
-const SAST_SUBJECT = /substantial\s+acquisition|SAST|takeover|shareholding\s+disclosure/i;
+/** Match SAST / takeover disclosure text on NSE attchmntText or BSE headlines. */
+const SAST_SUBJECT =
+  /substantial\s+acquisition|\bSAST\b|takeover\s+regulations?|regulation\s*29|regulation\s*10\s*\(\s*7\s*\)|shareholding\s+disclosure/i;
+
+function sastAnnouncementText(row) {
+  if (!row) return '';
+  return [
+    row.attchmntText,
+    row.sm_subject,
+    row.subject,
+    row.desc,
+    row.corpann_sub,
+    row.NEWSSUB,
+    row.HEADLINE,
+    row.attchmntFile,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function isSastAnnouncement(row) {
+  return SAST_SUBJECT.test(sastAnnouncementText(row));
+}
+
+function extractFilerFromSubject(subject) {
+  if (!subject) return null;
+  const patterns = [
+    /(?:name of the acquirer|acquirer|acquired by|disclosed by|shareholder)[:\s-]+([A-Z][A-Za-z0-9'&.\s(),-]{3,}?)(?:\s+\(|\.|,|\s+has|\s+from|\s+to)/i,
+    /(?:by|of)\s+([A-Z][A-Za-z'&.\s]{3,}?)(?:\s+\(|\s+from|\s+\d)/,
+  ];
+  for (const re of patterns) {
+    const m = subject.match(re);
+    if (m) return m[1].trim();
+  }
+  return null;
+}
+
+function bseDateYmd(d) {
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** BSE JSON API — Node fetch rejects their malformed HTTP headers; use insecure parser. */
+function fetchBseApiJson(query) {
+  const url = `https://api.bseindia.com/BseIndiaAPI/api/${query}`;
+  return new Promise((resolve) => {
+    const req = https.get(
+      url,
+      {
+        insecureHTTPParser: true,
+        headers: {
+          'User-Agent': UA,
+          Accept: 'application/json, text/plain, */*',
+          Origin: 'https://www.bseindia.com/',
+          Referer: 'https://www.bseindia.com/',
+        },
+      },
+      (res) => {
+        const chunks = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on('error', () => resolve(null));
+    req.setTimeout(25_000, () => {
+      req.destroy();
+      resolve(null);
+    });
+  });
+}
 
 /**
- * Parse BSE corporate-announcement feed rows into SAST filings.
+ * Parse BSE corporate-announcement feed rows into SAST filings (legacy HTML).
  */
 function parseBSESASTHTML(html) {
   const filings = [];
@@ -595,12 +670,49 @@ function parseBSESASTHTML(html) {
 }
 
 /**
- * Fetch recent SAST-type corporate announcements from BSE.
- * BSE exposes a corporate-announcement listing by date range + category filter.
+ * Fetch recent SAST-type corporate announcements from BSE JSON API (primary)
+ * with legacy HTML page as fallback.
  */
 export async function fetchBSESASTFilings(daysBack) {
   const today = new Date();
   const from = new Date(today.getTime() - daysBack * 24 * 60 * 60 * 1000);
+
+  const query = new URLSearchParams({
+    pageno: '1',
+    strCat: '-1',
+    subcategory: '-1',
+    strPrevDate: bseDateYmd(from),
+    strToDate: bseDateYmd(today),
+    strSearch: 'P',
+    strType: 'C',
+  }).toString();
+
+  const data = await fetchBseApiJson(`AnnSubCategoryGetData/w?${query}`);
+  const rows = data?.Table || data?.table || [];
+  if (Array.isArray(rows) && rows.length > 0) {
+    const filings = [];
+    for (const row of rows) {
+      const subject = sastAnnouncementText(row);
+      if (!isSastAnnouncement(row)) continue;
+      const filingDate =
+        row.NEWS_DT || row.News_dt || row.Date || row.DT_TM || row.News_submission_dt || null;
+      const pdf = row.ATTACHMENTNAME || row.ATTACHMENT || row.XML_NAME || null;
+      filings.push({
+        stockName: row.SLONGNAME || row.CompanyName || row.CURRENT_NAME || row.HEADLINE || '',
+        nseSymbol: row.NSE_SYMBOL || null,
+        filingDate,
+        subject,
+        sourceUrl: pdf
+          ? pdf.startsWith('http')
+            ? pdf
+            : `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${pdf}`
+          : null,
+        raw: row,
+      });
+    }
+    if (filings.length > 0) return filings;
+  }
+
   const fmt = (d) =>
     `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(
       2,
@@ -609,7 +721,7 @@ export async function fetchBSESASTFilings(daysBack) {
 
   const url = `https://www.bseindia.com/corporates/anndetails_new.aspx?annsegment=AN&qtr=From%20${encodeURIComponent(
     fmt(from)
-  )}%20to%20${encodeURIComponent(fmt(today))}&CategoryId=21`; // 21 ≈ SAST / Insider
+  )}%20to%20${encodeURIComponent(fmt(today))}&CategoryId=21`;
   try {
     const html = await fetchText(url);
     return parseBSESASTHTML(html);
@@ -656,14 +768,14 @@ export async function fetchNSESASTFilingsPuppeteer(daysBack) {
 
     const filings = [];
     for (const a of arr) {
-      const subject = a.sm_subject || a.subject || '';
-      if (!SAST_SUBJECT.test(subject)) continue;
+      if (!isSastAnnouncement(a)) continue;
+      const subject = sastAnnouncementText(a);
       filings.push({
         stockName: a.sm_name || a.symbol_name || '',
-        nseSymbol: a.sm_symbol || a.symbol || '',
-        filingDate: a.an_dt || a.rec_dt || null,
+        nseSymbol: a.symbol || a.sm_symbol || '',
+        filingDate: a.sort_date || a.an_dt || a.rec_dt || null,
         subject,
-        sourceUrl: a.att || a.sm_attachment || null,
+        sourceUrl: a.attchmntFile || a.att || a.sm_attachment || null,
         raw: a,
       });
     }
@@ -701,20 +813,21 @@ export async function fetchSASTFilings(daysBack) {
 
     // Try to recover filer + pre/post % from the subject line.
     // Patterns: "...acquired by <NAME> from 1.2% to 3.4%" or "<NAME> (2.1% to 4.3%)".
-    const filerMatch = f.subject.match(/(?:by|of)\s+([A-Z][A-Za-z'&.\s]{3,}?)(?:\s+\(|\s+from|\s+\d)/);
+    const filerMatch = extractFilerFromSubject(f.subject);
     const pctMatch = f.subject.match(/(\d+(?:\.\d+)?)\s*%?\s*(?:to|-)\s*(\d+(?:\.\d+)?)\s*%?/);
 
     filings.push({
       stockName: f.stockName,
       nseSymbol: f.nseSymbol,
       filingDate: normalizeDate(f.filingDate),
-      filerName: filerMatch ? filerMatch[1].trim() : f.subject.slice(0, 80),
+      filerName: filerMatch || f.subject.slice(0, 120),
       filerType: 'unknown',
       prePct: pctMatch ? parseFloat(pctMatch[1]) : null,
       postPct: pctMatch ? parseFloat(pctMatch[2]) : null,
       postShares: null, // detail-page fetch would populate; left null at feed level
       transactionNature: /acqui/i.test(f.subject) ? 'acquisition' : /dispos|sell/i.test(f.subject) ? 'disposal' : 'other',
       sourceUrl: f.sourceUrl,
+      subject: f.subject,
     });
   }
 

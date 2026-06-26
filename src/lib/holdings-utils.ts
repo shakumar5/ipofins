@@ -257,6 +257,67 @@ export function fundBaseSlug(slug: string): string {
     .replace(/-growth$/, '');
 }
 
+export interface SectorStockMoveSummary {
+  stockName: string;
+  stockSlug: string;
+  fundCount: number;
+  weightTotal: number;
+}
+
+export interface SectorStockMovesByType {
+  mostBought: SectorStockMoveSummary[];
+  increased: SectorStockMoveSummary[];
+  fresh: SectorStockMoveSummary[];
+  decreased: SectorStockMoveSummary[];
+  exits: SectorStockMoveSummary[];
+}
+
+type SectorMoveRow = {
+  stockName: string;
+  stockSlug: string;
+  sector: string;
+  fundCount: number;
+  weightTotal: number;
+};
+
+function topSectorStocks(
+  rows: SectorMoveRow[],
+  sector: string,
+  limit: number,
+  sort: 'fundCount' | 'weightTotal',
+): SectorStockMoveSummary[] {
+  return rows
+    .filter((r) => r.sector === sector)
+    .sort((a, b) => (sort === 'fundCount' ? b.fundCount - a.fundCount : b.weightTotal - a.weightTotal))
+    .slice(0, limit)
+    .map((r) => ({
+      stockName: r.stockName,
+      stockSlug: r.stockSlug,
+      fundCount: r.fundCount,
+      weightTotal: r.weightTotal,
+    }));
+}
+
+/** Top stock movers within one sector (from smart-money tracker month payload). */
+export function buildSectorStockMoves(
+  sector: string,
+  monthData: {
+    increased: SectorMoveRow[];
+    decreased: SectorMoveRow[];
+    fresh_entry: SectorMoveRow[];
+    complete_exit: SectorMoveRow[];
+  },
+  limit = 5,
+): SectorStockMovesByType {
+  return {
+    mostBought: topSectorStocks(monthData.increased, sector, limit, 'weightTotal'),
+    increased: topSectorStocks(monthData.increased, sector, limit, 'fundCount'),
+    fresh: topSectorStocks(monthData.fresh_entry, sector, limit, 'fundCount'),
+    decreased: topSectorStocks(monthData.decreased, sector, limit, 'weightTotal'),
+    exits: topSectorStocks(monthData.complete_exit, sector, limit, 'fundCount'),
+  };
+}
+
 /** Parse PostgreSQL text[] values returned by Neon into a string list. */
 export function parsePgTextArray(value: unknown): string[] {
   if (value == null) return [];

@@ -24,6 +24,7 @@
     "pipeline:superinvestor:repair": "node scripts/node-with-ca.mjs scripts/pipeline/04-super-investor-holdings.mjs -- --missing-only --concurrency=40",
     "pipeline:superinvestor:bse": "node scripts/node-with-ca.mjs scripts/pipeline/04-super-investor-holdings.mjs -- --bse-only",
     "pipeline:sast-sweep": "node scripts/node-with-ca.mjs scripts/pipeline/08-sast-sweep.mjs",
+    "export:sast-updates": "node scripts/node-with-ca.mjs scripts/export-sast-updates.mjs",
     "db:migrate-si": "node scripts/node-with-ca.mjs scripts/apply-migration.mjs db/migrations/005_super_investors.sql && node scripts/node-with-ca.mjs scripts/apply-migration.mjs db/migrations/006_super_investor_views.sql && node scripts/node-with-ca.mjs scripts/apply-migration.mjs db/migrations/007_entity_stats_null_strategy.sql && node scripts/node-with-ca.mjs scripts/apply-migration.mjs db/migrations/008_entity_holdings_null_strategy.sql && node scripts/node-with-ca.mjs scripts/apply-migration.mjs db/migrations/009_stock_quarter_prices.sql && node scripts/node-with-ca.mjs scripts/apply-migration.mjs db/migrations/010_stock_shp_summary.sql",
     "db:seed-superinvestors": "node scripts/node-with-ca.mjs db/seed/seed-super-investors.mjs",
     "db:sync-si-from-staging": "node scripts/node-with-ca.mjs db/seed/sync-si-staging-to-prod.mjs",

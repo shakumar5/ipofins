@@ -770,7 +770,8 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
 
 export async function getFundHoldings(fundSlug: string): Promise<Record<string, unknown>[]> {
   const diskRows = readFundHoldingsRowsFromDisk(fundSlug);
-  if (diskRows?.length) return diskRows;
+  const diskTotal = readFundPortfolioStockCountFromDisk(fundSlug);
+  if (diskRows?.length && (!diskTotal || diskRows.length >= diskTotal)) return diskRows;
 
   const sql = requireDb();
   const rows = await sql`

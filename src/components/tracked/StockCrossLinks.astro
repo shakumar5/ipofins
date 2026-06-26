@@ -34,7 +34,11 @@ const {
   latestQuarter = null,
 } = Astro.props;
 
-const hasLinks = showMfStockSignal || showOnePercentClub || curatedInvestors.length > 0;
+const hasLinks =
+  showMfStockSignal ||
+  showOnePercentClub ||
+  curatedInvestors.length > 0 ||
+  true;
 const quarterLabel = latestQuarter ? formatQuarter(latestQuarter) : null;
 ---
 
@@ -49,6 +53,20 @@ const quarterLabel = latestQuarter ? formatQuarter(latestQuarter) : null;
       </p>
 
       <div class="flex flex-wrap gap-2 mb-4">
+        <a
+          href="/super-investors"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
+        >
+          Super Investors
+          <span class="text-surface-400">→</span>
+        </a>
+        <a
+          href="/1-percent-club"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
+        >
+          1% Club hub
+          <span class="text-surface-400">→</span>
+        </a>
         {showMfStockSignal && (
           <a
             href={stockSignalPath(stockSlug)}

@@ -308,10 +308,14 @@ export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldi
         GROUP BY sph.stock_id, sph.quarter
       ),
       base AS (
-        SELECT * FROM eh_base
-        UNION ALL
-        SELECT * FROM sph_base
-        WHERE NOT EXISTS (SELECT 1 FROM eh_base)
+        SELECT
+          COALESCE(eh.stock_id, sph.stock_id) AS stock_id,
+          COALESCE(eh.shares_held, sph.shares_held) AS shares_held,
+          COALESCE(eh.pct_of_company, sph.pct_of_company) AS pct_of_company,
+          COALESCE(eh.quarter, sph.quarter) AS quarter,
+          eh.market_value_cr
+        FROM eh_base eh
+        FULL OUTER JOIN sph_base sph ON eh.stock_id = sph.stock_id
       ),
       valued AS (
         SELECT
@@ -918,6 +922,7 @@ export async function getTrackedSnapshot(): Promise<TrackedSnapshot> {
 
 export const SUPER_INVESTORS_HUB = '/super-investors';
 export const ONE_PERCENT_CLUB_HUB = '/1-percent-club';
+export const SAST_UPDATES_HUB = '/super-investors/sast-updates';
 
 export type StockEmptyStateKind =
   | 'not_indexed'
@@ -936,28 +941,6 @@ export interface StockEmptyStateContent {
 
 const SHP_DISCLOSURE_FOOTNOTE =
   'Based on SEBI quarterly Shareholding Pattern filings — holdings below 1% are not disclosed by name.';
-
-export function normalizeStockSearchQuery(s: string): string {
-  return s.toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
-/** Best single stock match for hub search (exact name/slug first, then partial). */
-export function matchStockSearchQuery(
-  query: string,
-  stocks: { slug: string; name: string }[],
-): { slug: string; name: string } | null {
-  const q = normalizeStockSearchQuery(query);
-  if (q.length < 2) return null;
-  const slugQ = q.replace(/\s+/g, '-');
-  const exact = stocks.find(
-    (s) => normalizeStockSearchQuery(s.name) === q || s.slug === slugQ,
-  );
-  if (exact) return exact;
-  const matches = stocks.filter(
-    (s) => normalizeStockSearchQuery(s.name).includes(q) || s.slug.includes(slugQ),
-  );
-  return matches[0] ?? null;
-}
 
 /** True when latest SHP shows no mutual fund, DII, FII, or curated super-investor ≥1% interest. */
 export function hasSmartMoneyRadarInterest(
@@ -1434,14 +1417,83 @@ export async function getHoldingsByHolderSlug(
   }
 }
 
+export interface OnePercentHolderPosition {
+  stockSlug: string;
+  stockName: string;
+  pct: number | null;
+}
+
+export interface OnePercentSearchHolder {
+  slug: string;
+  name: string;
+  entitySlug: string | null;
+  profileUrl: string | null;
+  stockCount: number;
+  positions: OnePercentHolderPosition[];
+}
+
+/** Latest-quarter ≥1% positions grouped for holder name search (build time). */
+export async function getOnePercentHolderPositionsMap(): Promise<
+  Map<string, OnePercentHolderPosition[]>
+> {
+  const map = new Map<string, OnePercentHolderPosition[]>();
+  if (!sql) return map;
+  try {
+    const rows = (await sql!`
+      WITH latest AS (
+        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+      )
+      SELECT
+        sph.holder_name,
+        sph.entity_id,
+        te.slug AS entity_slug,
+        s.slug AS stock_slug,
+        s.name AS stock_name,
+        sph.pct_of_company
+      FROM shareholding_pattern_holders sph
+      JOIN stocks s ON s.id = sph.stock_id
+      LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+      WHERE sph.quarter = (SELECT q FROM latest)
+        AND sph.is_promoter = FALSE
+        AND sph.pct_of_company >= 1.0
+      ORDER BY sph.pct_of_company DESC
+    `) as Array<{
+      holder_name: string;
+      entity_id: number | null;
+      entity_slug: string | null;
+      stock_slug: string;
+      stock_name: string;
+      pct_of_company: unknown;
+    }>;
+
+    for (const r of rows) {
+      const key = r.entity_slug
+        ? `entity:${r.entity_slug}`
+        : `name:${normalizeHolderSearchKey(r.holder_name)}`;
+      const pos: OnePercentHolderPosition = {
+        stockSlug: r.stock_slug,
+        stockName: r.stock_name,
+        pct: toNum(r.pct_of_company),
+      };
+      const list = map.get(key) ?? [];
+      list.push(pos);
+      map.set(key, list);
+    }
+  } catch {
+    /* empty */
+  }
+  return map;
+}
+
 /** Build client search index at page build time. */
 export async function getOnePercentSearchIndex(): Promise<{
   stocks: { slug: string; name: string }[];
-  holders: { slug: string; name: string; entitySlug: string | null; profileUrl: string }[];
+  holders: OnePercentSearchHolder[];
 }> {
-  const [stocks, holders] = await Promise.all([
+  const [stocks, holders, positionsMap] = await Promise.all([
     getOnePercentStockSlugs(),
     getDistinctHolderSlugs(),
+    getOnePercentHolderPositionsMap(),
   ]);
 
   const byKey = new Map<string, { slug: string; name: string; entitySlug: string | null; stockCount: number }>();
@@ -1458,26 +1510,34 @@ export async function getOnePercentSearchIndex(): Promise<{
     }
   }
 
-  const holderList = [...byKey.values()]
+  const holderList: OnePercentSearchHolder[] = [...byKey.values()]
     .map((h) => {
+      const key = h.entitySlug
+        ? `entity:${h.entitySlug}`
+        : `name:${normalizeHolderSearchKey(h.name)}`;
+      const positions = positionsMap.get(key) ?? [];
       const profileUrl = holderProfileUrl({
         entitySlug: h.entitySlug,
         holderSlug: h.slug,
         stockCount: h.stockCount,
       });
-      if (!profileUrl) return null;
       return {
         slug: h.entitySlug || h.slug,
         name: h.name,
         entitySlug: h.entitySlug,
         profileUrl,
+        stockCount: Math.max(h.stockCount, positions.length),
+        positions,
       };
     })
-    .filter((h): h is { slug: string; name: string; entitySlug: string | null; profileUrl: string } => !!h)
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return {
-    stocks: stocks.map((s) => ({ slug: s.slug, name: s.stockName })),
+    stocks: stocks.map((s) => ({
+      slug: s.slug,
+      name: s.stockName,
+      nseSymbol: s.nseSymbol ?? null,
+    })),
     holders: holderList,
   };
 }
@@ -1899,14 +1959,16 @@ export async function getOnePercentHoldersForStock(stockSlug: string): Promise<O
 }
 
 /** Stocks with SHP data for static paths — summary and/or ≥1% holders (latest quarter). */
-export async function getOnePercentStockSlugs(): Promise<{ slug: string; stockName: string }[]> {
+export async function getOnePercentStockSlugs(): Promise<
+  { slug: string; stockName: string; nseSymbol: string | null }[]
+> {
   if (!sql) return [];
   try {
     const rows = (await sql!`
       WITH latest AS (
         SELECT MAX(quarter) AS q FROM shareholding_pattern_holders
       )
-      SELECT DISTINCT s.slug, s.name AS stock_name
+      SELECT DISTINCT s.slug, s.name AS stock_name, s.nse_symbol
       FROM stocks s
       WHERE EXISTS (
         SELECT 1 FROM shareholding_pattern_holders sph
@@ -1920,8 +1982,12 @@ export async function getOnePercentStockSlugs(): Promise<{ slug: string; stockNa
           AND ss.quarter = (SELECT q FROM latest)
       )
       ORDER BY s.name
-    `) as { slug: string; stock_name: string }[];
-    return rows.map((r) => ({ slug: r.slug, stockName: r.stock_name }));
+    `) as { slug: string; stock_name: string; nse_symbol: string | null }[];
+    return rows.map((r) => ({
+      slug: r.slug,
+      stockName: r.stock_name,
+      nseSymbol: r.nse_symbol ?? null,
+    }));
   } catch {
     return [];
   }

@@ -5,7 +5,7 @@ import SmartMoneyAppSkeleton from './SmartMoneyAppSkeleton';
 const SmartMoneySignalTable = lazy(() => import('./SmartMoneySignalTable'));
 const SectorIntelligenceTable = lazy(() => import('./SectorIntelligenceTable'));
 
-import type { SmartMoneyTrackerData } from '../../lib/data/holdings';
+import type { SmartMoneyMonthData, SmartMoneyTrackerData } from '../../lib/data/holdings';
 import type { SmartMoneySignalsData } from '../../lib/smart-money-signals';
 import type { SectorIntelligenceData } from '../../lib/sector-intelligence';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
@@ -94,6 +94,7 @@ export default function SmartMoneyPage({
   const [signalsError, setSignalsError] = useState<string | null>(null);
 
   const [sectorData, setSectorData] = useState<SectorIntelligenceData | null>(null);
+  const [sectorMonthMoves, setSectorMonthMoves] = useState<SmartMoneyMonthData | null>(null);
   const [sectorLoading, setSectorLoading] = useState(false);
   const [sectorError, setSectorError] = useState<string | null>(null);
 
@@ -313,7 +314,13 @@ export default function SmartMoneyPage({
     const cancelSchedule = scheduleAfterPaint(() => {
       loadClientData()
         .then(({ fetchJsonCached }) => fetchJsonCached<SectorIntelligenceData>(SECTOR_URL))
-        .then((data) => startTransition(() => setSectorData(data)))
+        .then(async (data) => {
+          startTransition(() => setSectorData(data));
+          if (data.currentMonth) {
+            const moves = await loadSmartMoneyClient().then((m) => m.loadTrackerMonthData(data.currentMonth));
+            startTransition(() => setSectorMonthMoves(moves));
+          }
+        })
         .catch((err: Error) => setSectorError(err.message || 'Failed to load sector intelligence'))
         .finally(() => setSectorLoading(false));
     });
@@ -339,6 +346,7 @@ export default function SmartMoneyPage({
     sectorLoadStarted.current = false;
     setSectorError(null);
     setSectorData(null);
+    setSectorMonthMoves(null);
     setSectorRetry((r) => r + 1);
   };
 
@@ -402,7 +410,7 @@ export default function SmartMoneyPage({
           errorPanel(sectorError, retrySector)
         ) : sectorData ? (
           <Suspense fallback={<SmartMoneyAppSkeleton pulse={false} />}>
-            <SectorIntelligenceTable data={sectorData} />
+            <SectorIntelligenceTable data={sectorData} monthMoves={sectorMonthMoves} />
           </Suspense>
         ) : null
       )}

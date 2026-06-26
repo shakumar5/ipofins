@@ -131,11 +131,12 @@ const faqJsonLd = {
     <SnapshotStrip snapshot={snapshot} noun="super investors" />
   </section>
 
-  <section class="container-wide pb-8">
+  <section id="search" class="container-wide pb-8 scroll-mt-24">
     <CuratedInvestorSearch
       client:load
       curated={curatedSearchOptions}
       holders={searchIndex.holders}
+      stockBase={ONE_PERCENT_CLUB_HUB}
     />
   </section>
 

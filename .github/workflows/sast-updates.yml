@@ -1,0 +1,66 @@
+# Weekly SAST updates feed - export JSON, rebuild, deploy
+#
+# Runs every Monday at 08:45 IST (03:15 UTC).
+# Fetches NSE/BSE SAST filings into public/data/sast-updates.json (read-only;
+# no entity_holdings DB writes). Quarterly SHP remains source of truth.
+
+name: Weekly SAST Updates
+
+on:
+  schedule:
+    # 03:15 UTC = 08:45 IST every Monday
+    - cron: '15 3 * * 1'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  export-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Chrome for NSE Puppeteer
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export SAST updates feed
+        run: npm run export:sast-updates
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Type check
+        run: npm run check
+
+      - name: Build static site
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FORCE_EXPORT: '1'
+
+      - name: Deploy prebuilt static site to Vercel
+        run: |
+          npm i -g vercel@latest
+          mkdir -p .vercel/output/static
+          cp -r dist/* .vercel/output/static/
+          echo '{"version":3,"routes":[{"handle":"filesystem"}]}' > .vercel/output/config.json
+          vercel deploy --prebuilt --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
