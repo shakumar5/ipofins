@@ -1197,8 +1197,7 @@ export interface OnePercentStockAgg {
   stockName: string;
   stockSlug: string;
   holders: number;
-  curatedCount: number;        // how many resolved to a tracked entity
-  mysteryCount: number;        // unresolved ≥1% holders
+  totalValueCr: number | null; // sum of ≥1% non-promoter disclosed stakes (₹ Cr)
   topPct: number | null;       // largest single non-promoter stake
 }
 
@@ -1496,16 +1495,23 @@ export async function getOnePercentTopStocks(limit = 60): Promise<OnePercentStoc
         s.name      AS stock_name,
         s.slug      AS stock_slug,
         COUNT(*)                                            AS holders,
-        COUNT(sph.entity_id)                                AS curated_count,
-        COUNT(*) FILTER (WHERE sph.entity_id IS NULL)       AS mystery_count,
-        MAX(sph.pct_of_company)                             AS top_pct
+        MAX(sph.pct_of_company)                             AS top_pct,
+        ROUND(SUM(
+          CASE
+            WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+              THEN (sph.shares::numeric * sqp.close_price) / 1e7
+            ELSE NULL
+          END
+        ), 2)                                               AS total_value_cr
       FROM shareholding_pattern_holders sph
       JOIN stocks s ON s.id = sph.stock_id
+      LEFT JOIN stock_quarter_prices sqp
+        ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
       WHERE sph.quarter = (SELECT q FROM latest)
         AND sph.is_promoter = FALSE
         AND sph.pct_of_company >= 1.0
       GROUP BY s.id, s.name, s.slug
-      ORDER BY holders DESC, mystery_count DESC
+      ORDER BY holders DESC, total_value_cr DESC NULLS LAST
       LIMIT ${limit}
     `) as OnePercentStockAggRow[];
     return rows.map((r) => ({
@@ -1513,8 +1519,7 @@ export async function getOnePercentTopStocks(limit = 60): Promise<OnePercentStoc
       stockName: r.stock_name,
       stockSlug: r.stock_slug,
       holders: Number(r.holders),
-      curatedCount: Number(r.curated_count),
-      mysteryCount: Number(r.mystery_count),
+      totalValueCr: toNum(r.total_value_cr),
       topPct: r.top_pct ?? null,
     }));
   } catch {
@@ -1954,9 +1959,8 @@ interface OnePercentStockAggRow {
   stock_name: string;
   stock_slug: string;
   holders: number | bigint;
-  curated_count: number | bigint;
-  mystery_count: number | bigint;
   top_pct: number | null;
+  total_value_cr: string | null;
 }
 interface OnePercentRowDb {
   id: number;
