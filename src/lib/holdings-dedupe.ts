@@ -4,7 +4,7 @@ function holdingPct<T extends { pct?: number | null; pctOfCompany?: number | nul
   return row.pctOfCompany ?? row.pct ?? 0;
 }
 
-/** Keep one row per NSE/ISIN/BSE identity; prefer QoQ data, then higher stake, then shorter slug. */
+/** Keep one row per ISIN/NSE/BSE identity; prefer QoQ data, then higher stake, then shorter slug. */
 export function dedupeHoldingsByStock<
   T extends StockListingIdentity & {
     stockSlug: string;

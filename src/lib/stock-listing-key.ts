@@ -1,6 +1,6 @@
 /**
  * Listed-stock identity for holdings dedupe.
- * Uses exchange codes (NSE/BSE/ISIN) - never company display name.
+ * ISIN is primary so the same company is never counted once on NSE and again on BSE.
  */
 export interface StockListingIdentity {
   nseSymbol?: string | null;
@@ -9,18 +9,18 @@ export interface StockListingIdentity {
   stockSlug: string;
 }
 
-/** Client/JS dedupe key - NSE ticker first, then ISIN, BSE code, slug. */
+/** Client dedupe key: ISIN, then NSE, then BSE, then slug. */
 export function stockListingKey(parts: StockListingIdentity): string {
-  const nse = String(parts.nseSymbol ?? '').trim().toUpperCase();
-  if (nse) return `nse:${nse}`;
   const isin = String(parts.isin ?? '').trim().toUpperCase();
   if (isin) return `isin:${isin}`;
+  const nse = String(parts.nseSymbol ?? '').trim().toUpperCase();
+  if (nse) return `nse:${nse}`;
   const bse = String(parts.bseCode ?? '').trim();
   if (bse) return `bse:${bse}`;
   return `slug:${parts.stockSlug}`;
 }
 
-/** Postgres expression for GROUP BY - `alias` = stocks table alias. */
+/** Postgres GROUP BY / join expression for stocks table alias. */
 export function stockListingKeySql(alias = 's'): string {
-  return `COALESCE(NULLIF(UPPER(TRIM(${alias}.nse_symbol)), ''), NULLIF(TRIM(${alias}.isin), ''), NULLIF(TRIM(${alias}.bse_code), ''), ${alias}.slug)`;
+  return `COALESCE(NULLIF(UPPER(TRIM(${alias}.isin)), ''), NULLIF(UPPER(TRIM(${alias}.nse_symbol)), ''), NULLIF(TRIM(${alias}.bse_code), ''), ${alias}.slug)`;
 }
