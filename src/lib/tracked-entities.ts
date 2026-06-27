@@ -1451,36 +1451,27 @@ export async function getDistinctHolderSlugs(): Promise<
       WITH latest AS (
         SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
       ),
-      raw AS (
+      deduped AS (
         SELECT
-          sph.holder_name,
           sph.entity_id,
           te.slug AS entity_slug,
           te.display_name AS entity_display_name,
-          COUNT(*)::int AS stock_count
-        FROM (
-          SELECT DISTINCT
-            sph.holder_name,
-            sph.entity_id,
-            te.slug AS entity_slug,
-            te.display_name AS entity_display_name,
-            ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key
-          FROM shareholding_pattern_holders sph
-          JOIN stocks s ON s.id = sph.stock_id
-          LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-          WHERE sph.quarter = (SELECT q FROM latest)
-            AND sph.is_promoter = FALSE
-            AND sph.pct_of_company >= 1.0
-        ) sph
-        GROUP BY sph.holder_name, sph.entity_id, sph.entity_slug, sph.entity_display_name
+          sph.holder_name,
+          ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key
+        FROM shareholding_pattern_holders sph
+        JOIN stocks s ON s.id = sph.stock_id
+        LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+        WHERE sph.quarter = (SELECT q FROM latest)
+          AND sph.is_promoter = FALSE
+          AND sph.pct_of_company >= 1.0
       ),
       curated AS (
         SELECT
           entity_id,
           COALESCE(MAX(entity_display_name), MAX(holder_name)) AS holder_name,
           MAX(entity_slug) AS entity_slug,
-          SUM(stock_count)::int AS stock_count
-        FROM raw
+          COUNT(DISTINCT listing_key)::int AS stock_count
+        FROM deduped
         WHERE entity_id IS NOT NULL
         GROUP BY entity_id
       ),
@@ -1488,14 +1479,14 @@ export async function getDistinctHolderSlugs(): Promise<
         SELECT
           MAX(holder_name) AS holder_name,
           MAX(entity_slug) AS entity_slug,
-          SUM(stock_count)::int AS stock_count
+          COUNT(DISTINCT listing_key)::int AS stock_count
         FROM (
           SELECT
             holder_name,
             entity_slug,
-            stock_count,
+            listing_key,
             upper(regexp_replace(regexp_replace(trim(holder_name), '\\.+$', ''), '\\s+', ' ', 'g')) AS norm_key
-          FROM raw
+          FROM deduped
           WHERE entity_id IS NULL
         ) m
         GROUP BY norm_key
@@ -1662,6 +1653,24 @@ export interface OnePercentHolderPosition {
   pct: number | null;
   shares: number | null;
   marketValueCr: number | null;
+  nseSymbol?: string | null;
+  isin?: string | null;
+  bseCode?: string | null;
+}
+
+function dedupeHolderPositions(positions: OnePercentHolderPosition[]): OnePercentHolderPosition[] {
+  const byKey = new Map<string, OnePercentHolderPosition>();
+  for (const p of positions) {
+    const key = stockListingKey({
+      stockSlug: p.stockSlug,
+      nseSymbol: p.nseSymbol,
+      isin: p.isin,
+      bseCode: p.bseCode,
+    });
+    const prev = byKey.get(key);
+    if (!prev || (p.pct ?? 0) > (prev.pct ?? 0)) byKey.set(key, p);
+  }
+  return [...byKey.values()];
 }
 
 export interface OnePercentSearchHolder {
@@ -1689,6 +1698,9 @@ export async function getOnePercentHolderPositionsMap(): Promise<
         CASE WHEN sph.entity_id IS NOT NULL THEN NULL ELSE sph.holder_name END AS holder_name,
         (array_agg(s.slug ORDER BY s.id))[1] AS stock_slug,
         (array_agg(s.name ORDER BY s.id))[1] AS stock_name,
+        (array_agg(s.nse_symbol ORDER BY s.id))[1] AS nse_symbol,
+        (array_agg(s.isin ORDER BY s.id))[1] AS isin,
+        (array_agg(s.bse_code ORDER BY s.id))[1] AS bse_code,
         MAX(sph.pct_of_company)::numeric AS pct_of_company,
         MAX(sph.shares)::bigint AS shares,
         ROUND(MAX(
@@ -1716,6 +1728,9 @@ export async function getOnePercentHolderPositionsMap(): Promise<
       entity_slug: string | null;
       stock_slug: string;
       stock_name: string;
+      nse_symbol: string | null;
+      isin: string | null;
+      bse_code: string | null;
       pct_of_company: unknown;
       shares: number | null;
       market_value_cr: unknown;
@@ -1728,13 +1743,16 @@ export async function getOnePercentHolderPositionsMap(): Promise<
       const pos: OnePercentHolderPosition = {
         stockSlug: r.stock_slug,
         stockName: r.stock_name,
+        nseSymbol: r.nse_symbol ?? null,
+        isin: r.isin ?? null,
+        bseCode: r.bse_code ?? null,
         pct: toNum(r.pct_of_company),
         shares: r.shares != null ? Number(r.shares) : null,
         marketValueCr: toNum(r.market_value_cr),
       };
       const list = map.get(key) ?? [];
       list.push(pos);
-      map.set(key, list);
+      map.set(key, dedupeHolderPositions(list));
     }
   } catch {
     /* empty */
@@ -1757,7 +1775,7 @@ export async function getOnePercentSearchIndex(): Promise<{
   for (const h of holders) {
     const key = h.entitySlug ? `entity:${h.entitySlug}` : `name:${normalizeHolderSearchKey(h.holderName)}`;
     const prev = byKey.get(key);
-    if (!prev || (h.entitySlug && !prev.entitySlug) || h.stockCount > prev.stockCount) {
+    if (!prev || (h.entitySlug && !prev.entitySlug)) {
       byKey.set(key, {
         slug: h.holderSlug,
         name: h.holderName,
@@ -1772,11 +1790,11 @@ export async function getOnePercentSearchIndex(): Promise<{
       const key = h.entitySlug
         ? `entity:${h.entitySlug}`
         : `name:${normalizeHolderSearchKey(h.name)}`;
-      const positions = positionsMap.get(key) ?? [];
+      const positions = dedupeHolderPositions(positionsMap.get(key) ?? []);
       const profileUrl = holderProfileUrl({
         entitySlug: h.entitySlug,
         holderSlug: h.slug,
-        stockCount: h.stockCount,
+        stockCount: positions.length || h.stockCount,
       });
       return {
         slug: h.entitySlug || h.slug,
