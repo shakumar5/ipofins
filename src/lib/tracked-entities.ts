@@ -8,7 +8,10 @@
 import superInvestorsJson from '../data/super-investors.json';
 import { sql } from './db';
 import { BRAND_URL } from './brand';
-import { dedupeHoldingsByStock, stockListingKey } from './holdings-dedupe';
+import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql } from './holdings-dedupe';
+
+/** SQL fragment for GROUP BY / joins on stocks — must match stock-listing-key.ts */
+const STOCK_LISTING_KEY = stockListingKeySql('s');
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -690,6 +693,8 @@ async function loadEntityHoldingsSnapshots(
         s.name AS stock_name,
         s.slug AS stock_slug,
         s.nse_symbol,
+        s.isin,
+        s.bse_code,
         v.pct_of_company AS new_pct,
         v.market_value_cr AS new_value_cr
       FROM valued v
@@ -700,6 +705,8 @@ async function loadEntityHoldingsSnapshots(
       stock_name: string;
       stock_slug: string;
       nse_symbol: string | null;
+      isin: string | null;
+      bse_code: string | null;
       new_pct: unknown;
       new_value_cr: unknown;
     }>;
@@ -714,6 +721,8 @@ async function loadEntityHoldingsSnapshots(
         stockName: r.stock_name,
         stockSlug: r.stock_slug,
         nseSymbol: r.nse_symbol ?? null,
+        isin: r.isin ?? null,
+        bseCode: r.bse_code ?? null,
         changeType: 'unchanged',
         prevPct: toNum(r.new_pct),
         newPct: toNum(r.new_pct),
@@ -721,6 +730,10 @@ async function loadEntityHoldingsSnapshots(
         marketValueCr: toNum(r.new_value_cr),
         prevMarketValueCr: toNum(r.new_value_cr),
       });
+    }
+
+    for (const detail of byQuarter.values()) {
+      detail.rows = dedupeStockChangeRows(detail.rows);
     }
 
     return quarters
@@ -763,8 +776,10 @@ export async function getEntityQuarterHistory(
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(COALESCE(
               eh.market_value_cr,
               CASE
                 WHEN eh.shares_held > 0 AND sqp.close_price IS NOT NULL
@@ -773,56 +788,70 @@ export async function getEntityQuarterHistory(
                   THEN (eh.shares_held::numeric * px.price_per_share) / 1e7
                 ELSE NULL
               END
-            )
-          )::numeric, 2) AS value_cr
-        FROM entity_holdings eh
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
-        LEFT JOIN LATERAL (
-          SELECT (eh2.market_value_cr * 1e7 / NULLIF(eh2.shares_held, 0))::numeric AS price_per_share
-          FROM entity_holdings eh2
-          WHERE eh2.stock_id = eh.stock_id
-            AND eh2.quarter = eh.quarter
-            AND eh2.strategy_id IS NULL
-            AND eh2.market_value_cr > 0
-            AND eh2.shares_held > 0
-          LIMIT 1
-        ) px ON TRUE
-        WHERE eh.entity_id = te.id
-          AND eh.strategy_id IS NULL
-          AND eh.quarter = eqs.quarter
+            )) AS value_cr
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
+          LEFT JOIN LATERAL (
+            SELECT (eh2.market_value_cr * 1e7 / NULLIF(eh2.shares_held, 0))::numeric AS price_per_share
+            FROM entity_holdings eh2
+            WHERE eh2.stock_id = eh.stock_id
+              AND eh2.quarter = eh.quarter
+              AND eh2.strategy_id IS NULL
+              AND eh2.market_value_cr > 0
+              AND eh2.shares_held > 0
+            LIMIT 1
+          ) px ON TRUE
+          WHERE eh.entity_id = te.id
+            AND eh.strategy_id IS NULL
+            AND eh.quarter = eqs.quarter
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) eh_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(DISTINCT sph.stock_id)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
-              CASE
-                WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-                  THEN (sph.shares::numeric * sqp.close_price) / 1e7
-                ELSE NULL
-              END
-            )
-          )::numeric, 2) AS value_cr
-        FROM shareholding_pattern_holders sph
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-        WHERE sph.entity_id = te.id
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-          AND COALESCE(sph.match_confidence, 0) >= 0.85
-          AND sph.quarter = eqs.quarter
+          COUNT(*)::int AS cnt,
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(CASE
+              WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                THEN (sph.shares::numeric * sqp.close_price) / 1e7
+              ELSE NULL
+            END) AS value_cr
+          FROM shareholding_pattern_holders sph
+          JOIN stocks s ON s.id = sph.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+          WHERE sph.entity_id = te.id
+            AND sph.is_promoter = FALSE
+            AND sph.pct_of_company >= 1.0
+            AND COALESCE(sph.match_confidence, 0) >= 0.85
+            AND sph.quarter = eqs.quarter
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) sph_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(*) FILTER (WHERE ec.change_type = 'fresh_entry')   AS fresh_entries,
-          COUNT(*) FILTER (WHERE ec.change_type = 'increased')     AS adds,
-          COUNT(*) FILTER (WHERE ec.change_type = 'complete_exit') AS exits,
-          COUNT(*) FILTER (WHERE ec.change_type = 'decreased')     AS trims
-        FROM entity_changes ec
-        WHERE ec.entity_id = te.id
-          AND ec.strategy_id IS NULL
-          AND ec.quarter = eqs.quarter
+          COUNT(*) FILTER (WHERE d.change_type = 'fresh_entry')   AS fresh_entries,
+          COUNT(*) FILTER (WHERE d.change_type = 'increased')     AS adds,
+          COUNT(*) FILTER (WHERE d.change_type = 'complete_exit') AS exits,
+          COUNT(*) FILTER (WHERE d.change_type = 'decreased')     AS trims
+        FROM (
+          SELECT DISTINCT ON (${sql.unsafe(STOCK_LISTING_KEY)})
+            ec.change_type
+          FROM entity_changes ec
+          JOIN stocks s ON s.id = ec.stock_id
+          WHERE ec.entity_id = te.id
+            AND ec.strategy_id IS NULL
+            AND ec.quarter = eqs.quarter
+          ORDER BY ${sql.unsafe(STOCK_LISTING_KEY)},
+            CASE ec.change_type
+              WHEN 'fresh_entry' THEN 0 WHEN 'complete_exit' THEN 1
+              WHEN 'increased' THEN 2 WHEN 'decreased' THEN 3 ELSE 4
+            END
+        ) d
       ) mov ON TRUE
       WHERE te.slug = ${entitySlug}
       ORDER BY eqs.quarter DESC
@@ -924,53 +953,70 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(COALESCE(
               eh.market_value_cr,
               CASE
                 WHEN eh.shares_held > 0 AND sqp.close_price IS NOT NULL
                   THEN (eh.shares_held::numeric * sqp.close_price) / 1e7
                 ELSE NULL
               END
-            )
-          )::numeric, 2) AS value_cr
-        FROM entity_holdings eh
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
-        WHERE eh.entity_id = te.id
-          AND eh.strategy_id IS NULL
-          AND eh.quarter = (SELECT q FROM latest)
+            )) AS value_cr
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
+          WHERE eh.entity_id = te.id
+            AND eh.strategy_id IS NULL
+            AND eh.quarter = (SELECT q FROM latest)
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) eh_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(DISTINCT sph.stock_id)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
-              CASE
-                WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-                  THEN (sph.shares::numeric * sqp.close_price) / 1e7
-                ELSE NULL
-              END
-            )
-          )::numeric, 2) AS value_cr
-        FROM shareholding_pattern_holders sph
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-        WHERE sph.entity_id = te.id
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-          AND COALESCE(sph.match_confidence, 0) >= 0.85
-          AND sph.quarter = (SELECT q FROM latest)
+          COUNT(*)::int AS cnt,
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(CASE
+              WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                THEN (sph.shares::numeric * sqp.close_price) / 1e7
+              ELSE NULL
+            END) AS value_cr
+          FROM shareholding_pattern_holders sph
+          JOIN stocks s ON s.id = sph.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+          WHERE sph.entity_id = te.id
+            AND sph.is_promoter = FALSE
+            AND sph.pct_of_company >= 1.0
+            AND COALESCE(sph.match_confidence, 0) >= 0.85
+            AND sph.quarter = (SELECT q FROM latest)
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) sph_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(*) FILTER (WHERE ec.change_type = 'fresh_entry')   AS fresh_entries,
-          COUNT(*) FILTER (WHERE ec.change_type = 'complete_exit') AS exits,
-          COUNT(*) FILTER (WHERE ec.change_type = 'increased')     AS adds,
-          COUNT(*) FILTER (WHERE ec.change_type = 'decreased')     AS trims
-        FROM entity_changes ec
-        WHERE ec.entity_id = te.id AND ec.strategy_id IS NULL
-          AND ec.quarter = (SELECT q FROM latest)
+          COUNT(*) FILTER (WHERE d.change_type = 'fresh_entry')   AS fresh_entries,
+          COUNT(*) FILTER (WHERE d.change_type = 'increased')     AS adds,
+          COUNT(*) FILTER (WHERE d.change_type = 'complete_exit') AS exits,
+          COUNT(*) FILTER (WHERE d.change_type = 'decreased')     AS trims
+        FROM (
+          SELECT DISTINCT ON (${sql.unsafe(STOCK_LISTING_KEY)})
+            ec.change_type
+          FROM entity_changes ec
+          JOIN stocks s ON s.id = ec.stock_id
+          WHERE ec.entity_id = te.id
+            AND ec.strategy_id IS NULL
+            AND ec.quarter = (SELECT q FROM latest)
+          ORDER BY ${sql.unsafe(STOCK_LISTING_KEY)},
+            CASE ec.change_type
+              WHEN 'fresh_entry' THEN 0 WHEN 'complete_exit' THEN 1
+              WHEN 'increased' THEN 2 WHEN 'decreased' THEN 3 ELSE 4
+            END
+        ) d
       ) mov ON TRUE
     `) as EntityStatsRow[];
     for (const r of rows) {
@@ -1034,12 +1080,27 @@ export async function getTrackedSnapshot(): Promise<TrackedSnapshot> {
   if (!sql) return base;
   try {
     const rows = (await sql!`
+      WITH latest AS (
+        SELECT MAX(quarter) AS q FROM entity_holdings WHERE strategy_id IS NULL
+      )
       SELECT
-        (SELECT COUNT(DISTINCT stock_id) FROM entity_holdings)               AS stocks_held,
-        (SELECT SUM(portfolio_value_cr) FROM entity_quarterly_stats
-          WHERE strategy_id IS NULL
-            AND quarter = (SELECT MAX(quarter) FROM entity_quarterly_stats)) AS total_value_cr,
-        (SELECT MAX(quarter)::text FROM entity_quarterly_stats)              AS latest_quarter
+        (SELECT COUNT(*)::int FROM (
+          SELECT ${sql.unsafe(STOCK_LISTING_KEY)} AS k
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          WHERE eh.strategy_id IS NULL
+            AND eh.quarter = (SELECT q FROM latest)
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped_stocks) AS stocks_held,
+        (SELECT ROUND(SUM(value_cr)::numeric, 2) FROM (
+          SELECT MAX(eh.market_value_cr) AS value_cr
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          WHERE eh.strategy_id IS NULL
+            AND eh.quarter = (SELECT q FROM latest)
+          GROUP BY eh.entity_id, ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped_vals) AS total_value_cr,
+        (SELECT MAX(quarter)::text FROM entity_holdings WHERE strategy_id IS NULL) AS latest_quarter
     `) as SnapshotRow[];
     const r = rows[0];
     return {
@@ -1390,27 +1451,27 @@ export async function getDistinctHolderSlugs(): Promise<
       WITH latest AS (
         SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
       ),
-      raw AS (
+      deduped AS (
         SELECT
-          sph.holder_name,
           sph.entity_id,
           te.slug AS entity_slug,
           te.display_name AS entity_display_name,
-          COUNT(DISTINCT sph.stock_id)::int AS stock_count
+          sph.holder_name,
+          ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key
         FROM shareholding_pattern_holders sph
+        JOIN stocks s ON s.id = sph.stock_id
         LEFT JOIN tracked_entities te ON te.id = sph.entity_id
         WHERE sph.quarter = (SELECT q FROM latest)
           AND sph.is_promoter = FALSE
           AND sph.pct_of_company >= 1.0
-        GROUP BY sph.holder_name, sph.entity_id, te.slug, te.display_name
       ),
       curated AS (
         SELECT
           entity_id,
           COALESCE(MAX(entity_display_name), MAX(holder_name)) AS holder_name,
           MAX(entity_slug) AS entity_slug,
-          SUM(stock_count)::int AS stock_count
-        FROM raw
+          COUNT(DISTINCT listing_key)::int AS stock_count
+        FROM deduped
         WHERE entity_id IS NOT NULL
         GROUP BY entity_id
       ),
@@ -1418,14 +1479,14 @@ export async function getDistinctHolderSlugs(): Promise<
         SELECT
           MAX(holder_name) AS holder_name,
           MAX(entity_slug) AS entity_slug,
-          SUM(stock_count)::int AS stock_count
+          COUNT(DISTINCT listing_key)::int AS stock_count
         FROM (
           SELECT
             holder_name,
             entity_slug,
-            stock_count,
+            listing_key,
             upper(regexp_replace(regexp_replace(trim(holder_name), '\\.+$', ''), '\\s+', ' ', 'g')) AS norm_key
-          FROM raw
+          FROM deduped
           WHERE entity_id IS NULL
         ) m
         GROUP BY norm_key
@@ -1592,6 +1653,24 @@ export interface OnePercentHolderPosition {
   pct: number | null;
   shares: number | null;
   marketValueCr: number | null;
+  nseSymbol?: string | null;
+  isin?: string | null;
+  bseCode?: string | null;
+}
+
+function dedupeHolderPositions(positions: OnePercentHolderPosition[]): OnePercentHolderPosition[] {
+  const byKey = new Map<string, OnePercentHolderPosition>();
+  for (const p of positions) {
+    const key = stockListingKey({
+      stockSlug: p.stockSlug,
+      nseSymbol: p.nseSymbol,
+      isin: p.isin,
+      bseCode: p.bseCode,
+    });
+    const prev = byKey.get(key);
+    if (!prev || (p.pct ?? 0) > (prev.pct ?? 0)) byKey.set(key, p);
+  }
+  return [...byKey.values()];
 }
 
 export interface OnePercentSearchHolder {
@@ -1619,6 +1698,9 @@ export async function getOnePercentHolderPositionsMap(): Promise<
         CASE WHEN sph.entity_id IS NOT NULL THEN NULL ELSE sph.holder_name END AS holder_name,
         (array_agg(s.slug ORDER BY s.id))[1] AS stock_slug,
         (array_agg(s.name ORDER BY s.id))[1] AS stock_name,
+        (array_agg(s.nse_symbol ORDER BY s.id))[1] AS nse_symbol,
+        (array_agg(s.isin ORDER BY s.id))[1] AS isin,
+        (array_agg(s.bse_code ORDER BY s.id))[1] AS bse_code,
         MAX(sph.pct_of_company)::numeric AS pct_of_company,
         MAX(sph.shares)::bigint AS shares,
         ROUND(MAX(
@@ -1646,6 +1728,9 @@ export async function getOnePercentHolderPositionsMap(): Promise<
       entity_slug: string | null;
       stock_slug: string;
       stock_name: string;
+      nse_symbol: string | null;
+      isin: string | null;
+      bse_code: string | null;
       pct_of_company: unknown;
       shares: number | null;
       market_value_cr: unknown;
@@ -1658,13 +1743,16 @@ export async function getOnePercentHolderPositionsMap(): Promise<
       const pos: OnePercentHolderPosition = {
         stockSlug: r.stock_slug,
         stockName: r.stock_name,
+        nseSymbol: r.nse_symbol ?? null,
+        isin: r.isin ?? null,
+        bseCode: r.bse_code ?? null,
         pct: toNum(r.pct_of_company),
         shares: r.shares != null ? Number(r.shares) : null,
         marketValueCr: toNum(r.market_value_cr),
       };
       const list = map.get(key) ?? [];
       list.push(pos);
-      map.set(key, list);
+      map.set(key, dedupeHolderPositions(list));
     }
   } catch {
     /* empty */
@@ -1687,7 +1775,7 @@ export async function getOnePercentSearchIndex(): Promise<{
   for (const h of holders) {
     const key = h.entitySlug ? `entity:${h.entitySlug}` : `name:${normalizeHolderSearchKey(h.holderName)}`;
     const prev = byKey.get(key);
-    if (!prev || (h.entitySlug && !prev.entitySlug) || h.stockCount > prev.stockCount) {
+    if (!prev || (h.entitySlug && !prev.entitySlug)) {
       byKey.set(key, {
         slug: h.holderSlug,
         name: h.holderName,
@@ -1702,18 +1790,18 @@ export async function getOnePercentSearchIndex(): Promise<{
       const key = h.entitySlug
         ? `entity:${h.entitySlug}`
         : `name:${normalizeHolderSearchKey(h.name)}`;
-      const positions = positionsMap.get(key) ?? [];
+      const positions = dedupeHolderPositions(positionsMap.get(key) ?? []);
       const profileUrl = holderProfileUrl({
         entitySlug: h.entitySlug,
         holderSlug: h.slug,
-        stockCount: h.stockCount,
+        stockCount: positions.length || h.stockCount,
       });
       return {
         slug: h.entitySlug || h.slug,
         name: h.name,
         entitySlug: h.entitySlug,
         profileUrl,
-        stockCount: Math.max(h.stockCount, positions.length),
+        stockCount: positions.length > 0 ? positions.length : h.stockCount,
         positions,
       };
     })
@@ -1849,6 +1937,161 @@ function bucketShpHolders(rows: OnePercentRow[]): Omit<StockShareholdingDetail, 
   return { promoters, fii, mutualFunds, dii, superInvestors, onePercentClub };
 }
 
+function mapOnePercentRowDb(r: OnePercentRowDb): OnePercentRow {
+  return {
+    id: r.id,
+    stockId: r.stock_id,
+    stockName: r.stock_name,
+    stockSlug: r.stock_slug,
+    holderName: r.holder_name,
+    holderType: r.entity_type || r.holder_type,
+    shares: toNum(r.shares),
+    pctOfCompany: toNum(r.pct_of_company),
+    entityId: r.entity_id != null ? Number(r.entity_id) : null,
+    entitySlug: r.entity_slug ?? null,
+    entityDisplayName: r.entity_display_name ?? null,
+    entityType: r.entity_type ?? null,
+    matchConfidence: r.match_confidence != null ? toNum(r.match_confidence) : null,
+    quarter: quarterToIso(r.quarter),
+    marketValueCr: toNum(r.market_value_cr),
+    filingNames: Array.isArray(r.filing_names) ? r.filing_names : undefined,
+    filingCount: r.filing_count != null ? Number(r.filing_count) : undefined,
+  };
+}
+
+/** Deduped ≥1% SHP holders for one listed company (all duplicate stock rows collapse). */
+async function fetchDedupedShpHoldersForStock(
+  stockSlug: string,
+  quarter: string,
+  options: { excludePromoters?: boolean; promotersOnly?: boolean } = {},
+): Promise<OnePercentRow[]> {
+  if (!sql) return [];
+  const { excludePromoters = false, promotersOnly = false } = options;
+  try {
+    const rows = (await sql!`
+      WITH anchor AS (
+        SELECT id, isin, nse_symbol, bse_code, slug FROM stocks WHERE slug = ${stockSlug} LIMIT 1
+      ),
+      stock_ids AS (
+        SELECT s2.id
+        FROM stocks s2
+        CROSS JOIN anchor a
+        WHERE ${sql.unsafe(stockListingKeySql('s2'))} = ${sql.unsafe(stockListingKeySql('a'))}
+      ),
+      base AS (
+        SELECT
+          sph.id,
+          s.id   AS stock_id,
+          s.name AS stock_name,
+          s.slug AS stock_slug,
+          sph.holder_name,
+          sph.holder_type,
+          sph.is_promoter,
+          sph.shares,
+          sph.pct_of_company,
+          sph.entity_id,
+          te.slug AS entity_slug,
+          te.display_name AS entity_display_name,
+          te.type AS entity_type,
+          sph.match_confidence,
+          sph.quarter,
+          ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key,
+          COALESCE(sqp.close_price, px.price_per_share) AS price_per_share,
+          CASE
+            WHEN sph.shares > 0 AND COALESCE(sqp.close_price, px.price_per_share) IS NOT NULL
+              THEN ROUND((sph.shares::numeric * COALESCE(sqp.close_price, px.price_per_share)) / 1e7, 2)
+            ELSE NULL
+          END AS row_value_cr
+        FROM shareholding_pattern_holders sph
+        JOIN stocks s ON s.id = sph.stock_id
+        JOIN stock_ids si ON si.id = sph.stock_id
+        LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+        LEFT JOIN stock_quarter_prices sqp
+          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+        LEFT JOIN LATERAL (
+          SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
+          FROM entity_holdings eh
+          WHERE eh.stock_id = sph.stock_id
+            AND eh.quarter = sph.quarter
+            AND eh.strategy_id IS NULL
+            AND eh.market_value_cr > 0
+            AND eh.shares_held > 0
+          LIMIT 1
+        ) px ON TRUE
+        WHERE sph.quarter = ${quarter}::date
+          AND sph.pct_of_company >= 1.0
+          ${excludePromoters ? sql`AND sph.is_promoter = FALSE` : sql``}
+          ${promotersOnly ? sql`AND sph.is_promoter = TRUE` : sql``}
+      ),
+      curated AS (
+        SELECT
+          MIN(b.id) AS id,
+          (array_agg(b.stock_id ORDER BY b.id))[1] AS stock_id,
+          (array_agg(b.stock_name ORDER BY b.id))[1] AS stock_name,
+          (array_agg(b.stock_slug ORDER BY b.id))[1] AS stock_slug,
+          COALESCE(MAX(b.entity_display_name), MAX(b.holder_name)) AS holder_name,
+          CASE WHEN bool_or(b.is_promoter) THEN 'promoter' ELSE COALESCE(MAX(b.entity_type), MAX(b.holder_type)) END AS holder_type,
+          MAX(b.shares)::bigint AS shares,
+          MAX(b.pct_of_company)::numeric AS pct_of_company,
+          b.entity_id,
+          MAX(b.entity_slug) AS entity_slug,
+          MAX(b.entity_display_name) AS entity_display_name,
+          MAX(b.entity_type) AS entity_type,
+          MAX(b.match_confidence) AS match_confidence,
+          b.quarter,
+          MAX(b.row_value_cr) AS market_value_cr,
+          COUNT(*)::int AS filing_count,
+          ARRAY_AGG(DISTINCT b.holder_name ORDER BY b.holder_name) AS filing_names
+        FROM base b
+        WHERE b.entity_id IS NOT NULL
+        GROUP BY b.entity_id, b.listing_key, b.quarter
+      ),
+      mystery AS (
+        SELECT DISTINCT ON (b.listing_key, upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g')))
+          b.id,
+          b.stock_id,
+          b.stock_name,
+          b.stock_slug,
+          b.holder_name,
+          CASE WHEN b.is_promoter THEN 'promoter' ELSE b.holder_type END AS holder_type,
+          b.shares,
+          b.pct_of_company,
+          b.entity_id,
+          b.entity_slug,
+          b.entity_display_name,
+          b.entity_type,
+          b.match_confidence,
+          b.quarter,
+          b.row_value_cr AS market_value_cr,
+          1 AS filing_count,
+          ARRAY[b.holder_name] AS filing_names
+        FROM base b
+        WHERE b.entity_id IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM base c
+            WHERE c.entity_id IS NOT NULL
+              AND c.listing_key = b.listing_key
+              AND upper(regexp_replace(regexp_replace(trim(c.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
+                = upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
+          )
+        ORDER BY
+          b.listing_key,
+          upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g')),
+          b.pct_of_company DESC NULLS LAST,
+          b.id DESC
+      )
+      SELECT * FROM curated
+      UNION ALL
+      SELECT * FROM mystery
+      ORDER BY pct_of_company DESC
+    `) as OnePercentRowDb[];
+    return rows.map(mapOnePercentRowDb);
+  } catch {
+    return [];
+  }
+}
+
 /** Full shareholding breakdown for a stock page (chart + expandable sections). */
 export async function getStockShareholdingDetail(stockSlug: string): Promise<StockShareholdingDetail | null> {
   if (!sql) return null;
@@ -1888,75 +2131,8 @@ export async function getStockShareholdingDetail(stockSlug: string): Promise<Sto
     }[];
     const summaryRow = summaryRows[0];
 
-    const holderRows = (await sql!`
-      SELECT
-        sph.id,
-        s.id AS stock_id,
-        s.name AS stock_name,
-        s.slug AS stock_slug,
-        sph.holder_name,
-        sph.holder_type,
-        sph.shares,
-        sph.pct_of_company,
-        sph.entity_id,
-        te.slug AS entity_slug,
-        te.display_name AS entity_display_name,
-        te.type AS entity_type,
-        sph.match_confidence,
-        sph.quarter,
-        sph.is_promoter,
-        CASE
-          WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-            THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
-          ELSE NULL
-        END AS market_value_cr
-      FROM shareholding_pattern_holders sph
-      JOIN stocks s ON s.id = sph.stock_id
-      LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-      LEFT JOIN stock_quarter_prices sqp
-        ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-      WHERE s.slug = ${stockSlug}
-        AND sph.quarter = ${latestQ}::date
-        AND sph.pct_of_company >= 1.0
-      ORDER BY sph.pct_of_company DESC
-    `) as Array<{
-      id: number;
-      stock_id: number;
-      stock_name: string;
-      stock_slug: string;
-      holder_name: string;
-      holder_type: string;
-      shares: number | null;
-      pct_of_company: string | null;
-      entity_id: number | null;
-      entity_slug: string | null;
-      entity_display_name: string | null;
-      entity_type: string | null;
-      match_confidence: string | null;
-      quarter: string;
-      is_promoter: boolean;
-      market_value_cr: string | null;
-    }>;
-
-    if (!holderRows.length && !summaryRow) return null;
-
-    const mapped: OnePercentRow[] = holderRows.map((r) => ({
-      id: r.id,
-      stockId: r.stock_id,
-      stockName: r.stock_name,
-      stockSlug: r.stock_slug,
-      holderName: r.entity_display_name || r.holder_name,
-      holderType: r.is_promoter ? 'promoter' : (r.entity_type || r.holder_type),
-      shares: toNum(r.shares),
-      pctOfCompany: toNum(r.pct_of_company),
-      entityId: r.entity_id != null ? Number(r.entity_id) : null,
-      entitySlug: r.entity_slug ?? null,
-      entityDisplayName: r.entity_display_name ?? null,
-      entityType: r.entity_type ?? null,
-      matchConfidence: r.match_confidence != null ? toNum(r.match_confidence) : null,
-      quarter: quarterToIso(r.quarter),
-      marketValueCr: toNum(r.market_value_cr),
-    }));
+    const mapped = await fetchDedupedShpHoldersForStock(stockSlug, latestQ);
+    if (!mapped.length && !summaryRow) return null;
 
     const buckets = bucketShpHolders(mapped);
 
@@ -2003,143 +2179,12 @@ export async function getStockShareholdingDetail(stockSlug: string): Promise<Sto
 export async function getOnePercentHoldersForStock(stockSlug: string): Promise<OnePercentRow[]> {
   if (!sql) return [];
   try {
-    const rows = (await sql!`
-      WITH latest AS (
-        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
-      ),
-      base AS (
-        SELECT
-          sph.id,
-          s.id   AS stock_id,
-          s.name AS stock_name,
-          s.slug AS stock_slug,
-          sph.holder_name,
-          sph.holder_type,
-          sph.shares,
-          sph.pct_of_company,
-          sph.entity_id,
-          te.slug AS entity_slug,
-          te.display_name AS entity_display_name,
-          te.type AS entity_type,
-          sph.match_confidence,
-          sph.quarter,
-          COALESCE(sqp.close_price, px.price_per_share) AS price_per_share,
-          CASE
-            WHEN sph.shares > 0 AND COALESCE(sqp.close_price, px.price_per_share) IS NOT NULL
-              THEN ROUND((sph.shares::numeric * COALESCE(sqp.close_price, px.price_per_share)) / 1e7, 2)
-            ELSE NULL
-          END AS row_value_cr
-        FROM shareholding_pattern_holders sph
-        JOIN stocks s ON s.id = sph.stock_id
-        LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-        LEFT JOIN LATERAL (
-          SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
-          FROM entity_holdings eh
-          WHERE eh.stock_id = sph.stock_id
-            AND eh.quarter = sph.quarter
-            AND eh.strategy_id IS NULL
-            AND eh.market_value_cr > 0
-            AND eh.shares_held > 0
-          LIMIT 1
-        ) px ON TRUE
-        WHERE s.slug = ${stockSlug}
-          AND sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-      ),
-      curated AS (
-        SELECT
-          MIN(b.id) AS id,
-          b.stock_id,
-          b.stock_name,
-          b.stock_slug,
-          COALESCE(MAX(b.entity_display_name), MAX(b.holder_name)) AS holder_name,
-          COALESCE(MAX(b.entity_type), MAX(b.holder_type)) AS holder_type,
-          SUM(b.shares)::bigint AS shares,
-          SUM(b.pct_of_company)::numeric AS pct_of_company,
-          b.entity_id,
-          MAX(b.entity_slug) AS entity_slug,
-          MAX(b.entity_display_name) AS entity_display_name,
-          MAX(b.entity_type) AS entity_type,
-          MAX(b.match_confidence) AS match_confidence,
-          b.quarter,
-          CASE
-            WHEN SUM(b.shares) > 0 AND MAX(b.price_per_share) IS NOT NULL
-              THEN ROUND((SUM(b.shares)::numeric * MAX(b.price_per_share)) / 1e7, 2)
-            WHEN SUM(b.row_value_cr) IS NOT NULL
-              THEN ROUND(SUM(COALESCE(b.row_value_cr, 0))::numeric, 2)
-            ELSE NULL
-          END AS market_value_cr,
-          COUNT(*)::int AS filing_count,
-          ARRAY_AGG(DISTINCT b.holder_name ORDER BY b.holder_name) AS filing_names
-        FROM base b
-        WHERE b.entity_id IS NOT NULL
-        GROUP BY b.entity_id, b.stock_id, b.stock_name, b.stock_slug, b.quarter
-      ),
-      mystery AS (
-        SELECT DISTINCT ON (
-          b.stock_id,
-          upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
-        )
-          b.id,
-          b.stock_id,
-          b.stock_name,
-          b.stock_slug,
-          b.holder_name,
-          b.holder_type,
-          b.shares,
-          b.pct_of_company,
-          b.entity_id,
-          b.entity_slug,
-          b.entity_display_name,
-          b.entity_type,
-          b.match_confidence,
-          b.quarter,
-          b.row_value_cr AS market_value_cr,
-          1 AS filing_count,
-          ARRAY[b.holder_name] AS filing_names
-        FROM base b
-        WHERE b.entity_id IS NULL
-          AND NOT EXISTS (
-            SELECT 1
-            FROM base c
-            WHERE c.entity_id IS NOT NULL
-              AND c.stock_id = b.stock_id
-              AND upper(regexp_replace(regexp_replace(trim(c.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
-                = upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
-          )
-        ORDER BY
-          b.stock_id,
-          upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g')),
-          b.pct_of_company DESC NULLS LAST,
-          b.id DESC
-      )
-      SELECT * FROM curated
-      UNION ALL
-      SELECT * FROM mystery
-      ORDER BY pct_of_company DESC
-    `) as OnePercentRowDb[];
-    return rows.map((r) => ({
-      id: r.id,
-      stockId: r.stock_id,
-      stockName: r.stock_name,
-      stockSlug: r.stock_slug,
-      holderName: r.holder_name,
-      holderType: r.entity_type || r.holder_type,
-      shares: toNum(r.shares),
-      pctOfCompany: toNum(r.pct_of_company),
-      entityId: r.entity_id != null ? Number(r.entity_id) : null,
-      entitySlug: r.entity_slug ?? null,
-      entityDisplayName: r.entity_display_name ?? null,
-      entityType: r.entity_type ?? null,
-      matchConfidence: r.match_confidence != null ? toNum(r.match_confidence) : null,
-      quarter: quarterToIso(r.quarter),
-      marketValueCr: toNum(r.market_value_cr),
-      filingNames: Array.isArray(r.filing_names) ? r.filing_names : undefined,
-      filingCount: r.filing_count != null ? Number(r.filing_count) : undefined,
-    }));
+    const latestRows = (await sql!`
+      SELECT MAX(quarter)::text AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+    `) as { q: string | null }[];
+    const latestQ = latestRows[0]?.q;
+    if (!latestQ) return [];
+    return fetchDedupedShpHoldersForStock(stockSlug, latestQ, { excludePromoters: true });
   } catch {
     return [];
   }
@@ -2401,8 +2446,12 @@ export function buildInvestorPageSeo(
 ): { title: string; description: string } {
   const quarter = holdings[0]?.quarter ?? live?.quarter ?? null;
   const qLabel = quarter ? formatQuarter(quarter) : null;
-  const holdingsN = live?.totalHoldings ?? holdings.length;
-  const valueCr = live?.portfolioValueCr;
+  const holdingsN = holdings.length > 0 ? holdings.length : (live?.totalHoldings ?? 0);
+  const holdingsValueTotal = holdings.reduce((sum, h) => sum + (h.marketValueCr ?? 0), 0);
+  const valueCr =
+    holdings.length > 0 && holdingsValueTotal > 0
+      ? holdingsValueTotal
+      : live?.portfolioValueCr;
 
   const title = qLabel
     ? `${displayName} Portfolio & Holdings ${qLabel} | IPOFins`
