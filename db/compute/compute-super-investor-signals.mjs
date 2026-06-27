@@ -23,6 +23,8 @@
 import { sql, isDbConfigured } from '../../scripts/lib/db.mjs';
 import { stockListingKeySql } from '../../scripts/lib/stock-listing-key.mjs';
 
+const LISTING_KEY = stockListingKeySql('s');
+
 // ═══════════════════════════════════════════════════════════════
 // PARSE ARGS
 // ═══════════════════════════════════════════════════════════════
@@ -65,12 +67,12 @@ async function computeEntityChanges(quarter) {
         0, shares_held, shares_held,
         pct_of_company, 0
       FROM (
-        SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+        SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, ${sql.unsafe(LISTING_KEY)})
           eh.entity_id, eh.strategy_id, eh.stock_id, eh.quarter, eh.shares_held, eh.pct_of_company
         FROM entity_holdings eh
         JOIN stocks s ON s.id = eh.stock_id
         WHERE eh.quarter = ${quarter}::DATE
-        ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+        ORDER BY eh.entity_id, eh.strategy_id, ${sql.unsafe(LISTING_KEY)},
           eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
       ) eh
       ON CONFLICT (entity_id, strategy_id, stock_id, quarter) DO UPDATE SET
@@ -110,25 +112,25 @@ async function computeEntityChanges(quarter) {
       COALESCE(curr.pct_of_company, 0) - COALESCE(prev.pct_of_company, 0),
       COALESCE(curr.market_value_cr, 0) - COALESCE(prev.market_value_cr, 0)
     FROM (
-      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, ${sql.unsafe(LISTING_KEY)})
         eh.entity_id, eh.strategy_id, eh.stock_id,
-        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug) AS stock_key,
+        ${sql.unsafe(LISTING_KEY)} AS stock_key,
         eh.shares_held, eh.pct_of_company, eh.market_value_cr
       FROM entity_holdings eh
       JOIN stocks s ON s.id = eh.stock_id
       WHERE eh.quarter = ${quarter}::DATE
-      ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+      ORDER BY eh.entity_id, eh.strategy_id, ${sql.unsafe(LISTING_KEY)},
         eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
     ) curr
     FULL OUTER JOIN (
-      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, ${sql.unsafe(LISTING_KEY)})
         eh.entity_id, eh.strategy_id, eh.stock_id,
-        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug) AS stock_key,
+        ${sql.unsafe(LISTING_KEY)} AS stock_key,
         eh.shares_held, eh.pct_of_company, eh.market_value_cr
       FROM entity_holdings eh
       JOIN stocks s ON s.id = eh.stock_id
       WHERE eh.quarter = ${prevQuarter}::DATE
-      ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+      ORDER BY eh.entity_id, eh.strategy_id, ${sql.unsafe(LISTING_KEY)},
         eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
     ) prev
       ON curr.entity_id    = prev.entity_id
@@ -332,24 +334,33 @@ async function computeEntityOverlaps(quarter) {
   // this quarter, compute overlap % = common_stocks / min(a_holdings, b_holdings).
   await sql`
     INSERT INTO entity_overlaps (entity_a_id, entity_b_id, quarter, overlap_pct, common_stocks)
+    WITH deduped AS (
+      SELECT
+        eh.entity_id,
+        ${sql.unsafe(LISTING_KEY)} AS listing_key
+      FROM entity_holdings eh
+      JOIN stocks s ON s.id = eh.stock_id
+      WHERE eh.quarter = ${quarter}::DATE AND eh.strategy_id IS NULL
+      GROUP BY eh.entity_id, ${sql.unsafe(LISTING_KEY)}
+    ),
+    counts AS (
+      SELECT entity_id, COUNT(*)::int AS cnt FROM deduped GROUP BY entity_id
+    )
     SELECT
       a.entity_id AS entity_a_id,
       b.entity_id AS entity_b_id,
       ${quarter}::DATE,
       ROUND(
-        COUNT(*)::NUMERIC / LEAST(
-          (SELECT COUNT(*) FROM entity_holdings WHERE entity_id = a.entity_id AND quarter = ${quarter}::DATE),
-          (SELECT COUNT(*) FROM entity_holdings WHERE entity_id = b.entity_id AND quarter = ${quarter}::DATE)
-        ) * 100, 2
+        COUNT(*)::NUMERIC / LEAST(ca.cnt, cb.cnt) * 100, 2
       ) AS overlap_pct,
-      COUNT(*) AS common_stocks
-    FROM entity_holdings a
-    JOIN entity_holdings b
-      ON a.stock_id = b.stock_id
-     AND a.quarter = ${quarter}::DATE
-     AND b.quarter = ${quarter}::DATE
+      COUNT(*)::int AS common_stocks
+    FROM deduped a
+    JOIN deduped b
+      ON a.listing_key = b.listing_key
      AND a.entity_id < b.entity_id
-    GROUP BY a.entity_id, b.entity_id
+    JOIN counts ca ON ca.entity_id = a.entity_id
+    JOIN counts cb ON cb.entity_id = b.entity_id
+    GROUP BY a.entity_id, b.entity_id, ca.cnt, cb.cnt
     HAVING COUNT(*) >= 1
     ON CONFLICT (entity_a_id, entity_b_id, quarter) DO UPDATE SET
       overlap_pct  = EXCLUDED.overlap_pct,

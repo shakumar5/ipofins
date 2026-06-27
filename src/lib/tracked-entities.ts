@@ -693,6 +693,8 @@ async function loadEntityHoldingsSnapshots(
         s.name AS stock_name,
         s.slug AS stock_slug,
         s.nse_symbol,
+        s.isin,
+        s.bse_code,
         v.pct_of_company AS new_pct,
         v.market_value_cr AS new_value_cr
       FROM valued v
@@ -703,6 +705,8 @@ async function loadEntityHoldingsSnapshots(
       stock_name: string;
       stock_slug: string;
       nse_symbol: string | null;
+      isin: string | null;
+      bse_code: string | null;
       new_pct: unknown;
       new_value_cr: unknown;
     }>;
@@ -717,6 +721,8 @@ async function loadEntityHoldingsSnapshots(
         stockName: r.stock_name,
         stockSlug: r.stock_slug,
         nseSymbol: r.nse_symbol ?? null,
+        isin: r.isin ?? null,
+        bseCode: r.bse_code ?? null,
         changeType: 'unchanged',
         prevPct: toNum(r.new_pct),
         newPct: toNum(r.new_pct),
@@ -724,6 +730,10 @@ async function loadEntityHoldingsSnapshots(
         marketValueCr: toNum(r.new_value_cr),
         prevMarketValueCr: toNum(r.new_value_cr),
       });
+    }
+
+    for (const detail of byQuarter.values()) {
+      detail.rows = dedupeStockChangeRows(detail.rows);
     }
 
     return quarters
@@ -824,14 +834,24 @@ export async function getEntityQuarterHistory(
       ) sph_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(*) FILTER (WHERE ec.change_type = 'fresh_entry')   AS fresh_entries,
-          COUNT(*) FILTER (WHERE ec.change_type = 'increased')     AS adds,
-          COUNT(*) FILTER (WHERE ec.change_type = 'complete_exit') AS exits,
-          COUNT(*) FILTER (WHERE ec.change_type = 'decreased')     AS trims
-        FROM entity_changes ec
-        WHERE ec.entity_id = te.id
-          AND ec.strategy_id IS NULL
-          AND ec.quarter = eqs.quarter
+          COUNT(*) FILTER (WHERE d.change_type = 'fresh_entry')   AS fresh_entries,
+          COUNT(*) FILTER (WHERE d.change_type = 'increased')     AS adds,
+          COUNT(*) FILTER (WHERE d.change_type = 'complete_exit') AS exits,
+          COUNT(*) FILTER (WHERE d.change_type = 'decreased')     AS trims
+        FROM (
+          SELECT DISTINCT ON (${sql.unsafe(STOCK_LISTING_KEY)})
+            ec.change_type
+          FROM entity_changes ec
+          JOIN stocks s ON s.id = ec.stock_id
+          WHERE ec.entity_id = te.id
+            AND ec.strategy_id IS NULL
+            AND ec.quarter = eqs.quarter
+          ORDER BY ${sql.unsafe(STOCK_LISTING_KEY)},
+            CASE ec.change_type
+              WHEN 'fresh_entry' THEN 0 WHEN 'complete_exit' THEN 1
+              WHEN 'increased' THEN 2 WHEN 'decreased' THEN 3 ELSE 4
+            END
+        ) d
       ) mov ON TRUE
       WHERE te.slug = ${entitySlug}
       ORDER BY eqs.quarter DESC
@@ -979,13 +999,24 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
       ) sph_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(*) FILTER (WHERE ec.change_type = 'fresh_entry')   AS fresh_entries,
-          COUNT(*) FILTER (WHERE ec.change_type = 'complete_exit') AS exits,
-          COUNT(*) FILTER (WHERE ec.change_type = 'increased')     AS adds,
-          COUNT(*) FILTER (WHERE ec.change_type = 'decreased')     AS trims
-        FROM entity_changes ec
-        WHERE ec.entity_id = te.id AND ec.strategy_id IS NULL
-          AND ec.quarter = (SELECT q FROM latest)
+          COUNT(*) FILTER (WHERE d.change_type = 'fresh_entry')   AS fresh_entries,
+          COUNT(*) FILTER (WHERE d.change_type = 'increased')     AS adds,
+          COUNT(*) FILTER (WHERE d.change_type = 'complete_exit') AS exits,
+          COUNT(*) FILTER (WHERE d.change_type = 'decreased')     AS trims
+        FROM (
+          SELECT DISTINCT ON (${sql.unsafe(STOCK_LISTING_KEY)})
+            ec.change_type
+          FROM entity_changes ec
+          JOIN stocks s ON s.id = ec.stock_id
+          WHERE ec.entity_id = te.id
+            AND ec.strategy_id IS NULL
+            AND ec.quarter = (SELECT q FROM latest)
+          ORDER BY ${sql.unsafe(STOCK_LISTING_KEY)},
+            CASE ec.change_type
+              WHEN 'fresh_entry' THEN 0 WHEN 'complete_exit' THEN 1
+              WHEN 'increased' THEN 2 WHEN 'decreased' THEN 3 ELSE 4
+            END
+        ) d
       ) mov ON TRUE
     `) as EntityStatsRow[];
     for (const r of rows) {
@@ -1049,12 +1080,27 @@ export async function getTrackedSnapshot(): Promise<TrackedSnapshot> {
   if (!sql) return base;
   try {
     const rows = (await sql!`
+      WITH latest AS (
+        SELECT MAX(quarter) AS q FROM entity_holdings WHERE strategy_id IS NULL
+      )
       SELECT
-        (SELECT COUNT(DISTINCT stock_id) FROM entity_holdings)               AS stocks_held,
-        (SELECT SUM(portfolio_value_cr) FROM entity_quarterly_stats
-          WHERE strategy_id IS NULL
-            AND quarter = (SELECT MAX(quarter) FROM entity_quarterly_stats)) AS total_value_cr,
-        (SELECT MAX(quarter)::text FROM entity_quarterly_stats)              AS latest_quarter
+        (SELECT COUNT(*)::int FROM (
+          SELECT ${sql.unsafe(STOCK_LISTING_KEY)} AS k
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          WHERE eh.strategy_id IS NULL
+            AND eh.quarter = (SELECT q FROM latest)
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped_stocks) AS stocks_held,
+        (SELECT ROUND(SUM(value_cr)::numeric, 2) FROM (
+          SELECT MAX(eh.market_value_cr) AS value_cr
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          WHERE eh.strategy_id IS NULL
+            AND eh.quarter = (SELECT q FROM latest)
+          GROUP BY eh.entity_id, ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped_vals) AS total_value_cr,
+        (SELECT MAX(quarter)::text FROM entity_holdings WHERE strategy_id IS NULL) AS latest_quarter
     `) as SnapshotRow[];
     const r = rows[0];
     return {
@@ -1737,7 +1783,7 @@ export async function getOnePercentSearchIndex(): Promise<{
         name: h.name,
         entitySlug: h.entitySlug,
         profileUrl,
-        stockCount: Math.max(h.stockCount, positions.length),
+        stockCount: positions.length > 0 ? positions.length : h.stockCount,
         positions,
       };
     })
@@ -2425,8 +2471,12 @@ export function buildInvestorPageSeo(
 ): { title: string; description: string } {
   const quarter = holdings[0]?.quarter ?? live?.quarter ?? null;
   const qLabel = quarter ? formatQuarter(quarter) : null;
-  const holdingsN = live?.totalHoldings ?? holdings.length;
-  const valueCr = live?.portfolioValueCr;
+  const holdingsN = holdings.length > 0 ? holdings.length : (live?.totalHoldings ?? 0);
+  const holdingsValueTotal = holdings.reduce((sum, h) => sum + (h.marketValueCr ?? 0), 0);
+  const valueCr =
+    holdings.length > 0 && holdingsValueTotal > 0
+      ? holdingsValueTotal
+      : live?.portfolioValueCr;
 
   const title = qLabel
     ? `${displayName} Portfolio & Holdings ${qLabel} | IPOFins`
