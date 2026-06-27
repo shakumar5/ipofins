@@ -1919,6 +1919,161 @@ function bucketShpHolders(rows: OnePercentRow[]): Omit<StockShareholdingDetail, 
   return { promoters, fii, mutualFunds, dii, superInvestors, onePercentClub };
 }
 
+function mapOnePercentRowDb(r: OnePercentRowDb): OnePercentRow {
+  return {
+    id: r.id,
+    stockId: r.stock_id,
+    stockName: r.stock_name,
+    stockSlug: r.stock_slug,
+    holderName: r.holder_name,
+    holderType: r.entity_type || r.holder_type,
+    shares: toNum(r.shares),
+    pctOfCompany: toNum(r.pct_of_company),
+    entityId: r.entity_id != null ? Number(r.entity_id) : null,
+    entitySlug: r.entity_slug ?? null,
+    entityDisplayName: r.entity_display_name ?? null,
+    entityType: r.entity_type ?? null,
+    matchConfidence: r.match_confidence != null ? toNum(r.match_confidence) : null,
+    quarter: quarterToIso(r.quarter),
+    marketValueCr: toNum(r.market_value_cr),
+    filingNames: Array.isArray(r.filing_names) ? r.filing_names : undefined,
+    filingCount: r.filing_count != null ? Number(r.filing_count) : undefined,
+  };
+}
+
+/** Deduped ≥1% SHP holders for one listed company (all duplicate stock rows collapse). */
+async function fetchDedupedShpHoldersForStock(
+  stockSlug: string,
+  quarter: string,
+  options: { excludePromoters?: boolean; promotersOnly?: boolean } = {},
+): Promise<OnePercentRow[]> {
+  if (!sql) return [];
+  const { excludePromoters = false, promotersOnly = false } = options;
+  try {
+    const rows = (await sql!`
+      WITH anchor AS (
+        SELECT id, isin, nse_symbol, bse_code, slug FROM stocks WHERE slug = ${stockSlug} LIMIT 1
+      ),
+      stock_ids AS (
+        SELECT s2.id
+        FROM stocks s2
+        CROSS JOIN anchor a
+        WHERE ${sql.unsafe(stockListingKeySql('s2'))} = ${sql.unsafe(stockListingKeySql('a'))}
+      ),
+      base AS (
+        SELECT
+          sph.id,
+          s.id   AS stock_id,
+          s.name AS stock_name,
+          s.slug AS stock_slug,
+          sph.holder_name,
+          sph.holder_type,
+          sph.is_promoter,
+          sph.shares,
+          sph.pct_of_company,
+          sph.entity_id,
+          te.slug AS entity_slug,
+          te.display_name AS entity_display_name,
+          te.type AS entity_type,
+          sph.match_confidence,
+          sph.quarter,
+          ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key,
+          COALESCE(sqp.close_price, px.price_per_share) AS price_per_share,
+          CASE
+            WHEN sph.shares > 0 AND COALESCE(sqp.close_price, px.price_per_share) IS NOT NULL
+              THEN ROUND((sph.shares::numeric * COALESCE(sqp.close_price, px.price_per_share)) / 1e7, 2)
+            ELSE NULL
+          END AS row_value_cr
+        FROM shareholding_pattern_holders sph
+        JOIN stocks s ON s.id = sph.stock_id
+        JOIN stock_ids si ON si.id = sph.stock_id
+        LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+        LEFT JOIN stock_quarter_prices sqp
+          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+        LEFT JOIN LATERAL (
+          SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
+          FROM entity_holdings eh
+          WHERE eh.stock_id = sph.stock_id
+            AND eh.quarter = sph.quarter
+            AND eh.strategy_id IS NULL
+            AND eh.market_value_cr > 0
+            AND eh.shares_held > 0
+          LIMIT 1
+        ) px ON TRUE
+        WHERE sph.quarter = ${quarter}::date
+          AND sph.pct_of_company >= 1.0
+          ${excludePromoters ? sql`AND sph.is_promoter = FALSE` : sql``}
+          ${promotersOnly ? sql`AND sph.is_promoter = TRUE` : sql``}
+      ),
+      curated AS (
+        SELECT
+          MIN(b.id) AS id,
+          (array_agg(b.stock_id ORDER BY b.id))[1] AS stock_id,
+          (array_agg(b.stock_name ORDER BY b.id))[1] AS stock_name,
+          (array_agg(b.stock_slug ORDER BY b.id))[1] AS stock_slug,
+          COALESCE(MAX(b.entity_display_name), MAX(b.holder_name)) AS holder_name,
+          CASE WHEN bool_or(b.is_promoter) THEN 'promoter' ELSE COALESCE(MAX(b.entity_type), MAX(b.holder_type)) END AS holder_type,
+          MAX(b.shares)::bigint AS shares,
+          MAX(b.pct_of_company)::numeric AS pct_of_company,
+          b.entity_id,
+          MAX(b.entity_slug) AS entity_slug,
+          MAX(b.entity_display_name) AS entity_display_name,
+          MAX(b.entity_type) AS entity_type,
+          MAX(b.match_confidence) AS match_confidence,
+          b.quarter,
+          MAX(b.row_value_cr) AS market_value_cr,
+          COUNT(*)::int AS filing_count,
+          ARRAY_AGG(DISTINCT b.holder_name ORDER BY b.holder_name) AS filing_names
+        FROM base b
+        WHERE b.entity_id IS NOT NULL
+        GROUP BY b.entity_id, b.listing_key, b.quarter
+      ),
+      mystery AS (
+        SELECT DISTINCT ON (b.listing_key, upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g')))
+          b.id,
+          b.stock_id,
+          b.stock_name,
+          b.stock_slug,
+          b.holder_name,
+          CASE WHEN b.is_promoter THEN 'promoter' ELSE b.holder_type END AS holder_type,
+          b.shares,
+          b.pct_of_company,
+          b.entity_id,
+          b.entity_slug,
+          b.entity_display_name,
+          b.entity_type,
+          b.match_confidence,
+          b.quarter,
+          b.row_value_cr AS market_value_cr,
+          1 AS filing_count,
+          ARRAY[b.holder_name] AS filing_names
+        FROM base b
+        WHERE b.entity_id IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM base c
+            WHERE c.entity_id IS NOT NULL
+              AND c.listing_key = b.listing_key
+              AND upper(regexp_replace(regexp_replace(trim(c.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
+                = upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
+          )
+        ORDER BY
+          b.listing_key,
+          upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g')),
+          b.pct_of_company DESC NULLS LAST,
+          b.id DESC
+      )
+      SELECT * FROM curated
+      UNION ALL
+      SELECT * FROM mystery
+      ORDER BY pct_of_company DESC
+    `) as OnePercentRowDb[];
+    return rows.map(mapOnePercentRowDb);
+  } catch {
+    return [];
+  }
+}
+
 /** Full shareholding breakdown for a stock page (chart + expandable sections). */
 export async function getStockShareholdingDetail(stockSlug: string): Promise<StockShareholdingDetail | null> {
   if (!sql) return null;
@@ -1958,75 +2113,8 @@ export async function getStockShareholdingDetail(stockSlug: string): Promise<Sto
     }[];
     const summaryRow = summaryRows[0];
 
-    const holderRows = (await sql!`
-      SELECT
-        sph.id,
-        s.id AS stock_id,
-        s.name AS stock_name,
-        s.slug AS stock_slug,
-        sph.holder_name,
-        sph.holder_type,
-        sph.shares,
-        sph.pct_of_company,
-        sph.entity_id,
-        te.slug AS entity_slug,
-        te.display_name AS entity_display_name,
-        te.type AS entity_type,
-        sph.match_confidence,
-        sph.quarter,
-        sph.is_promoter,
-        CASE
-          WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-            THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
-          ELSE NULL
-        END AS market_value_cr
-      FROM shareholding_pattern_holders sph
-      JOIN stocks s ON s.id = sph.stock_id
-      LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-      LEFT JOIN stock_quarter_prices sqp
-        ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-      WHERE s.slug = ${stockSlug}
-        AND sph.quarter = ${latestQ}::date
-        AND sph.pct_of_company >= 1.0
-      ORDER BY sph.pct_of_company DESC
-    `) as Array<{
-      id: number;
-      stock_id: number;
-      stock_name: string;
-      stock_slug: string;
-      holder_name: string;
-      holder_type: string;
-      shares: number | null;
-      pct_of_company: string | null;
-      entity_id: number | null;
-      entity_slug: string | null;
-      entity_display_name: string | null;
-      entity_type: string | null;
-      match_confidence: string | null;
-      quarter: string;
-      is_promoter: boolean;
-      market_value_cr: string | null;
-    }>;
-
-    if (!holderRows.length && !summaryRow) return null;
-
-    const mapped: OnePercentRow[] = holderRows.map((r) => ({
-      id: r.id,
-      stockId: r.stock_id,
-      stockName: r.stock_name,
-      stockSlug: r.stock_slug,
-      holderName: r.entity_display_name || r.holder_name,
-      holderType: r.is_promoter ? 'promoter' : (r.entity_type || r.holder_type),
-      shares: toNum(r.shares),
-      pctOfCompany: toNum(r.pct_of_company),
-      entityId: r.entity_id != null ? Number(r.entity_id) : null,
-      entitySlug: r.entity_slug ?? null,
-      entityDisplayName: r.entity_display_name ?? null,
-      entityType: r.entity_type ?? null,
-      matchConfidence: r.match_confidence != null ? toNum(r.match_confidence) : null,
-      quarter: quarterToIso(r.quarter),
-      marketValueCr: toNum(r.market_value_cr),
-    }));
+    const mapped = await fetchDedupedShpHoldersForStock(stockSlug, latestQ);
+    if (!mapped.length && !summaryRow) return null;
 
     const buckets = bucketShpHolders(mapped);
 
@@ -2073,143 +2161,12 @@ export async function getStockShareholdingDetail(stockSlug: string): Promise<Sto
 export async function getOnePercentHoldersForStock(stockSlug: string): Promise<OnePercentRow[]> {
   if (!sql) return [];
   try {
-    const rows = (await sql!`
-      WITH latest AS (
-        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
-      ),
-      base AS (
-        SELECT
-          sph.id,
-          s.id   AS stock_id,
-          s.name AS stock_name,
-          s.slug AS stock_slug,
-          sph.holder_name,
-          sph.holder_type,
-          sph.shares,
-          sph.pct_of_company,
-          sph.entity_id,
-          te.slug AS entity_slug,
-          te.display_name AS entity_display_name,
-          te.type AS entity_type,
-          sph.match_confidence,
-          sph.quarter,
-          COALESCE(sqp.close_price, px.price_per_share) AS price_per_share,
-          CASE
-            WHEN sph.shares > 0 AND COALESCE(sqp.close_price, px.price_per_share) IS NOT NULL
-              THEN ROUND((sph.shares::numeric * COALESCE(sqp.close_price, px.price_per_share)) / 1e7, 2)
-            ELSE NULL
-          END AS row_value_cr
-        FROM shareholding_pattern_holders sph
-        JOIN stocks s ON s.id = sph.stock_id
-        LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-        LEFT JOIN LATERAL (
-          SELECT (eh.market_value_cr * 1e7 / NULLIF(eh.shares_held, 0))::numeric AS price_per_share
-          FROM entity_holdings eh
-          WHERE eh.stock_id = sph.stock_id
-            AND eh.quarter = sph.quarter
-            AND eh.strategy_id IS NULL
-            AND eh.market_value_cr > 0
-            AND eh.shares_held > 0
-          LIMIT 1
-        ) px ON TRUE
-        WHERE s.slug = ${stockSlug}
-          AND sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-      ),
-      curated AS (
-        SELECT
-          MIN(b.id) AS id,
-          b.stock_id,
-          b.stock_name,
-          b.stock_slug,
-          COALESCE(MAX(b.entity_display_name), MAX(b.holder_name)) AS holder_name,
-          COALESCE(MAX(b.entity_type), MAX(b.holder_type)) AS holder_type,
-          SUM(b.shares)::bigint AS shares,
-          SUM(b.pct_of_company)::numeric AS pct_of_company,
-          b.entity_id,
-          MAX(b.entity_slug) AS entity_slug,
-          MAX(b.entity_display_name) AS entity_display_name,
-          MAX(b.entity_type) AS entity_type,
-          MAX(b.match_confidence) AS match_confidence,
-          b.quarter,
-          CASE
-            WHEN SUM(b.shares) > 0 AND MAX(b.price_per_share) IS NOT NULL
-              THEN ROUND((SUM(b.shares)::numeric * MAX(b.price_per_share)) / 1e7, 2)
-            WHEN SUM(b.row_value_cr) IS NOT NULL
-              THEN ROUND(SUM(COALESCE(b.row_value_cr, 0))::numeric, 2)
-            ELSE NULL
-          END AS market_value_cr,
-          COUNT(*)::int AS filing_count,
-          ARRAY_AGG(DISTINCT b.holder_name ORDER BY b.holder_name) AS filing_names
-        FROM base b
-        WHERE b.entity_id IS NOT NULL
-        GROUP BY b.entity_id, b.stock_id, b.stock_name, b.stock_slug, b.quarter
-      ),
-      mystery AS (
-        SELECT DISTINCT ON (
-          b.stock_id,
-          upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
-        )
-          b.id,
-          b.stock_id,
-          b.stock_name,
-          b.stock_slug,
-          b.holder_name,
-          b.holder_type,
-          b.shares,
-          b.pct_of_company,
-          b.entity_id,
-          b.entity_slug,
-          b.entity_display_name,
-          b.entity_type,
-          b.match_confidence,
-          b.quarter,
-          b.row_value_cr AS market_value_cr,
-          1 AS filing_count,
-          ARRAY[b.holder_name] AS filing_names
-        FROM base b
-        WHERE b.entity_id IS NULL
-          AND NOT EXISTS (
-            SELECT 1
-            FROM base c
-            WHERE c.entity_id IS NOT NULL
-              AND c.stock_id = b.stock_id
-              AND upper(regexp_replace(regexp_replace(trim(c.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
-                = upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g'))
-          )
-        ORDER BY
-          b.stock_id,
-          upper(regexp_replace(regexp_replace(trim(b.holder_name), '\\.+$', ''), '\\s+', ' ', 'g')),
-          b.pct_of_company DESC NULLS LAST,
-          b.id DESC
-      )
-      SELECT * FROM curated
-      UNION ALL
-      SELECT * FROM mystery
-      ORDER BY pct_of_company DESC
-    `) as OnePercentRowDb[];
-    return rows.map((r) => ({
-      id: r.id,
-      stockId: r.stock_id,
-      stockName: r.stock_name,
-      stockSlug: r.stock_slug,
-      holderName: r.holder_name,
-      holderType: r.entity_type || r.holder_type,
-      shares: toNum(r.shares),
-      pctOfCompany: toNum(r.pct_of_company),
-      entityId: r.entity_id != null ? Number(r.entity_id) : null,
-      entitySlug: r.entity_slug ?? null,
-      entityDisplayName: r.entity_display_name ?? null,
-      entityType: r.entity_type ?? null,
-      matchConfidence: r.match_confidence != null ? toNum(r.match_confidence) : null,
-      quarter: quarterToIso(r.quarter),
-      marketValueCr: toNum(r.market_value_cr),
-      filingNames: Array.isArray(r.filing_names) ? r.filing_names : undefined,
-      filingCount: r.filing_count != null ? Number(r.filing_count) : undefined,
-    }));
+    const latestRows = (await sql!`
+      SELECT MAX(quarter)::text AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+    `) as { q: string | null }[];
+    const latestQ = latestRows[0]?.q;
+    if (!latestQ) return [];
+    return fetchDedupedShpHoldersForStock(stockSlug, latestQ, { excludePromoters: true });
   } catch {
     return [];
   }

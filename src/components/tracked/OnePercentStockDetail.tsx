@@ -104,7 +104,7 @@ function HolderTable({ rows }: { rows: OnePercentRow[] }) {
           {rows.map((h) => {
             const url = h.entitySlug ? curatedEntityUrl(h.entitySlug) : null;
             return (
-              <tr key={h.id} className="border-b border-surface-100 dark:border-surface-800">
+              <tr key={h.entitySlug ? `entity:${h.entitySlug}` : `holder:${h.id}`} className="border-b border-surface-100 dark:border-surface-800">
                 <td className="py-2.5 pr-4 font-medium text-surface-900 dark:text-white">
                   {url ? (
                     <a href={url} className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">
