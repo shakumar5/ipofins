@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { holderMatchesSearchQuery } from '../../lib/holder-name-search';
 import type { HolderPosition } from '../../lib/one-percent-holder-positions';
 import HolderHoldingsTable from './HolderHoldingsTable';
@@ -33,13 +33,15 @@ type Result = {
   holder: HolderOption;
 };
 
-export default function CuratedInvestorSearch({  curated,
+export default function CuratedInvestorSearch({
+  curated,
   holders,
   stockBase = '/1-percent-club',
 }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [expandedHolder, setExpandedHolder] = useState<HolderOption | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const q = norm(query);
   const results = useMemo((): Result[] => {
@@ -101,15 +103,34 @@ export default function CuratedInvestorSearch({  curated,
     }
 
     return out.slice(0, 12);
-  }, [q, curated, holders]);
+  }, [q, curated, holders, query]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
 
   function selectResult(result: Result) {
+    setOpen(false);
     if (result.profileUrl) {
       window.location.href = result.profileUrl;
       return;
     }
+    setQuery(result.name);
     setExpandedHolder((prev) => (prev?.slug === result.holder.slug ? null : result.holder));
-    setOpen(true);
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -118,7 +139,7 @@ export default function CuratedInvestorSearch({  curated,
   }
 
   return (
-    <div className="card max-w-3xl">
+    <div ref={rootRef} className="card max-w-3xl">
       <form onSubmit={onSubmit} className="relative">
         <label htmlFor="si-search" className="sr-only">
           Search curated super investors
@@ -147,6 +168,7 @@ export default function CuratedInvestorSearch({  curated,
                 <button
                   type="button"
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-surface-800 text-surface-900 dark:text-white flex items-center justify-between gap-2"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectResult(r)}
                 >
                   <span>{r.name}</span>
