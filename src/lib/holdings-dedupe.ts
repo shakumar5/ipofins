@@ -1,49 +1,46 @@
-/** Dedupe holdings when `stocks` has multiple rows for the same ISIN / NSE symbol. */
-
-export function stockCanonicalKey(parts: {
-  isin?: string | null;
-  nseSymbol?: string | null;
-  stockSlug: string;
-}): string {
-  const isin = String(parts.isin ?? '').trim().toUpperCase();
-  if (isin) return `isin:${isin}`;
-  const nse = String(parts.nseSymbol ?? '').trim().toUpperCase();
-  if (nse) return `nse:${nse}`;
-  return `slug:${parts.stockSlug}`;
-}
+import { stockListingKey, type StockListingIdentity } from './stock-listing-key';
 
 function holdingPct<T extends { pct?: number | null; pctOfCompany?: number | null }>(row: T): number {
   return row.pctOfCompany ?? row.pct ?? 0;
 }
 
-/** Keep one row per listed company; prefer higher stake, then shorter slug (stable). */
+/** Keep one row per NSE/ISIN/BSE identity; prefer QoQ data, then higher stake, then shorter slug. */
 export function dedupeHoldingsByStock<
-  T extends {
+  T extends StockListingIdentity & {
     stockSlug: string;
     stockName?: string;
-    isin?: string | null;
-    nseSymbol?: string | null;
     pct?: number | null;
     pctOfCompany?: number | null;
+    prevPct?: number | null;
+    changeType?: string | null;
   },
 >(rows: T[]): T[] {
+  function rowScore(row: T): number {
+    let score = holdingPct(row);
+    if (row.prevPct != null) score += 1000;
+    if (row.changeType && row.changeType !== 'unchanged') score += 100;
+    return score;
+  }
+
   const byKey = new Map<string, T>();
   for (const row of rows) {
-    const key = stockCanonicalKey(row);
+    const key = stockListingKey(row);
     const prev = byKey.get(key);
     if (!prev) {
       byKey.set(key, row);
       continue;
     }
-    const rowPct = holdingPct(row);
-    const prevPct = holdingPct(prev);
-    if (rowPct > prevPct) {
+    const rowScoreVal = rowScore(row);
+    const prevScoreVal = rowScore(prev);
+    if (rowScoreVal > prevScoreVal) {
       byKey.set(key, row);
       continue;
     }
-    if (rowPct === prevPct && row.stockSlug.localeCompare(prev.stockSlug) < 0) {
+    if (rowScoreVal === prevScoreVal && row.stockSlug.localeCompare(prev.stockSlug) < 0) {
       byKey.set(key, row);
     }
   }
   return [...byKey.values()];
 }
+
+export { stockListingKey, stockListingKeySql } from './stock-listing-key';
