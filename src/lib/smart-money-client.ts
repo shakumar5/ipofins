@@ -1,5 +1,5 @@
 import { fetchJsonCached, monthFileSlug, categoryFileSlug } from './client-data';
-import type { SmartMoneyTrackerData } from './data/holdings';
+import type { SmartMoneyMonthData, SmartMoneyTrackerData } from './data/holdings';
 import type {
   FundActivityLists,
   SignalFactorScores,
@@ -213,6 +213,22 @@ export async function loadTrackerIndex(): Promise<TrackerIndex> {
     trackerIndexPromise = fetchJsonCached<TrackerIndex>(TRACKER_INDEX);
   }
   return trackerIndexPromise;
+}
+
+export async function loadTrackerMonthData(month: string): Promise<SmartMoneyMonthData | null> {
+  try {
+    const file = await fetchJsonCached<TrackerMonthFile>(`${TRACKER_BASE}/${monthFileSlug(month)}.json`);
+    return {
+      month: file.month,
+      prevMonth: file.prevMonth,
+      increased: file.increased,
+      decreased: file.decreased,
+      fresh_entry: file.fresh_entry,
+      complete_exit: file.complete_exit,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function loadTrackerMonth(

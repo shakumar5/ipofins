@@ -49,39 +49,48 @@ function ymdToBseDdMmYy(ymd) {
   return `${ymd.slice(6, 8)}${ymd.slice(4, 6)}${ymd.slice(2, 4)}`;
 }
 
-function prevYmd(ymd) {
+/** Default ±calendar days around quarter-end anchor when matching local/downloaded bhavcopy. */
+export const BHAVCOPY_QUARTER_WINDOW_DAYS = Number(process.env.BHAVCOPY_QUARTER_WINDOW_DAYS || 7);
+
+function shiftYmd(ymd, days) {
   const y = Number(ymd.slice(0, 4));
   const m = Number(ymd.slice(4, 6)) - 1;
   const d = Number(ymd.slice(6, 8));
   const dt = new Date(Date.UTC(y, m, d));
-  dt.setUTCDate(dt.getUTCDate() - 1);
+  dt.setUTCDate(dt.getUTCDate() + days);
   return `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth() + 1)}${pad2(dt.getUTCDate())}`;
 }
 
-/** Ordered YYYYMMDD dates to try for quarter-end EOD close (newest first). */
-export function quarterPriceYmdCandidates(startIso, endIso, priceEndIso = null) {
-  const startYmd = isoToYmd(startIso);
+/**
+ * Ordered YYYYMMDD dates to try for quarter-end EOD close.
+ * Anchor = priceEndIso (e.g. 30-Mar) or calendar quarter-end; then ±windowDays.
+ * Earlier dates are tried before later ones (prefer last session on/before quarter-end).
+ */
+export function quarterPriceYmdCandidates(
+  startIso,
+  endIso,
+  priceEndIso = null,
+  windowDays = BHAVCOPY_QUARTER_WINDOW_DAYS,
+) {
   const endYmd = isoToYmd(endIso);
-  const primary = isoToYmd(priceEndIso || endIso);
-  if (!startYmd || !endYmd || !primary) return [];
+  const anchor = isoToYmd(priceEndIso || endIso);
+  if (!anchor) return [];
 
   const seen = new Set();
   const out = [];
   const push = (ymd) => {
-    if (!ymd || ymd < startYmd || ymd > endYmd || seen.has(ymd)) return;
+    if (!ymd || seen.has(ymd)) return;
     seen.add(ymd);
     out.push(ymd);
   };
 
-  push(primary);
-  if (primary !== endYmd) push(endYmd);
+  const win = Number.isFinite(windowDays) && windowDays >= 0 ? Math.floor(windowDays) : 7;
 
-  let ymd = endYmd;
-  for (let i = 0; i < 25; i++) {
-    push(ymd);
-    ymd = prevYmd(ymd);
-    if (ymd < startYmd) break;
-  }
+  push(anchor);
+  if (endYmd && endYmd !== anchor) push(endYmd);
+
+  for (let d = 1; d <= win; d++) push(shiftYmd(anchor, -d));
+  for (let d = 1; d <= win; d++) push(shiftYmd(anchor, d));
 
   return out;
 }
@@ -99,18 +108,28 @@ function localBhavPaths(exchange, ymd) {
   const ddmmyyyy = ymdToBseDdMmYyyy(ymd);
   const ddmmyy = ymdToBseDdMmYy(ymd);
 
+  const nseBase = `BhavCopy_NSE_CM_0_0_0_${ymd}_F_0000`;
   const explicit =
     exchange === 'nse'
       ? [
-          `BhavCopy_NSE_CM_0_0_0_${ymd}_F_0000.csv`,
-          `BhavCopy_NSE_CM_0_0_0_${ymd}_F_0000.csv.zip`,
-          `nse/BhavCopy_NSE_CM_0_0_0_${ymd}_F_0000.csv`,
+          // Flat file in nse/ (preferred layout)
+          `nse/${nseBase}.csv`,
+          `nse/${nseBase}.CSV`,
+          // Windows often unzips NSE zip → folder named *.csv with the CSV inside
+          `nse/${nseBase}.csv/${nseBase}.csv`,
+          `nse/${nseBase}.csv/${nseBase}.CSV`,
+          `nse/${nseBase}.CSV/${nseBase}.CSV`,
+          // Legacy / root fallbacks
+          `${nseBase}.csv`,
+          `${nseBase}.csv.zip`,
           `nse/${ymd}.csv`,
         ]
       : [
+          // BSE: flat files in bse/ (no nested folder)
+          `bse/BhavCopy_BSE_CM_0_0_0_${ymd}_F_0000.CSV`,
+          `bse/BhavCopy_BSE_CM_0_0_0_${ymd}_F_0000.csv`,
           `BhavCopy_BSE_CM_0_0_0_${ymd}_F_0000.CSV`,
           `BhavCopy_BSE_CM_0_0_0_${ymd}_F_0000.csv`,
-          `bse/BhavCopy_BSE_CM_0_0_0_${ymd}_F_0000.CSV`,
           `BSE_EQ_BHAVCOPY_${ddmmyyyy}_T0.csv`,
           `bse/BSE_EQ_BHAVCOPY_${ddmmyyyy}_T0.csv`,
           `BSE_EQ_BHAVCOPY_${ddmmyyyy}_T0/BSE_EQ_BHAVCOPY_${ddmmyyyy}_T0.csv`,
@@ -124,9 +143,10 @@ function localBhavPaths(exchange, ymd) {
       paths.push(join(base, name));
     }
 
-    // Files in base or nse/bse subdirs whose name contains the date token
+    // Scan nse/ or bse/ for date tokens (handles nested NSE zip folders)
     const tokens = exchange === 'nse' ? [ymd] : [ymd, ddmmyyyy, ddmmyy].filter(Boolean);
-    for (const rel of ['', exchange === 'nse' ? 'nse' : 'bse']) {
+    const subdir = exchange === 'nse' ? 'nse' : 'bse';
+    for (const rel of [subdir]) {
       const dir = join(base, rel);
       if (!existsSync(dir)) continue;
       for (const ent of readdirSync(dir, { withFileTypes: true })) {
@@ -134,8 +154,16 @@ function localBhavPaths(exchange, ymd) {
         const p = join(dir, ent.name);
         paths.push(p);
         if (ent.isDirectory()) {
-          const inner = join(p, ent.name);
-          if (existsSync(inner)) paths.push(inner);
+          const innerSame = join(p, ent.name);
+          if (existsSync(innerSame)) paths.push(innerSame);
+          try {
+            for (const child of readdirSync(p, { withFileTypes: true })) {
+              if (!child.isFile() || !/\.csv$/i.test(child.name)) continue;
+              paths.push(join(p, child.name));
+            }
+          } catch {
+            /* ignore unreadable folder */
+          }
         }
       }
     }

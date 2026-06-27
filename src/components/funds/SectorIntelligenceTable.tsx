@@ -1,10 +1,14 @@
-import { useDeferredValue, useMemo, useState, useTransition, type ReactNode } from 'react';
+import { Fragment, useDeferredValue, useMemo, useState, useTransition, type ReactNode } from 'react';
 
+import type { SmartMoneyMonthData } from '../../lib/data/holdings';
 import type { SectorIntelligenceData, SectorIntelligenceRow } from '../../lib/sector-intelligence';
+import { buildSectorStockMoves, type SectorStockMoveSummary } from '../../lib/holdings-utils';
+import { stockSignalPath } from '../../lib/stock-signal-meta';
 import { SIGNAL_OPTIONS } from '../../lib/smart-money-signals';
 
 interface Props {
   data: SectorIntelligenceData;
+  monthMoves?: SmartMoneyMonthData | null;
 }
 
 type SortKey = 'conviction' | 'aum' | 'weight' | 'trend' | 'funds';
@@ -123,13 +127,80 @@ function ColumnSearch({
   );
 }
 
-export default function SectorIntelligenceTable({ data }: Props) {
+const MOVE_LISTS: {
+  key: keyof ReturnType<typeof buildSectorStockMoves>;
+  label: string;
+  metric: 'funds' | 'weight';
+}[] = [
+  { key: 'mostBought', label: 'Most bought', metric: 'weight' },
+  { key: 'increased', label: 'Most funds adding', metric: 'funds' },
+  { key: 'fresh', label: 'Fresh entries', metric: 'funds' },
+  { key: 'decreased', label: 'Decreased', metric: 'weight' },
+  { key: 'exits', label: 'Complete exits', metric: 'funds' },
+];
+
+function formatMoveMetric(stock: SectorStockMoveSummary, metric: 'funds' | 'weight'): string {
+  if (metric === 'funds') return `${stock.fundCount} fund${stock.fundCount === 1 ? '' : 's'}`;
+  const sign = stock.weightTotal >= 0 ? '+' : '';
+  return `${sign}${stock.weightTotal.toFixed(2)}%`;
+}
+
+function SectorStockMovesPanel({
+  sector,
+  monthMoves,
+}: {
+  sector: string;
+  monthMoves: SmartMoneyMonthData;
+}) {
+  const moves = useMemo(() => buildSectorStockMoves(sector, monthMoves, 5), [sector, monthMoves]);
+  const hasAny = MOVE_LISTS.some(({ key }) => moves[key].length > 0);
+
+  if (!hasAny) {
+    return (
+      <p className="text-xs text-surface-500 dark:text-surface-400 py-2">
+        No stock-level moves in this sector for {monthMoves.month}.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+      {MOVE_LISTS.map(({ key, label, metric }) => (
+        <div key={key} className="rounded-lg bg-surface-50 dark:bg-surface-800/60 p-2.5 border border-surface-100 dark:border-surface-700">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-1.5">
+            {label}
+          </p>
+          {moves[key].length === 0 ? (
+            <p className="text-xs text-surface-400">—</p>
+          ) : (
+            <ul className="space-y-1">
+              {moves[key].map((stock) => (
+                <li key={stock.stockSlug}>
+                  <a
+                    href={stockSignalPath(stock.stockSlug)}
+                    className="flex items-start justify-between gap-2 text-xs hover:text-primary-600 dark:hover:text-primary-400"
+                  >
+                    <span className="font-medium text-surface-900 dark:text-white line-clamp-2">{stock.stockName}</span>
+                    <span className="text-surface-500 tabular-nums shrink-0">{formatMoveMetric(stock, metric)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function SectorIntelligenceTable({ data, monthMoves = null }: Props) {
   const rows = data.rows;
   const [sectorSearch, setSectorSearch] = useState('');
   const [signalSearch, setSignalSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('conviction');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [visibleLimit, setVisibleLimit] = useState(INITIAL_ROWS);
+  const [expandedSector, setExpandedSector] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const deferredSectorSearch = useDeferredValue(sectorSearch);
   const deferredSignalSearch = useDeferredValue(signalSearch);
@@ -206,6 +277,11 @@ export default function SectorIntelligenceTable({ data }: Props) {
 
   const hasActiveFilter = Boolean(normalizedSectorSearch || normalizedSignalSearch);
 
+  const toggleSector = (sector: string) => {
+    if (!monthMoves) return;
+    setExpandedSector((prev) => (prev === sector ? null : sector));
+  };
+
   if (!data.currentMonth || !rows.length) {
     return (
       <p className="text-center py-12 text-surface-500 dark:text-surface-400 text-sm">
@@ -269,6 +345,7 @@ export default function SectorIntelligenceTable({ data }: Props) {
         {hasActiveFilter ? ' (filtered)' : ''}
         {' • '}
         Sorted by {SORT_LABELS[sortBy]} ({sortDir === 'desc' ? 'high to low' : 'low to high'})
+        {monthMoves ? ' • Click a sector to see top stock moves' : ''}
       </p>
 
       {/* Mobile sort */}
@@ -332,15 +409,26 @@ export default function SectorIntelligenceTable({ data }: Props) {
       ) : (
         <>
           <div className="md:hidden space-y-2">
-            {displayRows.map((row, index) => (
-              <div
-                key={row.sector}
-                className="card p-3 border border-surface-200 dark:border-surface-700"
-              >
+            {displayRows.map((row, index) => {
+              const isExpanded = expandedSector === row.sector;
+              return (
+              <div key={row.sector} className="card p-3 border border-surface-200 dark:border-surface-700">
+                <button
+                  type="button"
+                  className="w-full text-left"
+                  onClick={() => toggleSector(row.sector)}
+                  disabled={!monthMoves}
+                  aria-expanded={isExpanded}
+                >
                 <div className="flex justify-between items-start gap-3">
                   <div className="min-w-0">
                     <p className="text-xs text-surface-400 tabular-nums">#{index + 1}</p>
-                    <p className="text-sm font-semibold text-surface-900 dark:text-white">{row.sector}</p>
+                    <p className="text-sm font-semibold text-surface-900 dark:text-white flex items-center gap-1.5">
+                      {row.sector}
+                      {monthMoves && (
+                        <span className="text-surface-400 text-xs" aria-hidden>{isExpanded ? '▲' : '▼'}</span>
+                      )}
+                    </p>
                     <p className="text-xs text-surface-500 mt-0.5">
                       {row.currentPct}% of equity · {row.fundsIncreasing}↑ / {row.fundsDecreasing}↓ funds
                     </p>
@@ -350,6 +438,7 @@ export default function SectorIntelligenceTable({ data }: Props) {
                     <p className="text-[10px] text-surface-400">Conviction</p>
                   </div>
                 </div>
+                </button>
                 <p className="mt-2 text-xs font-medium text-surface-700 dark:text-surface-300">
                   {row.signalEmoji} {row.signal}
                 </p>
@@ -372,14 +461,21 @@ export default function SectorIntelligenceTable({ data }: Props) {
                   </div>
                 </div>
                 <p className="text-[10px] text-surface-400 mt-2 text-center tabular-nums">{row.fundCount} funds</p>
+                {isExpanded && monthMoves && (
+                  <div className="mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
+                    <SectorStockMovesPanel sector={row.sector} monthMoves={monthMoves} />
+                  </div>
+                )}
               </div>
-            ))}
+            );
+            })}
           </div>
 
           <div className="hidden md:block overflow-x-auto card p-0">
           <table className="w-full text-sm">
           <thead className="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
             <tr>
+              <th className="px-2 py-3 w-8" aria-label="Expand" />
               <th className="px-4 py-3 w-12">Rank</th>
               <th className="px-4 py-3 min-w-[180px]">
                 <span className="block mb-1.5">Sector</span>
@@ -439,38 +535,61 @@ export default function SectorIntelligenceTable({ data }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-100 dark:divide-surface-700">
-              {displayRows.map((row, index) => (
-                <tr key={row.sector} className="hover:bg-surface-50 dark:hover:bg-surface-800/40">
-                  <td className="px-4 py-3 text-surface-400 tabular-nums">{index + 1}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-surface-900 dark:text-white">{row.sector}</p>
-                    <p className="text-xs text-surface-400 mt-0.5">
-                      {row.currentPct}% of equity · {row.fundsIncreasing}↑ / {row.fundsDecreasing}↓ funds
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-bold tabular-nums text-surface-900 dark:text-white">{row.convictionScore}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1 text-xs font-medium">
-                      <span>{row.signalEmoji}</span>
-                      <span className="text-surface-700 dark:text-surface-300">{row.signal}</span>
-                    </span>
-                  </td>
-                  <td className={`px-4 py-3 text-right font-bold tabular-nums ${aumChangeColor(row.aumChangePct)}`}>
-                    {row.aumChangePct >= 0 ? '+' : ''}{row.aumChangePct}%
-                  </td>
-                  <td className={`px-4 py-3 text-right tabular-nums text-xs ${aumChangeColor(row.weightChangePpt)}`}>
-                    {row.weightChangePpt >= 0 ? '+' : ''}{row.weightChangePpt} ppt
-                  </td>
-                  <td className={`px-4 py-3 text-center font-semibold tabular-nums ${trendColor(row.trendDirection)}`}>
-                    {row.trendLabel}
-                  </td>
-                  <td className="px-4 py-3 text-right text-xs text-surface-500 hidden lg:table-cell tabular-nums">
-                    {row.fundCount}
-                  </td>
-                </tr>
-              ))}
+              {displayRows.map((row, index) => {
+                const isExpanded = expandedSector === row.sector;
+                return (
+                  <Fragment key={row.sector}>
+                    <tr
+                      key={row.sector}
+                      className={`hover:bg-surface-50 dark:hover:bg-surface-800/40 ${monthMoves ? 'cursor-pointer' : ''}`}
+                      onClick={() => toggleSector(row.sector)}
+                      aria-expanded={isExpanded}
+                    >
+                      <td className="px-2 py-3 text-center text-surface-400">
+                        {monthMoves ? (isExpanded ? '▲' : '▼') : ''}
+                      </td>
+                      <td className="px-4 py-3 text-surface-400 tabular-nums">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-surface-900 dark:text-white">{row.sector}</p>
+                        <p className="text-xs text-surface-400 mt-0.5">
+                          {row.currentPct}% of equity · {row.fundsIncreasing}↑ / {row.fundsDecreasing}↓ funds
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-bold tabular-nums text-surface-900 dark:text-white">{row.convictionScore}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium">
+                          <span>{row.signalEmoji}</span>
+                          <span className="text-surface-700 dark:text-surface-300">{row.signal}</span>
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 text-right font-bold tabular-nums ${aumChangeColor(row.aumChangePct)}`}>
+                        {row.aumChangePct >= 0 ? '+' : ''}{row.aumChangePct}%
+                      </td>
+                      <td className={`px-4 py-3 text-right tabular-nums text-xs ${aumChangeColor(row.weightChangePpt)}`}>
+                        {row.weightChangePpt >= 0 ? '+' : ''}{row.weightChangePpt} ppt
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold tabular-nums ${trendColor(row.trendDirection)}`}>
+                        {row.trendLabel}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-surface-500 hidden lg:table-cell tabular-nums">
+                        {row.fundCount}
+                      </td>
+                    </tr>
+                    {isExpanded && monthMoves && (
+                      <tr key={`${row.sector}-detail`} className="bg-surface-50/80 dark:bg-surface-800/30">
+                        <td colSpan={9} className="px-4 py-4">
+                          <p className="text-xs font-semibold text-surface-600 dark:text-surface-300 mb-2">
+                            Top stock moves in {row.sector} ({monthMoves.month})
+                          </p>
+                          <SectorStockMovesPanel sector={row.sector} monthMoves={monthMoves} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
           </tbody>
         </table>
       </div>

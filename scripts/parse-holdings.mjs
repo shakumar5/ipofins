@@ -2059,9 +2059,11 @@ for (const [slug, fund] of Object.entries(output.holdings)) {
   for (const month of months) {
     const packed = unpackMonthHoldings(fund[month]);
     const before = packed.stocks.length;
-    const filtered = packed.stocks.filter((h) => h.pct > 0);
+    const filtered = packed.stocks.filter(
+      (h) => h.pct > 0 || (h.value ?? 0) > 0 || (h.quantity ?? 0) > 0,
+    );
     if (before !== filtered.length) validationIssues += before - filtered.length;
-    fund[month] = { stocks: filtered, totalStocks: packed.totalStocks };
+    fund[month] = { stocks: filtered, totalStocks: filtered.length };
   }
 }
 

@@ -326,6 +326,9 @@ export const AMFI_SLUG_ALIASES = {
   'baroda-bnp-paribas-large-and-mid-cap-fund': 'baroda-bnp-paribas-large-mid-cap-fund',
   'dsp-natural-resources-and-new-energy-fund': 'dsp-natural-resources-new-energy-fund',
   'capitalmind-flexi-cap-fund-direct-growth': 'capitalmind-flexi-cap-fund',
+  'jioblackrock-flexi-cap-fund-direct-plan': 'jioblackrock-flexi-cap-fund',
+  'jioblackrock-large-cap-fund-direct-plan': 'jioblackrock-large-cap-fund',
+  'jioblackrock-sector-rotation-fund-direct-plan': 'jioblackrock-sector-rotation-fund',
 };
 
 /**

@@ -65,3 +65,39 @@ export function stockMatchesSearchQuery(
 
   return false;
 }
+
+export interface StockSearchOption {
+  slug: string;
+  name: string;
+  nseSymbol?: string | null;
+}
+
+function stockSearchRank(s: StockSearchOption, query: string): number {
+  const q = query.trim().toLowerCase();
+  const symbol = String(s.nseSymbol || '').trim().toLowerCase();
+  if (symbol && symbol === q) return 0;
+  if (stockNameAcronym(s.name).toLowerCase() === q) return 1;
+  if (s.name.toLowerCase() === q) return 2;
+  if (s.name.toLowerCase().startsWith(q)) return 3;
+  return 4;
+}
+
+export function filterStockSearchQuery(
+  query: string,
+  stocks: StockSearchOption[],
+  limit = 12,
+): StockSearchOption[] {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  return stocks
+    .filter((s) => stockMatchesSearchQuery(s.name, s.slug, q, s.nseSymbol))
+    .sort((a, b) => stockSearchRank(a, query) - stockSearchRank(b, query) || a.name.localeCompare(b.name))
+    .slice(0, limit);
+}
+
+export function matchStockSearchQuery(
+  query: string,
+  stocks: StockSearchOption[],
+): StockSearchOption | null {
+  return filterStockSearchQuery(query, stocks, 1)[0] ?? null;
+}

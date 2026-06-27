@@ -18,7 +18,7 @@ import {
   signalSearchFileName,
   slimSignalRow,
 } from './lib/signal-export-utils.mjs';
-import { unpackMonthHoldings } from './lib/holdings-month.mjs';
+import { unpackMonthHoldings, latestMonthForFund } from './lib/holdings-month.mjs';
 import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs';
 import {
   loadHoldingsMetaFromDb,
@@ -92,6 +92,66 @@ function compactHoldings(raw) {
     amcs: raw.amcs || {},
     holdings,
   };
+}
+
+/** Prefer the source with more parsed stocks per fund/month (JSON parse often beats DB top-N rows). */
+function mergeHoldingsPreferMoreStocks(primary, supplemental) {
+  if (!supplemental?.holdings) return primary;
+  if (!primary?.holdings) return supplemental;
+  const merged = {
+    ...primary,
+    months: sortMonthLabels([...new Set([...(primary.months || []), ...(supplemental.months || [])])]),
+    amcs: { ...(supplemental.amcs || {}), ...(primary.amcs || {}) },
+    holdings: { ...primary.holdings },
+  };
+  const months = merged.months;
+  for (const [slug, fund] of Object.entries(supplemental.holdings)) {
+    for (const month of months) {
+      const fromExtra = unpackMonthHoldings(fund[month]);
+      if (!fromExtra.stocks.length) continue;
+      if (!merged.holdings[slug]) {
+        merged.holdings[slug] = { name: fund.name, amc: fund.amc };
+      }
+      const entry = merged.holdings[slug];
+      const fromPrimary = unpackMonthHoldings(entry[month]);
+      if (fromExtra.stocks.length > fromPrimary.stocks.length) {
+        entry[month] = fromExtra.stocks.map((h) => ({
+          name: h.name,
+          isin: h.isin || '',
+          sector: h.sector || '',
+          pct: h.pct ?? 0,
+        }));
+      }
+    }
+  }
+  return merged;
+}
+
+function writeFundHoldingsBySlugExports(holdings) {
+  const dir = join(OUT_DIR, 'fund-holdings-by-slug');
+  mkdirSync(dir, { recursive: true });
+  const months = holdings.months || [];
+  let count = 0;
+  for (const [slug, fund] of Object.entries(holdings.holdings || {})) {
+    const month = latestMonthForFund(fund, months);
+    if (!month) continue;
+    const { stocks } = unpackMonthHoldings(fund[month]);
+    if (!stocks.length) continue;
+    writeFileSync(
+      join(dir, `${slug}.json`),
+      JSON.stringify({
+        slug,
+        month,
+        stocks: stocks.map((h) => ({
+          name: h.name,
+          sector: h.sector || '',
+          pct: h.pct ?? 0,
+        })),
+      }),
+    );
+    count++;
+  }
+  console.log(`  ✓ fund-holdings-by-slug/ (${count} funds)`);
 }
 
 async function loadHoldingsFromDb() {
@@ -488,6 +548,60 @@ function reslimAllSignalListFiles(dir) {
   }
 }
 
+function normalizeHolderSearchKey(name) {
+  return String(name || '')
+    .toUpperCase()
+    .replace(/\./g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function exportOnePercentHolderPositions(dbSql) {
+  const rows = await dbSql`
+    WITH latest AS (
+      SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+    )
+    SELECT
+      sph.holder_name,
+      te.slug AS entity_slug,
+      s.slug AS stock_slug,
+      s.name AS stock_name,
+      sph.pct_of_company,
+      sph.shares,
+      CASE
+        WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+          THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
+        ELSE NULL
+      END AS market_value_cr
+    FROM shareholding_pattern_holders sph
+    JOIN stocks s ON s.id = sph.stock_id
+    LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+    LEFT JOIN stock_quarter_prices sqp
+      ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+    WHERE sph.quarter = (SELECT q FROM latest)
+      AND sph.is_promoter = FALSE
+      AND sph.pct_of_company >= 1.0
+    ORDER BY sph.pct_of_company DESC
+  `;
+
+  const record = {};
+  for (const r of rows) {
+    const key = r.entity_slug
+      ? `entity:${r.entity_slug}`
+      : `name:${normalizeHolderSearchKey(r.holder_name)}`;
+    if (!record[key]) record[key] = [];
+    record[key].push({
+      stockSlug: r.stock_slug,
+      stockName: r.stock_name,
+      pct: r.pct_of_company == null ? null : Number(r.pct_of_company),
+      shares: r.shares == null ? null : Number(r.shares),
+      marketValueCr: r.market_value_cr == null ? null : Number(r.market_value_cr),
+    });
+  }
+  writeJson('one-percent-holder-positions.json', record);
+  return Object.keys(record).length;
+}
+
 async function main() {
   const totalStart = Date.now();
   console.log('\n  Export client data → public/data/\n');
@@ -520,10 +634,16 @@ async function main() {
     if (holdings) console.log('  ℹ Using fund-holdings.json fallback');
   }
   if (!holdings) throw new Error('No holdings data source available');
+  const jsonHoldings = existsSync(jsonHoldingsPath) ? loadHoldingsFromJson() : null;
+  if (jsonHoldings && holdings) {
+    holdings = mergeHoldingsPreferMoreStocks(holdings, jsonHoldings);
+    console.log('  ℹ Merged fund-holdings.json where it has fuller portfolios');
+  }
   doneHoldings(`${holdings.months?.length || 0} months, ${Object.keys(holdings.holdings || {}).length} funds`);
 
   const doneCompare = logStep('Holdings compare + overlap');
   writeHoldingsCompareExports(holdings);
+  writeFundHoldingsBySlugExports(holdings);
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
   writePortfolioOverlapSitemaps(portfolioOverlap.funds);
@@ -691,6 +811,19 @@ async function main() {
     }
   } else {
     console.log('  ℹ DB not configured — checking for monolith signal files to split');
+  }
+
+  if (isDbConfigured()) {
+    const doneOpcPositions = logStep('1% Club holder positions index');
+    try {
+      const keys = await withDbRetry(() => exportOnePercentHolderPositions(sql), {
+        label: '1% Club holder positions',
+      });
+      doneOpcPositions(`${keys} holder keys`);
+    } catch (e) {
+      console.warn('  ⚠ 1% Club holder positions export failed:', e.message);
+      doneOpcPositions('skipped');
+    }
   }
 
   const doneFinalize = logStep('Finalize + verify');

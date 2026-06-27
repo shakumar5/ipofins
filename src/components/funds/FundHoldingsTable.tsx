@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchFundHoldingsBySlug, type FundHoldingRow } from '../../lib/fund-holdings-client';
 
-export interface FundHoldingRow {
-  name: string;
-  sector: string;
-  pct: number | string;
-}
+export type { FundHoldingRow };
 
 interface Props {
   holdings: FundHoldingRow[];
+  fundSlug?: string;
   latestMonth?: string;
   portfolioStockCount?: number | null;
 }
@@ -15,18 +13,78 @@ interface Props {
 const INITIAL_ROWS = 20;
 const ROWS_PAGE = 20;
 
-export default function FundHoldingsTable({ holdings, latestMonth, portfolioStockCount }: Props) {
+export default function FundHoldingsTable({
+  holdings: initialHoldings,
+  fundSlug,
+  latestMonth,
+  portfolioStockCount,
+}: Props) {
+  const [allHoldings, setAllHoldings] = useState(initialHoldings);
   const [visibleLimit, setVisibleLimit] = useState(INITIAL_ROWS);
-  const visibleHoldings = holdings.slice(0, visibleLimit);
-  const totalCount = portfolioStockCount && portfolioStockCount > holdings.length
-    ? portfolioStockCount
-    : holdings.length;
-  const hasMore = visibleLimit < holdings.length;
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [fetchExhausted, setFetchExhausted] = useState(false);
+
+  useEffect(() => {
+    setAllHoldings(initialHoldings);
+    setVisibleLimit(INITIAL_ROWS);
+    setFetchExhausted(false);
+  }, [initialHoldings, fundSlug]);
+
+  useEffect(() => {
+    if (!fundSlug || !portfolioStockCount || initialHoldings.length >= portfolioStockCount) return;
+    let cancelled = false;
+    void fetchFundHoldingsBySlug(fundSlug).then((rows) => {
+      if (cancelled) return;
+      if (rows.length > initialHoldings.length) {
+        setAllHoldings(rows);
+      }
+      if (!portfolioStockCount || rows.length >= portfolioStockCount) {
+        setFetchExhausted(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fundSlug, portfolioStockCount, initialHoldings]);
+
+  const reportedTotal =
+    portfolioStockCount && portfolioStockCount > allHoldings.length
+      ? portfolioStockCount
+      : allHoldings.length;
+  const totalCount = fetchExhausted ? allHoldings.length : reportedTotal;
+  const visibleHoldings = allHoldings.slice(0, visibleLimit);
+  const hasMoreLoaded = visibleLimit < allHoldings.length;
+  const canFetchMore = Boolean(
+    !fetchExhausted && fundSlug && portfolioStockCount && allHoldings.length < portfolioStockCount,
+  );
+  const showMoreButton = hasMoreLoaded || canFetchMore;
+  const remaining = Math.min(totalCount, canFetchMore ? totalCount : allHoldings.length) - visibleLimit;
+
+  async function handleShowMore() {
+    if (visibleLimit < allHoldings.length) {
+      setVisibleLimit((n) => n + ROWS_PAGE);
+      return;
+    }
+    if (!fundSlug) return;
+    setLoadingMore(true);
+    try {
+      const rows = await fetchFundHoldingsBySlug(fundSlug);
+      if (rows.length > allHoldings.length) {
+        setAllHoldings(rows);
+      }
+      if (!portfolioStockCount || rows.length >= portfolioStockCount) {
+        setFetchExhausted(true);
+      }
+      setVisibleLimit((n) => n + ROWS_PAGE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   return (
     <div>
       <p className="text-xs text-surface-500 mb-4">
-        Showing {Math.min(visibleLimit, holdings.length)} of {totalCount} stocks
+        Showing {Math.min(visibleLimit, allHoldings.length)} of {totalCount} stocks
         {latestMonth ? ` held by this fund as of ${latestMonth}` : ''} (Source: AMC monthly disclosure)
       </p>
       <div className="card overflow-hidden">
@@ -53,14 +111,15 @@ export default function FundHoldingsTable({ holdings, latestMonth, portfolioStoc
           </div>
         ))}
       </div>
-      {hasMore && (
+      {showMoreButton && (
         <div className="text-center mt-4">
           <button
             type="button"
-            onClick={() => setVisibleLimit((n) => n + ROWS_PAGE)}
-            className="px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+            onClick={() => void handleShowMore()}
+            disabled={loadingMore}
+            className="px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors disabled:opacity-60"
           >
-            Show more ({holdings.length - visibleLimit} remaining)
+            {loadingMore ? 'Loading…' : `Show more (${Math.max(remaining, 0)} remaining)`}
           </button>
         </div>
       )}

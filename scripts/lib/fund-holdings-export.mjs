@@ -65,7 +65,7 @@ export async function loadFundHoldingsIndexFromDb(sql, overlapSlugs = []) {
     holder_slugs AS (
       SELECT DISTINCT holder_slug AS slug
       FROM holders
-      WHERE COALESCE(portfolio_total, stored_stock_count) > 0
+      WHERE COALESCE(NULLIF(stored_stock_count, 0), portfolio_total) > 0
     )
     SELECT slug FROM holder_slugs
   `;

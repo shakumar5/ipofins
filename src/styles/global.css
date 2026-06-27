@@ -252,6 +252,22 @@ html.dark {
   transform: rotate(180deg);
 }
 
+.shp-holder-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.shp-holder-section > summary {
+  list-style: none;
+}
+
+.shp-holder-section > summary .shp-section-chevron {
+  transition: transform 0.15s ease;
+}
+
+.shp-holder-section[open] > summary .shp-section-chevron {
+  transform: rotate(180deg);
+}
+
 .cookie-consent-banner {
   transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }

@@ -1,21 +1,24 @@
 ---
-import { SUPER_INVESTORS_HUB, ONE_PERCENT_CLUB_HUB } from '../../lib/tracked-entities';
+import { SUPER_INVESTORS_HUB, ONE_PERCENT_CLUB_HUB, SAST_UPDATES_HUB } from '../../lib/tracked-entities';
 
-type ActiveTab = 'individual' | 'club';
+type ActiveTab = 'individual' | 'club' | 'stock' | 'sast';
 
 interface Props {
   active: ActiveTab;
+  stockSlug?: string;
 }
 
-const { active } = Astro.props;
+const { active, stockSlug } = Astro.props;
 
 const tabs: { id: ActiveTab; label: string; href: string }[] = [
-  { id: 'individual', label: 'Individual Investors', href: SUPER_INVESTORS_HUB },
-  { id: 'club', label: '1% Club', href: ONE_PERCENT_CLUB_HUB },
+  { id: 'individual', label: 'Super Investors', href: SUPER_INVESTORS_HUB },
+  { id: 'club', label: '1% Club hub', href: ONE_PERCENT_CLUB_HUB },
+  { id: 'sast', label: 'SAST Updates', href: SAST_UPDATES_HUB },
 ];
+const stockHref = stockSlug ? `${ONE_PERCENT_CLUB_HUB}/${stockSlug}` : null;
 ---
 
-<nav class="nav-btn-group mt-6" aria-label="Super Investors sections">
+<nav class="nav-btn-group mt-6 flex-wrap" aria-label="Super Investors & 1% Club">
   {tabs.map((tab) => (
     active === tab.id ? (
       <span class="btn-primary px-6 py-3 cursor-default" aria-current="page">{tab.label}</span>
@@ -23,6 +26,22 @@ const tabs: { id: ActiveTab; label: string; href: string }[] = [
       <a href={tab.href} class="btn-secondary px-6 py-3">{tab.label}</a>
     )
   ))}
+  {stockHref && (
+    active === 'stock' ? (
+      <span class="btn-primary px-6 py-3 cursor-default" aria-current="page">This stock</span>
+    ) : (
+      <a href={stockHref} class="btn-secondary px-6 py-3">Stock SHP</a>
+    )
+  )}
+  {active === 'individual' && (
+    <a href={`${SUPER_INVESTORS_HUB}#search`} class="btn-secondary px-6 py-3">Search investors</a>
+  )}
+  {active === 'club' && (
+    <a href={`${ONE_PERCENT_CLUB_HUB}#search`} class="btn-secondary px-6 py-3">Search holders</a>
+  )}
+  {active === 'stock' && (
+    <a href={`${ONE_PERCENT_CLUB_HUB}#search`} class="btn-secondary px-6 py-3">Search by name</a>
+  )}
   <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
   <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>
 </nav>

@@ -1,0 +1,85 @@
+---
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
+import SastUpdatesFeed from '../../components/tracked/SastUpdatesFeed.tsx';
+import {
+  canonicalFor,
+  SUPER_INVESTORS_HUB,
+  ONE_PERCENT_CLUB_HUB,
+  SAST_UPDATES_HUB,
+} from '../../lib/tracked-entities';
+import type { SastUpdatesPayload } from '../../lib/sast-updates';
+
+function loadCuratedFeed(): SastUpdatesPayload | null {
+  const path = join(process.cwd(), 'public/data/sast-updates-curated.json');
+  if (!existsSync(path)) return null;
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as SastUpdatesPayload;
+  } catch {
+    return null;
+  }
+}
+
+const initialCurated = loadCuratedFeed();
+
+const path = SAST_UPDATES_HUB;
+const canonical = canonicalFor(path);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'SAST Updates - Super Investor Filings',
+  description:
+    'Weekly feed of SAST Form B disclosures from NSE and BSE - preliminary stake changes before the next quarterly Shareholding Pattern.',
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Super Investors', item: 'https://ipofins.com/super-investors' },
+      { '@type': 'ListItem', position: 3, name: 'SAST Updates', item: canonical },
+    ],
+  },
+};
+---
+
+<BaseLayout
+  title="SAST Updates - Weekly Super Investor Filings | IPOFins"
+  description="Track preliminary SAST Form B disclosures from NSE and BSE. See stake changes from curated super investors and other filers before the next quarterly Shareholding Pattern."
+  canonicalUrl={canonical}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={SUPER_INVESTORS_HUB} class="hover:text-primary-600 transition-colors">Super Investors</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">SAST Updates</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-12">
+    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+      SAST Updates
+    </h1>
+    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
+      Event-driven SAST Form B filings from NSE and BSE - refreshed weekly every Monday morning.
+      These are preliminary disclosures; quarter-end Shareholding Pattern data remains the confirmed source
+      for super-investor portfolios.
+    </p>
+    <SuperInvestorsSubNav active="sast" />
+
+    <div class="mt-8">
+      <SastUpdatesFeed
+        client:visible
+        initialCurated={initialCurated}
+        superInvestorBase={SUPER_INVESTORS_HUB}
+        stockBase={ONE_PERCENT_CLUB_HUB}
+      />
+    </div>
+  </section>
+</BaseLayout>

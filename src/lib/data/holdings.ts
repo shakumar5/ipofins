@@ -7,6 +7,7 @@ import {
   monthsFromIndex,
   readFundHoldingsMetaFromDisk,
   readFundHoldingsRowsFromDisk,
+  readFundHoldingsBySlugFromDisk,
   readFundPortfolioStockCountFromDisk,
   readFundOverlapIndexFromDisk,
   readFundOverlapsByFundFromDisk,
@@ -653,7 +654,7 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
         AND f.name NOT ILIKE '%dividend plan%'
         AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     )
-    SELECT l.slug, COALESCE(h.portfolio_total, h.stored_stock_count) AS stock_count
+    SELECT l.slug, COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) AS stock_count
     FROM listable l
     CROSS JOIN LATERAL (
       SELECT h.portfolio_total, h.stored_stock_count
@@ -682,10 +683,10 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
           AND h.holder_scheme = l.scheme_code
         ) DESC,
         (h.holder_base = l.base_slug) DESC,
-        COALESCE(h.portfolio_total, h.stored_stock_count) DESC
+        COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) DESC
       LIMIT 1
     ) h
-    WHERE COALESCE(h.portfolio_total, h.stored_stock_count) > 0
+    WHERE COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) > 0
   `;
   const directRows = await sql`
     WITH fund_latest AS (
@@ -698,7 +699,7 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
     )
     SELECT
       f.slug,
-      COALESCE(MAX(ps.total_stocks), COUNT(DISTINCT fh.stock_id)::int) AS stock_count
+      COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) AS stock_count
     FROM fund_holdings fh
     JOIN funds f ON f.id = fh.fund_id
     INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
@@ -711,7 +712,7 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
       AND f.name NOT ILIKE '%dividend plan%'
       AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     GROUP BY f.slug
-    HAVING COALESCE(MAX(ps.total_stocks), COUNT(DISTINCT fh.stock_id)::int) > 0
+    HAVING COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) > 0
   `;
   const slugs = new Set<string>();
   const stockCounts: Record<string, number> = {};
@@ -725,7 +726,7 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
   return { slugs, stockCounts };
 }
 
-/** Full portfolio stock count for latest month (may exceed top holdings shown on fund page). */
+/** Equity holdings count for latest month (stored fund_holdings rows, not AMC total line items). */
 export async function getFundPortfolioStockCount(fundSlug: string): Promise<number | null> {
   const diskCount = readFundPortfolioStockCountFromDisk(fundSlug);
   if (diskCount != null) return diskCount;
@@ -739,12 +740,11 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
     holder AS (
       SELECT COALESCE(
         (SELECT f.id FROM funds f
-         JOIN fund_portfolio_stats fps ON fps.fund_id = f.id
+         JOIN fund_holdings fh ON fh.fund_id = f.id
          WHERE f.slug = ${fundSlug}
-         ORDER BY fps.month DESC
          LIMIT 1),
-        (SELECT h.id FROM fund_portfolio_stats fps
-         JOIN funds h ON h.id = fps.fund_id
+        (SELECT h.id FROM fund_holdings fh
+         JOIN funds h ON h.id = fh.fund_id
          CROSS JOIN target t
          WHERE h.slug = t.slug
             OR (
@@ -754,26 +754,44 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
               AND TRIM(t.scheme_code) <> ''
               AND h.scheme_code = t.scheme_code
             )
+            OR regexp_replace(
+                 regexp_replace(h.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
+                 '-growth-option$', ''
+               ) = regexp_replace(
+                 regexp_replace(t.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
+                 '-growth-option$', ''
+               )
          ORDER BY (h.slug = t.slug) DESC
          LIMIT 1)
       ) AS id
     )
-    SELECT fps.total_stocks
-    FROM fund_portfolio_stats fps
-    JOIN holder h ON fps.fund_id = h.id
-    ORDER BY fps.month DESC
-    LIMIT 1
+    SELECT COUNT(DISTINCT fh.stock_id)::int AS stock_count
+    FROM fund_holdings fh
+    JOIN holder h ON fh.fund_id = h.id
+    WHERE fh.month = (SELECT MAX(month) FROM fund_holdings WHERE fund_id = h.id)
   `;
-  const val = (rows as Record<string, unknown>[])[0]?.total_stocks;
+  const val = (rows as Record<string, unknown>[])[0]?.stock_count;
   return val != null ? Number(val) : null;
 }
 
+function mapFundHoldingRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  return rows.map((r) => ({
+    name: String(r.name || r.stock_name || ''),
+    pct: r.pct != null ? Number(r.pct) : 0,
+    sector: String(r.sector || ''),
+    month: r.month,
+  }));
+}
+
 export async function getFundHoldings(fundSlug: string): Promise<Record<string, unknown>[]> {
-  const diskRows = readFundHoldingsRowsFromDisk(fundSlug);
-  if (diskRows?.length) return diskRows;
+  const diskCandidates = [
+    readFundHoldingsBySlugFromDisk(fundSlug),
+    readFundHoldingsRowsFromDisk(fundSlug),
+  ].filter((rows): rows is Record<string, unknown>[] => Boolean(rows?.length));
+  const diskRows = diskCandidates.sort((a, b) => b.length - a.length)[0] ?? null;
 
   const sql = requireDb();
-  const rows = await sql`
+  const rows = (await sql`
     WITH target AS (
       SELECT id, amc_id, slug, scheme_code FROM funds
       WHERE slug = ${fundSlug} AND is_active = true LIMIT 1
@@ -836,8 +854,11 @@ export async function getFundHoldings(fundSlug: string): Promise<Record<string, 
     LEFT JOIN sectors sec ON sec.id = s.sector_id
     WHERE fh.month = (SELECT MAX(month) FROM fund_holdings WHERE fund_id = h.id)
     ORDER BY fh.pct_to_nav DESC NULLS LAST
-  `;
-  return rows as Record<string, unknown>[];
+  `) as Record<string, unknown>[];
+
+  const dbRows = mapFundHoldingRows(rows);
+  if (dbRows.length >= (diskRows?.length ?? 0)) return dbRows;
+  return diskRows ?? dbRows;
 }
 
 export interface FundComparisonResult {

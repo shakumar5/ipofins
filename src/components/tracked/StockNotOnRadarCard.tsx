@@ -1,7 +1,7 @@
 import {
   getStockEmptyStateContent,
   type StockEmptyStateKind,
-} from '../../lib/tracked-entities';
+} from '../../lib/tracked-client';
 
 interface Props {
   stockName?: string;
