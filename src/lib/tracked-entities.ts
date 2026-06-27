@@ -1533,6 +1533,8 @@ export interface OnePercentHolderPosition {
   stockSlug: string;
   stockName: string;
   pct: number | null;
+  shares: number | null;
+  marketValueCr: number | null;
 }
 
 export interface OnePercentSearchHolder {
@@ -1556,36 +1558,52 @@ export async function getOnePercentHolderPositionsMap(): Promise<
         SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
       )
       SELECT
-        sph.holder_name,
-        sph.entity_id,
         te.slug AS entity_slug,
+        CASE WHEN sph.entity_id IS NOT NULL THEN NULL ELSE sph.holder_name END AS holder_name,
         s.slug AS stock_slug,
         s.name AS stock_name,
-        sph.pct_of_company
+        SUM(sph.pct_of_company)::numeric AS pct_of_company,
+        SUM(sph.shares)::bigint AS shares,
+        ROUND(SUM(
+          CASE
+            WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+              THEN (sph.shares::numeric * sqp.close_price) / 1e7
+            ELSE NULL
+          END
+        ), 2) AS market_value_cr
       FROM shareholding_pattern_holders sph
       JOIN stocks s ON s.id = sph.stock_id
       LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+      LEFT JOIN stock_quarter_prices sqp
+        ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
       WHERE sph.quarter = (SELECT q FROM latest)
         AND sph.is_promoter = FALSE
         AND sph.pct_of_company >= 1.0
-      ORDER BY sph.pct_of_company DESC
+      GROUP BY
+        te.slug,
+        CASE WHEN sph.entity_id IS NOT NULL THEN NULL ELSE sph.holder_name END,
+        s.id, s.name, s.slug
+      ORDER BY pct_of_company DESC
     `) as Array<{
-      holder_name: string;
-      entity_id: number | null;
+      holder_name: string | null;
       entity_slug: string | null;
       stock_slug: string;
       stock_name: string;
       pct_of_company: unknown;
+      shares: number | null;
+      market_value_cr: unknown;
     }>;
 
     for (const r of rows) {
       const key = r.entity_slug
         ? `entity:${r.entity_slug}`
-        : `name:${normalizeHolderSearchKey(r.holder_name)}`;
+        : `name:${normalizeHolderSearchKey(r.holder_name ?? '')}`;
       const pos: OnePercentHolderPosition = {
         stockSlug: r.stock_slug,
         stockName: r.stock_name,
         pct: toNum(r.pct_of_company),
+        shares: r.shares != null ? Number(r.shares) : null,
+        marketValueCr: toNum(r.market_value_cr),
       };
       const list = map.get(key) ?? [];
       list.push(pos);
@@ -1639,8 +1657,7 @@ export async function getOnePercentSearchIndex(): Promise<{
         entitySlug: h.entitySlug,
         profileUrl,
         stockCount: Math.max(h.stockCount, positions.length),
-        // Positions are lazy-loaded from /data/one-percent-holder-positions.json on the client.
-        positions: [],
+        positions,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -2171,16 +2188,31 @@ export function toNum(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** PG DATE values from Neon arrive as UTC instants; use IST calendar date (India listings). */
+function toIstCalendarDate(value: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(value);
+  const y = parts.find((p) => p.type === 'year')?.value;
+  const m = parts.find((p) => p.type === 'month')?.value;
+  const d = parts.find((p) => p.type === 'day')?.value;
+  return y && m && d ? `${y}-${m}-${d}` : '';
+}
+
 /** Normalize PG DATE / ISO string from Neon (Date objects stringify to "Wed Apr 01 2026…"). */
 export function quarterToIso(value: unknown): string | null {
   if (value == null) return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const y = value.getFullYear();
-    const m = String(value.getMonth() + 1).padStart(2, '0');
-    const d = String(value.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return toIstCalendarDate(value) || null;
   }
   const s = String(value);
+  if (s.includes('T')) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return toIstCalendarDate(d) || null;
+  }
   const iso = s.match(/^(\d{4}-\d{2}-\d{2})/);
   return iso ? iso[1] : null;
 }

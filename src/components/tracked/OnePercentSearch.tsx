@@ -1,13 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { filterHolderSearchQuery } from '../../lib/holder-name-search';
 import { filterStockSearchQuery, matchStockSearchQuery } from '../../lib/stock-search-match';
-import {
-  holderPositionsKey,
-  loadHolderPositionsMap,
-  type HolderPosition,
-  type HolderPositionsMap,
-} from '../../lib/one-percent-holder-positions';
-import { stockSignalPath } from '../../lib/stock-signal-meta';
-import HolderHoldingsTable from './HolderHoldingsTable';
+import type { HolderPosition } from '../../lib/one-percent-holder-positions';
+import { stockSignalPath } from '../../lib/stock-signal-meta';import HolderHoldingsTable from './HolderHoldingsTable';
 import StockNotOnRadarCard from './StockNotOnRadarCard';
 
 export type SearchMode = 'stock' | 'name';
@@ -24,8 +19,8 @@ export interface SearchHolder {
   entitySlug: string | null;
   profileUrl: string | null;
   stockCount: number;
+  positions: HolderPosition[];
 }
-
 interface Props {
   stocks: StockOption[];
   mfStocks: StockOption[];
@@ -43,32 +38,8 @@ export default function OnePercentSearch({
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [expandedHolder, setExpandedHolder] = useState<SearchHolder | null>(null);
-  const [positionsMap, setPositionsMap] = useState<HolderPositionsMap | null>(null);
-  const [positionsLoading, setPositionsLoading] = useState(false);
 
-  useEffect(() => {
-    if (positionsMap) return;
-    let cancelled = false;
-    setPositionsLoading(true);
-    loadHolderPositionsMap()
-      .then((map) => {
-        if (!cancelled) setPositionsMap(map);
-      })
-      .finally(() => {
-        if (!cancelled) setPositionsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [positionsMap]);
-
-  function positionsFor(holder: SearchHolder): HolderPosition[] {
-    if (!positionsMap) return [];
-    return positionsMap[holderPositionsKey(holder.name, holder.entitySlug)] ?? [];
-  }
-
-  const stockResults = useMemo(() => {
-    if (!query.trim() || mode !== 'stock') return [];
+  const stockResults = useMemo(() => {    if (!query.trim() || mode !== 'stock') return [];
     return filterStockSearchQuery(query, stocks, 12);
   }, [query, mode, stocks]);
 
@@ -79,8 +50,7 @@ export default function OnePercentSearch({
 
   const holderResults = useMemo(() => {
     if (!query.trim() || mode !== 'name') return [];
-    const q = query.toLowerCase().replace(/\s+/g, ' ').trim();
-    return holders.filter((h) => h.name.toLowerCase().includes(q)).slice(0, 12);
+    return filterHolderSearchQuery(query, holders, 12);
   }, [query, mode, holders]);
 
   const showStockEmpty = mode === 'stock' && query.trim().length >= 2 && stockResults.length === 0;
@@ -117,8 +87,7 @@ export default function OnePercentSearch({
     if (mode === 'name' && holderResults[0]) selectHolder(holderResults[0]);
   }
 
-  const expandedPositions = expandedHolder ? positionsFor(expandedHolder) : [];
-
+  const expandedPositions = expandedHolder?.positions ?? [];
   return (
     <div className="card">
       <div className="relative z-30 flex gap-2 mb-4" role="tablist" aria-label="Search mode">
@@ -204,21 +173,14 @@ export default function OnePercentSearch({
             <StockNotOnRadarCard stockName={query.trim()} context="search" />
           </div>
         )}
-        {open && showHolderEmpty && !positionsLoading && (
-          <div
+        {open && showHolderEmpty && (          <div
             className="absolute z-20 mt-1 w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 shadow-lg px-4 py-3 text-sm text-surface-600 dark:text-surface-300"
             role="status"
           >
             No investor name matched &quot;{query.trim()}&quot; in our latest shareholding filings.
           </div>
         )}
-        {open && mode === 'name' && positionsLoading && holderResults.length === 0 && query.trim().length >= 2 && (
-          <div className="absolute z-20 mt-1 w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 shadow-lg px-4 py-3 text-sm text-surface-500">
-            Loading holdings data…
-          </div>
-        )}
-        {open && holderResults.length > 0 && mode === 'name' && (
-          <ul
+        {open && holderResults.length > 0 && mode === 'name' && (          <ul
             className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 shadow-lg"
             role="listbox"
           >
@@ -292,9 +254,7 @@ export default function OnePercentSearch({
           <HolderHoldingsTable
             positions={expandedPositions}
             stockBase={stockBase}
-            loading={positionsLoading && !positionsMap}
-          />
-        </div>
+          />        </div>
       )}
 
       <p className="mt-2 text-xs text-surface-500 dark:text-surface-400">
