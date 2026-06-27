@@ -8,6 +8,7 @@
 import superInvestorsJson from '../data/super-investors.json';
 import { sql } from './db';
 import { BRAND_URL } from './brand';
+import { dedupeHoldingsByStock, stockListingKey } from './holdings-dedupe';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -220,6 +221,8 @@ export interface EntityStockChangeRow {
   stockName: string;
   stockSlug: string;
   nseSymbol: string | null;
+  isin?: string | null;
+  bseCode?: string | null;
   changeType: string;
   prevPct: number | null;
   newPct: number | null;
@@ -237,7 +240,7 @@ export function stockCanonicalKey(nseSymbol: string | null | undefined, stockSlu
 function dedupeStockChangeRows(rows: EntityStockChangeRow[]): EntityStockChangeRow[] {
   const byKey = new Map<string, EntityStockChangeRow>();
   for (const row of rows) {
-    const key = stockCanonicalKey(row.nseSymbol, row.stockSlug);
+    const key = stockListingKey(row);
     const prev = byKey.get(key);
     if (!prev) {
       byKey.set(key, row);
@@ -309,13 +312,23 @@ export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldi
       ),
       base AS (
         SELECT
-          COALESCE(eh.stock_id, sph.stock_id) AS stock_id,
-          COALESCE(eh.shares_held, sph.shares_held) AS shares_held,
-          COALESCE(eh.pct_of_company, sph.pct_of_company) AS pct_of_company,
-          COALESCE(eh.quarter, sph.quarter) AS quarter,
-          eh.market_value_cr
-        FROM eh_base eh
-        FULL OUTER JOIN sph_base sph ON eh.stock_id = sph.stock_id
+          (array_agg(ps.stock_id ORDER BY ps.stock_id))[1] AS stock_id,
+          MAX(ps.shares_held) AS shares_held,
+          MAX(ps.pct_of_company) AS pct_of_company,
+          MAX(ps.quarter) AS quarter,
+          MAX(ps.market_value_cr) AS market_value_cr
+        FROM (
+          SELECT
+            COALESCE(eh.stock_id, sph.stock_id) AS stock_id,
+            COALESCE(eh.shares_held, sph.shares_held) AS shares_held,
+            COALESCE(eh.pct_of_company, sph.pct_of_company) AS pct_of_company,
+            COALESCE(eh.quarter, sph.quarter) AS quarter,
+            eh.market_value_cr
+          FROM eh_base eh
+          FULL OUTER JOIN sph_base sph ON eh.stock_id = sph.stock_id
+        ) ps
+        JOIN stocks s ON s.id = ps.stock_id
+        GROUP BY COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
       ),
       valued AS (
         SELECT
@@ -351,6 +364,8 @@ export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldi
         s.name AS stock_name,
         s.slug AS stock_slug,
         s.nse_symbol,
+        s.isin,
+        s.bse_code,
         v.shares_held,
         v.pct_of_company,
         v.market_value_cr,
@@ -373,22 +388,37 @@ export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldi
         FROM entity_changes ec
         LEFT JOIN entity_holdings prev_eh
           ON prev_eh.entity_id = te.id
-         AND prev_eh.stock_id = v.stock_id
          AND prev_eh.quarter = ec.prev_quarter
          AND prev_eh.strategy_id IS NULL
+         AND prev_eh.stock_id IN (
+           SELECT s3.id
+           FROM stocks s3
+           WHERE COALESCE(NULLIF(UPPER(TRIM(s3.isin)), ''), NULLIF(UPPER(TRIM(s3.nse_symbol)), ''), NULLIF(TRIM(s3.bse_code), ''), s3.slug)
+             = COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
+         )
         WHERE ec.entity_id = te.id
-          AND ec.stock_id = v.stock_id
           AND ec.strategy_id IS NULL
           AND ec.quarter = v.quarter
+          AND ec.stock_id IN (
+            SELECT s2.id
+            FROM stocks s2
+            WHERE COALESCE(NULLIF(UPPER(TRIM(s2.isin)), ''), NULLIF(UPPER(TRIM(s2.nse_symbol)), ''), NULLIF(TRIM(s2.bse_code), ''), s2.slug)
+              = COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
+          )
+        ORDER BY
+          CASE WHEN ec.change_type IS NOT NULL AND ec.change_type <> 'unchanged' THEN 0 ELSE 1 END,
+          ec.pct_change DESC NULLS LAST
         LIMIT 1
       ) ch ON TRUE
       WHERE (SELECT q FROM target_q) IS NOT NULL
       ORDER BY v.pct_of_company DESC NULLS LAST, v.market_value_cr DESC NULLS LAST
     `) as EntityHoldingDbRow[];
-    return rows.map((r) => ({
+    const mapped = rows.map((r) => ({
       stockName: r.stock_name,
       stockSlug: r.stock_slug,
       nseSymbol: r.nse_symbol ?? null,
+      isin: r.isin ?? null,
+      bseCode: r.bse_code ?? null,
       shares: toNum(r.shares_held),
       pctOfCompany: toNum(r.pct_of_company),
       marketValueCr: toNum(r.market_value_cr),
@@ -397,6 +427,11 @@ export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldi
       prevPct: toNum(r.prev_pct),
       quarter: quarterToIso(r.quarter),
     }));
+    return dedupeHoldingsByStock(mapped).sort(
+      (a, b) =>
+        (b.pctOfCompany ?? 0) - (a.pctOfCompany ?? 0) ||
+        (b.marketValueCr ?? 0) - (a.marketValueCr ?? 0),
+    );
   } catch {
     return [];
   }
@@ -410,7 +445,7 @@ export async function getEntityQuarterChangeDetails(
   if (!sql || quarters.length === 0) return [];
   try {
     const rows = (await sql!`
-      SELECT DISTINCT ON (ec.entity_id, ec.quarter, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
+      SELECT DISTINCT ON (ec.entity_id, ec.quarter, COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug))
         ec.quarter,
         ec.prev_quarter,
         ec.change_type,
@@ -418,6 +453,8 @@ export async function getEntityQuarterChangeDetails(
         s.name AS stock_name,
         s.slug AS stock_slug,
         s.nse_symbol,
+        s.isin,
+        s.bse_code,
         COALESCE(curr.pct_of_company, CASE WHEN ec.change_type = 'complete_exit' THEN 0 END) AS new_pct,
         CASE
           WHEN ec.change_type = 'fresh_entry' THEN 0::numeric
@@ -500,7 +537,7 @@ export async function getEntityQuarterChangeDetails(
       WHERE te.slug = ${entitySlug}
         AND ec.strategy_id IS NULL
         AND ec.quarter = ANY(${quarters}::date[])
-      ORDER BY ec.entity_id, ec.quarter, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+      ORDER BY ec.entity_id, ec.quarter, COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug),
         ABS(COALESCE(ec.pct_change, 0)) DESC,
         curr.market_value_cr DESC NULLS LAST,
         ec.stock_id DESC
@@ -512,6 +549,8 @@ export async function getEntityQuarterChangeDetails(
       stock_name: string;
       stock_slug: string;
       nse_symbol: string | null;
+      isin: string | null;
+      bse_code: string | null;
       new_pct: unknown;
       prev_pct: unknown;
       new_value_cr: unknown;
@@ -532,6 +571,8 @@ export async function getEntityQuarterChangeDetails(
         stockName: r.stock_name,
         stockSlug: r.stock_slug,
         nseSymbol: r.nse_symbol ?? null,
+        isin: r.isin ?? null,
+        bseCode: r.bse_code ?? null,
         changeType: r.change_type,
         prevPct: toNum(r.prev_pct),
         newPct: toNum(r.new_pct),
@@ -1459,11 +1500,14 @@ export async function getHoldingsByHolderSlug(
             SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
           )
           SELECT
-            s.name AS stock_name,
-            s.slug AS stock_slug,
-            SUM(sph.pct_of_company)::numeric AS pct_of_company,
-            SUM(sph.shares)::bigint AS shares,
-            ROUND(SUM(
+            (array_agg(s.name ORDER BY s.id))[1] AS stock_name,
+            (array_agg(s.slug ORDER BY s.id))[1] AS stock_slug,
+            (array_agg(s.nse_symbol ORDER BY s.id))[1] AS nse_symbol,
+            (array_agg(s.isin ORDER BY s.id))[1] AS isin,
+            (array_agg(s.bse_code ORDER BY s.id))[1] AS bse_code,
+            MAX(sph.pct_of_company)::numeric AS pct_of_company,
+            MAX(sph.shares)::bigint AS shares,
+            ROUND(MAX(
               CASE
                 WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
                   THEN (sph.shares::numeric * sqp.close_price) / 1e7
@@ -1481,7 +1525,7 @@ export async function getHoldingsByHolderSlug(
             AND sph.quarter = (SELECT q FROM latest)
             AND sph.is_promoter = FALSE
             AND sph.pct_of_company >= 1.0
-          GROUP BY s.id, s.name, s.slug
+          GROUP BY COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
           ORDER BY pct_of_company DESC
         `) as HolderStockDbRow[])
       : ((await sql!`
@@ -1489,17 +1533,22 @@ export async function getHoldingsByHolderSlug(
             SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
           )
           SELECT
-            s.name AS stock_name,
-            s.slug AS stock_slug,
-            sph.pct_of_company,
-            sph.shares,
-            CASE
-              WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-                THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
-              ELSE NULL
-            END AS market_value_cr,
-            sph.holder_type,
-            te.slug AS entity_slug
+            (array_agg(s.name ORDER BY s.id))[1] AS stock_name,
+            (array_agg(s.slug ORDER BY s.id))[1] AS stock_slug,
+            (array_agg(s.nse_symbol ORDER BY s.id))[1] AS nse_symbol,
+            (array_agg(s.isin ORDER BY s.id))[1] AS isin,
+            (array_agg(s.bse_code ORDER BY s.id))[1] AS bse_code,
+            MAX(sph.pct_of_company)::numeric AS pct_of_company,
+            MAX(sph.shares)::bigint AS shares,
+            ROUND(MAX(
+              CASE
+                WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                  THEN (sph.shares::numeric * sqp.close_price) / 1e7
+                ELSE NULL
+              END
+            ), 2) AS market_value_cr,
+            MAX(sph.holder_type) AS holder_type,
+            MAX(te.slug) AS entity_slug
           FROM shareholding_pattern_holders sph
           JOIN stocks s ON s.id = sph.stock_id
           LEFT JOIN tracked_entities te ON te.id = sph.entity_id
@@ -1509,20 +1558,28 @@ export async function getHoldingsByHolderSlug(
             AND sph.quarter = (SELECT q FROM latest)
             AND sph.is_promoter = FALSE
             AND sph.pct_of_company >= 1.0
-          ORDER BY sph.pct_of_company DESC
+          GROUP BY COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
+          ORDER BY pct_of_company DESC
         `) as HolderStockDbRow[]);
 
+    const mapped = rows.map((r) => ({
+      stockName: r.stock_name,
+      stockSlug: r.stock_slug,
+      nseSymbol: r.nse_symbol ?? null,
+      isin: r.isin ?? null,
+      bseCode: r.bse_code ?? null,
+      pctOfCompany: r.pct_of_company ?? null,
+      shares: r.shares ?? null,
+      marketValueCr: toNum(r.market_value_cr),
+      holderType: r.holder_type,
+    }));
+    const deduped = dedupeHoldingsByStock(mapped).sort(
+      (a, b) => (Number(b.pctOfCompany) || 0) - (Number(a.pctOfCompany) || 0),
+    );
     return {
       holderName,
       entitySlug: entitySlug ?? rows[0]?.entity_slug ?? null,
-      rows: rows.map((r) => ({
-        stockName: r.stock_name,
-        stockSlug: r.stock_slug,
-        pctOfCompany: r.pct_of_company ?? null,
-        shares: r.shares ?? null,
-        marketValueCr: toNum(r.market_value_cr),
-        holderType: r.holder_type,
-      })),
+      rows: deduped.map(({ nseSymbol: _nse, isin: _isin, bseCode: _bse, ...row }) => row),
     };
   } catch {
     return { holderName: holderSlug, entitySlug: null, rows: [] };
@@ -1560,11 +1617,11 @@ export async function getOnePercentHolderPositionsMap(): Promise<
       SELECT
         te.slug AS entity_slug,
         CASE WHEN sph.entity_id IS NOT NULL THEN NULL ELSE sph.holder_name END AS holder_name,
-        s.slug AS stock_slug,
-        s.name AS stock_name,
-        SUM(sph.pct_of_company)::numeric AS pct_of_company,
-        SUM(sph.shares)::bigint AS shares,
-        ROUND(SUM(
+        (array_agg(s.slug ORDER BY s.id))[1] AS stock_slug,
+        (array_agg(s.name ORDER BY s.id))[1] AS stock_name,
+        MAX(sph.pct_of_company)::numeric AS pct_of_company,
+        MAX(sph.shares)::bigint AS shares,
+        ROUND(MAX(
           CASE
             WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
               THEN (sph.shares::numeric * sqp.close_price) / 1e7
@@ -1582,7 +1639,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
       GROUP BY
         te.slug,
         CASE WHEN sph.entity_id IS NOT NULL THEN NULL ELSE sph.holder_name END,
-        s.id, s.name, s.slug
+        COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
       ORDER BY pct_of_company DESC
     `) as Array<{
       holder_name: string | null;
@@ -2127,6 +2184,8 @@ interface EntityHoldingDbRow {
   stock_name: string;
   stock_slug: string;
   nse_symbol: string | null;
+  isin: string | null;
+  bse_code: string | null;
   shares_held: number | null;
   pct_of_company: number | null;
   market_value_cr: number | null;
@@ -2138,6 +2197,9 @@ interface EntityHoldingDbRow {
 interface HolderStockDbRow {
   stock_name: string;
   stock_slug: string;
+  nse_symbol?: string | null;
+  isin?: string | null;
+  bse_code?: string | null;
   pct_of_company: number | null;
   shares: number | null;
   market_value_cr: unknown;
