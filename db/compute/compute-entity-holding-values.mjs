@@ -24,8 +24,14 @@ async function loadStocksToPrice(quarter) {
   return sql`
     SELECT DISTINCT
       s.id AS stock_id,
-      s.nse_symbol,
-      s.bse_code
+      COALESCE(
+        NULLIF(TRIM(s.nse_symbol), ''),
+        NULLIF(TRIM(sym.nse_symbol), '')
+      ) AS nse_symbol,
+      COALESCE(
+        NULLIF(TRIM(s.bse_code), ''),
+        NULLIF(TRIM(sym.bse_code), '')
+      ) AS bse_code
     FROM (
       SELECT stock_id FROM entity_holdings
       WHERE strategy_id IS NULL AND quarter = ${quarter}::date
@@ -36,7 +42,25 @@ async function loadStocksToPrice(quarter) {
         AND pct_of_company >= 1.0
     ) u
     JOIN stocks s ON s.id = u.stock_id
-    WHERE COALESCE(NULLIF(TRIM(s.nse_symbol), ''), NULLIF(TRIM(s.bse_code), '')) IS NOT NULL
+    LEFT JOIN LATERAL (
+      SELECT s2.nse_symbol, s2.bse_code
+      FROM stocks s2
+      WHERE s.isin IS NOT NULL
+        AND TRIM(s.isin) <> ''
+        AND s2.isin = s.isin
+        AND s2.id <> s.id
+      ORDER BY
+        (NULLIF(TRIM(s2.nse_symbol), '') IS NOT NULL) DESC,
+        (NULLIF(TRIM(s2.bse_code), '') IS NOT NULL) DESC,
+        s2.id ASC
+      LIMIT 1
+    ) sym ON TRUE
+    WHERE COALESCE(
+      NULLIF(TRIM(s.nse_symbol), ''),
+      NULLIF(TRIM(s.bse_code), ''),
+      NULLIF(TRIM(sym.nse_symbol), ''),
+      NULLIF(TRIM(sym.bse_code), '')
+    ) IS NOT NULL
   `;
 }
 

@@ -72,6 +72,8 @@
     "db:dedupe-si-data": "node scripts/node-with-ca.mjs db/seed/dedupe-super-investor-data.mjs",
     "db:dedupe-all": "node scripts/node-with-ca.mjs db/seed/dedupe-stocks-canonical.mjs && node scripts/node-with-ca.mjs db/seed/dedupe-super-investor-data.mjs && node scripts/node-with-ca.mjs db/compute/compute-entity-holding-values.mjs -- --all-quarters && node scripts/node-with-ca.mjs db/compute/compute-super-investor-signals.mjs -- --all-quarters",
     "db:backfill-entity-resolution": "node scripts/node-with-ca.mjs db/seed/backfill-entity-resolution.mjs",
+    "db:backfill-stock-symbols": "node scripts/node-with-ca.mjs db/seed/backfill-stock-symbols.mjs",
+    "audit:quarter-prices": "node scripts/node-with-ca.mjs scripts/audit-quarter-prices.mjs",
     "db:audit-si-duplicates": "node scripts/node-with-ca.mjs db/audit-si-duplicates.mjs",
     "audit:db": "node scripts/audit-db-health.mjs",
     "audit:nav-mapping": "node scripts/node-with-ca.mjs scripts/audit-nav-mapping.mjs",

@@ -361,13 +361,32 @@ async function closeInRange(exchange, key, range) {
     range.endIso,
     range.priceEndIso,
   );
+  const lookupKeys =
+    exchange === 'nse'
+      ? [String(key).trim().toUpperCase()]
+      : bseLookupKeys(key);
+
   for (const ymd of candidates) {
     const day = exchange === 'nse' ? await loadNseDay(ymd) : await loadBseDay(ymd);
     if (!day) continue;
-    const px = day.get(exchange === 'nse' ? key.toUpperCase() : String(key).trim());
-    if (px != null && px > 0) return px;
+    for (const k of lookupKeys) {
+      const px = day.get(k);
+      if (px != null && px > 0) return px;
+    }
   }
   return null;
+}
+
+/** BSE scrip codes may appear with/without leading zeros in bhavcopy. */
+function bseLookupKeys(code) {
+  const raw = String(code || '').trim();
+  if (!raw) return [];
+  const keys = new Set([raw]);
+  if (/^\d+$/.test(raw)) {
+    keys.add(raw.padStart(6, '0'));
+    keys.add(String(Number(raw)));
+  }
+  return [...keys];
 }
 
 /**

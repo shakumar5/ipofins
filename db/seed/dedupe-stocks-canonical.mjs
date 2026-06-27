@@ -121,6 +121,18 @@ async function remapSiStockFks(client) {
   `);
 
   await client.query(`
+    DELETE FROM stock_quarter_prices sqp
+    USING stock_dup_map m, stock_quarter_prices sqp2
+    WHERE sqp.stock_id = m.dup_id
+      AND sqp2.stock_id = m.canonical_id
+      AND sqp.quarter = sqp2.quarter
+  `);
+  await client.query(`
+    UPDATE stock_quarter_prices sqp SET stock_id = m.canonical_id
+    FROM stock_dup_map m WHERE sqp.stock_id = m.dup_id
+  `);
+
+  await client.query(`
     DELETE FROM entity_conviction ecv
     USING stock_dup_map m, entity_conviction ecv2
     WHERE ecv.stock_id = m.dup_id
