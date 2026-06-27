@@ -49,39 +49,48 @@ function ymdToBseDdMmYy(ymd) {
   return `${ymd.slice(6, 8)}${ymd.slice(4, 6)}${ymd.slice(2, 4)}`;
 }
 
-function prevYmd(ymd) {
+/** Default ±calendar days around quarter-end anchor when matching local/downloaded bhavcopy. */
+export const BHAVCOPY_QUARTER_WINDOW_DAYS = Number(process.env.BHAVCOPY_QUARTER_WINDOW_DAYS || 7);
+
+function shiftYmd(ymd, days) {
   const y = Number(ymd.slice(0, 4));
   const m = Number(ymd.slice(4, 6)) - 1;
   const d = Number(ymd.slice(6, 8));
   const dt = new Date(Date.UTC(y, m, d));
-  dt.setUTCDate(dt.getUTCDate() - 1);
+  dt.setUTCDate(dt.getUTCDate() + days);
   return `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth() + 1)}${pad2(dt.getUTCDate())}`;
 }
 
-/** Ordered YYYYMMDD dates to try for quarter-end EOD close (newest first). */
-export function quarterPriceYmdCandidates(startIso, endIso, priceEndIso = null) {
-  const startYmd = isoToYmd(startIso);
+/**
+ * Ordered YYYYMMDD dates to try for quarter-end EOD close.
+ * Anchor = priceEndIso (e.g. 30-Mar) or calendar quarter-end; then ±windowDays.
+ * Earlier dates are tried before later ones (prefer last session on/before quarter-end).
+ */
+export function quarterPriceYmdCandidates(
+  startIso,
+  endIso,
+  priceEndIso = null,
+  windowDays = BHAVCOPY_QUARTER_WINDOW_DAYS,
+) {
   const endYmd = isoToYmd(endIso);
-  const primary = isoToYmd(priceEndIso || endIso);
-  if (!startYmd || !endYmd || !primary) return [];
+  const anchor = isoToYmd(priceEndIso || endIso);
+  if (!anchor) return [];
 
   const seen = new Set();
   const out = [];
   const push = (ymd) => {
-    if (!ymd || ymd < startYmd || ymd > endYmd || seen.has(ymd)) return;
+    if (!ymd || seen.has(ymd)) return;
     seen.add(ymd);
     out.push(ymd);
   };
 
-  push(primary);
-  if (primary !== endYmd) push(endYmd);
+  const win = Number.isFinite(windowDays) && windowDays >= 0 ? Math.floor(windowDays) : 7;
 
-  let ymd = endYmd;
-  for (let i = 0; i < 25; i++) {
-    push(ymd);
-    ymd = prevYmd(ymd);
-    if (ymd < startYmd) break;
-  }
+  push(anchor);
+  if (endYmd && endYmd !== anchor) push(endYmd);
+
+  for (let d = 1; d <= win; d++) push(shiftYmd(anchor, -d));
+  for (let d = 1; d <= win; d++) push(shiftYmd(anchor, d));
 
   return out;
 }
