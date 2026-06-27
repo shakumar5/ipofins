@@ -21,6 +21,7 @@
  */
 
 import { sql, isDbConfigured } from '../../scripts/lib/db.mjs';
+import { stockListingKeySql } from '../../scripts/lib/stock-listing-key.mjs';
 
 // ═══════════════════════════════════════════════════════════════
 // PARSE ARGS
@@ -232,14 +233,17 @@ async function computeEntityQuarterlyStats(quarter) {
   await sql`
     INSERT INTO entity_quarterly_stats (entity_id, strategy_id, quarter, total_holdings, portfolio_value_cr, top5_concentration, hhi, turnover_ratio, large_cap_pct, mid_cap_pct, small_cap_pct)
     WITH deduped AS (
-      SELECT DISTINCT ON (eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug))
-        eh.entity_id, eh.strategy_id, eh.stock_id, eh.quarter,
-        eh.shares_held, eh.pct_of_company, eh.market_value_cr
+      SELECT
+        eh.entity_id,
+        eh.strategy_id,
+        eh.quarter,
+        MAX(eh.shares_held) AS shares_held,
+        MAX(eh.pct_of_company) AS pct_of_company,
+        MAX(eh.market_value_cr) AS market_value_cr
       FROM entity_holdings eh
       JOIN stocks s ON s.id = eh.stock_id
       WHERE eh.quarter = ${quarter}::DATE
-      ORDER BY eh.entity_id, eh.strategy_id, COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
-        eh.pct_of_company DESC NULLS LAST, eh.stock_id DESC
+      GROUP BY eh.entity_id, eh.strategy_id, eh.quarter, ${sql.unsafe(stockListingKeySql('s'))}
     )
     SELECT
       eh.entity_id,

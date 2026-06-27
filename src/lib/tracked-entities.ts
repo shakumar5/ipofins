@@ -8,7 +8,10 @@
 import superInvestorsJson from '../data/super-investors.json';
 import { sql } from './db';
 import { BRAND_URL } from './brand';
-import { dedupeHoldingsByStock, stockListingKey } from './holdings-dedupe';
+import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql } from './holdings-dedupe';
+
+/** SQL fragment for GROUP BY / joins on stocks — must match stock-listing-key.ts */
+const STOCK_LISTING_KEY = stockListingKeySql('s');
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -763,8 +766,10 @@ export async function getEntityQuarterHistory(
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(COALESCE(
               eh.market_value_cr,
               CASE
                 WHEN eh.shares_held > 0 AND sqp.close_price IS NOT NULL
@@ -773,45 +778,49 @@ export async function getEntityQuarterHistory(
                   THEN (eh.shares_held::numeric * px.price_per_share) / 1e7
                 ELSE NULL
               END
-            )
-          )::numeric, 2) AS value_cr
-        FROM entity_holdings eh
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
-        LEFT JOIN LATERAL (
-          SELECT (eh2.market_value_cr * 1e7 / NULLIF(eh2.shares_held, 0))::numeric AS price_per_share
-          FROM entity_holdings eh2
-          WHERE eh2.stock_id = eh.stock_id
-            AND eh2.quarter = eh.quarter
-            AND eh2.strategy_id IS NULL
-            AND eh2.market_value_cr > 0
-            AND eh2.shares_held > 0
-          LIMIT 1
-        ) px ON TRUE
-        WHERE eh.entity_id = te.id
-          AND eh.strategy_id IS NULL
-          AND eh.quarter = eqs.quarter
+            )) AS value_cr
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
+          LEFT JOIN LATERAL (
+            SELECT (eh2.market_value_cr * 1e7 / NULLIF(eh2.shares_held, 0))::numeric AS price_per_share
+            FROM entity_holdings eh2
+            WHERE eh2.stock_id = eh.stock_id
+              AND eh2.quarter = eh.quarter
+              AND eh2.strategy_id IS NULL
+              AND eh2.market_value_cr > 0
+              AND eh2.shares_held > 0
+            LIMIT 1
+          ) px ON TRUE
+          WHERE eh.entity_id = te.id
+            AND eh.strategy_id IS NULL
+            AND eh.quarter = eqs.quarter
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) eh_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(DISTINCT sph.stock_id)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
-              CASE
-                WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-                  THEN (sph.shares::numeric * sqp.close_price) / 1e7
-                ELSE NULL
-              END
-            )
-          )::numeric, 2) AS value_cr
-        FROM shareholding_pattern_holders sph
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-        WHERE sph.entity_id = te.id
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-          AND COALESCE(sph.match_confidence, 0) >= 0.85
-          AND sph.quarter = eqs.quarter
+          COUNT(*)::int AS cnt,
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(CASE
+              WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                THEN (sph.shares::numeric * sqp.close_price) / 1e7
+              ELSE NULL
+            END) AS value_cr
+          FROM shareholding_pattern_holders sph
+          JOIN stocks s ON s.id = sph.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+          WHERE sph.entity_id = te.id
+            AND sph.is_promoter = FALSE
+            AND sph.pct_of_company >= 1.0
+            AND COALESCE(sph.match_confidence, 0) >= 0.85
+            AND sph.quarter = eqs.quarter
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) sph_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
@@ -924,43 +933,49 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(COALESCE(
               eh.market_value_cr,
               CASE
                 WHEN eh.shares_held > 0 AND sqp.close_price IS NOT NULL
                   THEN (eh.shares_held::numeric * sqp.close_price) / 1e7
                 ELSE NULL
               END
-            )
-          )::numeric, 2) AS value_cr
-        FROM entity_holdings eh
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
-        WHERE eh.entity_id = te.id
-          AND eh.strategy_id IS NULL
-          AND eh.quarter = (SELECT q FROM latest)
+            )) AS value_cr
+          FROM entity_holdings eh
+          JOIN stocks s ON s.id = eh.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
+          WHERE eh.entity_id = te.id
+            AND eh.strategy_id IS NULL
+            AND eh.quarter = (SELECT q FROM latest)
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) eh_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
-          COUNT(DISTINCT sph.stock_id)::int AS cnt,
-          ROUND(SUM(
-            COALESCE(
-              CASE
-                WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-                  THEN (sph.shares::numeric * sqp.close_price) / 1e7
-                ELSE NULL
-              END
-            )
-          )::numeric, 2) AS value_cr
-        FROM shareholding_pattern_holders sph
-        LEFT JOIN stock_quarter_prices sqp
-          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-        WHERE sph.entity_id = te.id
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-          AND COALESCE(sph.match_confidence, 0) >= 0.85
-          AND sph.quarter = (SELECT q FROM latest)
+          COUNT(*)::int AS cnt,
+          ROUND(SUM(value_cr)::numeric, 2) AS value_cr
+        FROM (
+          SELECT
+            MAX(CASE
+              WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
+                THEN (sph.shares::numeric * sqp.close_price) / 1e7
+              ELSE NULL
+            END) AS value_cr
+          FROM shareholding_pattern_holders sph
+          JOIN stocks s ON s.id = sph.stock_id
+          LEFT JOIN stock_quarter_prices sqp
+            ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+          WHERE sph.entity_id = te.id
+            AND sph.is_promoter = FALSE
+            AND sph.pct_of_company >= 1.0
+            AND COALESCE(sph.match_confidence, 0) >= 0.85
+            AND sph.quarter = (SELECT q FROM latest)
+          GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
+        ) deduped
       ) sph_live ON TRUE
       LEFT JOIN LATERAL (
         SELECT
@@ -1396,13 +1411,22 @@ export async function getDistinctHolderSlugs(): Promise<
           sph.entity_id,
           te.slug AS entity_slug,
           te.display_name AS entity_display_name,
-          COUNT(DISTINCT sph.stock_id)::int AS stock_count
-        FROM shareholding_pattern_holders sph
-        LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-        WHERE sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
-          AND sph.pct_of_company >= 1.0
-        GROUP BY sph.holder_name, sph.entity_id, te.slug, te.display_name
+          COUNT(*)::int AS stock_count
+        FROM (
+          SELECT DISTINCT
+            sph.holder_name,
+            sph.entity_id,
+            te.slug AS entity_slug,
+            te.display_name AS entity_display_name,
+            ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key
+          FROM shareholding_pattern_holders sph
+          JOIN stocks s ON s.id = sph.stock_id
+          LEFT JOIN tracked_entities te ON te.id = sph.entity_id
+          WHERE sph.quarter = (SELECT q FROM latest)
+            AND sph.is_promoter = FALSE
+            AND sph.pct_of_company >= 1.0
+        ) sph
+        GROUP BY sph.holder_name, sph.entity_id, sph.entity_slug, sph.entity_display_name
       ),
       curated AS (
         SELECT

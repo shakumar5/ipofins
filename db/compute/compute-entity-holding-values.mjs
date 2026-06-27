@@ -10,6 +10,7 @@
  */
 
 import { sql } from '../../scripts/lib/db.mjs';
+import { stockListingKeySql } from '../../scripts/lib/stock-listing-key.mjs';
 import { requireDb } from '../../scripts/lib/db-writers.mjs';
 import { mapPool } from '../../scripts/lib/pool.mjs';
 import { fetchQuarterEndClose, holdingValueCr, clearPriceCache } from '../../scripts/lib/nse-quarter-price.mjs';
@@ -66,14 +67,28 @@ async function upsertStockQuarterPrice(stockId, quarter, close) {
 }
 
 async function refreshQuarterStats(quarter) {
+  const listingKey = stockListingKeySql('s');
   await sql`
     UPDATE entity_quarterly_stats eqs
-    SET portfolio_value_cr = COALESCE(sub.total, 0)
+    SET portfolio_value_cr = COALESCE(sub.total, 0),
+        total_holdings = COALESCE(sub.cnt, 0)
     FROM (
-      SELECT entity_id, strategy_id, SUM(market_value_cr) AS total
-      FROM entity_holdings
-      WHERE strategy_id IS NULL AND quarter = ${quarter}::date
-      GROUP BY entity_id, strategy_id
+      SELECT
+        eh.entity_id,
+        eh.strategy_id,
+        COUNT(*)::int AS cnt,
+        SUM(value_cr) AS total
+      FROM (
+        SELECT
+          eh.entity_id,
+          eh.strategy_id,
+          MAX(eh.market_value_cr) AS value_cr
+        FROM entity_holdings eh
+        JOIN stocks s ON s.id = eh.stock_id
+        WHERE eh.quarter = ${quarter}::date
+        GROUP BY eh.entity_id, eh.strategy_id, ${sql.unsafe(listingKey)}
+      ) eh
+      GROUP BY eh.entity_id, eh.strategy_id
     ) sub
     WHERE eqs.entity_id = sub.entity_id
       AND eqs.strategy_id IS NULL

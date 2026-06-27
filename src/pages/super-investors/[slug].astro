@@ -95,12 +95,16 @@ const description = seo.description;
 const live = entity?.live;
 const hasLive = !!live;
 const holdingsValueTotal = holdings.reduce((sum, h) => sum + (h.marketValueCr ?? 0), 0);
+const displayHoldingsCount =
+  holdings.length > 0 ? holdings.length : live?.totalHoldings ?? null;
 const displayPortfolioCr =
-  live?.portfolioValueCr != null && live.portfolioValueCr > 0
-    ? live.portfolioValueCr
-    : holdingsValueTotal > 0
-      ? holdingsValueTotal
-      : null;
+  holdings.length > 0 && holdingsValueTotal > 0
+    ? holdingsValueTotal
+    : live?.portfolioValueCr != null && live.portfolioValueCr > 0
+      ? live.portfolioValueCr
+      : holdingsValueTotal > 0
+        ? holdingsValueTotal
+        : null;
 
 const jsonLd = isPlaceholder
   ? null
@@ -221,7 +225,7 @@ const peers = isPlaceholder
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="card text-center">
               <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">
-                {live!.totalHoldings ?? '\u2014'}
+                {displayHoldingsCount ?? '\u2014'}
               </p>
               <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Holdings (Q-o-Q)</p>
             </div>
