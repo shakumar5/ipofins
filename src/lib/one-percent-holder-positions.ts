@@ -11,6 +11,7 @@ export interface HolderPosition {
   pct: number | null;
   shares: number | null;
   marketValueCr: number | null;
+  holderType?: string | null;
 }
 
 export type HolderPositionsMap = Record<string, HolderPosition[]>;

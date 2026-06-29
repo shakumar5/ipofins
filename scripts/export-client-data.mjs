@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdir
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { platform } from 'os';
-import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
+import { buildHolderPositionsRecord } from './lib/holder-positions-export.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
 import { buildSectorIntelligenceExport } from './lib/sector-intelligence-export.mjs';
@@ -548,56 +548,8 @@ function reslimAllSignalListFiles(dir) {
   }
 }
 
-function normalizeHolderSearchKey(name) {
-  return String(name || '')
-    .toUpperCase()
-    .replace(/\./g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-async function exportOnePercentHolderPositions(dbSql) {
-  const rows = await dbSql`
-    WITH latest AS (
-      SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
-    )
-    SELECT
-      sph.holder_name,
-      te.slug AS entity_slug,
-      s.slug AS stock_slug,
-      s.name AS stock_name,
-      sph.pct_of_company,
-      sph.shares,
-      CASE
-        WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
-          THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
-        ELSE NULL
-      END AS market_value_cr
-    FROM shareholding_pattern_holders sph
-    JOIN stocks s ON s.id = sph.stock_id
-    LEFT JOIN tracked_entities te ON te.id = sph.entity_id
-    LEFT JOIN stock_quarter_prices sqp
-      ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-    WHERE sph.quarter = (SELECT q FROM latest)
-      AND sph.is_promoter = FALSE
-      AND sph.pct_of_company >= 1.0
-    ORDER BY sph.pct_of_company DESC
-  `;
-
-  const record = {};
-  for (const r of rows) {
-    const key = r.entity_slug
-      ? `entity:${r.entity_slug}`
-      : `name:${normalizeHolderSearchKey(r.holder_name)}`;
-    if (!record[key]) record[key] = [];
-    record[key].push({
-      stockSlug: r.stock_slug,
-      stockName: r.stock_name,
-      pct: r.pct_of_company == null ? null : Number(r.pct_of_company),
-      shares: r.shares == null ? null : Number(r.shares),
-      marketValueCr: r.market_value_cr == null ? null : Number(r.market_value_cr),
-    });
-  }
+async function exportOnePercentHolderPositions() {
+  const record = await buildHolderPositionsRecord();
   writeJson('one-percent-holder-positions.json', record);
   return Object.keys(record).length;
 }
@@ -816,7 +768,7 @@ async function main() {
   if (isDbConfigured()) {
     const doneOpcPositions = logStep('1% Club holder positions index');
     try {
-      const keys = await withDbRetry(() => exportOnePercentHolderPositions(sql), {
+      const keys = await withDbRetry(() => exportOnePercentHolderPositions(), {
         label: '1% Club holder positions',
       });
       doneOpcPositions(`${keys} holder keys`);

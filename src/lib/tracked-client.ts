@@ -3,6 +3,7 @@
  * Do not import tracked-entities.ts here — it pulls Neon/sql into the browser bundle.
  */
 
+import superInvestorsJson from '../data/super-investors.json';
 import type { StockShareholdingDetail } from './tracked-entities';
 
 export const SUPER_INVESTORS_HUB = '/super-investors';
@@ -102,4 +103,27 @@ export function getStockEmptyStateContent(options: {
 export function curatedEntityUrl(entitySlug: string | null | undefined): string | null {
   if (!entitySlug) return null;
   return `${SUPER_INVESTORS_HUB}/${entitySlug}`;
+}
+
+export function onePercentHolderUrl(holderSlug: string): string {
+  return `${ONE_PERCENT_CLUB_HUB}/holder/${holderSlug}`;
+}
+
+export function slugifyEntity(text: string): string {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .substring(0, 80);
+}
+
+export function holderDetailUrl(holder: { holderName: string; entitySlug?: string | null }): string | null {
+  if (!holder.holderName?.trim() && !holder.entitySlug) return null;
+  if (holder.entitySlug) {
+    const isSi = superInvestorsJson.some(
+      (e) => slugifyEntity(e.displayName || e.name) === holder.entitySlug,
+    );
+    return isSi ? `${SUPER_INVESTORS_HUB}/${holder.entitySlug}` : onePercentHolderUrl(holder.entitySlug);
+  }
+  return onePercentHolderUrl(slugifyEntity(holder.holderName));
 }

@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import type { OnePercentRow, ShpCategorySummary, StockShareholdingDetail } from '../../lib/tracked-entities';
-import { curatedEntityUrl, hasCuratedSuperInvestorInterest, hasSmartMoneyRadarInterest } from '../../lib/tracked-client';
+import { curatedEntityUrl, hasCuratedSuperInvestorInterest, hasSmartMoneyRadarInterest, holderDetailUrl } from '../../lib/tracked-client';
 import { formatCr, formatPct } from '../../lib/tracked-display';
 import StockNotOnRadarCard from './StockNotOnRadarCard';
 
@@ -103,6 +103,7 @@ function HolderTable({ rows }: { rows: OnePercentRow[] }) {
         <tbody>
           {rows.map((h) => {
             const url = h.entitySlug ? curatedEntityUrl(h.entitySlug) : null;
+            const holderPageUrl = holderDetailUrl({ holderName: h.holderName, entitySlug: h.entitySlug });
             const trackedAs =
               h.entityDisplayName &&
               h.entityDisplayName.trim().toLowerCase() !== h.holderName.trim().toLowerCase()
@@ -111,7 +112,15 @@ function HolderTable({ rows }: { rows: OnePercentRow[] }) {
             return (
               <tr key={h.entitySlug ? `entity:${h.entitySlug}:${h.id}` : `holder:${h.id}`} className="border-b border-surface-100 dark:border-surface-800">
                 <td className="py-2.5 pr-4 text-surface-900 dark:text-white">
-                  <div className="font-medium">{h.holderName}</div>
+                  <div className="font-medium">
+                    {holderPageUrl ? (
+                      <a href={holderPageUrl} className="hover:text-primary-600 dark:hover:text-primary-400">
+                        {h.holderName}
+                      </a>
+                    ) : (
+                      h.holderName
+                    )}
+                  </div>
                   {url && trackedAs && (
                     <a
                       href={url}

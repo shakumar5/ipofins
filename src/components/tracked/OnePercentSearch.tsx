@@ -236,7 +236,7 @@ export default function OnePercentSearch({
                   href={expandedHolder.profileUrl}
                   className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
                 >
-                  Super Investor profile →
+                  View all holdings →
                 </a>
               )}
               <button
