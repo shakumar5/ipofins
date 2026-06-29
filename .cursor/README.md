@@ -4,7 +4,7 @@
 |-------|------|
 | Rules | `.cursor/rules/*.mdc` |
 | Skills | `.cursor/skills/*/SKILL.md` |
-| Subagents | `.cursor/subagents/*.md` |
+| Subagents | `.cursor/subagents/*.md` (mirrored to `.cursor/agents/*.md` for Cursor) |
 | Commands | `.cursor/commands/*.md` → `/command-name` |
 | MCP | Copy `.cursor/mcp.json.example` → `.cursor/mcp.json` (gitignored) |
 | Hooks | `.cursor/hooks.json` + `.cursor/hooks/*` |

@@ -1,0 +1,6 @@
+## Pipeline rules (applies to /pipeline/)
+- Use node:sqlite (built-in Node 22) — not better-sqlite3
+- Check ingestion_runs for existing SUCCESS before re-fetching
+- Compute SHA-256 checksum of every payload before storing
+- Write all errors to data_quality_issues with severity level
+- Never run mark_fund_exits() mid-pipeline — only after full load

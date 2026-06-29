@@ -23,10 +23,15 @@ def main() -> int:
     skipped: list[str] = []
     errors: list[str] = []
     optional = {"DESIGN.md": True, "CONTEXT.md": True}
+    subagent_skip = lambda r: r.startswith(".cursor/subagents/")
 
     for rel, content in sorted(FILES.items()):
         try:
-            status = write_file(rel, content, skip_if_exists=optional.get(rel, False))
+            status = write_file(
+                rel,
+                content,
+                skip_if_exists=optional.get(rel, False) or subagent_skip(rel),
+            )
             (skipped if status == "skipped" else created).append(rel)
         except Exception as exc:
             errors.append(f"{rel}: {exc}")

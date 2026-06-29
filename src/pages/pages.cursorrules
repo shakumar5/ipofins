@@ -1,0 +1,7 @@
+## Astro page rules
+- Every page: export const prerender = true (static by default)
+- Every content page MUST have: title, description, canonical
+- IPO pages: include JSON-LD structured data (FinancialProduct)
+- Broker pages: noindex if affiliate_url is null
+- GMP data: show source_count and last_updated — never raw avg
+- Use ipo_status_view — never compute status in component
