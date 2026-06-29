@@ -4,19 +4,12 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalizeHolderSearchKey } from './holder-name-search';
-import type { HolderPositionsMap } from './one-percent-holder-positions';
+import type { HolderPosition, HolderPositionsMap } from './one-percent-holder-positions';
 
-export interface CachedHolderPosition {
-  stockSlug: string;
-  stockName: string;
+export interface CachedHolderPosition extends HolderPosition {
   nseSymbol: string | null;
   isin: string | null;
   bseCode: string | null;
-  pct: number | null;
-  shares: number | null;
-  marketValueCr: number | null;
-  holderType: string | null;
 }
 
 const EXPORT_PATH = join(process.cwd(), 'public', 'data', 'one-percent-holder-positions.json');
@@ -60,8 +53,20 @@ export function loadHolderPositionsMapFromExport(): Map<string, CachedHolderPosi
   }
 }
 
+/** Normalize any holder-position map (export cache or SQL) into HolderPositionsMap. */
 export function holderPositionsMapToRecord(
-  map: Map<string, CachedHolderPosition[]>,
+  map: Map<string, readonly HolderPosition[]>,
 ): HolderPositionsMap {
-  return Object.fromEntries(map);
+  const record: HolderPositionsMap = {};
+  for (const [key, list] of map) {
+    record[key] = list.map((p) => ({
+      stockSlug: p.stockSlug,
+      stockName: p.stockName,
+      pct: p.pct ?? null,
+      shares: p.shares ?? null,
+      marketValueCr: p.marketValueCr ?? null,
+      holderType: p.holderType ?? null,
+    }));
+  }
+  return record;
 }

@@ -9,11 +9,11 @@ export function isHolderPageIndexable(stockCount: number): boolean {
 }
 
 export function onePercentStockPath(stockSlug: string): string {
-  return /1-percent-club/;
+  return `/1-percent-club/${stockSlug}`;
 }
 
 export function onePercentHolderPath(holderSlug: string): string {
-  return /1-percent-club/holder/;
+  return `/1-percent-club/holder/${holderSlug}`;
 }
 
 export function slugifyEntity(text: string): string {
