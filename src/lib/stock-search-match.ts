@@ -1,4 +1,4 @@
-/** Match stock signal search queries against name, slug, acronym, and NSE symbol. */
+/** Match stock search queries against ISIN, NSE, BSE, name, slug, and acronym. */
 
 const NAME_STOP_WORDS = new Set([
   'limited',
@@ -37,30 +37,62 @@ function uppercaseTokens(stockName: string): string[] {
   return [...new Set([...tokens, ...embedded])].map((t) => t.toLowerCase());
 }
 
+function normIsin(value: string | null | undefined): string {
+  return String(value ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+function normNse(value: string | null | undefined): string {
+  return String(value ?? '')
+    .trim()
+    .toUpperCase();
+}
+
+function normBse(value: string | null | undefined): string {
+  return String(value ?? '').trim();
+}
+
 export function stockMatchesSearchQuery(
   stockName: string,
   stockSlug: string,
   query: string,
   nseSymbol?: string | null,
+  isin?: string | null,
+  bseCode?: string | null,
 ): boolean {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (q.length < 2) return false;
 
+  const qUpper = q.toUpperCase();
+  const qLower = q.toLowerCase();
+
+  const isinNorm = normIsin(isin);
+  if (isinNorm) {
+    const qIsin = normIsin(q);
+    if (qIsin.length >= 10 && isinNorm === qIsin) return true;
+    if (qIsin.length >= 4 && isinNorm.includes(qIsin)) return true;
+  }
+
+  const symbol = normNse(nseSymbol);
+  if (symbol && (symbol === qUpper || symbol.includes(qUpper) || qUpper.includes(symbol))) return true;
+
+  const bse = normBse(bseCode);
+  if (bse && (bse === q || bse.includes(q) || q.includes(bse))) return true;
+
   const name = stockName.toLowerCase();
-  if (name.includes(q)) return true;
+  if (name.includes(qLower)) return true;
 
   const slug = stockSlug.toLowerCase();
-  if (slug.includes(q)) return true;
-  if (slug.replace(/-/g, '').includes(q)) return true;
-
-  const symbol = String(nseSymbol || '').trim().toLowerCase();
-  if (symbol && (symbol.includes(q) || q.includes(symbol))) return true;
+  if (slug.includes(qLower)) return true;
+  if (slug.replace(/-/g, '').includes(qLower)) return true;
 
   const acronym = stockNameAcronym(stockName).toLowerCase();
-  if (acronym.length >= 2 && (acronym === q || acronym.startsWith(q))) return true;
+  if (acronym.length >= 2 && (acronym === qLower || acronym.startsWith(qLower))) return true;
 
   for (const token of uppercaseTokens(stockName)) {
-    if (token.includes(q) || q.includes(token)) return true;
+    if (token.includes(qLower) || qLower.includes(token)) return true;
   }
 
   return false;
@@ -70,16 +102,25 @@ export interface StockSearchOption {
   slug: string;
   name: string;
   nseSymbol?: string | null;
+  isin?: string | null;
+  bseCode?: string | null;
 }
 
 function stockSearchRank(s: StockSearchOption, query: string): number {
-  const q = query.trim().toLowerCase();
-  const symbol = String(s.nseSymbol || '').trim().toLowerCase();
-  if (symbol && symbol === q) return 0;
-  if (stockNameAcronym(s.name).toLowerCase() === q) return 1;
-  if (s.name.toLowerCase() === q) return 2;
-  if (s.name.toLowerCase().startsWith(q)) return 3;
-  return 4;
+  const q = query.trim();
+  const qUpper = q.toUpperCase();
+  const qLower = q.toLowerCase();
+  const isin = normIsin(s.isin);
+  const symbol = normNse(s.nseSymbol);
+  const bse = normBse(s.bseCode);
+
+  if (isin && isin === normIsin(q)) return 0;
+  if (symbol && symbol === qUpper) return 1;
+  if (bse && bse === q) return 2;
+  if (stockNameAcronym(s.name).toLowerCase() === qLower) return 3;
+  if (s.name.toLowerCase() === qLower) return 4;
+  if (s.name.toLowerCase().startsWith(qLower)) return 5;
+  return 6;
 }
 
 export function filterStockSearchQuery(
@@ -90,7 +131,7 @@ export function filterStockSearchQuery(
   const q = query.trim();
   if (q.length < 2) return [];
   return stocks
-    .filter((s) => stockMatchesSearchQuery(s.name, s.slug, q, s.nseSymbol))
+    .filter((s) => stockMatchesSearchQuery(s.name, s.slug, q, s.nseSymbol, s.isin, s.bseCode))
     .sort((a, b) => stockSearchRank(a, query) - stockSearchRank(b, query) || a.name.localeCompare(b.name))
     .slice(0, limit);
 }

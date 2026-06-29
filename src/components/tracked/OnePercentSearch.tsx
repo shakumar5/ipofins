@@ -11,6 +11,8 @@ export interface StockOption {
   slug: string;
   name: string;
   nseSymbol?: string | null;
+  isin?: string | null;
+  bseCode?: string | null;
 }
 
 export interface SearchHolder {

@@ -10,3 +10,7 @@ export function holderFilingKeySql(holderExpr) {
 export function canonicalStockRankOrderSql(alias = 's') {
   return `(EXISTS (SELECT 1 FROM stock_shp_summary ss WHERE ss.stock_id = ${alias}.id)) DESC, ${alias}.id ASC`;
 }
+
+export function canonicalStockRankOrderByStockIdSql(stockIdExpr = 'stock_id') {
+  return `(EXISTS (SELECT 1 FROM stock_shp_summary ss WHERE ss.stock_id = ${stockIdExpr})) DESC, ${stockIdExpr} ASC`;
+}
