@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * Backfill pct_of_company rows mis-parsed as 100% when XBRL stored 1.0 (= 1%).
- * Uses the earliest later quarter for the same stock + holder with a plausible stake (< 20%).
+ *
+ * Pass 1: copy stake from earliest later quarter (same stock + holder, pct < 20%).
+ * Pass 2: orphan historical rows still at 100% → 1.0 (XBRL 1% mis-parse, not in latest quarter).
  *
  * Usage: npm run db:fix-shp-pct-100
  * Then:  npm run db:compute-si:all
@@ -16,7 +18,7 @@ async function main() {
 
   console.log('Fixing mis-parsed 100% SHP rows (1.0 XBRL → 1%)...\n');
 
-  const sph = await sql`
+  const sph1 = await sql`
     UPDATE shareholding_pattern_holders sph
     SET pct_of_company = sub.fix_pct
     FROM (
@@ -34,9 +36,10 @@ async function main() {
       ORDER BY sph.id, nxt.quarter ASC
     ) sub
     WHERE sph.id = sub.id
+    RETURNING sph.id
   `;
 
-  const eh = await sql`
+  const eh1 = await sql`
     UPDATE entity_holdings eh
     SET pct_of_company = sub.fix_pct
     FROM (
@@ -55,12 +58,31 @@ async function main() {
       ORDER BY eh.id, nxt.quarter ASC
     ) sub
     WHERE eh.id = sub.id
+    RETURNING eh.id
   `;
 
-  const sphN = sph.count ?? 0;
-  const ehN = eh.count ?? 0;
-  console.log(`  shareholding_pattern_holders: ${sphN} rows updated`);
-  console.log(`  entity_holdings: ${ehN} rows updated`);
+  console.log(`  Pass 1 — shareholding_pattern_holders: ${sph1.length} rows`);
+  console.log(`  Pass 1 — entity_holdings: ${eh1.length} rows`);
+
+  const sph2 = await sql`
+    UPDATE shareholding_pattern_holders sph
+    SET pct_of_company = 1.0
+    WHERE sph.pct_of_company >= 99
+      AND sph.is_promoter = FALSE
+      AND sph.quarter < (SELECT MAX(quarter) FROM shareholding_pattern_holders)
+    RETURNING sph.id
+  `;
+
+  const eh2 = await sql`
+    UPDATE entity_holdings eh
+    SET pct_of_company = 1.0
+    WHERE eh.pct_of_company >= 99
+      AND eh.quarter < (SELECT MAX(quarter) FROM entity_holdings)
+    RETURNING eh.id
+  `;
+
+  console.log(`  Pass 2 (orphan historical) — shareholding_pattern_holders: ${sph2.length} rows`);
+  console.log(`  Pass 2 (orphan historical) — entity_holdings: ${eh2.length} rows`);
 
   const [{ remaining }] = await sql`
     SELECT COUNT(*)::int AS remaining
@@ -68,9 +90,7 @@ async function main() {
     WHERE pct_of_company = 100 AND is_promoter = FALSE
   `;
   console.log(`\nRemaining non-promoter sph rows at exactly 100%: ${remaining}`);
-  if (sphN + ehN > 0) {
-    console.log('\nDone. Re-run: npm run db:compute-si:all');
-  }
+  console.log('\nDone. Re-run: npm run db:compute-si:all');
 }
 
 main().catch((err) => {
