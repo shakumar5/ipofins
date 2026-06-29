@@ -133,7 +133,15 @@ export default function SuperInvestorHoldingsTable({ holdings }: Props) {
   return (
     <div>
       <p className="text-xs text-surface-500 dark:text-surface-400 mb-3">
-        {holdings.length} stocks · Sorted by {SORT_LABELS[sortBy]} ({sortDir === 'desc' ? 'high to low' : 'low to high'})
+        {holdings.length} stocks · Sorted by {SORT_LABELS[sortBy]} (
+        {sortBy === 'stock'
+          ? sortDir === 'asc'
+            ? 'A to Z'
+            : 'Z to A'
+          : sortDir === 'desc'
+            ? 'high to low'
+            : 'low to high'}
+        )
       </p>
 
       <div className="md:hidden flex flex-wrap gap-2 mb-3">
