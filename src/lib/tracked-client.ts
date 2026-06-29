@@ -3,7 +3,6 @@
  * Do not import tracked-entities.ts here — it pulls Neon/sql into the browser bundle.
  */
 
-import superInvestorsJson from '../data/super-investors.json';
 import type { StockShareholdingDetail } from './tracked-entities';
 
 export const SUPER_INVESTORS_HUB = '/super-investors';
@@ -119,11 +118,6 @@ export function slugifyEntity(text: string): string {
 
 export function holderDetailUrl(holder: { holderName: string; entitySlug?: string | null }): string | null {
   if (!holder.holderName?.trim() && !holder.entitySlug) return null;
-  if (holder.entitySlug) {
-    const isSi = superInvestorsJson.some(
-      (e) => slugifyEntity(e.displayName || e.name) === holder.entitySlug,
-    );
-    return isSi ? `${SUPER_INVESTORS_HUB}/${holder.entitySlug}` : onePercentHolderUrl(holder.entitySlug);
-  }
-  return onePercentHolderUrl(slugifyEntity(holder.holderName));
+  const slug = holder.entitySlug || slugifyEntity(holder.holderName);
+  return slug ? onePercentHolderUrl(slug) : null;
 }

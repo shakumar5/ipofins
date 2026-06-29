@@ -67,10 +67,18 @@ const faqJsonLd = {
     },
     {
       '@type': 'Question',
+      name: 'Can I search by promoter or FII names?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. Investor search covers every shareholder disclosed at ≥1% in the latest quarterly filing — promoters, FII, DII, mutual funds, and individuals. Stock pages group them by category; search finds them by name across all companies.',
+      },
+    },
+    {
+      '@type': 'Question',
       name: 'Are promoters included in the 1% Club?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No. Promoters are excluded from the 1% Club by design. They are tracked separately so we can show "% held by promoters" on stock pages, but they are never treated as conviction signals.',
+        text: 'Promoters appear on each stock’s shareholding page and in investor name search when they hold ≥1%. They are grouped separately from FII/DII/individual holders so you can distinguish promoter stake from outside investors.',
       },
     },
   ],

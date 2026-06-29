@@ -1,3 +1,5 @@
+import { parsePct } from './lib/shp-xbrl-parser.mjs';
+
 const url = process.argv[2] || 'https://nsearchives.nseindia.com/corporate/xbrl/SHP_1655807_21042026113753_WEB.xml';
 const xml = await (await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })).text();
 
@@ -6,15 +8,6 @@ const PCT_TAGS = [
   'ShareholdingAsAPercentageOfTotalNumberOfSharesCalculatedAsPerSCRR1957AsAPercentageOfABPlusC2',
   'ShareholdingAsAPercentageOfTotalNumberOfSharesOfTheCompany',
 ];
-
-function parsePct(raw) {
-  const n = parseFloat(String(raw || '').replace(/[%,\s]/g, ''));
-  if (!Number.isFinite(n) || n <= 0) return null;
-  if (n > 1) return n;
-  const scaled = n * 100;
-  if (scaled > 100) return n;
-  return scaled;
-}
 
 const contexts = [...xml.matchAll(/<xbrli:context id="([^"]+)"/g)].map((m) => m[1]);
 const categoryCtxs = contexts.filter((id) => id.endsWith('_ContextI') && !id.startsWith('D_'));

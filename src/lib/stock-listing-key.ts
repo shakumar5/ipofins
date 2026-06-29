@@ -34,3 +34,8 @@ export function holderFilingKeySql(holderExpr: string): string {
 export function canonicalStockRankOrderSql(alias = 's'): string {
   return `(EXISTS (SELECT 1 FROM stock_shp_summary ss WHERE ss.stock_id = ${alias}.id)) DESC, ${alias}.id ASC`;
 }
+
+/** ORDER BY fragment when only stocks.id is available (aggregates over listing_key). */
+export function canonicalStockRankOrderByStockIdSql(stockIdExpr = 'stock_id'): string {
+  return `(EXISTS (SELECT 1 FROM stock_shp_summary ss WHERE ss.stock_id = ${stockIdExpr})) DESC, ${stockIdExpr} ASC`;
+}

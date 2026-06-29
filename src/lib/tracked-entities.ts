@@ -8,7 +8,7 @@
 import superInvestorsJson from '../data/super-investors.json';
 import { sql } from './db';
 import { BRAND_URL } from './brand';
-import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql, holderFilingKeySql, canonicalStockRankOrderSql } from './holdings-dedupe';
+import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql, holderFilingKeySql, canonicalStockRankOrderSql, canonicalStockRankOrderByStockIdSql } from './holdings-dedupe';
 import { resolveHolderPositions } from './one-percent-holder-positions';
 
 /** SQL fragment for GROUP BY / joins on stocks — must match stock-listing-key.ts */
@@ -1231,9 +1231,9 @@ export function isHolderPageIndexable(stockCount: number): boolean {
   return stockCount >= HOLDER_PAGE_MIN_INDEXABLE_STOCKS;
 }
 
-/** Mystery holder static pages are disabled — only curated super-investor profiles get links. */
-export function shouldBuildHolderPageFor(_stockCount: number, hasCuratedEntity: boolean): boolean {
-  return hasCuratedEntity;
+/** Mystery holder static pages — build for any ≥1% disclosed holder. */
+export function shouldBuildHolderPageFor(stockCount: number, _hasCuratedEntity: boolean): boolean {
+  return stockCount >= 1;
 }
 
 export function holderProfileUrl(holder: {
@@ -1241,9 +1241,9 @@ export function holderProfileUrl(holder: {
   holderSlug: string;
   stockCount?: number;
 }): string | null {
-  if (holder.entitySlug) return curatedEntityUrl(holder.entitySlug);
-  if ((holder.stockCount ?? 0) > 0) return onePercentHolderUrl(holder.holderSlug);
-  return null;
+  if ((holder.stockCount ?? 0) < 1) return null;
+  const slug = holder.entitySlug || holder.holderSlug;
+  return slug ? onePercentHolderUrl(slug) : null;
 }
 
 /** True when a static super-investor profile exists (JSON roster). */
@@ -1443,7 +1443,7 @@ export interface HolderSearchRow {
   topPct: number | null;
 }
 
-/** Distinct holder name slugs for static paths (latest quarter). */
+/** Distinct holder name slugs for static paths + search (latest quarter, all ≥1% types). */
 export async function getDistinctHolderSlugs(): Promise<
   { holderSlug: string; holderName: string; entitySlug: string | null; stockCount: number }[]
 > {
@@ -1451,7 +1451,7 @@ export async function getDistinctHolderSlugs(): Promise<
   try {
     const rows = (await sql!`
       WITH latest AS (
-        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders
       ),
       deduped AS (
         SELECT
@@ -1464,7 +1464,6 @@ export async function getDistinctHolderSlugs(): Promise<
         JOIN stocks s ON s.id = sph.stock_id
         LEFT JOIN tracked_entities te ON te.id = sph.entity_id
         WHERE sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
           AND sph.pct_of_company >= 1.0
       ),
       curated AS (
@@ -1542,7 +1541,12 @@ export async function getHoldingsByHolderSlug(
 
     if (!holderName) {
       const holders = await getDistinctHolderSlugs();
-      const match = holders.find((h) => h.holderSlug === holderSlug || h.entitySlug === holderSlug);
+      const match = holders.find(
+        (h) =>
+          h.holderSlug === holderSlug ||
+          h.entitySlug === holderSlug ||
+          slugifyEntity(h.holderName) === holderSlug,
+      );
       if (!match) return { holderName: holderSlug, entitySlug: null, rows: [] };
       holderName = match.holderName;
       entitySlug = match.entitySlug;
@@ -1551,14 +1555,16 @@ export async function getHoldingsByHolderSlug(
     const positionsMap = await getOnePercentHolderPositionsMap();
     const positions = resolveHolderPositions(Object.fromEntries(positionsMap), holderName, entitySlug);
 
-    const rows = positions.map((p) => ({
-      stockName: p.stockName,
-      stockSlug: p.stockSlug,
-      pctOfCompany: p.pct,
-      shares: p.shares,
-      marketValueCr: p.marketValueCr,
-      holderType: p.holderType ?? 'other',
-    }));
+    const rows = positions
+      .map((p) => ({
+        stockName: p.stockName,
+        stockSlug: p.stockSlug,
+        pctOfCompany: p.pct,
+        shares: p.shares,
+        marketValueCr: p.marketValueCr,
+        holderType: p.holderType ?? 'other',
+      }))
+      .sort((a, b) => (b.pctOfCompany ?? 0) - (a.pctOfCompany ?? 0));
 
     return {
       holderName,
@@ -1615,7 +1621,7 @@ export interface OnePercentSearchHolder {
   positions: OnePercentHolderPosition[];
 }
 
-/** Latest-quarter ≥1% positions grouped for holder name search (build time). */
+/** Latest-quarter ≥1% positions grouped for holder name search (all holder types). */
 export async function getOnePercentHolderPositionsMap(): Promise<
   Map<string, OnePercentHolderPosition[]>
 > {
@@ -1624,7 +1630,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
   try {
     const rows = (await sql!`
       WITH latest AS (
-        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders
       ),
       raw AS (
         SELECT
@@ -1641,7 +1647,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
           s.bse_code,
           sph.pct_of_company,
           sph.shares,
-          sph.holder_type,
+          CASE WHEN sph.is_promoter THEN 'promoter' ELSE sph.holder_type END AS holder_type,
           CASE
             WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
               THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
@@ -1653,7 +1659,6 @@ export async function getOnePercentHolderPositionsMap(): Promise<
         LEFT JOIN stock_quarter_prices sqp
           ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
         WHERE sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
           AND sph.pct_of_company >= 1.0
       ),
       deduped AS (
@@ -1694,11 +1699,11 @@ export async function getOnePercentHolderPositionsMap(): Promise<
           roll_entity_slug AS entity_slug,
           NULL::text AS holder_name,
           listing_key,
-          (array_agg(stock_slug ORDER BY stock_id))[1] AS stock_slug,
-          (array_agg(stock_name ORDER BY stock_id))[1] AS stock_name,
-          (array_agg(nse_symbol ORDER BY stock_id))[1] AS nse_symbol,
-          (array_agg(isin ORDER BY stock_id))[1] AS isin,
-          (array_agg(bse_code ORDER BY stock_id))[1] AS bse_code,
+          (array_agg(stock_slug ORDER BY ${sql.unsafe(canonicalStockRankOrderByStockIdSql('stock_id'))}))[1] AS stock_slug,
+          (array_agg(stock_name ORDER BY ${sql.unsafe(canonicalStockRankOrderByStockIdSql('stock_id'))}))[1] AS stock_name,
+          (array_agg(nse_symbol ORDER BY ${sql.unsafe(canonicalStockRankOrderByStockIdSql('stock_id'))}))[1] AS nse_symbol,
+          (array_agg(isin ORDER BY ${sql.unsafe(canonicalStockRankOrderByStockIdSql('stock_id'))}))[1] AS isin,
+          (array_agg(bse_code ORDER BY ${sql.unsafe(canonicalStockRankOrderByStockIdSql('stock_id'))}))[1] AS bse_code,
           ROUND(SUM(pct_of_company)::numeric, 3) AS pct_of_company,
           SUM(shares)::bigint AS shares,
           ROUND(SUM(row_value_cr), 2) AS market_value_cr,
@@ -1769,7 +1774,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
 
 /** Build client search index at page build time. */
 export async function getOnePercentSearchIndex(): Promise<{
-  stocks: { slug: string; name: string }[];
+  stocks: { slug: string; name: string; nseSymbol: string | null; isin: string | null; bseCode: string | null }[];
   holders: OnePercentSearchHolder[];
 }> {
   const [stocks, holders, positionsMap] = await Promise.all([
@@ -1819,6 +1824,8 @@ export async function getOnePercentSearchIndex(): Promise<{
       slug: s.slug,
       name: s.stockName,
       nseSymbol: s.nseSymbol ?? null,
+      isin: s.isin ?? null,
+      bseCode: s.bseCode ?? null,
     })),
     holders: holderList,
   };
@@ -1862,23 +1869,33 @@ export async function getOnePercentTopStocks(limit = 60): Promise<OnePercentStoc
         FROM raw
         ORDER BY listing_key, filing_key, pct_of_company DESC NULLS LAST, stock_id ASC
       ),
+      canonical AS (
+        SELECT DISTINCT ON (listing_key)
+          listing_key,
+          stock_id,
+          stock_slug,
+          stock_name
+        FROM deduped
+        ORDER BY listing_key, ${sql.unsafe(canonicalStockRankOrderByStockIdSql('stock_id'))}
+      ),
       by_stock AS (
         SELECT
-          listing_key,
-          (array_agg(stock_id ORDER BY stock_id))[1] AS stock_id,
-          (array_agg(stock_slug ORDER BY stock_id))[1] AS stock_slug,
-          (array_agg(stock_name ORDER BY stock_id))[1] AS stock_name,
+          d.listing_key,
+          c.stock_id,
+          c.stock_slug,
+          c.stock_name,
           COUNT(*)::int AS holders,
-          MAX(pct_of_company) AS top_pct,
+          MAX(d.pct_of_company) AS top_pct,
           ROUND(SUM(
             CASE
-              WHEN shares > 0 AND close_price IS NOT NULL
-                THEN (shares::numeric * close_price) / 1e7
+              WHEN d.shares > 0 AND d.close_price IS NOT NULL
+                THEN (d.shares::numeric * d.close_price) / 1e7
               ELSE NULL
             END
           ), 2) AS total_value_cr
-        FROM deduped
-        GROUP BY listing_key
+        FROM deduped d
+        JOIN canonical c ON c.listing_key = d.listing_key
+        GROUP BY d.listing_key, c.stock_id, c.stock_slug, c.stock_name
       )
       SELECT * FROM by_stock
       ORDER BY holders DESC, total_value_cr DESC NULLS LAST
@@ -2194,13 +2211,22 @@ export async function getOnePercentHoldersForStock(stockSlug: string): Promise<O
   }
 }
 
-/** Canonical slug for a listing (ISIN → NSE → BSE → slug). */
-export async function resolveCanonicalStockSlug(slug: string): Promise<string | null> {
-  if (!sql) return slug;
+/** Canonical slug for a listing (ISIN → NSE → BSE → slug). Accepts slug, ISIN, NSE symbol, or BSE code. */
+export async function resolveCanonicalStockSlug(ref: string): Promise<string | null> {
+  if (!sql) return ref;
+  const input = ref.trim();
+  if (!input) return null;
   try {
     const rows = (await sql!`
       WITH anchor AS (
-        SELECT id, isin, nse_symbol, bse_code, slug FROM stocks WHERE slug = ${slug} LIMIT 1
+        SELECT id, isin, nse_symbol, bse_code, slug
+        FROM stocks
+        WHERE slug = ${input}
+           OR UPPER(TRIM(isin)) = UPPER(TRIM(${input}))
+           OR UPPER(TRIM(nse_symbol)) = UPPER(TRIM(${input}))
+           OR TRIM(bse_code) = TRIM(${input})
+        ORDER BY ${sql.unsafe(canonicalStockRankOrderSql('stocks'))}
+        LIMIT 1
       ),
       peers AS (
         SELECT s.slug, s.id
@@ -2212,15 +2238,15 @@ export async function resolveCanonicalStockSlug(slug: string): Promise<string | 
       ORDER BY ${sql.unsafe(canonicalStockRankOrderSql('peers'))}
       LIMIT 1
     `) as { slug: string }[];
-    return rows[0]?.slug ?? slug;
+    return rows[0]?.slug ?? input;
   } catch {
-    return slug;
+    return input;
   }
 }
 
 /** Stocks with SHP data for static paths — summary and/or ≥1% holders (latest quarter). */
 export async function getOnePercentStockSlugs(): Promise<
-  { slug: string; stockName: string; nseSymbol: string | null }[]
+  { slug: string; stockName: string; nseSymbol: string | null; isin: string | null; bseCode: string | null }[]
 > {
   if (!sql) return [];
   try {
@@ -2234,6 +2260,8 @@ export async function getOnePercentStockSlugs(): Promise<
           s.slug,
           s.name AS stock_name,
           s.nse_symbol,
+          s.isin,
+          s.bse_code,
           ${sql.unsafe(STOCK_LISTING_KEY)} AS listing_key
         FROM stocks s
         WHERE EXISTS (
@@ -2253,21 +2281,25 @@ export async function getOnePercentStockSlugs(): Promise<
           e.slug,
           e.stock_name,
           e.nse_symbol,
+          e.isin,
+          e.bse_code,
           ROW_NUMBER() OVER (
             PARTITION BY e.listing_key
             ORDER BY ${sql.unsafe(canonicalStockRankOrderSql('e'))}
           ) AS rn
         FROM eligible e
       )
-      SELECT slug, stock_name, nse_symbol
+      SELECT slug, stock_name, nse_symbol, isin, bse_code
       FROM ranked
       WHERE rn = 1
       ORDER BY stock_name
-    `) as { slug: string; stock_name: string; nse_symbol: string | null }[];
+    `) as { slug: string; stock_name: string; nse_symbol: string | null; isin: string | null; bse_code: string | null }[];
     return rows.map((r) => ({
       slug: r.slug,
       stockName: r.stock_name,
       nseSymbol: r.nse_symbol ?? null,
+      isin: r.isin ?? null,
+      bseCode: r.bse_code ?? null,
     }));
   } catch {
     return [];

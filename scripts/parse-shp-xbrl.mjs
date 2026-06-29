@@ -20,7 +20,8 @@ while ((nm = nameRe.exec(xml)) !== null) {
       || fields.ShareholdingAsAPercentageOfTotalNumberOfSharesCalculatedAsPerSCRR1957AsAPercentageOfABPlusC2
       || '',
   );
-  if (Number.isFinite(pct) && pct > 0 && pct <= 1) pct *= 100;
+  if (Number.isFinite(pct) && pct > 0 && pct < 1) pct *= 100;
+  if (pct === 1) pct = 1;
   const shares = parseInt(String(fields.TotalNumberOfSharesHeld || fields.NumberOfFullyPaidUpEquitySharesHeld || '').replace(/,/g, ''), 10);
   holders.push({ ctx, name, pct: Number.isFinite(pct) ? pct : null, shares: Number.isFinite(shares) ? shares : null, keys: Object.keys(fields) });
 }

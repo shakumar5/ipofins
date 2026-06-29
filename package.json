@@ -35,6 +35,7 @@
     "db:backfill-symbols": "node scripts/node-with-ca.mjs db/seed/seed-listed-equities.mjs",
     "validate:si-pipeline": "node scripts/node-with-ca.mjs scripts/validate-si-pipeline.mjs",
     "validate:si-data": "node scripts/node-with-ca.mjs scripts/validate-si-data.mjs",
+    "db:fix-shp-pct-100": "node scripts/node-with-ca.mjs scripts/fix-shp-pct-100.mjs",
     "test:shp-fetch": "node scripts/node-with-ca.mjs scripts/test-shp-fetch.mjs",
     "db:compute-si:values": "node scripts/node-with-ca.mjs db/compute/compute-entity-holding-values.mjs",
     "db:compute-si:values:all": "node scripts/node-with-ca.mjs db/compute/compute-entity-holding-values.mjs -- --all-quarters",

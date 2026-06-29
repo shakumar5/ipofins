@@ -48,4 +48,5 @@ export {
   stockListingKeySql,
   holderFilingKeySql,
   canonicalStockRankOrderSql,
+  canonicalStockRankOrderByStockIdSql,
 } from './stock-listing-key';
