@@ -1,0 +1,22 @@
+---
+description: IPOFins core project rules
+alwaysApply: true
+---
+
+# IPOFins.com — core rules
+
+## Stack
+
+- Astro 4.x, TypeScript strict, PostgreSQL 16 (Neon), Node.js 22, Tailwind CSS v4
+- Schema: `db/migrations/`, `db/verify-schema.mjs`
+- Read `DESIGN.md` and `CONTEXT.md` before UI / pipeline work
+
+## Git
+
+- **Never merge to `main` from agents** — feature branch only
+
+## Absolute rules
+
+- Money: `NUMERIC`; timestamps: `TIMESTAMPTZ`; rupee ₹
+- Smart money: `mv_smart_money_latest` (not raw `fund_holdings` aggregates)
+- Use `stock_id`, not `security_id`

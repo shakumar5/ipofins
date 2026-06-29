@@ -1,0 +1,9 @@
+---
+description: Astro pages and components
+globs: src/pages/**,src/components/**
+alwaysApply: false
+---
+
+- Default `prerender = true`
+- SEO titles/descriptions; canonical URLs
+- `font-mono` for numbers; Indian date formatting

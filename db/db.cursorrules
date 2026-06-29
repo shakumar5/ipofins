@@ -1,0 +1,7 @@
+## Database rules (applies to /src/lib/db/)
+- Always use postgres parameterised queries: $1, $2 etc.
+- Query smart_money_summary MV — never fund_holdings directly
+- Query ipo_gmp_daily MV — never ipo_gmp directly
+- All DB functions must return typed interfaces (no `any`)
+- Log failed queries to data_quality_issues table
+- Never SELECT * — always name columns explicitly

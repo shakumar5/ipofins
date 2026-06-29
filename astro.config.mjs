@@ -29,6 +29,8 @@ export default defineConfig({
   build: {
     // ~17 KiB global CSS — inline to remove render-blocking link (saves ~170–340 ms LCP/FCP)
     inlineStylesheets: 'always',
+    // Parallel page generation after holder data is loaded from export JSON (not per-page Neon queries).
+    concurrency: 2,
   },
   vite: {
     plugins: [
