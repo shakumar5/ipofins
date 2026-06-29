@@ -1231,9 +1231,9 @@ export function isHolderPageIndexable(stockCount: number): boolean {
   return stockCount >= HOLDER_PAGE_MIN_INDEXABLE_STOCKS;
 }
 
-/** Mystery holder static pages are disabled — only curated super-investor profiles get links. */
-export function shouldBuildHolderPageFor(_stockCount: number, hasCuratedEntity: boolean): boolean {
-  return hasCuratedEntity;
+/** Mystery holder static pages — build for any ≥1% disclosed holder. */
+export function shouldBuildHolderPageFor(stockCount: number, _hasCuratedEntity: boolean): boolean {
+  return stockCount >= 1;
 }
 
 export function holderProfileUrl(holder: {
@@ -1241,9 +1241,9 @@ export function holderProfileUrl(holder: {
   holderSlug: string;
   stockCount?: number;
 }): string | null {
-  if (holder.entitySlug) return curatedEntityUrl(holder.entitySlug);
-  if ((holder.stockCount ?? 0) > 0) return onePercentHolderUrl(holder.holderSlug);
-  return null;
+  if ((holder.stockCount ?? 0) < 1) return null;
+  const slug = holder.entitySlug || holder.holderSlug;
+  return slug ? onePercentHolderUrl(slug) : null;
 }
 
 /** True when a static super-investor profile exists (JSON roster). */
@@ -1443,7 +1443,7 @@ export interface HolderSearchRow {
   topPct: number | null;
 }
 
-/** Distinct holder name slugs for static paths (latest quarter). */
+/** Distinct holder name slugs for static paths + search (latest quarter, all ≥1% types). */
 export async function getDistinctHolderSlugs(): Promise<
   { holderSlug: string; holderName: string; entitySlug: string | null; stockCount: number }[]
 > {
@@ -1451,7 +1451,7 @@ export async function getDistinctHolderSlugs(): Promise<
   try {
     const rows = (await sql!`
       WITH latest AS (
-        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders
       ),
       deduped AS (
         SELECT
@@ -1464,7 +1464,6 @@ export async function getDistinctHolderSlugs(): Promise<
         JOIN stocks s ON s.id = sph.stock_id
         LEFT JOIN tracked_entities te ON te.id = sph.entity_id
         WHERE sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
           AND sph.pct_of_company >= 1.0
       ),
       curated AS (
@@ -1542,7 +1541,12 @@ export async function getHoldingsByHolderSlug(
 
     if (!holderName) {
       const holders = await getDistinctHolderSlugs();
-      const match = holders.find((h) => h.holderSlug === holderSlug || h.entitySlug === holderSlug);
+      const match = holders.find(
+        (h) =>
+          h.holderSlug === holderSlug ||
+          h.entitySlug === holderSlug ||
+          slugifyEntity(h.holderName) === holderSlug,
+      );
       if (!match) return { holderName: holderSlug, entitySlug: null, rows: [] };
       holderName = match.holderName;
       entitySlug = match.entitySlug;
@@ -1551,14 +1555,16 @@ export async function getHoldingsByHolderSlug(
     const positionsMap = await getOnePercentHolderPositionsMap();
     const positions = resolveHolderPositions(Object.fromEntries(positionsMap), holderName, entitySlug);
 
-    const rows = positions.map((p) => ({
-      stockName: p.stockName,
-      stockSlug: p.stockSlug,
-      pctOfCompany: p.pct,
-      shares: p.shares,
-      marketValueCr: p.marketValueCr,
-      holderType: p.holderType ?? 'other',
-    }));
+    const rows = positions
+      .map((p) => ({
+        stockName: p.stockName,
+        stockSlug: p.stockSlug,
+        pctOfCompany: p.pct,
+        shares: p.shares,
+        marketValueCr: p.marketValueCr,
+        holderType: p.holderType ?? 'other',
+      }))
+      .sort((a, b) => (b.pctOfCompany ?? 0) - (a.pctOfCompany ?? 0));
 
     return {
       holderName,
@@ -1615,7 +1621,7 @@ export interface OnePercentSearchHolder {
   positions: OnePercentHolderPosition[];
 }
 
-/** Latest-quarter ≥1% positions grouped for holder name search (build time). */
+/** Latest-quarter ≥1% positions grouped for holder name search (all holder types). */
 export async function getOnePercentHolderPositionsMap(): Promise<
   Map<string, OnePercentHolderPosition[]>
 > {
@@ -1624,7 +1630,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
   try {
     const rows = (await sql!`
       WITH latest AS (
-        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders WHERE is_promoter = FALSE
+        SELECT MAX(quarter) AS q FROM shareholding_pattern_holders
       ),
       raw AS (
         SELECT
@@ -1641,7 +1647,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
           s.bse_code,
           sph.pct_of_company,
           sph.shares,
-          sph.holder_type,
+          CASE WHEN sph.is_promoter THEN 'promoter' ELSE sph.holder_type END AS holder_type,
           CASE
             WHEN sph.shares > 0 AND sqp.close_price IS NOT NULL
               THEN ROUND((sph.shares::numeric * sqp.close_price) / 1e7, 2)
@@ -1653,7 +1659,6 @@ export async function getOnePercentHolderPositionsMap(): Promise<
         LEFT JOIN stock_quarter_prices sqp
           ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
         WHERE sph.quarter = (SELECT q FROM latest)
-          AND sph.is_promoter = FALSE
           AND sph.pct_of_company >= 1.0
       ),
       deduped AS (

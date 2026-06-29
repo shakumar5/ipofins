@@ -18,12 +18,14 @@ function holderTypeFromContext(ctx, category) {
   return 'public';
 }
 
-function parsePct(raw) {
+export function parsePct(raw) {
   const n = parseFloat(String(raw || '').replace(/[%,\s]/g, ''));
   if (!Number.isFinite(n) || n <= 0) return null;
-  // Already percent points (e.g. 2.57 = 2.57%, 51.89 = 51.89%).
+  // Percent points (2.57 = 2.57%, 51.89 = 51.89%).
   if (n > 1) return n;
-  // 0 < n <= 1: decimal fraction (0.013) or whole percent stored as 1.0 (= 1%, not 100%).
+  // Indian SHP XBRL stores exactly 1% as 1.0 — not 0.01 and not 100.
+  if (n === 1) return 1;
+  // Decimal fraction (0.0257 = 2.57%).
   const scaled = n * 100;
   if (scaled > 100) return n;
   return scaled;

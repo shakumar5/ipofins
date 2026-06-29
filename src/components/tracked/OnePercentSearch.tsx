@@ -139,7 +139,7 @@ export default function OnePercentSearch({
           id="opc-search"
           type="search"
           autoComplete="off"
-          placeholder={mode === 'stock' ? 'Search Reliance, TCS, Tata Motors...' : 'Search Vijay Kedia, Dolly Khanna...'}
+          placeholder={mode === 'stock' ? 'Search Reliance, TCS, Tata Motors...' : 'Search any ≥1% holder — promoters, FII, DII, funds, individuals...'}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -261,8 +261,8 @@ export default function OnePercentSearch({
 
       <p className="mt-2 text-xs text-surface-500 dark:text-surface-400">
         {mode === 'stock'
-          ? 'Find every non-promoter shareholder owning ≥1% of a listed stock. No 1% Club match? We will send you to MF Stock Signal when available.'
-          : 'Search any ≥1% holder from quarterly filings — select a name to see all their disclosed holdings below.'}
+          ? 'Find every shareholder owning ≥1% of a listed stock. No 1% Club match? We will send you to MF Stock Signal when available.'
+          : 'Search any ≥1% holder from quarterly filings — promoters, FII, DII, mutual funds, or individuals. Select a name to see all their disclosed holdings.'}
       </p>
     </div>
   );

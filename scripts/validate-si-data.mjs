@@ -75,6 +75,22 @@ async function main() {
     console.log('  ✓ Sunil / Abakkus separated');
   }
 
+  const bogus100 = await sql`
+    SELECT COUNT(*)::int AS cnt
+    FROM shareholding_pattern_holders sph
+    WHERE sph.quarter = ${latest}::date
+      AND sph.pct_of_company = 100
+      AND sph.is_promoter = FALSE
+  `;
+  const b100 = bogus100[0]?.cnt ?? 0;
+  console.log(`\nNon-promoter rows at exactly 100% (latest quarter): ${b100}`);
+  if (b100 > 0) {
+    console.log('  ⚠ Run npm run db:fix-shp-pct-100 then npm run db:compute-si:all');
+    failed++;
+  } else {
+    console.log('  ✓ No mis-parsed 100% stakes in latest quarter');
+  }
+
   console.log(failed ? '\n❌ Validation issues found' : '\n✅ Validation passed');
   process.exit(failed ? 1 : 0);
 }

@@ -4,7 +4,6 @@ import SuperInvestorsSubNav from '../../../components/tracked/SuperInvestorsSubN
 import {
   getDistinctHolderSlugs,
   getHoldingsByHolderSlug,
-  shouldBuildHolderPageFor,
   hasSuperInvestorProfile,
   onePercentStockUrl,
   formatPct,
@@ -18,10 +17,28 @@ import {
 } from '../../../lib/tracked-entities';
 
 export async function getStaticPaths() {
-  return [];
+  const holders = await getDistinctHolderSlugs();
+  const seen = new Set<string>();
+  const paths: {
+    params: { holderSlug: string };
+    props: { holderName: string; entitySlug: string | null };
+  }[] = [];
+  for (const h of holders) {
+    if (!h.holderSlug || seen.has(h.holderSlug)) continue;
+    seen.add(h.holderSlug);
+    paths.push({
+      params: { holderSlug: h.holderSlug },
+      props: { holderName: h.holderName, entitySlug: h.entitySlug },
+    });
+  }
+  return paths;
 }
 
-const { holderSlug, holderName, entitySlug } = Astro.props;
+const { holderSlug } = Astro.params;
+const { holderName, entitySlug } = Astro.props;
+if (!holderSlug) {
+  return Astro.redirect('/404');
+}
 const data = await getHoldingsByHolderSlug(holderSlug, { holderName, entitySlug });
 
 if (!data.rows.length) {
