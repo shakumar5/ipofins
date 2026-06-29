@@ -4,6 +4,7 @@
  */
 
 import type { StockShareholdingDetail } from './tracked-entities';
+import { resolveHolderProfileUrl, slugifyEntity } from './holder-profile-url';
 
 export const SUPER_INVESTORS_HUB = '/super-investors';
 export const ONE_PERCENT_CLUB_HUB = '/1-percent-club';
@@ -108,16 +109,22 @@ export function onePercentHolderUrl(holderSlug: string): string {
   return `${ONE_PERCENT_CLUB_HUB}/holder/${holderSlug}`;
 }
 
-export function slugifyEntity(text: string): string {
-  return String(text || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .substring(0, 80);
-}
+export { slugifyEntity } from './holder-profile-url';
 
-export function holderDetailUrl(holder: { holderName: string; entitySlug?: string | null }): string | null {
+export function holderDetailUrl(holder: {
+  holderName: string;
+  entitySlug?: string | null;
+  portfolioStockCount?: number;
+  currentStockSlug?: string;
+}): string | null {
   if (!holder.holderName?.trim() && !holder.entitySlug) return null;
-  const slug = holder.entitySlug || slugifyEntity(holder.holderName);
-  return slug ? onePercentHolderUrl(slug) : null;
+  const holderSlug = holder.entitySlug || slugifyEntity(holder.holderName);
+  if (!holderSlug) return null;
+  const count = holder.portfolioStockCount ?? 0;
+  return resolveHolderProfileUrl({
+    entitySlug: holder.entitySlug ?? null,
+    holderSlug,
+    stockCount: count > 0 ? count : 1,
+    primaryStockSlug: holder.currentStockSlug ?? null,
+  });
 }

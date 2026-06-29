@@ -10,6 +10,15 @@ import { sql } from './db';
 import { BRAND_URL } from './brand';
 import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql, holderFilingKeySql, canonicalStockRankOrderSql, canonicalStockRankOrderByStockIdSql } from './holdings-dedupe';
 import { resolveHolderPositions } from './one-percent-holder-positions';
+import { loadHolderPositionsMapFromExport, holderPositionsMapToRecord } from './holder-positions-build-cache';
+import {
+  HOLDER_PAGE_MIN_INDEXABLE_STOCKS,
+  isHolderPageIndexable,
+  primaryStockSlugFromPositions,
+  resolveHolderProfileUrl,
+} from './holder-profile-url';
+
+export { HOLDER_PAGE_MIN_INDEXABLE_STOCKS, isHolderPageIndexable } from './holder-profile-url';
 
 /** SQL fragment for GROUP BY / joins on stocks — must match stock-listing-key.ts */
 const STOCK_LISTING_KEY = stockListingKeySql('s');
@@ -1224,26 +1233,23 @@ export function stockNotOnRadarMessage(
   return { headline: content.headline, body: content.body };
 }
 
-/** Mystery holder result pages with fewer stocks are thin — noindex, omit from sitemap. */
-export const HOLDER_PAGE_MIN_INDEXABLE_STOCKS = 2;
-
-export function isHolderPageIndexable(stockCount: number): boolean {
-  return stockCount >= HOLDER_PAGE_MIN_INDEXABLE_STOCKS;
-}
-
-/** Mystery holder static pages — build for any ≥1% disclosed holder. */
+/** Mystery holder static pages with fewer stocks are thin — noindex, omit from sitemap. */
 export function shouldBuildHolderPageFor(stockCount: number, _hasCuratedEntity: boolean): boolean {
-  return stockCount >= 1;
+  return isHolderPageIndexable(stockCount);
 }
 
 export function holderProfileUrl(holder: {
   entitySlug: string | null;
   holderSlug: string;
   stockCount?: number;
+  primaryStockSlug?: string | null;
 }): string | null {
-  if ((holder.stockCount ?? 0) < 1) return null;
-  const slug = holder.entitySlug || holder.holderSlug;
-  return slug ? onePercentHolderUrl(slug) : null;
+  return resolveHolderProfileUrl({
+    entitySlug: holder.entitySlug,
+    holderSlug: holder.holderSlug,
+    stockCount: holder.stockCount ?? 0,
+    primaryStockSlug: holder.primaryStockSlug ?? null,
+  });
 }
 
 /** True when a static super-investor profile exists (JSON roster). */
@@ -1300,6 +1306,8 @@ export interface OnePercentRow {
   /** When multiple SHP filing names map to one curated entity. */
   filingNames?: string[];
   filingCount?: number;
+  /** Distinct ≥1% stocks in portfolio (latest quarter) — for holder link routing. */
+  portfolioStockCount?: number;
 }
 
 /** Normalize filing name for dedupe (trustee suffix, spacing, discretionary quirks). */
@@ -1444,9 +1452,14 @@ export interface HolderSearchRow {
 }
 
 /** Distinct holder name slugs for static paths + search (latest quarter, all ≥1% types). */
+let distinctHolderSlugsCache:
+  | { holderSlug: string; holderName: string; entitySlug: string | null; stockCount: number }[]
+  | null = null;
+
 export async function getDistinctHolderSlugs(): Promise<
   { holderSlug: string; holderName: string; entitySlug: string | null; stockCount: number }[]
 > {
+  if (distinctHolderSlugsCache) return distinctHolderSlugsCache;
   if (!sql) return [];
   try {
     const rows = (await sql!`
@@ -1497,15 +1510,117 @@ export async function getDistinctHolderSlugs(): Promise<
       SELECT holder_name, entity_slug, stock_count FROM mystery
       ORDER BY holder_name
     `) as { holder_name: string; entity_slug: string | null; stock_count: number }[];
-    return rows.map((r) => ({
+    distinctHolderSlugsCache = rows.map((r) => ({
       holderSlug: r.entity_slug || slugifyEntity(r.holder_name),
       holderName: r.holder_name,
       entitySlug: r.entity_slug,
       stockCount: Number(r.stock_count) || 0,
     }));
+    return distinctHolderSlugsCache;
   } catch {
     return [];
   }
+}
+
+export type HolderDetailRow = {
+  stockName: string;
+  stockSlug: string;
+  pctOfCompany: number | null;
+  shares: number | null;
+  marketValueCr: number | null;
+  holderType: string;
+};
+
+function mapPositionsToHolderRows(positions: OnePercentHolderPosition[]): HolderDetailRow[] {
+  return positions
+    .map((p) => ({
+      stockName: p.stockName,
+      stockSlug: p.stockSlug,
+      pctOfCompany: p.pct,
+      shares: p.shares,
+      marketValueCr: p.marketValueCr,
+      holderType: p.holderType ?? 'other',
+    }))
+    .sort((a, b) => (b.pctOfCompany ?? 0) - (a.pctOfCompany ?? 0));
+}
+
+export async function getHolderStaticPathsFromExport(): Promise<
+  Array<{
+    params: { holderSlug: string };
+    props:
+      | {
+          mode: 'full';
+          holderName: string;
+          entitySlug: string | null;
+          rows: HolderDetailRow[];
+        }
+      | {
+          mode: 'redirect';
+          holderName: string;
+          entitySlug: string | null;
+          stockSlug: string;
+        };
+  }>
+> {
+  const [holders, positionsMap] = await Promise.all([
+    getDistinctHolderSlugs(),
+    getOnePercentHolderPositionsMap(),
+  ]);
+  const mapObj = holderPositionsMapToRecord(positionsMap);
+  const seen = new Set<string>();
+  const paths: Array<{
+    params: { holderSlug: string };
+    props:
+      | {
+          mode: 'full';
+          holderName: string;
+          entitySlug: string | null;
+          rows: HolderDetailRow[];
+        }
+      | {
+          mode: 'redirect';
+          holderName: string;
+          entitySlug: string | null;
+          stockSlug: string;
+        };
+  }> = [];
+
+  for (const h of holders) {
+    if (!h.holderSlug || seen.has(h.holderSlug)) continue;
+    const positions = dedupeHolderPositions(
+      resolveHolderPositions(mapObj, h.holderName, h.entitySlug),
+    );
+    if (!positions.length) continue;
+    seen.add(h.holderSlug);
+
+    const stockCount = positions.length;
+    if (isHolderPageIndexable(stockCount)) {
+      paths.push({
+        params: { holderSlug: h.holderSlug },
+        props: {
+          mode: 'full',
+          holderName: h.holderName,
+          entitySlug: h.entitySlug,
+          rows: mapPositionsToHolderRows(positions),
+        },
+      });
+      continue;
+    }
+
+    const stockSlug = primaryStockSlugFromPositions(positions);
+    if (!stockSlug) continue;
+    paths.push({
+      params: { holderSlug: h.holderSlug },
+      props: {
+        mode: 'redirect',
+        holderName: h.holderName,
+        entitySlug: h.entitySlug,
+        stockSlug,
+      },
+    });
+  }
+
+  return paths;
 }
 
 /** All ≥1% positions for a holder name slug (latest quarter). */
@@ -1524,20 +1639,9 @@ export async function getHoldingsByHolderSlug(
     holderType: string;
   }>;
 }> {
-  if (!sql) return { holderName: holderSlug, entitySlug: null, rows: [] };
   try {
     let holderName = knownHolder?.holderName;
     let entitySlug = knownHolder?.entitySlug ?? null;
-
-    if (!holderName || !entitySlug) {
-      const [entityRow] = (await sql!`
-        SELECT id, slug, display_name FROM tracked_entities WHERE slug = ${holderSlug} LIMIT 1
-      `) as { id: number; slug: string; display_name: string }[];
-      if (entityRow) {
-        entitySlug = entityRow.slug;
-        holderName = entityRow.display_name;
-      }
-    }
 
     if (!holderName) {
       const holders = await getDistinctHolderSlugs();
@@ -1553,7 +1657,7 @@ export async function getHoldingsByHolderSlug(
     }
 
     const positionsMap = await getOnePercentHolderPositionsMap();
-    const positions = resolveHolderPositions(Object.fromEntries(positionsMap), holderName, entitySlug);
+    const positions = resolveHolderPositions(holderPositionsMapToRecord(positionsMap), holderName, entitySlug);
 
     const rows = positions
       .map((p) => ({
@@ -1622,9 +1726,17 @@ export interface OnePercentSearchHolder {
 }
 
 /** Latest-quarter ≥1% positions grouped for holder name search (all holder types). */
+let sqlPositionsMapCache: Map<string, OnePercentHolderPosition[]> | null = null;
+
 export async function getOnePercentHolderPositionsMap(): Promise<
   Map<string, OnePercentHolderPosition[]>
 > {
+  const fromExport = loadHolderPositionsMapFromExport();
+  if (fromExport) {
+    return fromExport as Map<string, OnePercentHolderPosition[]>;
+  }
+  if (sqlPositionsMapCache) return sqlPositionsMapCache;
+
   const map = new Map<string, OnePercentHolderPosition[]>();
   if (!sql) return map;
   try {
@@ -1769,6 +1881,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
   } catch {
     /* empty */
   }
+  sqlPositionsMapCache = map;
   return map;
 }
 
@@ -1807,6 +1920,7 @@ export async function getOnePercentSearchIndex(): Promise<{
         entitySlug: h.entitySlug,
         holderSlug: h.slug,
         stockCount: positions.length || h.stockCount,
+        primaryStockSlug: primaryStockSlugFromPositions(positions),
       });
       return {
         slug: h.entitySlug || h.slug,
@@ -1989,6 +2103,17 @@ function bucketShpHolders(rows: OnePercentRow[]): Omit<StockShareholdingDetail, 
   return { promoters, fii, mutualFunds, dii, superInvestors, onePercentClub };
 }
 
+function attachPortfolioStockCounts(
+  rows: OnePercentRow[],
+  positionsMap: Map<string, OnePercentHolderPosition[]>,
+): OnePercentRow[] {
+  const mapObj = holderPositionsMapToRecord(positionsMap);
+  return rows.map((row) => ({
+    ...row,
+    portfolioStockCount: resolveHolderPositions(mapObj, row.holderName, row.entitySlug).length,
+  }));
+}
+
 function mapOnePercentRowDb(r: OnePercentRowDb): OnePercentRow {
   return {
     id: r.id,
@@ -2156,6 +2281,8 @@ export async function getStockShareholdingDetail(stockSlug: string): Promise<Sto
     if (!mapped.length && !summaryRow) return null;
 
     const buckets = bucketShpHolders(mapped);
+    const positionsMap = await getOnePercentHolderPositionsMap();
+    const enrich = (rows: OnePercentRow[]) => attachPortfolioStockCounts(rows, positionsMap);
 
     const summary: ShpCategorySummary = summaryRow
       ? {
@@ -2189,7 +2316,12 @@ export async function getStockShareholdingDetail(stockSlug: string): Promise<Sto
       stockName: stock.name,
       stockSlug: stock.slug,
       summary,
-      ...buckets,
+      promoters: enrich(buckets.promoters),
+      fii: enrich(buckets.fii),
+      mutualFunds: enrich(buckets.mutualFunds),
+      dii: enrich(buckets.dii),
+      superInvestors: enrich(buckets.superInvestors),
+      onePercentClub: enrich(buckets.onePercentClub),
     };
   } catch {
     return null;

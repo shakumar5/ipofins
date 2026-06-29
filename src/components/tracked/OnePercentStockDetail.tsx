@@ -85,7 +85,7 @@ function chartSegments(summary: ShpCategorySummary) {
   return [];
 }
 
-function HolderTable({ rows }: { rows: OnePercentRow[] }) {
+function HolderTable({ rows, stockSlug }: { rows: OnePercentRow[]; stockSlug: string }) {
   if (!rows.length) {
     return <p className="text-sm text-surface-500 dark:text-surface-400 py-2">No named holders ≥1% in this bucket.</p>;
   }
@@ -103,7 +103,12 @@ function HolderTable({ rows }: { rows: OnePercentRow[] }) {
         <tbody>
           {rows.map((h) => {
             const url = h.entitySlug ? curatedEntityUrl(h.entitySlug) : null;
-            const holderPageUrl = holderDetailUrl({ holderName: h.holderName, entitySlug: h.entitySlug });
+            const holderPageUrl = holderDetailUrl({
+              holderName: h.holderName,
+              entitySlug: h.entitySlug,
+              portfolioStockCount: h.portfolioStockCount,
+              currentStockSlug: stockSlug,
+            });
             const trackedAs =
               h.entityDisplayName &&
               h.entityDisplayName.trim().toLowerCase() !== h.holderName.trim().toLowerCase()
@@ -150,6 +155,7 @@ function Section({
   subtitle,
   pct,
   rows,
+  stockSlug,
   defaultOpen,
   hasData,
   children,
@@ -159,6 +165,7 @@ function Section({
   subtitle?: string;
   pct?: number | null;
   rows?: OnePercentRow[];
+  stockSlug: string;
   defaultOpen?: boolean;
   hasData: boolean;
   children?: ReactNode;
@@ -215,7 +222,7 @@ function Section({
         </div>
       </summary>
       <div className="px-4 pb-4 border-t border-surface-100 dark:border-surface-800">
-        {children ?? (rows ? <HolderTable rows={rows} /> : null)}
+        {children ?? (rows ? <HolderTable rows={rows} stockSlug={stockSlug} /> : null)}
       </div>
     </details>
   );
@@ -413,6 +420,7 @@ export default function OnePercentStockDetail({ detail, mfStockSignalUrl = null 
             subtitle={section.subtitle}
             pct={section.pct}
             rows={section.rows}
+            stockSlug={detail.stockSlug}
             hasData={section.hasData}
             defaultOpen={section.id === topSectionWithData}
           >

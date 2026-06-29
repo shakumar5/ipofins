@@ -2,8 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SuperInvestorsSubNav from '../../../components/tracked/SuperInvestorsSubNav.astro';
 import {
-  getDistinctHolderSlugs,
-  getHoldingsByHolderSlug,
+  getHolderStaticPathsFromExport,
   hasSuperInvestorProfile,
   onePercentStockUrl,
   formatPct,
@@ -14,36 +13,43 @@ import {
   superInvestorUrl,
   ONE_PERCENT_CLUB_HUB,
   SUPER_INVESTORS_HUB,
+  type HolderDetailRow,
 } from '../../../lib/tracked-entities';
 
 export async function getStaticPaths() {
-  const holders = await getDistinctHolderSlugs();
-  const seen = new Set<string>();
-  const paths: {
-    params: { holderSlug: string };
-    props: { holderName: string; entitySlug: string | null };
-  }[] = [];
-  for (const h of holders) {
-    if (!h.holderSlug || seen.has(h.holderSlug)) continue;
-    seen.add(h.holderSlug);
-    paths.push({
-      params: { holderSlug: h.holderSlug },
-      props: { holderName: h.holderName, entitySlug: h.entitySlug },
-    });
-  }
-  return paths;
+  return getHolderStaticPathsFromExport();
 }
 
+type PageProps =
+  | {
+      mode: 'full';
+      holderName: string;
+      entitySlug: string | null;
+      rows: HolderDetailRow[];
+    }
+  | {
+      mode: 'redirect';
+      holderName: string;
+      entitySlug: string | null;
+      stockSlug: string;
+    };
+
+const props = Astro.props as PageProps;
 const { holderSlug } = Astro.params;
-const { holderName, entitySlug } = Astro.props;
 if (!holderSlug) {
   return Astro.redirect('/404');
 }
-const data = await getHoldingsByHolderSlug(holderSlug, { holderName, entitySlug });
 
-if (!data.rows.length) {
+if (props.mode === 'redirect') {
+  return Astro.redirect(onePercentStockUrl(props.stockSlug));
+}
+
+const { holderName, entitySlug, rows } = props;
+if (!rows.length) {
   return Astro.redirect('/404');
 }
+
+const data = { holderName, entitySlug, rows };
 
 const indexable = isHolderPageIndexable(data.rows.length);
 const robots = indexable
