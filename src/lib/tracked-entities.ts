@@ -12,7 +12,6 @@ import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql, holderFilin
 import { resolveHolderPositions } from './one-percent-holder-positions';
 import { loadHolderPositionsMapFromExport, holderPositionsMapToRecord } from './holder-positions-build-cache';
 import {
-  HOLDER_PAGE_MIN_INDEXABLE_STOCKS,
   isHolderPageIndexable,
   primaryStockSlugFromPositions,
   resolveHolderProfileUrl,
