@@ -239,6 +239,7 @@ async function computeEntityQuarterlyStats(quarter) {
         eh.entity_id,
         eh.strategy_id,
         eh.quarter,
+        MIN(eh.stock_id) AS stock_id,
         MAX(eh.shares_held) AS shares_held,
         MAX(eh.pct_of_company) AS pct_of_company,
         MAX(eh.market_value_cr) AS market_value_cr
@@ -284,26 +285,41 @@ async function computeEntityQuarterlyStats(quarter) {
       ) AS turnover_ratio,
       -- Market cap splits (join to stocks table).
       COALESCE(
-        ROUND((SELECT COUNT(*)::NUMERIC / NULLIF(COUNT(*), 0) * 100
+        ROUND((
+          SELECT COUNT(*)::NUMERIC
           FROM deduped h3
           JOIN stocks s3 ON s3.id = h3.stock_id
           WHERE h3.entity_id = eh.entity_id AND h3.strategy_id IS NOT DISTINCT FROM eh.strategy_id
             AND s3.market_cap_category = 'large'
-        ), 2), 0) AS large_cap_pct,
+        ) / NULLIF((
+          SELECT COUNT(*)::NUMERIC
+          FROM deduped h3b
+          WHERE h3b.entity_id = eh.entity_id AND h3b.strategy_id IS NOT DISTINCT FROM eh.strategy_id
+        ), 0) * 100, 2), 0) AS large_cap_pct,
       COALESCE(
-        ROUND((SELECT COUNT(*)::NUMERIC / NULLIF(COUNT(*), 0) * 100
+        ROUND((
+          SELECT COUNT(*)::NUMERIC
           FROM deduped h4
           JOIN stocks s4 ON s4.id = h4.stock_id
           WHERE h4.entity_id = eh.entity_id AND h4.strategy_id IS NOT DISTINCT FROM eh.strategy_id
             AND s4.market_cap_category = 'mid'
-        ), 2), 0) AS mid_cap_pct,
+        ) / NULLIF((
+          SELECT COUNT(*)::NUMERIC
+          FROM deduped h4b
+          WHERE h4b.entity_id = eh.entity_id AND h4b.strategy_id IS NOT DISTINCT FROM eh.strategy_id
+        ), 0) * 100, 2), 0) AS mid_cap_pct,
       COALESCE(
-        ROUND((SELECT COUNT(*)::NUMERIC / NULLIF(COUNT(*), 0) * 100
+        ROUND((
+          SELECT COUNT(*)::NUMERIC
           FROM deduped h5
           JOIN stocks s5 ON s5.id = h5.stock_id
           WHERE h5.entity_id = eh.entity_id AND h5.strategy_id IS NOT DISTINCT FROM eh.strategy_id
             AND s5.market_cap_category = 'small'
-        ), 2), 0) AS small_cap_pct
+        ) / NULLIF((
+          SELECT COUNT(*)::NUMERIC
+          FROM deduped h5b
+          WHERE h5b.entity_id = eh.entity_id AND h5b.strategy_id IS NOT DISTINCT FROM eh.strategy_id
+        ), 0) * 100, 2), 0) AS small_cap_pct
     FROM deduped eh
     GROUP BY eh.entity_id, eh.strategy_id
     ON CONFLICT (entity_id, strategy_id, quarter) DO UPDATE SET

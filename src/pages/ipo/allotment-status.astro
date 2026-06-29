@@ -1,4 +1,4 @@
----
+﻿---
 import IPOLayout from '../../layouts/IPOLayout.astro';
 import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
@@ -75,7 +75,7 @@ const registrars = [
   description={`Check IPO allotment status for all recent IPOs. Direct links to Link Intime, KFintech, BigShare registrar portals. Step-by-step guide to check your allotment.`}
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
 
 

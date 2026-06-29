@@ -1,5 +1,13 @@
 /** Stock name normalization & quality scoring for deduplication. */
 
+import { isExcludedPlanName } from './canonical-fund-filter.mjs';
+
+/** Indian equity ISIN (INE…) or alternate IN0… prefix from AMFI disclosures. */
+export function isValidEquityIsin(isin) {
+  const s = String(isin || '').trim().toUpperCase();
+  return s.startsWith('INE') || s.startsWith('IN0');
+}
+
 export function normalizeStockName(name) {
   return String(name)
     .toLowerCase()
@@ -105,6 +113,36 @@ export function isDebtInstrument(name, sector = '') {
   return false;
 }
 
+/** MF scheme/plan rows misclassified as equity in AMFI portfolio disclosures. */
+export function isMutualFundSchemeHolding(name, sector = '') {
+  const n = String(name || '').trim();
+  if (!n) return false;
+
+  const s = String(sector || '').trim();
+  if (/^(Mutual Fund|Foreign Mutual Fund|Overseas Mutual Fund|Exchange Traded Fund|ETF)/i.test(s)) {
+    return true;
+  }
+
+  if (isExcludedPlanName(name)) return true;
+
+  if (/^(REGULAR|DIRECT)\s+PLAN(\s+(GROWTH|IDCW|DIVIDEND|BONUS|PAYOUT|OPTION))?$/i.test(n)) {
+    return true;
+  }
+  if (/^(GROWTH|DIVIDEND)\s+OPTION$/i.test(n)) return true;
+
+  if (/\b(REGULAR|DIRECT)\s+PLAN\b/i.test(n)) {
+    if (/\bFUND\b/i.test(n) && !/\b(LIMITED|LTD)\b/i.test(n)) return true;
+    if (/\bSCHEME\b/i.test(n)) return true;
+    if (/\b(GROWTH|IDCW|DIVIDEND|OPTION|PAYOUT)\b/i.test(n)) return true;
+    if (/\b-\s*DIRECT\s+PL\b/i.test(n)) return true;
+  }
+
+  if (/\b-\s*DIRECT\s+PL(?:AN)?(?:\s*-\s*)?(?:GR(?:OWTH)?|IDCW|DIV)?\b/i.test(n)) return true;
+  if (/\b-\s*REGULAR\s+PL(?:AN)?/i.test(n)) return true;
+
+  return false;
+}
+
 export function stockQualityScore(stock, sectorName = '') {
   let score = 0;
   if (stock.isin) score += 100;
@@ -116,18 +154,17 @@ export function stockQualityScore(stock, sectorName = '') {
   return score;
 }
 
-export function stockGroupKey(stock) {
-  if (stock.isin && String(stock.isin).trim()) return String(stock.isin).trim().toUpperCase();
-  return `name:${normalizeStockName(stock.name)}`;
-}
-
-/** Resolve holdings stock names to DB stock ids (ISIN → normalized name → slug). */
+/** Resolve holdings stock names to DB stock ids (ISIN → NSE → BSE → name → slug). */
 export function buildStockIdResolver(stockRows, slugifyFn) {
   const stockIdBySlug = Object.fromEntries(stockRows.map((r) => [r.slug, r.id]));
   const stockIdByIsin = {};
+  const stockIdByNse = {};
+  const stockIdByBse = {};
   const stockIdByNormName = {};
   for (const r of stockRows) {
     if (r.isin) stockIdByIsin[String(r.isin).trim().toUpperCase()] = r.id;
+    if (r.nse_symbol) stockIdByNse[String(r.nse_symbol).trim().toUpperCase()] = r.id;
+    if (r.bse_code) stockIdByBse[String(r.bse_code).trim()] = r.id;
     const norm = normalizeStockName(r.name);
     if (norm && stockIdByNormName[norm] === undefined) stockIdByNormName[norm] = r.id;
   }
@@ -137,6 +174,16 @@ export function buildStockIdResolver(stockRows, slugifyFn) {
       const byIsin = stockIdByIsin[isin.toUpperCase()];
       if (byIsin) return byIsin;
     }
+    const nse = holding.nse_symbol && String(holding.nse_symbol).trim();
+    if (nse) {
+      const byNse = stockIdByNse[nse.toUpperCase()];
+      if (byNse) return byNse;
+    }
+    const bse = holding.bse_code && String(holding.bse_code).trim();
+    if (bse) {
+      const byBse = stockIdByBse[bse];
+      if (byBse) return byBse;
+    }
     const norm = normalizeStockName(holding.name);
     if (norm && stockIdByNormName[norm]) return stockIdByNormName[norm];
     if (holding.name && slugifyFn) {
@@ -144,5 +191,79 @@ export function buildStockIdResolver(stockRows, slugifyFn) {
       if (bySlug) return bySlug;
     }
     return null;
+  };
+}
+
+export function stockGroupKey(stock) {
+  if (stock.isin && String(stock.isin).trim()) return String(stock.isin).trim().toUpperCase();
+  return `name:${normalizeStockName(stock.name)}`;
+}
+
+export function hasListingIdentity(listing) {
+  if (!listing) return false;
+  if (isValidEquityIsin(listing.isin)) return true;
+  if (listing.nse_symbol && String(listing.nse_symbol).trim()) return true;
+  if (listing.bse_code && String(listing.bse_code).trim()) return true;
+  return false;
+}
+
+/**
+ * Resolve listing identifiers for a holdings row: ISIN → NSE → BSE from disclosure,
+ * then backfill missing fields from the NSE/BSE master in `stocks`.
+ */
+export function buildListingLookup(stockRows, slugifyFn) {
+  const byNormName = new Map();
+  const bySlug = new Map();
+
+  for (const row of stockRows) {
+    const listing = {
+      isin: isValidEquityIsin(row.isin) ? String(row.isin).trim().toUpperCase() : null,
+      nse_symbol: row.nse_symbol ? String(row.nse_symbol).trim().toUpperCase() : null,
+      bse_code: row.bse_code ? String(row.bse_code).trim() : null,
+    };
+    if (!hasListingIdentity(listing)) continue;
+
+    const norm = normalizeStockName(row.name);
+    if (norm && !byNormName.has(norm)) byNormName.set(norm, listing);
+
+    if (row.slug && !bySlug.has(row.slug)) bySlug.set(row.slug, listing);
+
+    if (slugifyFn && row.name) {
+      const slug = slugifyFn(row.name);
+      if (slug && !bySlug.has(slug)) bySlug.set(slug, listing);
+    }
+  }
+
+  return function resolveListing(holding) {
+    const listing = {
+      isin: isValidEquityIsin(holding?.isin) ? String(holding.isin).trim().toUpperCase() : null,
+      nse_symbol: holding?.nse_symbol ? String(holding.nse_symbol).trim().toUpperCase() : null,
+      bse_code: holding?.bse_code ? String(holding.bse_code).trim() : null,
+      name: holding?.name || null,
+    };
+
+    if (!holding?.name) return listing;
+
+    const norm = normalizeStockName(holding.name);
+    const master =
+      (norm && byNormName.get(norm)) ||
+      (slugifyFn && bySlug.get(slugifyFn(holding.name))) ||
+      null;
+
+    if (master) {
+      if (!listing.isin) listing.isin = master.isin;
+      if (!listing.nse_symbol) listing.nse_symbol = master.nse_symbol;
+      if (!listing.bse_code) listing.bse_code = master.bse_code;
+    }
+
+    return listing;
+  };
+}
+
+/** @deprecated Use buildListingLookup */
+export function buildIsinLookup(stockRows, slugifyFn) {
+  const resolveListing = buildListingLookup(stockRows, slugifyFn);
+  return function resolveIsin(holding) {
+    return resolveListing(holding).isin;
   };
 }

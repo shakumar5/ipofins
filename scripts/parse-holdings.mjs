@@ -37,6 +37,7 @@ import {
   isGarbageDisclosureFund,
   normalizeDisclosureFundName,
 } from './lib/holdings-name-utils.mjs';
+import { isMutualFundSchemeHolding, isValidEquityIsin } from './lib/stock-utils.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
@@ -620,7 +621,7 @@ function parseUtiHoldingsFromBlock(data, startIdx, endIdx) {
 
     holdings.push({
       name: stockName.replace(/\s+/g, ' '),
-      isin: isin.startsWith('INE') || isin.startsWith('IN0') ? isin : '',
+      isin: isValidEquityIsin(isin) ? String(isin).trim().toUpperCase() : '',
       sector,
       quantity: qty,
       value: Math.round(value * 100) / 100,
@@ -788,8 +789,8 @@ function parseHoldingsFromSheet(data) {
     if (stockName.includes('(a) Listed') || stockName.includes('(b) Unlisted')) continue;
     if (stockName.includes('Grand Total') || stockName.includes('Sub Total') || stockName.includes('Net Assets')) continue;
     
-    // Must have a valid ISIN (INE...) or at least a numeric quantity
-    const hasISIN = isin.startsWith('INE') || isin.startsWith('IN0');
+    // Must have a valid ISIN (INE…) or at least a numeric quantity — ISIN may be backfilled at seed from NSE master
+    const hasISIN = isValidEquityIsin(isin);
     const qty = parseFloat(String(row[colQty] || '0').replace(/,/g, '')) || 0;
     
     if (!hasISIN && qty === 0) continue;
@@ -803,6 +804,7 @@ function parseHoldingsFromSheet(data) {
     // or by instrument name patterns (e.g., "7.35% Bharti Telecom Limited (15/10/2027)")
     if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)\s/i.test(sector)) continue;
     if (sector && /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Mutual Fund)/i.test(sector)) continue;
+    if (isMutualFundSchemeHolding(stockName, sector)) continue;
     if (/^\d+\.?\d*\s*%\s/.test(stockName)) continue; // Names starting with coupon rate like "7.35% ..." or "7.35 % ..."
     if (/\(\d{2}\/\d{2}\/\d{4}\)/.test(stockName)) continue; // Names with maturity dates like "(15/10/2027)"
     if (/\d{2}(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d{2,4}/i.test(stockName)) continue; // Dates like "01DEC2027"
@@ -835,7 +837,7 @@ function parseHoldingsFromSheet(data) {
     
     holdings.push({
       name: stockName.replace(/\s+/g, ' '),
-      isin: hasISIN ? isin : '',
+      isin: hasISIN ? String(isin).trim().toUpperCase() : '',
       sector: sector.replace(/\r\n/g, ' '),
       quantity: qty,
       value: Math.round(value * 100) / 100,

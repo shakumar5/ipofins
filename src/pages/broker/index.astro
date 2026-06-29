@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import brokersData from '../../data/brokers.json';
 
@@ -37,7 +37,7 @@ const fullServiceBrokers = brokersData.filter(b => b.type === 'full-service');
   description="Compare India's best stock brokers side-by-side. Reviews of Zerodha, Groww, Upstox, Angel One, ICICI Direct with pricing, features, pros & cons."
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">

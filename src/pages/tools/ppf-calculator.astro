@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PPFCalculator from '../../components/calculators/PPFCalculator.tsx';
 
@@ -54,7 +54,7 @@ const faqJsonLd = {
   description="Free PPF calculator to estimate maturity value and interest earned on Public Provident Fund. Plan your 15-year tax-free investment with current rates."
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

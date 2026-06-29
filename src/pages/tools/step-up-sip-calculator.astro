@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import StepUpSIPCalculator from '../../components/calculators/StepUpSIPCalculator.tsx';
 
@@ -41,7 +41,7 @@ const faqJsonLd = {
   description="Free Step-Up SIP calculator — see how ₹5,000/month increasing 10% yearly for 20 years at 12% returns builds significantly more wealth than a flat SIP. Try now!"
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">

@@ -103,15 +103,22 @@ function HolderTable({ rows }: { rows: OnePercentRow[] }) {
         <tbody>
           {rows.map((h) => {
             const url = h.entitySlug ? curatedEntityUrl(h.entitySlug) : null;
+            const trackedAs =
+              h.entityDisplayName &&
+              h.entityDisplayName.trim().toLowerCase() !== h.holderName.trim().toLowerCase()
+                ? h.entityDisplayName
+                : null;
             return (
-              <tr key={h.entitySlug ? `entity:${h.entitySlug}` : `holder:${h.id}`} className="border-b border-surface-100 dark:border-surface-800">
-                <td className="py-2.5 pr-4 font-medium text-surface-900 dark:text-white">
-                  {url ? (
-                    <a href={url} className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">
-                      {h.holderName}
+              <tr key={h.entitySlug ? `entity:${h.entitySlug}:${h.id}` : `holder:${h.id}`} className="border-b border-surface-100 dark:border-surface-800">
+                <td className="py-2.5 pr-4 text-surface-900 dark:text-white">
+                  <div className="font-medium">{h.holderName}</div>
+                  {url && trackedAs && (
+                    <a
+                      href={url}
+                      className="text-xs text-primary-600 dark:text-primary-400 hover:underline mt-0.5 inline-block"
+                    >
+                      Tracked as {trackedAs} →
                     </a>
-                  ) : (
-                    h.holderName
                   )}
                 </td>
                 <td className="py-2.5 px-4 text-right font-semibold tabular-nums">{formatPct(h.pctOfCompany)}</td>

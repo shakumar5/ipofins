@@ -17,7 +17,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sql, isDbConfigured, upsertMany } from '../../scripts/lib/db.mjs';
-import { normalizeStockName } from '../../scripts/lib/stock-utils.mjs';
+import { normalizeStockName, isValidEquityIsin } from '../../scripts/lib/stock-utils.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', '..', 'src', 'data');
@@ -303,6 +303,8 @@ async function seedHoldings() {
 
     const key = holding.isin || slugify(holding.name);
     if (stockCache[key]) return stockCache[key];
+
+    if (!isValidEquityIsin(holding.isin)) return null;
 
     const slug = slugify(holding.name);
     let sectorName = String(holding.sector || '').trim();

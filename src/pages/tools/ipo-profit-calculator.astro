@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import IPOProfitCalculator from '../../components/calculators/IPOProfitCalculator.tsx';
 
@@ -34,7 +34,7 @@ const faqJsonLd = {
 ---
 
 <BaseLayout title="IPO Profit Calculator 2026 - Listing Gains Calculator | IPOFins" description="Free IPO profit calculator. Estimate your potential profit or loss from IPO listing based on issue price, expected listing price, and lot size." jsonLd={jsonLd}>
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

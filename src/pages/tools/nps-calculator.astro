@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import NPSCalculator from '../../components/calculators/NPSCalculator.tsx';
 
@@ -54,7 +54,7 @@ const faqJsonLd = {
   description="Free NPS calculator to estimate retirement corpus and monthly pension. Plan your NPS contributions with expected returns. Additional ₹50,000 tax benefit."
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

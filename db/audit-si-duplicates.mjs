@@ -70,7 +70,7 @@ async function main() {
       JOIN stocks s ON s.id = eh.stock_id
       WHERE eh.strategy_id IS NULL
       GROUP BY eh.entity_id, eh.quarter,
-        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug)
+        COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
       HAVING COUNT(*) > 1
     ) x
   `;
@@ -82,7 +82,7 @@ async function main() {
       JOIN stocks s ON s.id = ec.stock_id
       WHERE ec.strategy_id IS NULL
       GROUP BY ec.entity_id, ec.quarter,
-        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug)
+        COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug)
       HAVING COUNT(*) > 1
     ) x
   `;
@@ -93,7 +93,7 @@ async function main() {
       FROM shareholding_pattern_holders sph
       JOIN stocks s ON s.id = sph.stock_id
       GROUP BY sph.quarter,
-        COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug),
+        COALESCE(NULLIF(UPPER(TRIM(s.isin)), ''), NULLIF(UPPER(TRIM(s.nse_symbol)), ''), NULLIF(TRIM(s.bse_code), ''), s.slug),
         LOWER(TRIM(sph.holder_name))
       HAVING COUNT(*) > 1
     ) x

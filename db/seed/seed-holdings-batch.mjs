@@ -14,7 +14,13 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { buildFundMatcher, slugify } from '../../scripts/lib/fund-match.mjs';
-import { buildStockIdResolver, isDebtInstrument } from '../../scripts/lib/stock-utils.mjs';
+import {
+  buildStockIdResolver,
+  buildListingLookup,
+  isDebtInstrument,
+  isMutualFundSchemeHolding,
+  isValidEquityIsin,
+} from '../../scripts/lib/stock-utils.mjs';
 import { unpackMonthHoldings } from '../../scripts/lib/holdings-month.mjs';
 import { buildCuratedParserSlugSet } from '../../scripts/lib/canonical-fund-filter.mjs';
 import {
@@ -69,7 +75,7 @@ function sanitizeSectorName(sectorName) {
   return sector;
 }
 
-function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs) {
+function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs, resolveListing) {
   const stockBySlug = new Map();
   const sectorBySlug = new Map();
 
@@ -82,8 +88,15 @@ function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs) {
 
       const { stocks: holdings } = unpackMonthHoldings(fundData[monthStr]);
       for (const holding of holdings) {
-        if (!holding?.name || isDebtInstrument(holding.name, holding.sector)) continue;
+        if (
+          !holding?.name ||
+          isDebtInstrument(holding.name, holding.sector) ||
+          isMutualFundSchemeHolding(holding.name, holding.sector)
+        ) {
+          continue;
+        }
 
+        const listing = resolveListing(holding);
         const stockSlug = slugify(holding.name);
         if (!stockSlug || stockBySlug.has(stockSlug)) continue;
 
@@ -96,7 +109,9 @@ function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs) {
         }
 
         stockBySlug.set(stockSlug, {
-          isin: holding.isin ? String(holding.isin).trim() : null,
+          isin: listing.isin,
+          nse_symbol: listing.nse_symbol,
+          bse_code: listing.bse_code,
           name: holding.name,
           slug: stockSlug,
           sectorSlug: sectorName ? slugify(sectorName) : null,
@@ -111,8 +126,8 @@ function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs) {
   };
 }
 
-async function ensureStocksFromHoldings(holdingsData, targetDates, allowedParserSlugs) {
-  const { sectors, stocks } = collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs);
+async function ensureStocksFromHoldings(holdingsData, targetDates, allowedParserSlugs, resolveListing) {
+  const { sectors, stocks } = collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs, resolveListing);
   if (!stocks.length) return 0;
 
   if (sectors.length) {
@@ -124,6 +139,8 @@ async function ensureStocksFromHoldings(holdingsData, targetDates, allowedParser
 
   const stockRows = stocks.map((stock) => ({
     isin: stock.isin,
+    nse_symbol: stock.nse_symbol,
+    bse_code: stock.bse_code,
     name: stock.name,
     slug: stock.slug,
     sector_id: stock.sectorSlug ? sectorIdBySlug[stock.sectorSlug] ?? null : null,
@@ -172,13 +189,29 @@ async function main() {
 
   console.log(`  Funds: ${fundRows.length}`);
 
+  const stockRows = await sql`SELECT id, slug, name, isin, nse_symbol, bse_code FROM stocks`;
+  const resolveListing = buildListingLookup(stockRows, slugify);
+  const masterListingCount = stockRows.filter(
+    (r) => isValidEquityIsin(r.isin) || r.nse_symbol || r.bse_code,
+  ).length;
+  if (masterListingCount < 2000) {
+    console.warn(
+      `  ⚠️  Only ${masterListingCount} listed stocks in DB — run db:seed-listed-equities + db:seed-bse-listed-equities`,
+    );
+  }
+
   console.log('\n  📈 Ensuring stock universe from holdings...');
-  const stocksUpserted = await ensureStocksFromHoldings(holdingsData, targetDates, allowedParserSlugs);
+  const stocksUpserted = await ensureStocksFromHoldings(
+    holdingsData,
+    targetDates,
+    allowedParserSlugs,
+    resolveListing,
+  );
   console.log(`  Stocks upserted: ${stocksUpserted}`);
 
-  const stockRows = await sql`SELECT id, slug, name, isin FROM stocks`;
-  const resolveStockId = buildStockIdResolver(stockRows, slugify);
-  console.log(`  Stocks in DB: ${stockRows.length}`);
+  const stockRowsAfter = await sql`SELECT id, slug, name, isin, nse_symbol, bse_code FROM stocks`;
+  const resolveStockId = buildStockIdResolver(stockRowsAfter, slugify);
+  console.log(`  Stocks in DB: ${stockRowsAfter.length}`);
 
   if (fullReload) {
     await sql`DELETE FROM holdings_changes`;
@@ -199,6 +232,9 @@ async function main() {
   const statsRows = [];
   let matchedFunds = 0;
   let unmatchedFunds = 0;
+  let holdingsListingFromMaster = 0;
+  let holdingsNseFallback = 0;
+  let holdingsBseFallback = 0;
 
   for (const [fundSlug, fundData] of Object.entries(holdingsData.holdings)) {
     if (allowedParserSlugs && !allowedParserSlugs.has(fundSlug)) continue;
@@ -223,7 +259,23 @@ async function main() {
       });
 
       for (const h of holdings) {
-        const stockId = resolveStockId(h);
+        if (
+          !h?.name ||
+          isDebtInstrument(h.name, h.sector) ||
+          isMutualFundSchemeHolding(h.name, h.sector)
+        ) {
+          continue;
+        }
+
+        const hadIsin = isValidEquityIsin(h.isin);
+        const listing = resolveListing(h);
+        if (!hadIsin && listing.isin) holdingsListingFromMaster++;
+        if (!hadIsin && !listing.isin && listing.nse_symbol) holdingsNseFallback++;
+        if (!hadIsin && !listing.isin && !listing.nse_symbol && listing.bse_code) {
+          holdingsBseFallback++;
+        }
+
+        const stockId = resolveStockId({ ...h, ...listing });
         if (!stockId) continue;
         allRows.push({
           fund_id: fundId,
@@ -238,6 +290,7 @@ async function main() {
   }
 
   console.log(`  Matched funds: ${matchedFunds} (${unmatchedFunds} unmatched)`);
+  console.log(`  Listing backfill from master — ISIN: ${holdingsListingFromMaster}, NSE: ${holdingsNseFallback}, BSE: ${holdingsBseFallback}`);
   console.log(`  Rows to insert: ${allRows.length}`);
 
   // Dedupe (same fund+stock+month can appear from overlapping disclosure files)

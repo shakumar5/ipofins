@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GoalPlanner from '../../components/calculators/GoalPlanner.tsx';
 
@@ -41,7 +41,7 @@ const faqJsonLd = {
   description="Free goal-based investment planner. Plan for child's education, marriage, home purchase, or any financial goal. Get inflation-adjusted target and exact monthly SIP needed."
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

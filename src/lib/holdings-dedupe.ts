@@ -43,4 +43,9 @@ export function dedupeHoldingsByStock<
   return [...byKey.values()];
 }
 
-export { stockListingKey, stockListingKeySql } from './stock-listing-key';
+export {
+  stockListingKey,
+  stockListingKeySql,
+  holderFilingKeySql,
+  canonicalStockRankOrderSql,
+} from './stock-listing-key';

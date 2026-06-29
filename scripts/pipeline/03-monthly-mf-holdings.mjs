@@ -35,6 +35,8 @@ async function main() {
 
   const parseFlags = fullReload ? '' : ' --incremental';
   run(`node scripts/parse-holdings.mjs${parseFlags}`, 'Parse Excel → fund-holdings.json');
+  run(nodeExecCmd('db/seed/seed-listed-equities.mjs'), 'Refresh NSE equity master (ISIN/NSE lookup)');
+  run(nodeExecCmd('db/seed/seed-bse-listed-equities.mjs'), 'Refresh BSE-only equity master (ISIN/BSE lookup)');
   run(nodeExecCmd('db/seed/seed-curated-mf.mjs'), 'Upsert curated fund universe');
 
   const seedFlags = fullReload ? '--full --curated-only' : '--curated-only';
