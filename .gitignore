@@ -15,7 +15,9 @@ dist/
 # editor / IDE
 .vscode/
 .idea/
-.cursor/
+
+# Cursor — commit rules/skills/commands; keep local MCP secrets out of git
+.cursor/mcp.json
 
 # OS
 .DS_Store

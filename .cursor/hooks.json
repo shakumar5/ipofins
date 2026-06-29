@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/validate-sql.mjs"
+      }
+    ],
+    "stop": [
+      {
+        "command": "node .cursor/hooks/suggest-check.mjs"
+      }
+    ]
+  }
+}

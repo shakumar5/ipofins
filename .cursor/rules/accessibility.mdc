@@ -1,0 +1,7 @@
+---
+description: WCAG AA accessibility
+globs: src/**/*.astro,src/**/*.tsx
+alwaysApply: false
+---
+
+WCAG AA: contrast, focus states, labels, table headers, reduced motion.

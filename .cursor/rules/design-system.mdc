@@ -1,0 +1,7 @@
+---
+description: Design system — read DESIGN.md
+globs: src/**/*.astro,src/**/*.tsx,src/**/*.css,src/**/*.html
+alwaysApply: false
+---
+
+Read `DESIGN.md` before UI changes. Use theme tokens from `src/styles/global.css`, 8px spacing, `dark:` variants.

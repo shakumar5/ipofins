@@ -1,0 +1,8 @@
+---
+description: Git workflow — never merge main from agents
+alwaysApply: true
+---
+
+- Never merge to `main` from agent sessions
+- `git push origin HEAD` on the active feature branch
+- Deploy via GitHub Actions **Build & Deploy** on that branch

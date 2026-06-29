@@ -1,0 +1,10 @@
+---
+description: Database and pipeline layer
+globs: db/**,scripts/pipeline/**
+alwaysApply: false
+---
+
+- No `SELECT *`; explicit columns only
+- `TIMESTAMPTZ` not bare `TIMESTAMP`
+- `NUMERIC` for money; `stock_id` FK to `stocks(id)`
+- Migrations under `db/migrations/`

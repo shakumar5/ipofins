@@ -1,0 +1,8 @@
+---
+description: Typography — font-mono for numbers
+globs: src/**/*.astro,src/**/*.tsx,src/**/*.css
+alwaysApply: false
+---
+
+- `font-sans` for prose; `font-mono` for all numeric values
+- Rupee ₹; `Intl.NumberFormat('en-IN')`
