@@ -16,8 +16,8 @@ const REQUIRED = join(ROOT, 'public', 'data', 'smart-money-signals-index.json');
 const MAX_AGE_MIN = Number(process.env.EXPORT_MAX_AGE_MINUTES || 180);
 
 function shouldSkip() {
-  if (process.env.FORCE_EXPORT === '1') return false;
   if (process.env.SKIP_EXPORT === '1' || process.argv.includes('--skip')) return true;
+  if (process.env.FORCE_EXPORT === '1') return false;
   if (!existsSync(STAMP) || !existsSync(REQUIRED)) return false;
 
   try {

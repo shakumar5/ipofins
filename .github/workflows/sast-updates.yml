@@ -1,8 +1,11 @@
-# Weekly SAST updates feed - export JSON, rebuild, deploy
+# Weekly SAST updates feed — export SAST JSON only, rebuild, deploy
 #
 # Runs every Monday at 08:45 IST (03:15 UTC).
 # Fetches NSE/BSE SAST filings into public/data/sast-updates.json (read-only;
 # no entity_holdings DB writes). Quarterly SHP remains source of truth.
+#
+# Reuses the export-data cache from Build & Deploy (holdings, signals, etc.).
+# Does NOT run export:client-data — only export:sast-updates refreshes SAST JSON.
 
 name: Weekly SAST Updates
 
@@ -22,7 +25,7 @@ env:
 jobs:
   export-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
 
     steps:
       - name: Checkout code
@@ -40,26 +43,70 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Restore exported client data cache
+        uses: actions/cache@v4
+        id: export-cache
+        with:
+          path: public/data
+          key: export-data-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs') }}
+          restore-keys: |
+            export-data-
+
+      - name: Export cache status
+        run: |
+          if [ "${{ steps.export-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "✓ Export cache hit — reusing holdings/signals JSON (no client export)"
+          else
+            echo "ℹ Export cache miss — will verify required client JSON exists before build"
+          fi
+
+      - name: Verify client data cache
+        run: node scripts/verify-sast-weekly.mjs cache
+
       - name: Export SAST updates feed
         run: npm run export:sast-updates
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      - name: Verify SAST export
+        run: node scripts/verify-sast-weekly.mjs export
+
       - name: Type check
         run: npm run check
 
-      - name: Build static site
-        run: npm run build
+      - name: Build static site (skip client export)
+        run: npm run build:fast
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          FORCE_EXPORT: '1'
+          SKIP_EXPORT: '1'
+
+      - name: Verify SAST files in dist
+        run: node scripts/verify-sast-weekly.mjs dist
+
+      - name: Save exported client data cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: public/data
+          key: export-data-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs') }}
 
       - name: Deploy prebuilt static site to Vercel
         run: |
           npm i -g vercel@latest
           mkdir -p .vercel/output/static
           cp -r dist/* .vercel/output/static/
-          echo '{"version":3,"routes":[{"handle":"filesystem"}]}' > .vercel/output/config.json
+          cat > .vercel/output/config.json <<'EOF'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/mutual-funds/portfolio-overlap-checker/([^/]+-vs-[^/]+)/?",
+                "dest": "/mutual-funds/portfolio-overlap-checker/index.html"
+              },
+              { "handle": "filesystem" }
+            ]
+          }
+          EOF
           vercel deploy --prebuilt --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
