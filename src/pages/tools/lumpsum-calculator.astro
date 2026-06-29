@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LumpsumCalculator from '../../components/calculators/LumpsumCalculator.tsx';
 
@@ -54,7 +54,7 @@ const faqJsonLd = {
   description="Free lumpsum investment calculator. Estimate how one-time mutual fund investments grow with compound interest. Compare with SIP returns."
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

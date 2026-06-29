@@ -5,6 +5,7 @@ import OnePercentStockDetail from '../../components/tracked/OnePercentStockDetai
 import {
   getOnePercentStockSlugs,
   getStockShareholdingDetail,
+  resolveCanonicalStockSlug,
   formatQuarter,
   buildOnePercentStockSeo,
   canonicalFor,
@@ -20,6 +21,11 @@ export async function getStaticPaths() {
 }
 
 const { slug, stockName } = Astro.props;
+
+const canonicalSlug = await resolveCanonicalStockSlug(slug);
+if (canonicalSlug && canonicalSlug !== slug) {
+  return Astro.redirect(`${ONE_PERCENT_CLUB_HUB}/${canonicalSlug}`);
+}
 
 const detail = await getStockShareholdingDetail(slug);
 if (!detail) {

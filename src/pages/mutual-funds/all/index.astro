@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
 import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
@@ -114,5 +114,5 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 </BaseLayout>

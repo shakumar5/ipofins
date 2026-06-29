@@ -24,3 +24,13 @@ export function stockListingKey(parts: StockListingIdentity): string {
 export function stockListingKeySql(alias = 's'): string {
   return `COALESCE(NULLIF(UPPER(TRIM(${alias}.isin)), ''), NULLIF(UPPER(TRIM(${alias}.nse_symbol)), ''), NULLIF(TRIM(${alias}.bse_code), ''), ${alias}.slug)`;
 }
+
+/** Normalize SHP holder_name for dedupe across NSE/BSE duplicate stock rows. */
+export function holderFilingKeySql(holderExpr: string): string {
+  return `upper(regexp_replace(regexp_replace(trim(${holderExpr}), '\\.+$', ''), '\\s+', ' ', 'g'))`;
+}
+
+/** Pick one slug per listing key: summary present, then lowest stocks.id. */
+export function canonicalStockRankOrderSql(alias = 's'): string {
+  return `(EXISTS (SELECT 1 FROM stock_shp_summary ss WHERE ss.stock_id = ${alias}.id)) DESC, ${alias}.id ASC`;
+}

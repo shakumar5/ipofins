@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SmartMoneyHubView from '../../../components/funds/SmartMoneyHubView.astro';
 import { BRAND_URL } from '../../../lib/brand';
@@ -69,6 +69,6 @@ const faqJsonLd = {
       <link slot="head" rel="preload" href="/data/smart-money-tracker-index.json" as="fetch" crossorigin />
     </>
   )}
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
   <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} trackerBootstrap={trackerBootstrap} />
 </BaseLayout>

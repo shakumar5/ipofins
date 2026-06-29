@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import OnePercentSearch from '../../components/tracked/OnePercentSearch.tsx';
 import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
@@ -84,7 +84,7 @@ const faqJsonLd = {
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

@@ -9,13 +9,14 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getPgPool, closePgPool } from '../../scripts/lib/pg-bulk.mjs';
+import { stockListingKeySql } from '../../scripts/lib/stock-listing-key.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const env = readFileSync(join(ROOT, '.env'), 'utf-8');
 process.env.DATABASE_URL = env.match(/DATABASE_URL=(.+)/)[1].trim();
 
-/** Canonical equity key — keep in sync with tracked-entities.ts / compute-super-investor-signals.mjs */
-const STOCK_KEY = `COALESCE(NULLIF(TRIM(s.nse_symbol), ''), s.slug)`;
+/** Canonical equity key — ISIN, then NSE, then BSE, then slug. */
+const STOCK_KEY = stockListingKeySql('s');
 
 async function siSchemaPresent(pool) {
   const result = await pool.query(`

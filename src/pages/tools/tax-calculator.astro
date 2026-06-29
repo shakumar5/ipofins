@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TaxCalculator from '../../components/calculators/TaxCalculator.tsx';
 
@@ -41,7 +41,7 @@ const faqJsonLd = {
   description="Free capital gains tax calculator for India. Calculate STCG/LTCG tax on equity mutual funds, stocks, debt funds, and gold with updated 2024 Budget rules. Plan before you sell!"
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

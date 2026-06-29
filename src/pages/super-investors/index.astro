@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntityCard from '../../components/tracked/EntityCard.astro';
 import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
@@ -103,7 +103,7 @@ const faqJsonLd = {
   ogImage="/og-fund.png"
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <!-- Breadcrumb -->
   <nav class="container-wide pt-6" aria-label="Breadcrumb">

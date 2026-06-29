@@ -346,7 +346,7 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
     </div>
   </section>
 
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <!-- Bottom Navigation -->
   <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">

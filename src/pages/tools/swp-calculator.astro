@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SWPCalculator from '../../components/calculators/SWPCalculator.tsx';
 
@@ -84,7 +84,7 @@ const faqJsonLd = {
   description="Free SWP calculator for mutual funds — see how ₹50L corpus with ₹40K/month withdrawals lasts 20 years at 10% returns. Plan retirement income with live charts. Try now!"
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">

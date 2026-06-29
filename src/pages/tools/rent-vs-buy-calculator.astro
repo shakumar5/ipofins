@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import RentVsBuyCalculator from '../../components/calculators/RentVsBuyCalculator.tsx';
 
@@ -41,7 +41,7 @@ const faqJsonLd = {
   description="Free rent vs buy calculator for India. Compare the financial outcome of renting + investing vs buying a home. Enter rent, property price, loan rate, and get your answer."
   jsonLd={jsonLd}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <nav class="container-wide pt-6" aria-label="Breadcrumb">
     <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
