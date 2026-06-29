@@ -9,8 +9,7 @@ import superInvestorsJson from '../data/super-investors.json';
 import { sql } from './db';
 import { BRAND_URL } from './brand';
 import { dedupeHoldingsByStock, stockListingKey, stockListingKeySql, holderFilingKeySql, canonicalStockRankOrderSql, canonicalStockRankOrderByStockIdSql } from './holdings-dedupe';
-import { resolveHolderPositions } from './one-percent-holder-positions';
-import { loadHolderPositionsMapFromExport, holderPositionsMapToRecord } from './holder-positions-build-cache';
+import { holderPositionsMapToRecord, resolveHolderPositions } from './one-percent-holder-positions';
 import {
   isHolderPageIndexable,
   primaryStockSlugFromPositions,
@@ -1726,13 +1725,53 @@ export interface OnePercentSearchHolder {
 
 /** Latest-quarter ≥1% positions grouped for holder name search (all holder types). */
 let sqlPositionsMapCache: Map<string, OnePercentHolderPosition[]> | null = null;
+let exportPositionsMapCache: Map<string, OnePercentHolderPosition[]> | null | undefined;
+
+async function loadHolderPositionsMapFromExportAtBuild(): Promise<
+  Map<string, OnePercentHolderPosition[]> | null
+> {
+  if (!import.meta.env.SSR) return null;
+  if (exportPositionsMapCache !== undefined) return exportPositionsMapCache;
+
+  try {
+    const { existsSync, readFileSync } = await import('node:fs');
+    const exportPath = `${process.cwd()}/public/data/one-percent-holder-positions.json`;
+    if (!existsSync(exportPath)) {
+      exportPositionsMapCache = null;
+      return null;
+    }
+    const record = JSON.parse(readFileSync(exportPath, 'utf8')) as import('./one-percent-holder-positions').HolderPositionsMap;
+    const map = new Map<string, OnePercentHolderPosition[]>();
+    for (const [key, list] of Object.entries(record)) {
+      map.set(
+        key,
+        list.map((p) => ({
+          stockSlug: p.stockSlug,
+          stockName: p.stockName,
+          pct: p.pct ?? null,
+          shares: p.shares ?? null,
+          marketValueCr: p.marketValueCr ?? null,
+          holderType: p.holderType ?? null,
+          nseSymbol: (p as { nseSymbol?: string | null }).nseSymbol ?? null,
+          isin: (p as { isin?: string | null }).isin ?? null,
+          bseCode: (p as { bseCode?: string | null }).bseCode ?? null,
+        })),
+      );
+    }
+    exportPositionsMapCache = map;
+    return map;
+  } catch {
+    exportPositionsMapCache = null;
+    return null;
+  }
+}
 
 export async function getOnePercentHolderPositionsMap(): Promise<
   Map<string, OnePercentHolderPosition[]>
 > {
-  const fromExport = loadHolderPositionsMapFromExport();
+  const fromExport = await loadHolderPositionsMapFromExportAtBuild();
   if (fromExport) {
-    return fromExport as Map<string, OnePercentHolderPosition[]>;
+    return fromExport;
   }
   if (sqlPositionsMapCache) return sqlPositionsMapCache;
 

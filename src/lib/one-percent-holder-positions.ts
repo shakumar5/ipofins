@@ -60,3 +60,21 @@ export function loadHolderPositionsMap(): Promise<HolderPositionsMap> {
   );
   return loadPromise;
 }
+
+/** Normalize a holder-position map (export or SQL) into HolderPositionsMap. */
+export function holderPositionsMapToRecord(
+  map: Map<string, readonly HolderPosition[]>,
+): HolderPositionsMap {
+  const record: HolderPositionsMap = {};
+  for (const [key, list] of map) {
+    record[key] = list.map((p) => ({
+      stockSlug: p.stockSlug,
+      stockName: p.stockName,
+      pct: p.pct ?? null,
+      shares: p.shares ?? null,
+      marketValueCr: p.marketValueCr ?? null,
+      holderType: p.holderType ?? null,
+    }));
+  }
+  return record;
+}
