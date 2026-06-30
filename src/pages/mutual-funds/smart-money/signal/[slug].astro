@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../../components/layout/PageHeader.astro';
 import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
 import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
 import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
@@ -87,13 +88,18 @@ const jsonLd = isPlaceholder
         class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
       />
     )}
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>
-      {isPlaceholder ? 'Smart Money Signal' : pageMeta.heading}
-    </h1>
-    <p class="mt-1 text-sm text-surface-500" data-page-subtitle>
-      {isPlaceholder ? 'Conviction score breakdown' : pageMeta.subtitle}
-    </p>
-    {!isPlaceholder && <SmartMoneySubNav active="signals" />}
+    <PageHeader
+      title={isPlaceholder ? 'Smart Money Signal' : (pageMeta.heading || stockName)}
+      subtitle={isPlaceholder ? 'Conviction score breakdown' : pageMeta.subtitle}
+      freshness="Updated monthly"
+      source="AMC portfolio disclosures"
+    >
+      {!isPlaceholder && (
+        <div class="mt-4">
+          <SmartMoneySubNav active="signals" />
+        </div>
+      )}
+    </PageHeader>
   </section>
 
   <section class="container-wide py-4 pb-12">

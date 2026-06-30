@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import FundTableLoader from '../../../components/funds/FundTableLoader.tsx';
-import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
+import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
 import { getAllFunds } from '../../../lib/data/funds';
 import { selectBestFunds } from '../../../lib/best-funds';
 import { catToSlug } from '../../../lib/fund-category-slug';
@@ -52,10 +52,7 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading}</h1>
-    <p class="mt-1 text-sm text-surface-500" data-page-subtitle>{pageMeta.subtitle}</p>
-
-    <MfSectionTabs active="best" />
+    <MfSectionHeader active="best" heading={pageMeta.heading || ''} subtitle={pageMeta.subtitle || ''} />
   </section>
 
   <section class="container-wide py-4">

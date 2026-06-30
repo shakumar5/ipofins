@@ -129,7 +129,7 @@ export default function BrokerCompare({ brokers, focusBroker }: Props) {
       </div>
 
       {/* Comparison Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 data-table-premium">
         <table className="w-full text-sm">
           {/* Header */}
           <thead>

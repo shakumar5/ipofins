@@ -1,5 +1,6 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import { ipoDetailHref } from '../../lib/list-back-nav';
@@ -67,18 +68,13 @@ const faqJsonLd = {
 
 
 
-  <!-- Header -->
   <section class="container-wide pt-8 pb-6">
-    <div class="flex items-center gap-3 mb-2">
-      <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
-      <span class="text-xs font-medium text-success-600 dark:text-success-400">Live data — Updated every 12 hours</span>
-    </div>
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      IPO Subscription Status — {today}
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Real-time subscription data for all currently open IPOs. Track how many times each IPO is subscribed across Retail, HNI, and QIB categories.
-    </p>
+    <PageHeader
+      title={`IPO Subscription Status — ${today}`}
+      subtitle="Real-time subscription data for all currently open IPOs. Track how many times each IPO is subscribed across Retail, HNI, and QIB categories."
+      freshness="Live data — Updated every 12 hours"
+      source="BSE/NSE subscription feeds"
+    />
   </section>
 
   <!-- Live Subscription Data -->

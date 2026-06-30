@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import IPOProfitCalculator from '../../components/calculators/IPOProfitCalculator.tsx';
 
 const jsonLd = {
@@ -47,8 +48,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">IPO Profit Calculator</h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">Estimate your potential profit or loss from an IPO investment. Enter issue price, expected listing price, lot size, and number of lots applied.</p>
+    <PageHeader
+      title="IPO Profit Calculator"
+      subtitle="Estimate your potential profit or loss from an IPO investment. Enter issue price, expected listing price, lot size, and number of lots applied."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

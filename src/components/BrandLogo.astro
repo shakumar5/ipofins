@@ -1,18 +1,12 @@
 ---
 import { BRAND_NAME } from '../lib/brand';
-
-interface Props {
-  /** Footer / compact contexts */
-  compact?: boolean;
-  class?: string;
-}
-
+interface Props { compact?: boolean; class?: string; }
 const { compact = false, class: className = '' } = Astro.props;
-const textClass = compact
-  ? 'text-sm font-extrabold tracking-tight'
-  : 'text-lg font-extrabold tracking-tight';
+const textClass = compact ? 'text-sm font-bold tracking-tight' : 'text-lg font-bold tracking-tight';
 ---
-
-<span class={`${textClass} text-surface-900 dark:text-white ${className}`.trim()}>
-  {BRAND_NAME}
+<span class={`inline-flex items-center gap-2 ${className}`.trim()}>
+  <span class="brand-logo-mark" aria-hidden="true">
+    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg>
+  </span>
+  <span class={`${textClass} text-surface-900 dark:text-white`}>{BRAND_NAME}</span>
 </span>

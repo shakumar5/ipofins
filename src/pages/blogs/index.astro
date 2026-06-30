@@ -1,6 +1,7 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BRAND_URL } from '../../lib/brand';
+import PageHeader from '../../components/layout/PageHeader.astro';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -39,8 +40,7 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Blogs & Guides</h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300">Everything you need to know about IPOs, mutual funds, and financial tools — answered.</p>
+    <PageHeader title="Blogs & Guides" subtitle="Everything you need to know about IPOs, mutual funds, and financial tools — answered." />
   </section>
 
   <section class="container-wide py-6">

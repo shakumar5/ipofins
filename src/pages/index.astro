@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import AdUnit from '../components/AdUnit.astro';
 import ToolCard from '../components/ToolCard.astro';
 import PlatformFeatureCard from '../components/home/PlatformFeatureCard.astro';
+import StatCard from '../components/home/StatCard.astro';
 import toolsData from '../data/tools.json';
 import { getAllIPOs } from '../lib/data/ipos';
 import { getHoldingsStats } from '../lib/data/funds';
@@ -133,81 +134,50 @@ const faqJsonLd = {
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <!-- Hero -->
-  <section class="relative overflow-hidden border-b border-surface-200/80 dark:border-surface-800">
-    <div class="absolute inset-0 bg-gradient-to-br from-primary-50/80 via-white to-surface-50 dark:from-surface-950 dark:via-surface-900 dark:to-primary-950/20"></div>
-    <div class="absolute top-0 right-0 w-[480px] h-[480px] bg-primary-200/20 dark:bg-primary-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-
-    <div class="relative container-wide py-14 lg:py-20">
+  <section class="home-hero relative overflow-hidden">
+    <div class="relative container-wide py-14 lg:py-16">
       <div class="home-hero-grid">
         <div>
-          <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/80 dark:bg-surface-800/80 backdrop-blur border border-surface-200 dark:border-surface-700 rounded-full mb-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-full mb-6">
             <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse-subtle"></span>
-            <span class="text-xs font-semibold text-surface-600 dark:text-surface-300">Free · No login · Official data</span>
+            <span class="text-xs font-medium text-surface-600 dark:text-surface-300">Free · No login · Official data</span>
           </div>
-
-          <h1 class="text-4xl lg:text-[2.75rem] font-extrabold text-surface-900 dark:text-white tracking-tighter leading-[1.1]">
+          <h1 class="text-4xl lg:text-[2.75rem] font-bold text-surface-900 dark:text-white tracking-tight leading-[1.12]">
             Track what funds<br />
-            <span class="text-gradient">and super investors buy.</span>
+            <span class="text-surface-700 dark:text-surface-200">and super investors buy.</span>
           </h1>
           <p class="mt-5 text-lg text-surface-600 dark:text-surface-300 max-w-xl leading-relaxed">
             IPOFins turns SEBI &amp; AMFI disclosures into actionable intelligence — MF smart money signals, super-investor holdings, the 1% Club, and IPO analytics for Indian investors.
           </p>
-
           <div class="mt-8 flex flex-wrap gap-3">
             <a href={sm.hub} class="btn-primary px-6 py-3 text-base">
               Smart Money Tracker
               <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </a>
-            <a href="/super-investors" class="btn-secondary px-6 py-3 text-base">
-              Super Investors
-            </a>
             <a href="/ipo" class="btn-secondary px-6 py-3 text-base">
               {liveIPOs.length > 0 ? `${liveIPOs.length} Live IPOs` : 'Browse IPOs'}
             </a>
           </div>
-
-          <div class="mt-6 nav-btn-group">
-            <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
-            <a href={sm.stockSignal} class="btn-secondary px-6 py-3">Stock Signal</a>
-            <a href="/mutual-funds/portfolio-overlap-checker" class="btn-secondary px-6 py-3">Portfolio Overlap</a>
-            <a href="/mutual-funds/best" class="btn-secondary px-6 py-3">Best Funds</a>
-            <a href="/broker/compare" class="btn-secondary px-6 py-3">Compare Brokers</a>
-            <a href="/learn" class="btn-secondary px-6 py-3">Learn</a>
-            <a href="/blogs" class="btn-secondary px-6 py-3">Guides & FAQs</a>
+          <div class="home-hero-quick-links">
+            <a href="/super-investors" class="home-quick-link">Super Investors</a>
+            <a href="/1-percent-club" class="home-quick-link">1% Club</a>
+            <a href={sm.stockSignal} class="home-quick-link">Stock Signal</a>
+            <a href="/mutual-funds/portfolio-overlap-checker" class="home-quick-link">Portfolio Overlap</a>
+            <a href="/tools" class="home-quick-link">Tools</a>
+            <a href="/learn" class="home-quick-link">Learn</a>
           </div>
-
           <p class="mt-5 text-xs text-surface-500 dark:text-surface-400">
             Not investment advice. Data from AMFI, SEBI, NSE &amp; BSE.{' '}
             <a href="/methodology" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">Methodology →</a>
           </p>
         </div>
-
-        <!-- Stats bento -->
         <div class="home-stat-bento">
-          <a href="/ipo" class="card-compact lg:col-span-1 hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-surface-900 dark:text-white tabular-nums">{iposData.length}</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">IPOs Tracked</p>
-          </a>
-          <a href="/ipo" class="card-compact border-success-500/30 bg-success-50/50 dark:bg-success-500/5 hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-success-600 tabular-nums">{liveIPOs.length}</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Live Now</p>
-          </a>
-          <a href="/mutual-funds/all" class="card-compact hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400 tabular-nums">{fundsCovered}+</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Funds with Holdings</p>
-          </a>
-          <a href="/tools" class="card-compact hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-surface-900 dark:text-white tabular-nums">{toolsData.length}</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Finance Tools</p>
-          </a>
-          <a href="/super-investors" class="card-compact hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-teal-600 dark:text-teal-400 tabular-nums">{trackedSnapshot.entityCount}</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">Super Investors</p>
-          </a>
-          <a href="/1-percent-club" class="card-compact hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tabular-nums">{onePercentStocks.length}</p>
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1">1% Club Stocks</p>
-          </a>
+          <StatCard href="/ipo" value={iposData.length} label="IPOs Tracked" />
+          <StatCard href="/ipo" value={liveIPOs.length} label="Live Now" variant="live" />
+          <StatCard href="/mutual-funds/all" value={`${fundsCovered}+`} label="Funds with Holdings" />
+          <StatCard href="/tools" value={toolsData.length} label="Finance Tools" />
+          <StatCard href="/super-investors" value={trackedSnapshot.entityCount} label="Super Investors" />
+          <StatCard href="/1-percent-club" value={onePercentStocks.length} label="1% Club Stocks" />
         </div>
       </div>
     </div>
@@ -226,64 +196,57 @@ const faqJsonLd = {
         description={`Industry-wide stock activity from ${amcCount} AMCs — most bought, sold, fresh entries & complete exits each month.`}
         href={sm.hub}
         badge="Core"
-        icon="💡"
-        accent="success"
+        iconName="smart-money"
+        iconName="smart-money"
       />
       <PlatformFeatureCard
         title="Holdings Changes"
         description="Month-on-month portfolio diffs per AMC — see additions, removals, and weight shifts fund by fund."
         href={sm.holdingsChanges}
         badge="Deep dive"
-        icon="📋"
-        accent="primary"
+        iconName="holdings"
       />
       <PlatformFeatureCard
         title="Stock Signal"
         description="Per-stock conviction scores from aggregated fund manager activity — searchable across 900+ stocks."
         href={sm.stockSignal}
         badge="900+ stocks"
-        icon="📡"
-        accent="primary"
+        iconName="signal"
       />
       <PlatformFeatureCard
         title="Super Investors"
         description={`Curated portfolios for ${trackedSnapshot.entityCount} well-known investors — quarter-on-quarter adds, exits, and conviction from SHP filings.`}
         href="/super-investors"
         badge="SHP data"
-        icon="🎯"
-        accent="success"
+        iconName="investors"
       />
       <PlatformFeatureCard
         title="1% Club"
         description={`Every ≥1% non-promoter shareholder on ${onePercentStocks.length}+ stocks — curated super investors and mystery holders from shareholding patterns.`}
         href="/1-percent-club"
         badge="Quarterly"
-        icon="👥"
-        accent="primary"
+        iconName="one-percent"
       />
       <PlatformFeatureCard
         title="Sector Intelligence"
         description="Where smart money is rotating — Banking, IT, Healthcare, Capital Markets and more, updated monthly."
         href={sm.sectorIntelligence}
         badge="Monthly"
-        icon="🌐"
-        accent="success"
+        iconName="sector"
       />
       <PlatformFeatureCard
         title="Portfolio Overlap"
         description="Check how much your mutual funds overlap before you unknowingly double up on the same holdings."
         href="/mutual-funds/portfolio-overlap-checker"
         badge="Free tool"
-        icon="🔗"
-        accent="warning"
+        iconName="overlap"
       />
       <PlatformFeatureCard
         title="IPO Performance"
         description="Listing gains, subscription trends, and year-wise IPO returns for mainboard and SME issues."
         href="/ipo/performance/2026"
         badge="Analytics"
-        icon="📈"
-        accent="primary"
+        iconName="ipo"
       />
     </div>
   </section>

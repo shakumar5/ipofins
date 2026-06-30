@@ -1,5 +1,6 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import AIInsightBox from '../../components/AIInsightBox.astro';
 import IpoRiskScore from '../../components/IpoRiskScore.astro';
@@ -93,15 +94,19 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       class="text-sm text-primary-600 hover:underline mb-3 inline-flex items-center gap-1"
     />
 
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-3">
+    <PageHeader
+      title={`${ipo.name} IPO`}
+      subtitle={`${ipo.sector} • ${ipo.issueSize} • ${ipo.headquarters || ''}`}
+      freshness={`Status: ${statusInfo.label}`}
+      source="SEBI DRHP & exchange data"
+    >
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-4">
       <div>
         <div class="flex items-center gap-2 mb-2">
           <span class={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
           <span class="text-xs text-surface-500 uppercase">{ipo.type}</span>
           <span class="text-xs text-surface-400">• {ipo.sector}</span>
         </div>
-        <h1 class="text-2xl lg:text-3xl font-extrabold text-surface-900 dark:text-white">{ipo.name} IPO</h1>
-        <p class="mt-1 text-sm text-surface-500">{ipo.sector} • {ipo.issueSize} • {ipo.headquarters || ''}</p>
       </div>
       <div class="flex items-center gap-4">
         {ipo.aiScore && (
@@ -115,6 +120,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
         <IpoRiskScore ipo={ipo} size="lg" />
       </div>
     </div>
+    </PageHeader>
   </section>
 
   <!-- Key Metrics -->
@@ -155,7 +161,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
   {(ipo.allotmentDate || ipo.listingDate || ipo.refundDate || ipo.creditDate) && (
     <section class="container-wide py-4">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">IPO Schedule</h2>
-      <div class="card overflow-hidden">
+      <div class="card overflow-hidden data-table-premium">
         <table class="w-full text-sm">
           <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
             <tr>
@@ -358,7 +364,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
   {ipo.financials && Object.keys(ipo.financials).length > 0 && (
     <section class="container-wide py-4">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Financial Summary</h2>
-      <div class="card overflow-x-auto">
+      <div class="card overflow-x-auto data-table-premium">
         <table class="w-full text-sm min-w-[400px]">
           <thead>
             <tr class="border-b border-surface-200 dark:border-surface-700">

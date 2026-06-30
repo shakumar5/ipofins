@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import TaxCalculator from '../../components/calculators/TaxCalculator.tsx';
 
 const jsonLd = {
@@ -54,12 +55,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Investment Tax Calculator - LTCG & STCG Tax on Stocks, MFs, Gold
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Calculate your exact capital gains tax liability before selling. Covers equity mutual funds, stocks, debt MFs, and gold with the latest 2024 Union Budget tax rules.
-    </p>
+    <PageHeader
+      title="Investment Tax Calculator - LTCG &amp; STCG Tax on Stocks, MFs, Gold"
+      subtitle="Calculate your exact capital gains tax liability before selling. Covers equity mutual funds, stocks, debt MFs, and gold with the latest 2024 Union Budget tax rules."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">
@@ -74,7 +75,7 @@ const faqJsonLd = {
       <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How Capital Gains Tax Works in India (2024 Rules)</h2>
       <p class="text-surface-600 dark:text-surface-300">Tax rules differ based on asset type and holding period:</p>
     </div>
-    <div class="overflow-x-auto mt-4">
+    <div class="overflow-x-auto mt-4 data-table-premium">
       <table class="w-full text-sm border-collapse">
         <thead>
           <tr class="border-b border-surface-200 dark:border-surface-700">

@@ -1,6 +1,7 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import brokersData from '../../data/brokers.json';
+import PageHeader from '../../components/layout/PageHeader.astro';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -50,18 +51,17 @@ const fullServiceBrokers = brokersData.filter(b => b.type === 'full-service');
 
   <!-- Page Header -->
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Best Stock Brokers in India 2026
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Comprehensive reviews and side-by-side comparison of India's top discount and full-service brokers.
-    </p>
-    <div class="nav-btn-group mt-6">
-      <a href="/broker/compare" class="btn-primary px-6 py-3">⚖️ Compare Brokers</a>
-      <a href="/ipo" class="btn-secondary px-6 py-3">🚀 Live IPOs</a>
-      <a href="/mutual-funds" class="btn-secondary px-6 py-3">💰 Mutual Funds</a>
-      <a href="/learn/best-stock-broker-2026" class="btn-secondary px-6 py-3">📖 Broker Guide</a>
-    </div>
+    <PageHeader
+      title="Best Stock Brokers in India 2026"
+      subtitle="Comprehensive reviews and side-by-side comparison of India's top discount and full-service brokers."
+    >
+      <div class="nav-btn-group mt-4">
+        <a href="/broker/compare" class="btn-primary px-6 py-3">Compare Brokers</a>
+        <a href="/ipo" class="btn-secondary px-6 py-3">Live IPOs</a>
+        <a href="/mutual-funds" class="btn-secondary px-6 py-3">Mutual Funds</a>
+        <a href="/learn/best-stock-broker-2026" class="btn-secondary px-6 py-3">Broker Guide</a>
+      </div>
+    </PageHeader>
   </section>
 
   <!-- Discount Brokers -->

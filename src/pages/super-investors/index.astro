@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import EntityCard from '../../components/tracked/EntityCard.astro';
 import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
 import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import CuratedInvestorSearch from '../../components/tracked/CuratedInvestorSearch.tsx';
 import {
   getSuperInvestors,
@@ -116,14 +117,14 @@ const faqJsonLd = {
 
   <!-- Hero -->
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Super Investors — Track India's Best Public-Market Investors
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
-      Quarter-on-quarter portfolios of legendary individual investors, family offices, FIIs and DIIs — sourced
-      directly from NSE/BSE Shareholding Pattern filings and SAST disclosures. See what they buy, sell, and hold.
-    </p>
-    <SuperInvestorsSubNav active="individual" />
+    <PageHeader
+      title="Super Investors — Track India's Best Public-Market Investors"
+      subtitle="Quarter-on-quarter portfolios of legendary individual investors, family offices, FIIs and DIIs — sourced directly from NSE/BSE Shareholding Pattern filings and SAST disclosures."
+      freshness="Updated quarterly"
+      source="NSE/BSE shareholding pattern & SAST filings"
+    >
+      <div class="mt-4"><SuperInvestorsSubNav active="individual" /></div>
+    </PageHeader>
   </section>
 
   <!-- Snapshot -->

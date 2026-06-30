@@ -2,6 +2,7 @@
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import StockSignalPage from '../../../../components/funds/StockSignalPage.tsx';
 import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
+import PageHeader from '../../../../components/layout/PageHeader.astro';
 import { getStockSignalPageMeta } from '../../../../lib/stock-signal-meta';
 import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
 import {
@@ -50,10 +51,9 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{pageMeta.heading}</h1>
-    <p class="mt-1 text-sm text-surface-500">{pageMeta.subtitle}</p>
-    <span class="data-freshness mt-2">📊 Source: AMC monthly portfolio disclosures · Updated monthly</span>
-    <SmartMoneySubNav active="stock-signal-hub" />
+    <PageHeader title={pageMeta.heading || 'Stock Signal'} subtitle={pageMeta.subtitle} freshness="Updated monthly" source="AMC monthly portfolio disclosures">
+      <div class="mt-4"><SmartMoneySubNav active="stock-signal-hub" /></div>
+    </PageHeader>
   </section>
 
   <section class="container-wide pb-12">

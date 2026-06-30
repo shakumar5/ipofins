@@ -7,20 +7,13 @@ interface Props {
   color?: string;
 }
 
-const { title, description, href, icon, color = 'primary' } = Astro.props;
-
-const colorMap: Record<string, string> = {
-  primary: 'from-primary-500 to-primary-600',
-  success: 'from-success-500 to-success-600',
-  warning: 'from-warning-500 to-warning-600',
-  danger: 'from-danger-500 to-danger-600',
-};
+const { title, description, href, icon } = Astro.props;
 ---
 
 <a href={href} class="card group block">
   <div class="flex items-start gap-4">
-    <div class={`w-10 h-10 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center flex-shrink-0`}>
-      <span class="text-white text-lg">{icon}</span>
+    <div class="tool-card-icon" aria-hidden="true">
+      <span>{icon}</span>
     </div>
     <div class="flex-1 min-w-0">
       <h3 class="text-base font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">

@@ -1,0 +1,13 @@
+---
+interface Props {
+  href: string;
+  value: string | number;
+  label: string;
+  variant?: 'default' | 'live';
+}
+const { href, value, label, variant = 'default' } = Astro.props;
+---
+<a href={href} class:list={['stat-card', variant === 'live' && 'stat-card--live']}>
+  <p class="stat-card__value font-mono">{value}</p>
+  <p class="stat-card__label">{label}</p>
+</a>

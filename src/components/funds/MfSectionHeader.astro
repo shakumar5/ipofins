@@ -1,17 +1,30 @@
 ---
 import MfSectionTabs from './MfSectionTabs.astro';
+import PageHeader from '../layout/PageHeader.astro';
 
 interface Props {
   active: 'hub' | 'best' | 'all' | 'holdings-changes' | 'overlap-checker' | 'fund-overlap' | 'smart-money';
   heading: string;
   subtitle: string;
   freshness?: string;
+  source?: string;
 }
 
-const { active, heading, subtitle, freshness } = Astro.props;
+const { active, heading, subtitle, freshness, source } = Astro.props;
+
+function parseFreshness(raw?: string, explicitSource?: string) {
+  if (!raw) return { label: undefined as string | undefined, source: explicitSource };
+  const cleaned = raw.replace(/^[^\w]+/, '').trim();
+  const match = cleaned.match(/^(.+?)\s*•\s*Source:\s*(.+)$/i);
+  if (match) return { label: match[1].trim(), source: explicitSource ?? match[2].trim() };
+  return { label: cleaned, source: explicitSource };
+}
+
+const meta = parseFreshness(freshness, source);
 ---
 
-<h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{heading}</h1>
-<p class="mt-1 text-sm text-surface-500" data-page-subtitle>{subtitle}</p>
-{freshness && <span class="data-freshness mt-2">{freshness}</span>}
-<MfSectionTabs active={active} />
+<PageHeader title={heading} subtitle={subtitle} freshness={meta.label} source={meta.source}>
+  <div class="mt-4">
+    <MfSectionTabs active={active} />
+  </div>
+</PageHeader>

@@ -1,5 +1,6 @@
 ---
 import IPOLayout from '../../../layouts/IPOLayout.astro';
+import PageHeader from '../../../components/layout/PageHeader.astro';
 import { getUpcomingIPOs } from '../../../lib/data/ipos';
 import { IPO_LIST_BACK } from '../../../lib/list-back-nav';
 import ListBackLink from '../../../components/ListBackLink.astro';
@@ -39,7 +40,12 @@ const jsonLd = {
       class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1"
     />
 
-    <!-- Header -->
+    <PageHeader
+      title={`${ipo.name} IPO`}
+      subtitle={`${ipo.sector} • ${ipo.headquarters}`}
+      freshness={ipo.status === 'sebi-approved' ? 'SEBI Approved' : 'DRHP Filed'}
+      source="SEBI filings"
+    >
     <div class="mt-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
       <div>
         <div class="flex items-center gap-3 mb-2">
@@ -48,14 +54,13 @@ const jsonLd = {
           </span>
           <span class="text-xs text-surface-500 uppercase">{ipo.type}</span>
         </div>
-        <h1 class="text-2xl lg:text-3xl font-extrabold text-surface-900 dark:text-white">{ipo.name} IPO</h1>
-        <p class="mt-1 text-surface-500">{ipo.sector} • {ipo.headquarters}</p>
       </div>
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Issue Size</p>
         <p class="text-2xl font-extrabold text-primary-600">{ipo.issueSize}</p>
       </div>
     </div>
+    </PageHeader>
   </section>
 
   <!-- Company Overview -->

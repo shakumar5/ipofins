@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/layout/PageHeader.astro';
 import SuperInvestorsSubNav from '../../../components/tracked/SuperInvestorsSubNav.astro';
 import {
   getHolderStaticPathsFromExport,
@@ -74,12 +75,12 @@ const description = `Stocks where ${data.holderName} holds 1% or more per latest
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      {data.holderName}
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300">
-      {data.rows.length} stock{data.rows.length === 1 ? '' : 's'} with ≥1% disclosed stake (latest quarter).
-    </p>
+    <PageHeader
+      title={data.holderName}
+      subtitle={`${data.rows.length} stock${data.rows.length === 1 ? '' : 's'} with ≥1% disclosed stake (latest quarter).`}
+      freshness="Updated quarterly"
+      source="BSE/NSE shareholding disclosures"
+    >
   {data.entitySlug && hasSuperInvestorProfile(data.entitySlug) && (
     <p class="mt-2 text-sm">
       <a href={superInvestorUrl(data.entitySlug)} class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
@@ -97,10 +98,11 @@ const description = `Stocks where ${data.holderName} holds 1% or more per latest
     </p>
   )}
     <SuperInvestorsSubNav active="club" />
+    </PageHeader>
   </section>
 
   <section class="container-wide pb-10">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto data-table-premium card p-0">
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">

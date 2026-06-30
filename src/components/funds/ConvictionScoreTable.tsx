@@ -98,7 +98,7 @@ export default function ConvictionScoreTable({ data }: Props) {
           No conviction scores for this selection. Run <code className="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run db:compute-signals</code> after loading monthly holdings.
         </p>
       ) : (
-        <div className="overflow-x-auto card p-0">
+        <div className="overflow-x-auto card p-0 data-table-premium">
           <table className="w-full text-sm">
             <thead className="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
               <tr>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import SnapshotStrip from '../../components/tracked/SnapshotStrip.astro';
 import QuarterTrajectory from '../../components/tracked/QuarterTrajectory';
 import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
@@ -154,8 +155,7 @@ const peers = isPlaceholder
 
   {isPlaceholder ? (
     <section class="container-wide py-20 text-center">
-      <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Super Investors</h1>
-      <p class="mt-2 text-surface-600 dark:text-surface-300">Curated roster coming soon.</p>
+      <PageHeader title="Super Investors" subtitle="Curated roster coming soon." />
       <a href={SUPER_INVESTORS_HUB} class="btn-primary px-6 py-3 mt-6 inline-block">Back to hub</a>
     </section>
   ) : (
@@ -177,24 +177,24 @@ const peers = isPlaceholder
 
       <!-- Header -->
       <section class="container-wide pt-8 pb-6">
-        <div class="flex flex-col md:flex-row md:items-start gap-6">
+        <PageHeader
+          title={entity!.displayName}
+          subtitle={`${typeLabel(entity!.type)}${entity!.location ? ` · ${entity!.location}` : ''}`}
+          freshness={latestQuarterLabel ? `Data as of ${latestQuarterLabel}` : undefined}
+          source="BSE/NSE shareholding disclosures"
+        >
+        <div class="flex flex-col md:flex-row md:items-start gap-6 mt-4">
           <div class="w-20 h-20 shrink-0 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
             <span class="text-white font-bold text-3xl">{entity!.displayName.charAt(0)}</span>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-3 flex-wrap">
-              <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-                {entity!.displayName}
-              </h1>
               {entity!.tier && (
                 <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
                   {tierLabel(entity!.tier)}
                 </span>
               )}
             </div>
-            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
-              {typeLabel(entity!.type)}{entity!.location && ` \u00b7 ${entity!.location}`}
-            </p>
             {entity!.focus && (
               <p class="mt-3 text-surface-700 dark:text-surface-200 max-w-2xl">{entity!.focus}</p>
             )}
@@ -218,6 +218,7 @@ const peers = isPlaceholder
             )}
           </div>
         </div>
+        </PageHeader>
       </section>
 
       <!-- Live stats -->

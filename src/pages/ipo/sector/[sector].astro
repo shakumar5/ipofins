@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/layout/PageHeader.astro';
 import IPOCard from '../../../components/IPOCard.astro';
 import { getAllIPOs } from '../../../lib/data/ipos';
 import { withCorrectStatuses } from '../../../utils/ipo-status';
@@ -87,12 +88,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      {sectorName} IPOs
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      All IPOs from the {sectorName} sector with data-driven investment insights and performance tracking.
-    </p>
+    <PageHeader
+      title={`${sectorName} IPOs`}
+      subtitle={`All IPOs from the ${sectorName} sector with data-driven investment insights and performance tracking.`}
+      freshness="Updated on new listings"
+      source="BSE/NSE IPO data"
+    />
   </section>
 
   <section class="container-wide py-6">

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/layout/PageHeader.astro';
 ---
 
 <BaseLayout title="Page Not Found (404)" robots="noindex, nofollow">
@@ -8,14 +9,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <!-- 404 Visual -->
       <div class="text-8xl font-extrabold text-surface-200 dark:text-surface-700 mb-4">404</div>
 
-      <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-3">
-        Page not found
-      </h1>
-      <p class="text-surface-500 dark:text-surface-400 mb-8">
-        The page you're looking for doesn't exist or has been moved. Let's get you back on track.
-      </p>
+      <PageHeader
+        title="Page not found"
+        subtitle="The page you're looking for doesn't exist or has been moved. Let's get you back on track."
+      />
 
-      <div class="flex flex-wrap justify-center gap-3">
+      <div class="flex flex-wrap justify-center gap-3 mt-8">
         <a href="/" class="btn-primary px-6 py-3">
           Go Home
         </a>

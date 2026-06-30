@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/layout/PageHeader.astro';
 import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holdings';
 import { getAllFunds, fundHoldingsHref, getFundHoldingsLinkMeta } from '../../../lib/data/funds';
 import { resolveDetailSlug } from '../../../lib/fund-detail-slug';
@@ -76,13 +77,17 @@ const jsonLd = {
       variants={overlapBackVariants}
       class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
     />
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{fundName}</h1>
-    <p class="mt-1 text-sm text-surface-500">Other funds with portfolio holdings that share the most stocks (by weight). Tap a common-stocks count to see the full list.</p>
+    <PageHeader
+      title={fundName}
+      subtitle="Other funds with portfolio holdings that share the most stocks (by weight). Tap a common-stocks count to see the full list."
+      freshness="Updated monthly"
+      source="AMC portfolio disclosures"
+    />
   </section>
 
   <section class="container-wide pb-12">
     {overlapRows.length > 0 ? (
-      <div class="overflow-x-auto card p-0">
+      <div class="overflow-x-auto card p-0 data-table-premium">
         <table class="w-full text-sm">
           <thead class="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
             <tr>

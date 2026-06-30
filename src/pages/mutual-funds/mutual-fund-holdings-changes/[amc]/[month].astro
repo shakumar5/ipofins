@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../../components/layout/PageHeader.astro';
 import HoldingsCompare from '../../../../components/funds/HoldingsCompare.tsx';
 import { loadHoldingsPageBootstrap } from '../../../../lib/holdings-page-static';
 import { monthSlug, monthDisplay } from '../../../../utils/month-slug';
@@ -89,10 +90,12 @@ const holdingsBackVariants = Object.fromEntries(
       variants={holdingsBackVariants}
       class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
     />
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{amcName} Holdings Changes - {displayMonth}</h1>
-    <p class="mt-1 text-sm text-surface-500 dark:text-surface-400" data-page-subtitle>
-      Stocks bought and sold by {amcName} funds between {previousMonth} → {currentMonth}
-    </p>
+    <PageHeader
+      title={`${amcName} Holdings Changes - ${displayMonth}`}
+      subtitle={`Stocks bought and sold by ${amcName} funds between ${previousMonth} → ${currentMonth}`}
+      freshness="Updated monthly"
+      source="AMC portfolio disclosures"
+    />
 
     <div class="mt-4 flex flex-wrap gap-2">
       <a href={defaultBack.href} class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">← {defaultBack.label}</a>

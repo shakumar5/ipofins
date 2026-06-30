@@ -453,7 +453,7 @@ export default function SmartMoneyTracker({
             })}
           </div>
 
-          <div className="hidden md:block overflow-x-auto card p-0">
+          <div className="hidden md:block overflow-x-auto card p-0 data-table-premium">
           <table className="w-full text-sm">
             <thead className="bg-surface-50 dark:bg-surface-800/50 text-left text-xs text-surface-500 uppercase">
               <tr>

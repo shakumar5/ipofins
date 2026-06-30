@@ -2,6 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
 import SastUpdatesFeed from '../../components/tracked/SastUpdatesFeed.tsx';
 import {
@@ -63,15 +64,16 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-12">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      SAST Updates
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-3xl">
-      Event-driven SAST Form B filings from NSE and BSE - refreshed weekly every Monday morning.
-      These are preliminary disclosures; quarter-end Shareholding Pattern data remains the confirmed source
-      for super-investor portfolios.
-    </p>
-    <SuperInvestorsSubNav active="sast" />
+    <PageHeader
+      title="SAST Updates"
+      subtitle="Event-driven SAST Form B filings from NSE and BSE — refreshed weekly every Monday morning. Preliminary disclosures; quarter-end Shareholding Pattern remains the confirmed source."
+      freshness="Updated weekly"
+      source="NSE & BSE SAST filings"
+    >
+      <div class="mt-4">
+        <SuperInvestorsSubNav active="sast" />
+      </div>
+    </PageHeader>
 
     <div class="mt-8">
       <SastUpdatesFeed
