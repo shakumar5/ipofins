@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import AuthorByline from '../../components/AuthorByline.astro';
 import { BRAND_URL } from '../../lib/brand';
 import articlesData from '../../data/articles.json';
@@ -59,15 +60,14 @@ const jsonLd = {
     <div class="max-w-3xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="badge bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">{article.category}</span>
-          <span class="text-xs text-surface-400 dark:text-surface-500">{article.readTime} read</span>
-        </div>
-        <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight leading-tight">
-          {article.title}
-        </h1>
-        <p class="mt-3 text-lg text-surface-600 dark:text-surface-300">{article.excerpt}</p>
-        <AuthorByline date={'date' in article && article.date ? String(article.date) : 'June 2026'} />
+        <PageHeader
+          eyebrow={article.category}
+          title={article.title}
+          subtitle={article.excerpt}
+        >
+          <p class="mt-2 text-xs text-surface-400 dark:text-surface-500">{article.readTime} read</p>
+          <AuthorByline date={'date' in article && article.date ? String(article.date) : 'June 2026'} />
+        </PageHeader>
       </div>
 
       <!-- Content -->

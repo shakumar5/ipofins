@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -27,8 +28,10 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-4">
-    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Finance Tools Guide — Complete FAQ</h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300">Everything about SIP calculator, CAGR, EMI, IPO profit, return simulator & risk analyzer.</p>
+    <PageHeader
+      title="Finance Tools Guide — Complete FAQ"
+      subtitle="Everything about SIP calculator, CAGR, EMI, IPO profit, return simulator & risk analyzer."
+    />
   </section>
 
   <section class="container-narrow py-6 space-y-10">

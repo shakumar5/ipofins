@@ -31,7 +31,7 @@ export default function HolderHoldingsTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto data-table-premium">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-surface-700">

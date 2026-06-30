@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import StepUpSIPCalculator from '../../components/calculators/StepUpSIPCalculator.tsx';
 
 const jsonLd = {
@@ -56,12 +57,12 @@ const faqJsonLd = {
 
   <!-- Page Header -->
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Step-Up SIP Calculator - Calculate Growing SIP Returns
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Calculate how much wealth you can create by increasing your SIP amount every year. A Step-Up SIP aligns with salary growth and can create 50-70% more wealth than a flat SIP over 20 years.
-    </p>
+    <PageHeader
+      title="Step-Up SIP Calculator - Calculate Growing SIP Returns"
+      subtitle="Calculate how much wealth you can create by increasing your SIP amount every year. A Step-Up SIP aligns with salary growth and can create 50-70% more wealth than a flat SIP over 20 years."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <!-- Calculator -->

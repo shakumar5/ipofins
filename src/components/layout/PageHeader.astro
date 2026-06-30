@@ -1,0 +1,23 @@
+---
+import DataFreshnessChip from '../ui/DataFreshnessChip.astro';
+interface Props {
+  title: string;
+  subtitle?: string;
+  freshness?: string;
+  source?: string;
+  eyebrow?: string;
+  class?: string;
+}
+const { title, subtitle, freshness, source, eyebrow, class: className = '' } = Astro.props;
+---
+<header class={`page-header ${className}`.trim()}>
+  {eyebrow && <p class="page-header__eyebrow">{eyebrow}</p>}
+  <h1 class="page-header__title" data-page-heading>{title}</h1>
+  {subtitle && <p class="page-header__subtitle" data-page-subtitle>{subtitle}</p>}
+  {freshness && (
+    <div class="page-header__meta">
+      <DataFreshnessChip label={freshness} source={source} />
+    </div>
+  )}
+  <slot />
+</header>

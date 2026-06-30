@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/layout/PageHeader.astro';
 import { BRAND_DOMAIN, BRAND_NAME, BRAND_URL } from '../lib/brand';
 import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
 
@@ -22,12 +23,10 @@ const jsonLd = {
 >
   <section class="container-narrow py-16">
     <div class="max-w-3xl mx-auto">
-      <p class="text-sm font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
-        About {BRAND_NAME}
-      </p>
-      <h1 class="mt-2 text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-        Helping Investors Make Smarter Decisions with Data
-      </h1>
+    <PageHeader
+      eyebrow={`About ${BRAND_NAME}`}
+      title="Helping Investors Make Smarter Decisions with Data"
+    />
 
       <div class="mt-8 space-y-6 text-surface-600 dark:text-surface-300 leading-relaxed">
         <p class="text-lg text-surface-700 dark:text-surface-200">

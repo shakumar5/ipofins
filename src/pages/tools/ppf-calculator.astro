@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import PPFCalculator from '../../components/calculators/PPFCalculator.tsx';
 
 const jsonLd = {
@@ -67,12 +68,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      PPF Calculator
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Calculate how your Public Provident Fund investment grows over time. PPF offers guaranteed, tax-free returns with government backing.
-    </p>
+    <PageHeader
+      title="PPF Calculator"
+      subtitle="Calculate how your Public Provident Fund investment grows over time. PPF offers guaranteed, tax-free returns with government backing."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

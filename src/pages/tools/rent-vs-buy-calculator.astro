@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import RentVsBuyCalculator from '../../components/calculators/RentVsBuyCalculator.tsx';
 
 const jsonLd = {
@@ -54,12 +55,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Rent vs Buy Calculator - Should You Rent or Buy a House?
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      The most debated personal finance question in India, answered with math. Compare the total financial outcome of renting + investing vs buying a property over 10-30 years.
-    </p>
+    <PageHeader
+      title="Rent vs Buy Calculator - Should You Rent or Buy a House?"
+      subtitle="The most debated personal finance question in India, answered with math. Compare the total financial outcome of renting + investing vs buying a property over 10-30 years."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

@@ -1,0 +1,13 @@
+---
+interface Props {
+  label: string;
+  source?: string;
+  class?: string;
+}
+const { label, source, class: className = '' } = Astro.props;
+---
+<div class={`data-freshness-chip ${className}`.trim()} role="status">
+  <span class="data-freshness-chip__dot" aria-hidden="true"></span>
+  <span class="data-freshness-chip__label">{label}</span>
+  {source && <span class="data-freshness-chip__source">{source}</span>}
+</div>

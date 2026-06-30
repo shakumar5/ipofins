@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import TaxSavingPlanner from '../../components/calculators/TaxSavingPlanner.tsx';
 
 const jsonLd = {
@@ -54,12 +55,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Tax Saving Planner - HRA, 80C, 80D, NPS Deductions
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      See exactly how much tax you can save using HRA exemption, Section 80C, 80D, NPS, and home loan deductions. Compare your tax before and after optimisation under the Old Regime.
-    </p>
+    <PageHeader
+      title="Tax Saving Planner - HRA, 80C, 80D, NPS Deductions"
+      subtitle="See exactly how much tax you can save using HRA exemption, Section 80C, 80D, NPS, and home loan deductions. Compare your tax before and after optimisation under the Old Regime."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

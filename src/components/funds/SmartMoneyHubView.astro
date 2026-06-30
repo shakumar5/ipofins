@@ -5,6 +5,7 @@ import type { SmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links
 import SmartMoneyPage from './SmartMoneyPage.tsx';
 import SmartMoneyInternalLinks from './SmartMoneyInternalLinks.astro';
 import SmartMoneySubNav from './SmartMoneySubNav.astro';
+import PageHeader from '../layout/PageHeader.astro';
 import type { TrackerViewType } from '../../lib/smart-money-tracker-meta';
 import type { SmartMoneyTrackerBootstrap } from '../../lib/smart-money-tracker-server';
 import { SMART_MONEY_TRACKER_DATA_BOOTSTRAP_ID, SMART_MONEY_TRACKER_INDEX_BOOTSTRAP_ID } from '../../lib/smart-money-tracker-bootstrap';
@@ -52,10 +53,14 @@ const islandDirective = 'load';
 </nav>
 
 <section class="container-wide pt-8 pb-4">
-  <h1 class="text-2xl font-bold text-surface-900 dark:text-white" data-page-heading>{pageMeta.heading || 'Smart Money Tracker'}</h1>
-  <p class="mt-1 text-sm text-surface-600 dark:text-surface-400" data-page-subtitle>{pageMeta.subtitle || 'Track institutional conviction — what fund managers are buying, selling, and rotating at the stock and sector level.'}</p>
-  <p class="mt-2 text-xs text-surface-600 dark:text-surface-400">Source: AMC monthly portfolio disclosures · Updated monthly</p>
-  <SmartMoneySubNav active={smNavActive} />
+  <PageHeader
+    title={pageMeta.heading || 'Smart Money Tracker'}
+    subtitle={pageMeta.subtitle || 'Track institutional conviction — what fund managers are buying, selling, and rotating at the stock and sector level.'}
+    freshness="Updated monthly"
+    source="AMC monthly portfolio disclosures"
+  >
+    <div class="mt-4"><SmartMoneySubNav active={smNavActive} /></div>
+  </PageHeader>
 </section>
 
 <section class="container-wide pb-12 smart-money-tracker-section">
@@ -255,7 +260,7 @@ const islandDirective = 'load';
       <div class="space-y-2">
         <h4 class="text-sm font-semibold text-surface-900 dark:text-white">Six score factors</h4>
         <p class="text-xs text-surface-600 dark:text-surface-400">Each factor earns points vs the <strong>category leader</strong> that month. Points sum to the final score (max 100).</p>
-        <div class="overflow-x-auto -mx-1">
+        <div class="overflow-x-auto -mx-1 data-table-premium">
           <table class="w-full text-xs border-collapse">
             <thead>
               <tr class="text-left text-surface-500 border-b border-surface-200 dark:border-surface-600">

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/layout/PageHeader.astro';
 import PortfolioTracker from '../components/dashboard/PortfolioTracker.tsx';
 import Watchlist from '../components/dashboard/Watchlist.tsx';
 
@@ -18,13 +19,13 @@ const today = new Date().toLocaleDateString('en-IN', {
       <strong>Preview only.</strong> This dashboard uses sample data and browser localStorage. It is not linked to your demat or mutual fund accounts. No login or paid plan is required.
     </div>
 
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-2xl lg:text-3xl font-extrabold text-surface-900 dark:text-white">Dashboard</h1>
-        <p class="text-surface-500 dark:text-surface-400 mt-1">Sample portfolio overview — {today}</p>
-      </div>
-      <span class="badge bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 px-3 py-1">Demo</span>
-    </div>
+    <PageHeader
+      title="Dashboard"
+      subtitle={`Sample portfolio overview — ${today}`}
+      freshness="Preview data"
+      source="Browser localStorage only"
+      class="mb-8"
+    />
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2">

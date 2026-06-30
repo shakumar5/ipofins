@@ -1,5 +1,6 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
@@ -41,10 +42,13 @@ const faqJsonLd = {
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
-  <!-- Header -->
   <section class="container-wide pt-6 pb-4">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white">Upcoming IPOs India 2026</h1>
-    <p class="mt-1 text-sm text-surface-500">{totalUpcoming} upcoming IPOs — {sebiApproved.length} SEBI approved, {drhpFiled.length} DRHP filed.</p>
+    <PageHeader
+      title="Upcoming IPOs India 2026"
+      subtitle={`${totalUpcoming} upcoming IPOs — ${sebiApproved.length} SEBI approved, ${drhpFiled.length} DRHP filed.`}
+      freshness="Updated weekly"
+      source="SEBI DRHP filings"
+    />
   </section>
 
   <section class="container-wide py-4">

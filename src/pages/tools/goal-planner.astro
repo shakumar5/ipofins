@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import GoalPlanner from '../../components/calculators/GoalPlanner.tsx';
 
 const jsonLd = {
@@ -54,12 +55,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Goal-Based Investment Planner - Plan Any Financial Goal
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      "I want ₹50L for my child's education in 12 years" — this planner shows exactly how much to invest monthly via SIP or lumpsum, with inflation-adjusted targets and fund category recommendations.
-    </p>
+    <PageHeader
+      title="Goal-Based Investment Planner - Plan Any Financial Goal"
+      subtitle="&quot;I want ₹50L for my child's education in 12 years&quot; — this planner shows exactly how much to invest monthly via SIP or lumpsum, with inflation-adjusted targets and fund category recommendations."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

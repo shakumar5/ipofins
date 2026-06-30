@@ -1,5 +1,6 @@
 ﻿---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
@@ -79,14 +80,13 @@ const registrars = [
 
 
 
-  <!-- Header -->
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      IPO Allotment Status
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Check your IPO allotment result using registrar portals. Find direct links and step-by-step instructions below.
-    </p>
+    <PageHeader
+      title="IPO Allotment Status"
+      subtitle="Check your IPO allotment result using registrar portals. Find direct links and step-by-step instructions below."
+      freshness="Updated on allotment days"
+      source="KFintech, Link Intime, BigShare"
+    />
   </section>
 
   <!-- Registrar Links -->

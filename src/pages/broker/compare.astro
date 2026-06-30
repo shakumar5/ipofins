@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import BrokerCompare from '../../components/BrokerCompare.tsx';
 import brokersData from '../../data/brokers.json';
 
@@ -38,14 +39,15 @@ const jsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Compare Stock Brokers - Side by Side
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Select 2 to 4 brokers from the dropdowns below and compare them on fees, platforms, strengths, and weaknesses.
-      Read individual <a href="/broker" class="text-primary-600 hover:underline">broker reviews</a> or use our
-      <a href="/learn/best-stock-broker-2026" class="text-primary-600 hover:underline">broker selection guide</a>.
-    </p>
+    <PageHeader
+      title="Compare Stock Brokers - Side by Side"
+      subtitle="Select 2 to 4 brokers from the dropdowns below and compare them on fees, platforms, strengths, and weaknesses."
+    >
+      <p class="mt-3 text-sm text-surface-600 dark:text-surface-300 max-w-2xl">
+        Read individual <a href="/broker" class="text-primary-600 hover:underline">broker reviews</a> or use our
+        <a href="/learn/best-stock-broker-2026" class="text-primary-600 hover:underline">broker selection guide</a>.
+      </p>
+    </PageHeader>
   </section>
 
   <!-- Interactive Comparison Tool -->

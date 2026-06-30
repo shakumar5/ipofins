@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/layout/PageHeader.astro';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -18,17 +19,11 @@ const jsonLd = {
 >
   <section class="container-narrow py-16">
     <div class="max-w-3xl mx-auto">
-      <p class="text-sm font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
-        Transparency
-      </p>
-      <h1 class="mt-2 text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-        How We Source Data
-      </h1>
-      <p class="mt-4 text-lg text-surface-600 dark:text-surface-300 leading-relaxed">
-        IPOFins is built on publicly available regulatory and exchange disclosures. We do not repackage
-        unofficial indicators such as grey market premium (GMP). Our goal is to make official data
-        easier to search, compare, and understand.
-      </p>
+    <PageHeader
+      eyebrow="Transparency"
+      title="How We Source Data"
+      subtitle="IPOFins is built on publicly available regulatory and exchange disclosures. We do not repackage unofficial indicators such as grey market premium (GMP)."
+    />
 
       <div class="mt-10 space-y-8 text-surface-600 dark:text-surface-300 leading-relaxed">
         <div>

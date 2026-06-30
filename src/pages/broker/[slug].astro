@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import { BRAND_NAME } from '../../lib/brand';
 import brokersData from '../../data/brokers.json';
 
@@ -107,19 +108,20 @@ const faqJsonLd = {
 
   <!-- Header -->
   <section class="container-wide pt-8 pb-6">
-    <div class="flex items-center gap-4 mb-4">
+    <PageHeader title={broker.name} subtitle={`${broker.rating}/5 rating · ${broker.type} broker`}>
+    <div class="flex items-center gap-4 mt-4">
       <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center">
         <span class="text-white font-bold text-2xl">{broker.logo}</span>
       </div>
       <div>
-        <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">{broker.name}</h1>
-        <div class="flex items-center gap-2 mt-1">
+        <div class="flex items-center gap-2">
           <span class="text-warning-500 text-lg">★</span>
           <span class="font-semibold text-surface-700 dark:text-surface-300">{broker.rating}/5</span>
           <span class="badge bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 capitalize">{broker.type}</span>
         </div>
       </div>
     </div>
+    </PageHeader>
   </section>
 
   <!-- Key Metrics -->

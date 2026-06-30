@@ -1,11 +1,15 @@
 ---
 import { BRAND_NAME } from '../lib/brand';
 import BrandLogo from './BrandLogo.astro';
+import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
+
+const sm = loadSmartMoneyTrackerLinks();
+const { pathname } = Astro.url;
 
 const navLinks = [
-  { label: 'IPOs', href: '/ipo' },
-  { label: 'Mutual Funds', href: '/mutual-funds', shortLabel: 'MF' },
-  { label: 'Smart Money', href: '/mutual-funds/smart-money', shortLabel: 'SM' },
+  { label: 'IPOs', href: '/ipo', shortLabel: 'IPO' },
+  { label: 'Funds', href: '/mutual-funds', shortLabel: 'MF' },
+  { label: 'Smart Money', href: sm.hub, shortLabel: 'SM' },
   { label: 'Super Investors', href: '/super-investors', shortLabel: 'SI' },
   { label: '1% Club', href: '/1-percent-club', shortLabel: '1%' },
   { label: 'Brokers', href: '/broker' },
@@ -13,8 +17,6 @@ const navLinks = [
   { label: 'Blogs', href: '/blogs' },
   { label: 'Learn', href: '/learn' },
 ];
-
-const { pathname } = Astro.url;
 
 function isNavActive(href: string): boolean {
   if (href === '/') return pathname === '/';
@@ -25,16 +27,41 @@ function isNavActive(href: string): boolean {
 }
 ---
 
-<header class="site-header sticky top-0 z-50 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700 shadow-sm backdrop-blur-md">
+<header class="site-header sticky top-0 z-50 bg-white/95 dark:bg-surface-900/95 border-b border-surface-200 dark:border-surface-700 shadow-sm backdrop-blur-md">
   <div class="container-wide">
-    <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
-      <!-- Logo -->
-      <a href="/" class="flex items-center group" aria-label={`${BRAND_NAME} home`}>
-        <BrandLogo class="group-hover:text-primary-600 transition-colors" />
+    <div class="site-header-toolbar flex items-center gap-3 sm:gap-4 h-14 sm:h-16">
+      <a href="/" class="flex items-center shrink-0 group" aria-label={`${BRAND_NAME} home`}>
+        <BrandLogo class="group-hover:opacity-90 transition-opacity" />
       </a>
 
-      <!-- Actions -->
-      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <!-- Main nav — fills center space on md+ -->
+      <div class="site-header-nav-wrap relative hidden md:flex flex-1 min-w-0">
+        <div class="site-header-nav-fade site-header-nav-fade--left" aria-hidden="true"></div>
+        <div class="site-header-nav-fade site-header-nav-fade--right" aria-hidden="true"></div>
+        <nav class="site-header-nav" aria-label="Main navigation">
+          {navLinks.map((link) => {
+            const active = isNavActive(link.href);
+            return (
+              <a
+                href={link.href}
+                class:list={['site-header-nav-link', active && 'site-header-nav-link--active']}
+                aria-current={active ? 'page' : undefined}
+              >
+                {link.shortLabel ? (
+                  <>
+                    <span class="lg:hidden">{link.shortLabel}</span>
+                    <span class="hidden lg:inline">{link.label}</span>
+                  </>
+                ) : (
+                  link.label
+                )}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
         <!-- Search — visible pill on sm+; icon-only on xs -->
         <button
           id="search-trigger"
@@ -73,7 +100,7 @@ function isNavActive(href: string): boolean {
         <button
           id="mobile-menu-btn"
           type="button"
-          class="lg:hidden flex items-center gap-1.5 px-2.5 py-2 text-surface-800 dark:text-surface-100 font-semibold text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors border border-surface-200 dark:border-surface-600"
+          class="md:hidden flex items-center gap-1.5 px-2.5 py-2 text-surface-800 dark:text-surface-100 font-semibold text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors border border-surface-200 dark:border-surface-600"
           aria-label="Open full menu"
           aria-expanded="false"
           aria-controls="mobile-menu"
@@ -86,34 +113,10 @@ function isNavActive(href: string): boolean {
       </div>
     </div>
 
-    <!-- Section nav — always visible; horizontal scroll on narrow viewports -->
-    <div class="site-header-nav-wrap relative border-t border-surface-200/90 dark:border-surface-700/90">
-      <div class="site-header-nav-fade site-header-nav-fade--left" aria-hidden="true"></div>
-      <div class="site-header-nav-fade site-header-nav-fade--right" aria-hidden="true"></div>
-      <nav class="site-header-nav" aria-label="Main navigation">
-        {navLinks.map((link) => {
-          const active = isNavActive(link.href);
-          return (
-            <a
-              href={link.href}
-              class:list={[
-                'site-header-nav-link',
-                active && 'site-header-nav-link--active',
-              ]}
-              aria-current={active ? 'page' : undefined}
-            >
-              <span class="sm:hidden">{link.shortLabel ?? link.label}</span>
-              <span class="hidden sm:inline">{link.label}</span>
-            </a>
-          );
-        })}
-      </nav>
-    </div>
-
     <!-- Mobile Nav (expanded list) -->
     <nav
       id="mobile-menu"
-      class="hidden lg:hidden pt-3 pb-4 border-t border-surface-200 dark:border-surface-700"
+      class="hidden md:hidden pt-3 pb-4 border-t border-surface-200 dark:border-surface-700"
       aria-label="Mobile menu"
     >
       <div class="flex flex-col gap-1">

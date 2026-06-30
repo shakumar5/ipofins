@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import RetirementCalculator from '../../components/calculators/RetirementCalculator.tsx';
 
 const jsonLd = {
@@ -54,12 +55,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Retirement Corpus Calculator - How Much Do You Need to Retire?
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      The most important personal finance question answered with precision. Enter your age, monthly expenses, and inflation rate to find the exact retirement corpus and monthly SIP needed.
-    </p>
+    <PageHeader
+      title="Retirement Corpus Calculator - How Much Do You Need to Retire?"
+      subtitle="The most important personal finance question answered with precision. Enter your age, monthly expenses, and inflation rate to find the exact retirement corpus and monthly SIP needed."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

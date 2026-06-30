@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/layout/PageHeader.astro';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -11,7 +12,7 @@ const jsonLd = {
 
 <BaseLayout title="Terms of Use - IPOFins" description="Terms and conditions for using IPOFins finance tools and content." jsonLd={jsonLd}>
   <section class="container-narrow py-16">
-    <h1 class="text-3xl font-extrabold text-surface-900 dark:text-white">Terms of Use</h1>
+    <PageHeader title="Terms of Use" subtitle="Last updated: June 2026" />
     <div class="mt-8 space-y-6 text-sm text-surface-600 dark:text-surface-300 leading-relaxed prose prose-surface dark:prose-invert max-w-none">
       <p><strong>Last updated:</strong> June 2026</p>
       <h2 class="text-lg font-bold text-surface-900 dark:text-white pt-4">Acceptance</h2>

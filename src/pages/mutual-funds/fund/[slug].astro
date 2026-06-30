@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/layout/PageHeader.astro';
 import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug, type FundRecord } from '../../../lib/data/funds';
 import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
@@ -145,9 +146,9 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
     />
     <MfSectionTabs active="all" />
 
+    <PageHeader title={fund.name} subtitle={fund.category} freshness="Updated monthly" source="AMFI & AMC disclosures">
     <div class="mt-3 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-extrabold text-surface-900 dark:text-white">{fund.name}</h1>
         <div class="flex items-center gap-3 mt-2">
           <span class="badge bg-primary-50 text-primary-600">{fund.category}</span>
           <span class={`badge capitalize ${fund.riskLevel === 'low' ? 'bg-success-50 text-success-600' : fund.riskLevel === 'moderate' ? 'bg-warning-50 text-warning-600' : 'bg-danger-50 text-danger-600'}`}>{fund.riskLevel.replace('-', ' ')} Risk</span>
@@ -163,6 +164,7 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
         <p class="text-2xl font-extrabold text-primary-600">{fund.nav != null ? `₹${fund.nav.toFixed(2)}` : '—'}</p>
       </div>
     </div>
+    </PageHeader>
   </section>
 
   <!-- Key Metrics -->

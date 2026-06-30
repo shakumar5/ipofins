@@ -1,5 +1,6 @@
 ---
 import IPOLayout from '../../layouts/IPOLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
@@ -36,8 +37,7 @@ const faqJsonLd = {
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 
   <section class="container-wide py-6">
-    <h1 class="text-2xl font-bold text-surface-900 dark:text-white mb-1">All IPOs — 2026</h1>
-    <p class="text-sm text-surface-500 mb-6">{subtitle}</p>
+    <PageHeader title="All IPOs — 2026" subtitle={subtitle} freshness="Updated daily" source="BSE/NSE IPO filings" class="mb-6" />
 
     <IPOStatusSections ipos={iposData} listFrom="all" showTypeBadge />
 

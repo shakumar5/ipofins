@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import NPSCalculator from '../../components/calculators/NPSCalculator.tsx';
 
 const jsonLd = {
@@ -67,12 +68,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      NPS Calculator
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Estimate your National Pension System corpus at retirement. Enter your age, monthly contribution, and expected return to plan your pension.
-    </p>
+    <PageHeader
+      title="NPS Calculator"
+      subtitle="Estimate your National Pension System corpus at retirement. Enter your age, monthly contribution, and expected return to plan your pension."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

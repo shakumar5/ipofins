@@ -1,5 +1,6 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import SWPCalculator from '../../components/calculators/SWPCalculator.tsx';
 
 const jsonLd = {
@@ -97,12 +98,12 @@ const faqJsonLd = {
   </nav>
 
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      SWP Calculator - Systematic Withdrawal Plan
-    </h1>
-    <p class="mt-3 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Plan monthly income from your mutual fund corpus. See total withdrawn, remaining balance, growth earned, and whether your money lasts the full withdrawal period — ideal for retirement planning.
-    </p>
+    <PageHeader
+      title="SWP Calculator - Systematic Withdrawal Plan"
+      subtitle="Plan monthly income from your mutual fund corpus. See total withdrawn, remaining balance, growth earned, and whether your money lasts the full withdrawal period — ideal for retirement planning."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <section class="container-narrow py-6">

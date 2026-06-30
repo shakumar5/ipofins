@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BRAND_URL } from '../../lib/brand';
 import articlesData from '../../data/articles.json';
+import PageHeader from '../../components/layout/PageHeader.astro';
 
 const articles = articlesData.filter(article => article.content && article.content.trim().length > 0);
 
@@ -48,14 +49,11 @@ const faqJsonLd = {
     </ol>
   </nav>
 
-  <!-- Page Header -->
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Learn Investing
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Free guides and articles to help you understand IPOs, mutual funds, trading strategies, and personal finance.
-    </p>
+    <PageHeader
+      title="Learn Investing"
+      subtitle="Free guides and articles to help you understand IPOs, mutual funds, trading strategies, and personal finance."
+    />
   </section>
 
   <!-- Articles Grid -->

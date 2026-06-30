@@ -1,0 +1,17 @@
+---
+interface Props {
+  name: 'smart-money' | 'holdings' | 'signal' | 'investors' | 'one-percent' | 'sector' | 'overlap' | 'ipo' | 'chart';
+  class?: string;
+}
+const { name, class: className = 'w-5 h-5' } = Astro.props;
+const cls = className;
+---
+{name === 'smart-money' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 17l6-6 4 4 8-10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M14 7h7v7"/></svg>)}
+{name === 'holdings' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4"/></svg>)}
+{name === 'signal' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 12.55a11 11 0 0114.08 0"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8.53 16.11a6 6 0 016.95 0M12 20h.01"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>)}
+{name === 'investors' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a3 3 0 015.356-1.857M15 11a3 3 0 10-6 0 3 3 0 006 0z"/></svg>)}
+{name === 'one-percent' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="17" r="2" stroke-width="1.75"/></svg>)}
+{name === 'sector' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-width="1.75"/><path stroke-linecap="round" stroke-width="1.75" d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>)}
+{name === 'overlap' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="5" stroke-width="1.75"/><circle cx="15" cy="12" r="5" stroke-width="1.75"/></svg>)}
+{name === 'ipo' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg>)}
+{name === 'chart' && (<svg class={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 20V4M4 20h16M8 16v-4M12 16V8M16 16v-6"/></svg>)}

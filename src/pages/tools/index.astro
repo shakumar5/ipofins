@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ToolCard from '../../components/ToolCard.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
 import toolsData from '../../data/tools.json';
 
 const jsonLd = {
@@ -35,12 +36,12 @@ const jsonLd = {
 
   <!-- Page Header -->
   <section class="container-wide pt-8 pb-6">
-    <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-      Finance Tools
-    </h1>
-    <p class="mt-2 text-surface-600 dark:text-surface-300 max-w-2xl">
-      Free, fast, and accurate calculators to help you plan investments, estimate returns, and analyze risk.
-    </p>
+    <PageHeader
+      title="Finance Tools"
+      subtitle="Free, fast, and accurate calculators to help you plan investments, estimate returns, and analyze risk."
+      freshness="Runs in browser"
+      source="No data stored"
+    />
   </section>
 
   <!-- Tools Grid -->
