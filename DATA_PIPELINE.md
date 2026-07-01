@@ -6,7 +6,7 @@
 
 - **Neon PostgreSQL is the source of truth** for all market data (IPOs, NAVs, holdings).
 - **Git stores code only** — scraped market data is never committed.
-- **Manual pipelines** — you run scripts locally, verify output, then push code (if any) to trigger Vercel build.
+- **Automated pipelines** run on GitHub Actions (see workflows below); you can also run the same scripts locally.
 - **Authorized sources only** — NSE, BSE, SEBI, AMFI for regulatory data. **Zerodha + Groww** for IPO calendar, dates, subscription, and company detail (bidirectional merge — each source fills gaps in the other).
 
 ## GMP removed
@@ -23,9 +23,11 @@ Grey Market Premium (GMP) is **not published by any authorized source** (NSE, BS
 | — | `npm run pipeline:predeploy` | Before deploy | NAV + IPO quick + subscription + verify | Same as above |
 | 3 | `npm run pipeline:monthly` | 1–2× per month | AMFI holdings Excel + TER | `fund_holdings`, signals, overlaps |
 | 4 | `npm run pipeline:superinvestor` | Quarterly / backfill | NSE/BSE SHP | `shareholding_pattern_holders`, `entity_holdings` |
-| 8 | `npm run pipeline:sast-sweep` | Weekly (manual) | NSE/BSE SAST | `sast_filings` (DB) |
-| — | GitHub **Quarterly Expense Ratio** | Auto: 1 Jan/Apr/Jul/Oct | AMFI TER | `funds.expense_ratio` → build → deploy |
-| — | GitHub **Weekly SAST Updates** | Auto: Monday 08:45 IST | SAST export only | `public/data/sast-updates*.json` → `build:fast` → deploy |
+| — | `npm run pipeline:cron:daily` | **Auto: weekdays 9 AM IST** | AMFI NAV + Zerodha/Groww IPO (full detail) + subscription | `funds`, `fund_navs`, `ipos`, … |
+| — | `npm run pipeline:cron:monthly` | **Auto: 15th, 6 AM IST** | MF holdings + TER + SAST sweep + SAST JSON | `fund_holdings`, `sast_filings`, signals |
+| — | `npm run pipeline:cron:quarterly` | **Auto: 28 Jan/Apr/Jul/Oct, 6 AM IST** (post-SHP window) | SHP fetch + SI signals + export | `shareholding_pattern_holders`, `entity_holdings` |
+| 8 | `npm run pipeline:sast-sweep` | Monthly (in cron) | NSE/BSE SAST | `sast_filings` (DB) |
+| — | GitHub **Weekly SAST Updates** | Manual only (emergency) | SAST JSON export | `public/data/sast-updates*.json` |
 
 ## Workflow
 
@@ -67,7 +69,17 @@ flowchart LR
   B --> V
 ```
 
-**CI/Vercel never runs pipelines** — only `npm run build` (reads Neon). Refresh data locally first, then deploy.
+**CI/Vercel** runs `npm run build` on every deploy. Scheduled workflows refresh Neon first, then build + deploy.
+
+### GitHub Actions workflows (manual trigger via Actions tab)
+
+| Workflow | Schedule (IST) | What it runs |
+|----------|----------------|--------------|
+| **Pipeline Daily** | Mon–Fri 9:00 AM | `pipeline:cron:daily` → build → Vercel |
+| **Pipeline Monthly** | 15th 6:00 AM | `pipeline:cron:monthly` → build → Vercel |
+| **Pipeline Quarterly Super Investors** | 28 Jan/Apr/Jul/Oct 6:00 AM (after SHP filing window) | `pipeline:cron:quarterly` → build → Vercel |
+| **Build & Deploy** | Push to `main` | Build only (optional pipelines on manual dispatch) |
+| **Weekly SAST Updates** | Manual only | Mid-month SAST JSON refresh without MF holdings |
 
 ### IPO broker sync (`pipeline:ipo`)
 

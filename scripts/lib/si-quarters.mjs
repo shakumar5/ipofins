@@ -1,6 +1,10 @@
 /**
  * Calendar quarter helpers for Super Investors SHP pipeline.
  * Shareholding Pattern filings use calendar quarters (Jan–Mar, Apr–Jun, …).
+ *
+ * SEBI: SHP due within 21 days of quarter-end. We treat a quarter as ingestible
+ * after quarter-end + 25 days (see quarterFilingWindowEnd). GitHub cron runs on
+ * the 28th of Jan/Apr/Jul/Oct so NSE/BSE usually have the new quarter live.
  */
 
 /** Quarter start dates for a calendar year (ISO YYYY-MM-DD). */
