@@ -34,10 +34,13 @@ function isCap(v: string | null): v is TopStocksCap {
 export function parseTopStocksFiltersFromSearch(search: string): TopStocksFilters {
   const raw = search.startsWith('?') ? search.slice(1) : search;
   const params = new URLSearchParams(raw);
+  const flowParam = params.get('flow');
+  const sourceParam = params.get('source');
+  const capParam = params.get('cap');
   return {
-    flow: isFlow(params.get('flow')) ? params.get('flow')! : DEFAULT_TOP_STOCKS_FILTERS.flow,
-    source: isSource(params.get('source')) ? params.get('source')! : DEFAULT_TOP_STOCKS_FILTERS.source,
-    cap: isCap(params.get('cap')) ? params.get('cap')! : DEFAULT_TOP_STOCKS_FILTERS.cap,
+    flow: isFlow(flowParam) ? flowParam : DEFAULT_TOP_STOCKS_FILTERS.flow,
+    source: isSource(sourceParam) ? sourceParam : DEFAULT_TOP_STOCKS_FILTERS.source,
+    cap: isCap(capParam) ? capParam : DEFAULT_TOP_STOCKS_FILTERS.cap,
   };
 }
 

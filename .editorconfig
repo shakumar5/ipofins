@@ -1,0 +1,14 @@
+# Enforce UTF-8 + LF for all text sources (Astro/TS break on UTF-16).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{json,lock}]
+insert_final_newline = false
