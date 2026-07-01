@@ -8,7 +8,7 @@ import {
 
 const STOCK_LISTING_KEY = stockListingKeySql('s');
 const HOLDER_FILING_KEY = holderFilingKeySql('sph.holder_name');
-const SUPER_INVESTOR_TYPES = ['individual', 'family_office', 'fii', 'dii'];
+const SUPER_INVESTOR_FLOW_TYPES = ['individual', 'family_office'];
 const DII_FII_TYPES = ['dii', 'fii'];
 
 const TOP_STOCKS_CAP_OPTIONS = [
@@ -181,7 +181,7 @@ async function loadEntityFlows(sql, entityTypes) {
 }
 
 async function loadSuperInvestorFlows(sql) {
-  return loadEntityFlows(sql, SUPER_INVESTOR_TYPES);
+  return loadEntityFlows(sql, SUPER_INVESTOR_FLOW_TYPES);
 }
 
 async function loadDiiFiiFlows(sql) {

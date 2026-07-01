@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from './db';
 import { holderFilingKeySql, stockListingKeySql } from './holdings-dedupe';
-import { DII_FII_TYPES, SUPER_INVESTOR_TYPES } from './tracked-entities';
+import { DII_FII_TYPES, SUPER_INVESTOR_FLOW_TYPES } from './tracked-entities';
 import {
   buildBuckets,
   emptyTopStocksPayload,
@@ -121,7 +121,7 @@ async function loadSuperInvestorFlows(): Promise<{ period: string; rows: RawFlow
   const qRow = (await sql`
     SELECT MAX(ec.quarter) AS q FROM entity_changes ec
     JOIN tracked_entities te ON te.id = ec.entity_id
-    WHERE te.type = ANY(${SUPER_INVESTOR_TYPES}) AND ec.strategy_id IS NULL
+    WHERE te.type = ANY(${SUPER_INVESTOR_FLOW_TYPES}) AND ec.strategy_id IS NULL
   `) as { q: string | null }[];
   const quarter = qRow[0]?.q;
   if (!quarter) return { period: '', rows: [] };
@@ -140,7 +140,7 @@ async function loadSuperInvestorFlows(): Promise<{ period: string; rows: RawFlow
       JOIN tracked_entities te ON te.id = ec.entity_id
       WHERE ec.quarter = ${quarter}::date
         AND ec.strategy_id IS NULL
-        AND te.type = ANY(${SUPER_INVESTOR_TYPES})
+        AND te.type = ANY(${SUPER_INVESTOR_FLOW_TYPES})
         AND ec.change_type <> 'unchanged'
       GROUP BY ec.stock_id
     )

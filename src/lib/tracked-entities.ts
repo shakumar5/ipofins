@@ -146,6 +146,9 @@ export function getSuperInvestors(): Entity[] {
 
 export const SUPER_INVESTOR_TYPES: EntityType[] = ['individual', 'family_office', 'fii', 'dii'];
 
+/** Top Stocks — super-investor flows (stock-pickers only; institutions use DII & FII). */
+export const SUPER_INVESTOR_FLOW_TYPES: EntityType[] = ['individual', 'family_office'];
+
 /** Domestic & foreign institutional investors (LIC, large FIIs, etc.) */
 export const DII_FII_TYPES: EntityType[] = ['dii', 'fii'];
 
