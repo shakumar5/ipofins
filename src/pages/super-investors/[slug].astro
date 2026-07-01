@@ -12,6 +12,9 @@ import {
   getEntityQuarterHistory,
   getEntityQuarterChangeDetails,
   summarizeQuarterTrend,
+  computePortfolioQoQ,
+  formatPortfolioQoQPct,
+  formatPortfolioDeltaCr,
   getTrackedSnapshot,
   superInvestorUrl,
   onePercentStockUrl,
@@ -107,6 +110,30 @@ const displayPortfolioCr =
       : holdingsValueTotal > 0
         ? holdingsValueTotal
         : null;
+
+const portfolioQoQ = computePortfolioQoQ(quarterHistory);
+const portfolioQoQLabel = formatPortfolioQoQPct(portfolioQoQ.pctChange);
+const portfolioDeltaLabel = formatPortfolioDeltaCr(portfolioQoQ.deltaCr);
+const holdingsDelta = portfolioQoQ.holdingsDelta;
+const portfolioQoQTone =
+  portfolioQoQ.pctChange == null
+    ? 'neutral'
+    : portfolioQoQ.pctChange > 0.05
+      ? 'up'
+      : portfolioQoQ.pctChange < -0.05
+        ? 'down'
+        : 'flat';
+
+function portfolioQoQClass(tone: string): string {
+  switch (tone) {
+    case 'up':
+      return 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300';
+    case 'down':
+      return 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300';
+    default:
+      return 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300';
+  }
+}
 
 const jsonLd = isPlaceholder
   ? null
@@ -216,46 +243,100 @@ const peers = isPlaceholder
                 Official website &rarr;
               </a>
             )}
+            {displayPortfolioCr != null && (
+              <div class="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+                <p class="text-3xl font-extrabold text-surface-900 dark:text-white tabular-nums">
+                  {formatCr(displayPortfolioCr)}
+                </p>
+                {portfolioQoQLabel && (
+                  <span class={`px-2.5 py-1 text-sm font-semibold rounded-full tabular-nums ${portfolioQoQClass(portfolioQoQTone)}`}>
+                    {portfolioQoQLabel}
+                  </span>
+                )}
+                {portfolioDeltaLabel && (
+                  <span class="text-sm text-surface-600 dark:text-surface-300 tabular-nums">
+                    {portfolioDeltaLabel} vs prior quarter
+                  </span>
+                )}
+              </div>
+            )}
+            {displayPortfolioCr != null && (
+              <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                Disclosed portfolio value &middot; shares at quarter-end close{latestQuarterLabel ? ` &middot; ${latestQuarterLabel}` : ''}
+              </p>
+            )}
           </div>
         </div>
         </PageHeader>
       </section>
 
       <!-- Live stats -->
-      {hasLive && (
+      {(hasLive || holdings.length > 0 || quarterHistory.length > 0) && (
         <section class="container-wide pb-6">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="card text-center">
-              <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">
+              <p class="text-2xl font-extrabold text-primary-600 dark:text-primary-400 tabular-nums">
                 {displayHoldingsCount ?? '\u2014'}
+                {holdingsDelta != null && holdingsDelta !== 0 && (
+                  <span class={`ml-1 text-sm font-semibold ${holdingsDelta > 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
+                    ({holdingsDelta > 0 ? `+${holdingsDelta}` : holdingsDelta})
+                  </span>
+                )}
               </p>
-              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Holdings (Q-o-Q)</p>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Holdings</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-extrabold text-surface-900 dark:text-white">{formatCr(displayPortfolioCr)}</p>
+              <p class="text-2xl font-extrabold text-surface-900 dark:text-white tabular-nums">{formatCr(displayPortfolioCr)}</p>
+              {portfolioQoQLabel && (
+                <p class={`text-xs font-semibold mt-0.5 tabular-nums ${portfolioQoQTone === 'up' ? 'text-success-600 dark:text-success-400' : portfolioQoQTone === 'down' ? 'text-danger-600 dark:text-danger-400' : 'text-surface-500 dark:text-surface-400'}`}>
+                  {portfolioQoQLabel}
+                  {portfolioDeltaLabel ? ` · ${portfolioDeltaLabel}` : ''}
+                </p>
+              )}
               <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Disclosed value</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-extrabold text-success-600 dark:text-success-400">
-                {(() => {
-                  const adds = (toNum(live!.freshEntries) ?? 0) + (toNum(live!.adds) ?? 0);
-                  return adds > 0 ? `+${adds}` : '—';
-                })()}
+              <p class="text-2xl font-extrabold text-success-600 dark:text-success-400 tabular-nums">
+                {hasLive
+                  ? (() => {
+                      const adds = (toNum(live!.freshEntries) ?? 0) + (toNum(live!.adds) ?? 0);
+                      return adds > 0 ? `+${adds}` : '—';
+                    })()
+                  : quarterHistory[0]
+                    ? (() => {
+                        const adds = (quarterHistory[0]!.freshEntries ?? 0) + (quarterHistory[0]!.adds ?? 0);
+                        return adds > 0 ? `+${adds}` : '—';
+                      })()
+                    : '—'}
               </p>
               <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Adds this quarter</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-extrabold text-warning-600 dark:text-warning-400">
-                {(() => {
-                  const trims = (toNum(live!.exits) ?? 0) + (toNum(live!.trims) ?? 0);
-                  return trims > 0 ? `−${trims}` : '—';
-                })()}
+              <p class="text-2xl font-extrabold text-warning-600 dark:text-warning-400 tabular-nums">
+                {hasLive
+                  ? (() => {
+                      const trims = (toNum(live!.exits) ?? 0) + (toNum(live!.trims) ?? 0);
+                      return trims > 0 ? `−${trims}` : '—';
+                    })()
+                  : quarterHistory[0]
+                    ? (() => {
+                        const trims = (quarterHistory[0]!.exits ?? 0) + (quarterHistory[0]!.trims ?? 0);
+                        return trims > 0 ? `−${trims}` : '—';
+                      })()
+                    : '—'}
               </p>
               <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">Trims this quarter</p>
             </div>
           </div>
           <p class="text-center text-xs text-surface-500 dark:text-surface-400 mt-3">
-            Latest disclosure: {formatQuarter(live!.quarter)} · Top-5 concentration {formatPct(live!.top5Concentration)}
+            {hasLive ? (
+              <>Latest disclosure: {formatQuarter(live!.quarter)} · Top-5 concentration {formatPct(live!.top5Concentration)}</>
+            ) : latestQuarterLabel ? (
+              <>Latest disclosure: {latestQuarterLabel}</>
+            ) : null}
+            {portfolioQoQ.priorQuarter && portfolioQoQLabel && (
+              <> · QoQ vs {formatQuarter(portfolioQoQ.priorQuarter)}</>
+            )}
           </p>
         </section>
       )}
@@ -322,7 +403,7 @@ const peers = isPlaceholder
               )}
             </div>
             <p class="text-xs text-surface-500 dark:text-surface-400 max-w-md">
-              Value = shares × quarter-end close. QoQ compares stake % vs prior quarter.
+              Value = shares at quarter-end close. QoQ compares stake % vs prior quarter.
             </p>
           </div>
           <SuperInvestorHoldingsTable client:load holdings={holdings} />

@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import type { OnePercentRow, ShpCategorySummary, StockShareholdingDetail } from '../../lib/tracked-entities';
+import type { OnePercentRow, StockShareholdingDetail } from '../../lib/tracked-entities';
 import { curatedEntityUrl, hasCuratedSuperInvestorInterest, hasSmartMoneyRadarInterest, holderDetailUrl } from '../../lib/tracked-client';
 import { formatCr, formatPct } from '../../lib/tracked-display';
 import StockNotOnRadarCard from './StockNotOnRadarCard';
@@ -11,15 +11,7 @@ interface Props {
 
 type SectionKey = 'promoters' | 'fii' | 'mf' | 'dii' | 'superInvestors' | 'onePercentClub' | 'retail';
 
-const CHART_COLORS: Record<string, string> = {
-  promoters: 'bg-amber-500',
-  fii: 'bg-blue-500',
-  mf: 'bg-violet-500',
-  dii: 'bg-teal-500',
-  retail: 'bg-surface-400 dark:bg-surface-500',
-};
-
-/** Matches ownership chart + holder section headers. */
+/** Matches holder section headers (ownership chart is OwnershipBreakdown.astro). */
 const SECTION_STYLES: Record<
   SectionKey,
   { dot: string; border: string; pct: string; headerBg: string }
@@ -70,19 +62,6 @@ const SECTION_STYLES: Record<
 
 function hasSectionData(section: { rows?: OnePercentRow[]; pct?: number | null }): boolean {
   return (section.rows?.length ?? 0) > 0 || (section.pct != null && section.pct > 0.01);
-}
-
-function chartSegments(summary: ShpCategorySummary) {
-  if (summary.dataQuality === 'verified') {
-    return [
-      { key: 'promoters', label: 'Promoters', pct: summary.promoterPct },
-      { key: 'fii', label: 'FII', pct: summary.fiiPct },
-      { key: 'mf', label: 'Mutual Funds', pct: summary.mfPct },
-      { key: 'dii', label: 'DII (ex-MF)', pct: summary.diiExMfPct },
-      { key: 'retail', label: 'Retail & others', pct: summary.retailPct },
-    ].filter((s) => (s.pct ?? 0) > 0.01);
-  }
-  return [];
 }
 
 function HolderTable({ rows, stockSlug }: { rows: OnePercentRow[]; stockSlug: string }) {
@@ -240,8 +219,6 @@ function sectionWeight(section: {
 
 export default function OnePercentStockDetail({ detail, mfStockSignalUrl = null }: Props) {
   const { summary, promoters, fii, mutualFunds, dii, superInvestors, onePercentClub } = detail;
-  const segments = chartSegments(summary);
-  const chartTotal = segments.reduce((s, x) => s + (x.pct ?? 0), 0);
   const onSmartMoneyRadar = hasSmartMoneyRadarInterest(detail);
   const hasCuratedSi = hasCuratedSuperInvestorInterest(detail);
   const superInvestorTotalPct = superInvestors.reduce((s, h) => s + (h.pctOfCompany ?? 0), 0);
@@ -358,56 +335,6 @@ export default function OnePercentStockDetail({ detail, mfStockSignalUrl = null 
           context="page"
           mfStockSignalUrl={mfStockSignalUrl}
         />
-      )}
-      {segments.length > 0 ? (
-        <div className="card">
-          <h2 className="text-lg font-bold text-surface-900 dark:text-white mb-1">Ownership breakdown</h2>
-          <p className="text-xs text-surface-500 dark:text-surface-400 mb-4">
-            Category totals from the official quarterly Shareholding Pattern filing
-            {summary.quarter ? ` (${summary.quarter})` : ''}. Sums to {formatPct(chartTotal)}.
-          </p>
-          <div className="flex h-8 w-full rounded-lg overflow-hidden ring-1 ring-surface-200 dark:ring-surface-700">
-            {segments.map((seg) => (
-              <div
-                key={seg.key}
-                className={`${CHART_COLORS[seg.key] || 'bg-surface-300'} min-w-[2px]`}
-                style={{ width: `${seg.pct}%` }}
-                title={`${seg.label}: ${formatPct(seg.pct)}`}
-              />
-            ))}
-          </div>
-          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-surface-600 dark:text-surface-300">
-            {segments.map((seg) => (
-              <li key={seg.key} className="flex items-center gap-1.5">
-                <span className={`inline-block w-2.5 h-2.5 rounded-sm ${CHART_COLORS[seg.key]}`} />
-                {seg.label} {formatPct(seg.pct)}
-              </li>
-            ))}
-            {superInvestorTotalPct > 0.01 && (
-              <li className="flex items-center gap-1.5">
-                <span className={`inline-block w-2.5 h-2.5 rounded-sm ${SECTION_STYLES.superInvestors.dot}`} />
-                Super Investors {formatPct(superInvestorTotalPct)} <span className="text-surface-400">(subset)</span>
-              </li>
-            )}
-            {onePercentClubTotalPct > 0.01 && (
-              <li className="flex items-center gap-1.5">
-                <span className={`inline-block w-2.5 h-2.5 rounded-sm ${SECTION_STYLES.onePercentClub.dot}`} />
-                1% Club {formatPct(onePercentClubTotalPct)} <span className="text-surface-400">(subset)</span>
-              </li>
-            )}
-          </ul>
-          <p className="mt-3 text-[11px] text-surface-500 dark:text-surface-400">
-            Super Investors and 1% Club names below are disclosed holders ≥1% — subsets of the categories above, not additive.
-          </p>
-        </div>
-      ) : (
-        <div className="card bg-warning-50/50 dark:bg-warning-950/20">
-          <p className="text-sm text-surface-600 dark:text-surface-300">
-            Category totals not yet parsed for this stock. Showing named ≥1% holders only. Re-run{' '}
-            <code className="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">pipeline:superinvestor</code>{' '}
-            after migration 010.
-          </p>
-        </div>
       )}
 
       <div className="space-y-3">
