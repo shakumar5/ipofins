@@ -5,6 +5,8 @@
 
 const MIN_MCAP_CR = 100;
 const MAX_MCAP_CR = 50_000_000;
+const MIN_HOLDER_PCT = 0.25;
+const MAX_HOLDER_PCT = 90;
 
 /**
  * @param {import('@neondatabase/serverless').NeonQueryFunction} sql
@@ -12,29 +14,41 @@ const MAX_MCAP_CR = 50_000_000;
  */
 export async function backfillMarketCapCategory(sql) {
   const stats = await sql`
-    WITH stock_mcap AS (
+    WITH latest_sph_quarter AS (
+      SELECT stock_id, MAX(quarter) AS quarter
+      FROM shareholding_pattern_holders
+      WHERE shares > 0 AND pct_of_company > 0
+      GROUP BY stock_id
+    ),
+    latest_eh_quarter AS (
+      SELECT stock_id, MAX(quarter) AS quarter
+      FROM entity_holdings
+      WHERE strategy_id IS NULL
+        AND market_value_cr > 0
+        AND pct_of_company > 0
+      GROUP BY stock_id
+    ),
+    stock_mcap AS (
       SELECT stock_id, MAX(mcap_cr) AS mcap_cr
       FROM (
         SELECT sph.stock_id,
           (sph.shares::numeric * sqp.close_price * 100.0 / NULLIF(sph.pct_of_company, 0)) / 1e7 AS mcap_cr
         FROM shareholding_pattern_holders sph
-        JOIN LATERAL (
-          SELECT close_price
-          FROM stock_quarter_prices sqp
-          WHERE sqp.stock_id = sph.stock_id
-          ORDER BY quarter DESC
-          LIMIT 1
-        ) sqp ON true
-        WHERE sph.shares > 0 AND sph.pct_of_company > 0
+        JOIN latest_sph_quarter lq ON lq.stock_id = sph.stock_id AND lq.quarter = sph.quarter
+        JOIN stock_quarter_prices sqp
+          ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
+        WHERE sph.shares > 0
+          AND sph.pct_of_company BETWEEN ${MIN_HOLDER_PCT} AND ${MAX_HOLDER_PCT}
 
         UNION ALL
 
         SELECT eh.stock_id,
           eh.market_value_cr * 100.0 / NULLIF(eh.pct_of_company, 0) AS mcap_cr
         FROM entity_holdings eh
+        JOIN latest_eh_quarter leq ON leq.stock_id = eh.stock_id AND leq.quarter = eh.quarter
         WHERE eh.strategy_id IS NULL
           AND eh.market_value_cr > 0
-          AND eh.pct_of_company > 0
+          AND eh.pct_of_company BETWEEN ${MIN_HOLDER_PCT} AND ${MAX_HOLDER_PCT}
       ) raw
       WHERE mcap_cr > ${MIN_MCAP_CR} AND mcap_cr < ${MAX_MCAP_CR}
       GROUP BY stock_id
@@ -85,16 +99,10 @@ export async function backfillMarketCapCategory(sql) {
 }
 
 /**
+ * Re-rank cap buckets on every Top Stocks export (do not skip after first 100).
  * @param {import('@neondatabase/serverless').NeonQueryFunction} sql
  */
 export async function ensureMarketCapCategories(sql) {
-  const [{ count }] = await sql`
-    SELECT COUNT(*)::int AS count
-    FROM stocks
-    WHERE market_cap_category IN ('large', 'mid', 'small', 'micro')
-  `;
-  if (count >= 100) return { skipped: true, classified: count };
-
   const result = await backfillMarketCapCategory(sql);
   const [{ count: after }] = await sql`
     SELECT COUNT(*)::int AS count
