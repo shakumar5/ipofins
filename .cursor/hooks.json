@@ -4,6 +4,9 @@
     "afterFileEdit": [
       {
         "command": "node .cursor/hooks/validate-sql.mjs"
+      },
+      {
+        "command": "node .cursor/hooks/validate-encoding.mjs"
       }
     ],
     "stop": [

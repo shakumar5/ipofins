@@ -1,0 +1,25 @@
+---
+description: UTF-8 file encoding — required for Astro/TS on Windows
+alwaysApply: true
+---
+
+# File encoding (UTF-8 only)
+
+## Root cause of repeated CI failures
+
+On **Windows**, Cursor agent Write / StrReplace and PowerShell Out-File / Set-Content (default) can save **UTF-16 LE** instead of UTF-8. Those files contain NUL bytes between ASCII characters; **Astro and TypeScript cannot parse them** (astro(1000), File is not a module, Bad control character).
+
+## Rules for agents
+
+1. **Never** use PowerShell Out-File, Set-Content, or `>` redirection for `.ts`, `.tsx`, `.astro`, `.mjs` without explicit UTF-8.
+2. After editing text sources on Windows, run `npm run verify:encoding` (or `-- --fix` if needed).
+3. Prefer **small StrReplace patches** over rewriting whole files when possible.
+4. If a file looks garbled in Read or `type` shows spaced letters, it is UTF-16 — run `npm run verify:encoding -- --fix` immediately.
+5. Safe PowerShell write pattern:
+   `[System.IO.File]::WriteAllText($path, $content, [System.Text.UTF8Encoding]::new($false))`
+
+## Project guards
+
+- `.cursor/hooks/validate-encoding.mjs` auto-repairs UTF-16 after agent file edits
+- `npm run verify:encoding` runs in `npm run check` and `npm run build`
+- `.editorconfig` + `.gitattributes` request UTF-8 / LF
