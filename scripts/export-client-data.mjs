@@ -885,18 +885,27 @@ async function main() {
     }
   }
 
-  if (isDbConfigured()) {
-    const doneTopStocks = logStep('Top Stocks export');
-    try {
+  const doneTopStocks = logStep('Top Stocks export');
+  const emptyTopStocks = {
+    periods: { mutual_funds: '', super_investors: '', one_percent_club: '' },
+    buckets: {},
+    hasData: false,
+  };
+  try {
+    if (isDbConfigured()) {
       const topStocks = await withDbRetry(() => buildTopStocksExport(sql), {
         label: 'Top Stocks export',
       });
       writeJson('top-stocks.json', topStocks);
       doneTopStocks(topStocks.hasData ? 'ok' : 'empty');
-    } catch (e) {
-      console.warn('  ⚠ Top Stocks export failed:', e.message);
-      doneTopStocks('skipped');
+    } else {
+      writeJson('top-stocks.json', emptyTopStocks);
+      doneTopStocks('skipped (no DB)');
     }
+  } catch (e) {
+    console.warn('  ⚠ Top Stocks export failed:', e.message);
+    writeJson('top-stocks.json', emptyTopStocks);
+    doneTopStocks('fallback empty');
   }
 
   const doneFinalize = logStep('Finalize + verify');
