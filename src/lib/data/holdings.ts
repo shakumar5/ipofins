@@ -11,6 +11,7 @@ import {
   readFundPortfolioStockCountFromDisk,
   readFundOverlapIndexFromDisk,
   readFundOverlapsByFundFromDisk,
+  fundSlugCandidates,
   readHoldingsCompareIndexFromDisk,
   readPortfolioOverlapFromDisk,
 } from '../holdings-compare-server';
@@ -918,8 +919,13 @@ export async function getAMCHoldingsComparison(
 
 export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Record<string, unknown>[]> {
   const disk = readFundOverlapsByFundFromDisk();
-  if (disk?.bySlug?.[fundSlug]) {
-    return disk.bySlug[fundSlug].slice(0, limit).map((row) => ({ ...row })) as Record<string, unknown>[];
+  if (disk?.bySlug) {
+    for (const slug of fundSlugCandidates(fundSlug)) {
+      const rows = disk.bySlug[slug];
+      if (rows?.length) {
+        return rows.slice(0, limit).map((row) => ({ ...row })) as Record<string, unknown>[];
+      }
+    }
   }
 
   const sql = requireDb();

@@ -279,6 +279,26 @@ export function buildHoldingsMetaFromJson(holdings) {
   return { stockCounts, bySchemeCode: {}, byBaseSlug };
 }
 
+/** Union DB + parser meta so table rows match funds present in fund-holdings.json. */
+export function mergeHoldingsMeta(primary, supplemental) {
+  const empty = { stockCounts: {}, bySchemeCode: {}, byBaseSlug: {} };
+  const a = primary?.stockCounts ? primary : empty;
+  const b = supplemental?.stockCounts ? supplemental : empty;
+  if (!Object.keys(a.stockCounts).length) return { ...b, stockCounts: { ...b.stockCounts } };
+  if (!Object.keys(b.stockCounts).length) return { ...a, stockCounts: { ...a.stockCounts } };
+
+  const stockCounts = { ...b.stockCounts };
+  for (const [slug, count] of Object.entries(a.stockCounts)) {
+    stockCounts[slug] = Math.max(stockCounts[slug] || 0, Number(count) || 0);
+  }
+
+  return {
+    stockCounts,
+    bySchemeCode: { ...(b.bySchemeCode || {}), ...(a.bySchemeCode || {}) },
+    byBaseSlug: { ...(b.byBaseSlug || {}), ...(a.byBaseSlug || {}) },
+  };
+}
+
 /** Prefer slugs that match built static fund pages (not parser/AMFI shortcuts). */
 export function pickBestDetailSlug(candidates, { pageSlugSet, overlapSlugSet } = {}) {
   const matched = [...new Set(candidates.filter(Boolean))].filter(

@@ -277,7 +277,7 @@ function latestMonthLabelForFund(
   return null;
 }
 
-function fundSlugCandidates(fundSlug: string): string[] {
+export function fundSlugCandidates(fundSlug: string): string[] {
   const aliases = readFundHoldingsAliasesFromDisk() ?? {};
   const candidates = new Set<string>([fundSlug]);
   if (aliases[fundSlug]) candidates.add(aliases[fundSlug]);

@@ -2,7 +2,7 @@
 /**
  * Sync expense ratio (TER) from AMFI official API → Neon funds.expense_ratio
  *
- * Used by: npm run pipeline:ter, GitHub quarterly cron workflow
+ * Used by: monthly holdings pipeline (`03-monthly-mf-holdings.mjs`), `npm run pipeline:ter` (manual)
  * Source:  https://www.amfiindia.com/ter-of-mf-schemes
  */
 

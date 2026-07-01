@@ -1,6 +1,5 @@
 # IPOfins — Build & Deploy
-# Triggers on push to main only. No scheduled data fetching.
-# Data pipelines run manually locally (see DATA_PIPELINE.md).
+# Triggers on push to main. Scheduled data pipelines: pipeline-daily/monthly/quarterly workflows.
 
 name: Build & Deploy
 

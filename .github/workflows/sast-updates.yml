@@ -1,19 +1,10 @@
-# Weekly SAST updates feed — export SAST JSON only, rebuild, deploy
-#
-# Runs every Monday at 08:45 IST (03:15 UTC).
-# Fetches NSE/BSE SAST filings into public/data/sast-updates.json (read-only;
-# no entity_holdings DB writes). Quarterly SHP remains source of truth.
-#
-# Reuses the export-data cache from Build & Deploy (holdings, signals, etc.).
-# Does NOT run export:client-data — only export:sast-updates refreshes SAST JSON.
+# SAST JSON-only refresh (emergency manual run).
+# Scheduled SAST is now part of Pipeline Monthly (15th, 6 AM IST).
+# Use this workflow only for a mid-month SAST-only deploy without MF holdings.
 
-name: Weekly SAST Updates
+name: Weekly SAST Updates (manual only)
 
 on:
-  schedule:
-    # 03:15 UTC = 08:45 IST every Monday
-    - cron: '15 3 * * 1'
-
   workflow_dispatch:
 
 permissions:
