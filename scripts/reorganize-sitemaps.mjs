@@ -1,6 +1,6 @@
 /**
  * Post-build: replace Astro's default sitemap output with categorized child sitemaps
- * and a clean sitemap-index.xml (10 canonical buckets + lastmod).
+ * and a clean sitemap-index.xml (canonical buckets + lastmod).
  */
 import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -136,6 +136,7 @@ function writeBucketSitemaps(buckets) {
     'sitemap-smart-money.xml': 'monthly',
     'sitemap-super-investors.xml': 'weekly',
     'sitemap-one-percent-club.xml': 'weekly',
+    'sitemap-top-stocks.xml': 'weekly',
     'sitemap-tools.xml': 'monthly',
     'sitemap-blog.xml': 'monthly',
     'sitemap-learn.xml': 'monthly',

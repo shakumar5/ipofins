@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import TopStocksBoard from '../../components/top-stocks/TopStocksBoard.tsx';
+import { loadTopStocksPayload } from '../../lib/top-stocks';
+import { canonicalFor } from '../../lib/tracked-entities';
+
+const payload = await loadTopStocksPayload();
+const path = '/top-stocks';
+const canonical = canonicalFor(path);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Top Stocks',
+  description:
+    'Rank Indian stocks by net rupee accumulation or distribution from mutual funds, super investors, and the 1% Club.',
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Top Stocks', item: canonical },
+    ],
+  },
+};
+---
+
+<BaseLayout
+  title="Top Stocks | IPOFins"
+  description="See which large, mid, small and micro cap stocks mutual funds, super investors and 1% Club holders are accumulating or distributing."
+  canonical={canonical}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <div class="container-wide py-8 sm:py-10 space-y-8">
+    <PageHeader
+      eyebrow="Market flows"
+      title="Top Stocks"
+      subtitle="Net rupee accumulation and distribution across mutual funds, super investors, and every 1% or larger non-promoter holder."
+      freshness={payload.hasData ? 'Latest filing period' : undefined}
+      source="Neon build time"
+    />
+
+    <TopStocksBoard client:load payload={payload} />
+  </div>
+</BaseLayout>

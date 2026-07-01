@@ -1,5 +1,7 @@
 # IPOfins Data Pipeline
 
+> **Full reference (all pipelines, CI workflows, duplicates):** [docs/PIPELINES.md](docs/PIPELINES.md)
+
 ## Philosophy
 
 - **Neon PostgreSQL is the source of truth** for all market data (IPOs, NAVs, holdings).
@@ -11,15 +13,19 @@
 
 Grey Market Premium (GMP) is **not published by any authorized source** (NSE, BSE, SEBI, AMFI). GMP has been removed from the product. The `ipo_gmp_history` table remains in the schema for a possible future licensed feed but is unused.
 
-## Three Pipelines
+## Core pipelines (summary)
 
 | # | Script | Frequency | Sources | Writes to |
 |---|--------|-----------|---------|-----------|
-| 0 | `npm run pipeline:ipo` | Daily / before deploy (manual) | Zerodha + Groww (listing, detail, subscription) | `ipos`, `ipo_subscriptions`, `ipo_performance` |
-| 1 | `npm run pipeline:daily` | Daily (manual) | AMFI NAVAll.txt + `pipeline:ipo` (incremental) | `funds`, `fund_navs`, `ipos`, … |
-| 2 | `npm run pipeline:subscription` | Hourly during IPO season (manual) | Groww subscription page | `ipo_subscriptions` |
-| 3 | `npm run pipeline:monthly` | 1–2× per month (manual) | AMFI portfolio Excel + AMFI TER API | `fund_holdings`, `funds.expense_ratio` → compute signals & overlaps |
-| — | GitHub `Quarterly Expense Ratio` workflow | Auto: 1 Jan / Apr / Jul / Oct | AMFI TER API | `funds.expense_ratio` → build → Vercel deploy |
+| 0 | `npm run pipeline:ipo` | Manual | Zerodha + Groww | `ipos`, `ipo_subscriptions`, `ipo_performance` |
+| 1 | `npm run pipeline:daily` | Daily (manual) | AMFI NAV + IPO quick sync | `funds`, `fund_navs`, `ipos`, … |
+| 2 | `npm run pipeline:subscription` | Hourly during IPO season | Groww subscription | `ipo_subscriptions` |
+| — | `npm run pipeline:predeploy` | Before deploy | NAV + IPO quick + subscription + verify | Same as above |
+| 3 | `npm run pipeline:monthly` | 1–2× per month | AMFI holdings Excel + TER | `fund_holdings`, signals, overlaps |
+| 4 | `npm run pipeline:superinvestor` | Quarterly / backfill | NSE/BSE SHP | `shareholding_pattern_holders`, `entity_holdings` |
+| 8 | `npm run pipeline:sast-sweep` | Weekly (manual) | NSE/BSE SAST | `sast_filings` (DB) |
+| — | GitHub **Quarterly Expense Ratio** | Auto: 1 Jan/Apr/Jul/Oct | AMFI TER | `funds.expense_ratio` → build → deploy |
+| — | GitHub **Weekly SAST Updates** | Auto: Monday 08:45 IST | SAST export only | `public/data/sast-updates*.json` → `build:fast` → deploy |
 
 ## Workflow
 

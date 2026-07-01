@@ -35,7 +35,7 @@ import {
   loadFundHoldingsIndexFromDb,
   serializeHoldingsMetaForDisk,
 } from './lib/fund-holdings-export.mjs';
-import { enrichHoldingsMetaWithOverlap } from './lib/mf-hub-holdings-meta.mjs';
+import { enrichHoldingsMetaWithOverlap, buildHoldingsMetaFromJson, mergeHoldingsMeta } from './lib/mf-hub-holdings-meta.mjs';
 import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
 import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
 
@@ -259,6 +259,84 @@ function writeJson(name, data) {
   writeFileSync(path, JSON.stringify(data));
   const kb = (readFileSync(path).length / 1024).toFixed(0);
   console.log(`  ✓ ${name} (${kb} KB)`);
+}
+
+/** Map fund-overlap-index slugs to keys present in fund-overlaps-by-fund.json (via aliases). */
+function alignFundOverlapExports(aliases = {}) {
+  const indexPath = join(OUT_DIR, 'fund-overlap-index.json');
+  const byFundPath = join(OUT_DIR, 'fund-overlaps-by-fund.json');
+  if (!existsSync(indexPath) || !existsSync(byFundPath)) return;
+
+  const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
+  const byFund = JSON.parse(readFileSync(byFundPath, 'utf-8'));
+  const bySlug = byFund.bySlug || {};
+  if (!Array.isArray(index) || !index.length || !Object.keys(bySlug).length) return;
+
+  const resolveSlug = (slug) => {
+    for (const candidate of fundOverlapSlugCandidates(slug, aliases)) {
+      if (bySlug[candidate]) return candidate;
+    }
+    return null;
+  };
+
+  const seen = new Set();
+  const aligned = [];
+  let changed = false;
+
+  for (const fund of index) {
+    const resolved = resolveSlug(String(fund.slug));
+    if (!resolved) continue;
+    if (resolved !== fund.slug) changed = true;
+    if (seen.has(resolved)) continue;
+    seen.add(resolved);
+    aligned.push({ slug: resolved, name: String(fund.name) });
+  }
+
+  if (!changed && aligned.length === index.length) return;
+
+  aligned.sort((a, b) => a.name.localeCompare(b.name));
+  writeJson('fund-overlap-index.json', aligned);
+  console.log(`  ℹ Aligned fund-overlap index (${aligned.length} funds) with overlap pair slugs`);
+}
+
+function fundOverlapSlugCandidates(slug, aliases = {}) {
+  const candidates = new Set([slug]);
+  if (aliases[slug]) candidates.add(aliases[slug]);
+  for (const [from, to] of Object.entries(aliases)) {
+    if (from === slug || to === slug) {
+      candidates.add(from);
+      candidates.add(to);
+    }
+  }
+  return [...candidates];
+}
+
+/** Fail export when index slugs cannot resolve to fund-overlaps-by-fund keys. */
+function verifyFundOverlapExports(aliases = {}) {
+  const indexPath = join(OUT_DIR, 'fund-overlap-index.json');
+  const byFundPath = join(OUT_DIR, 'fund-overlaps-by-fund.json');
+  const hasIndex = existsSync(indexPath);
+  const hasByFund = existsSync(byFundPath);
+  if (!hasIndex && !hasByFund) return;
+  if (hasIndex !== hasByFund) {
+    throw new Error(
+      'Fund overlap export incomplete: fund-overlap-index.json and fund-overlaps-by-fund.json must exist together.',
+    );
+  }
+
+  const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
+  const bySlug = JSON.parse(readFileSync(byFundPath, 'utf-8')).bySlug || {};
+  if (!Array.isArray(index) || !index.length) return;
+
+  const missing = index.filter(
+    (fund) => !fundOverlapSlugCandidates(String(fund.slug), aliases).some((slug) => bySlug[slug]?.length),
+  );
+  if (missing.length) {
+    const sample = missing.slice(0, 3).map((f) => f.slug).join(', ');
+    throw new Error(
+      `Fund overlap slug mismatch: ${missing.length} index fund(s) have no rows in fund-overlaps-by-fund.json (e.g. ${sample}). Run db:compute-overlaps and re-export.`,
+    );
+  }
 }
 
 function writeHoldingsCompareExports(holdings) {
@@ -600,10 +678,8 @@ async function main() {
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
   writePortfolioOverlapSitemaps(portfolioOverlap.funds);
-  writeJson(
-    'fund-overlap-index.json',
-    portfolioOverlap.funds.map((f) => ({ slug: f.slug, name: f.name })),
-  );
+  // fund-overlap-index.json is written only with fund-overlaps-by-fund.json (DB step below).
+  // Do not write it from holdings keys — parser slugs differ from funds.slug (-direct-plan).
   doneCompare(`${portfolioOverlap.funds.length} funds`);
 
   const doneFundOverlap = logStep('Fund overlap pages (DB)');
@@ -625,14 +701,16 @@ async function main() {
         });
         doneFundOverlap(`${overlapFunds.length} funds, ${Object.keys(bySlug).length} with rows`);
       } else {
-        console.warn('  ⚠ fund_overlaps empty — run db:compute-overlaps; keeping holdings-based index');
+        console.warn('  ⚠ fund_overlaps empty — run db:compute-overlaps; fund overlap pages unchanged');
         doneFundOverlap('skipped (no fund_overlaps rows)');
       }
     } catch (e) {
       console.warn('  ⚠ Fund overlap DB export failed:', e.message);
-      doneFundOverlap('holdings-based index only');
+      console.warn('  ℹ Keeping previous fund-overlap JSON (if any) — index is not overwritten from holdings');
+      doneFundOverlap('skipped (DB error)');
     }
   } else {
+    console.log('  ℹ DB not configured — fund overlap pages use existing export or stay empty');
     doneFundOverlap('skipped (no DB)');
   }
 
@@ -646,24 +724,24 @@ async function main() {
   if (mfFunds.length) {
     const doneHoldingsPages = logStep('fund holdings pages export');
     const overlapSlugs = portfolioOverlap.funds.map((f) => f.slug).filter(Boolean);
-    let holdingsMeta = null;
+    const jsonHoldingsMeta = buildHoldingsMetaFromJson(holdings);
+    let holdingsMeta = jsonHoldingsMeta;
     if (isDbConfigured()) {
       try {
-        holdingsMeta = await withDbRetry(
+        const dbMeta = await withDbRetry(
           () => loadHoldingsMetaFromDb(sql),
           { label: 'mf-hub holdings meta' },
         );
+        holdingsMeta = mergeHoldingsMeta(dbMeta, jsonHoldingsMeta);
+        const dbOnly = Object.keys(dbMeta.stockCounts || {}).length;
+        const merged = Object.keys(holdingsMeta.stockCounts || {}).length;
+        if (merged > dbOnly) {
+          console.log(`  ℹ Merged parser holdings meta (+${merged - dbOnly} slugs not in DB match)`);
+        }
       } catch (e) {
         console.warn('  ⚠ mf-hub holdings meta from DB failed:', e.message);
+        console.log('  ℹ Using parser fund-holdings.json for holdings meta');
       }
-    }
-    if (!holdingsMeta) {
-      const rawPath = join(ROOT, 'src', 'data', 'fund-holdings.json');
-      const rawHoldings = existsSync(rawPath)
-        ? JSON.parse(readFileSync(rawPath, 'utf-8'))
-        : holdings;
-      holdingsMeta = buildHoldingsMetaFromJson(rawHoldings);
-      console.log('  ℹ mf-hub holdings meta from JSON fallback');
     }
     const enrichedMeta = enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs);
     writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(enrichedMeta));
@@ -682,9 +760,9 @@ async function main() {
     const pageSlugSet = new Set(holdingsIndex.map((f) => f.slug));
 
     const doneMfHub = logStep('mf-hub export');
-    const hub = buildMfHubExports(mfFunds, holdingsMeta, {
+    const hub = buildMfHubExports(mfFunds, enrichedMeta, {
       amcCount: Object.keys(holdings.amcs || {}).length,
-      fundCount: Object.values(holdingsMeta.stockCounts).length,
+      fundCount: Object.values(enrichedMeta.stockCounts).length,
       latestMonth: holdings.months?.[holdings.months.length - 1] || '',
       overlapSlugs,
       pageSlugSet,
@@ -701,6 +779,7 @@ async function main() {
         holdingsIndex.map((f) => f.slug),
       );
       writeJson('fund-holdings-aliases.json', aliases);
+      alignFundOverlapExports(aliases);
       doneHoldingsPages(
         `${holdingsIndex.length} pages, ${Object.keys(aliases).length} aliases`,
       );
@@ -782,6 +861,14 @@ async function main() {
   const doneFinalize = logStep('Finalize + verify');
   splitMonolithSignalsOnDisk();
   migrateSignalsExportTiersOnDisk();
+  const aliasesPath = join(OUT_DIR, 'fund-holdings-aliases.json');
+  const aliases = existsSync(aliasesPath)
+    ? JSON.parse(readFileSync(aliasesPath, 'utf-8'))
+    : {};
+  if (Object.keys(aliases).length) {
+    alignFundOverlapExports(aliases);
+  }
+  verifyFundOverlapExports(aliases);
   verifySmartMoneyExports();
   doneFinalize();
 

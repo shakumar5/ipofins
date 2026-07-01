@@ -1,5 +1,8 @@
 /** Shared helpers for sitemap XML generation. */
 
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+
 export const SITE = 'https://ipofins.com';
 export const SITEMAP_URL_LIMIT = 45_000;
 
@@ -75,6 +78,7 @@ export function classifySitemapBucket(pathname) {
 
   if (path.startsWith('/super-investors')) return 'sitemap-super-investors.xml';
   if (path.startsWith('/1-percent-club')) return 'sitemap-one-percent-club.xml';
+  if (path.startsWith('/top-stocks')) return 'sitemap-top-stocks.xml';
   if (path.startsWith('/ipo')) return 'sitemap-ipos.xml';
   if (path.includes('/stock-signal/') || /^\/mutual-funds\/smart-money\/signal\//.test(path)) {
     return 'sitemap-stocks.xml';
@@ -83,7 +87,7 @@ export function classifySitemapBucket(pathname) {
   if (path.startsWith('/mutual-funds/portfolio-overlap-checker')) return 'sitemap-portfolio-overlap.xml';
   if (path.startsWith('/mutual-funds/fund/')) return 'sitemap-funds.xml';
   if (/^\/mutual-funds\/mutual-fund-holdings-changes\/[^/]+/.test(path)) return 'sitemap-amcs.xml';
-  if (path.startsWith('/mutual-funds/')) return 'sitemap-mutual-funds.xml';
+  if (path === '/mutual-funds' || path.startsWith('/mutual-funds/')) return 'sitemap-mutual-funds.xml';
   if (path.startsWith('/tools') || path.startsWith('/broker')) return 'sitemap-tools.xml';
   if (path.startsWith('/blogs')) return 'sitemap-blog.xml';
   if (path.startsWith('/learn')) return 'sitemap-learn.xml';
@@ -100,8 +104,70 @@ export const CANONICAL_SITEMAP_INDEX = [
   'sitemap-smart-money.xml',
   'sitemap-super-investors.xml',
   'sitemap-one-percent-club.xml',
+  'sitemap-top-stocks.xml',
   'sitemap-portfolio-overlap.xml', // placeholder — expanded to urlset(s) in reorganize-sitemaps.mjs
   'sitemap-tools.xml',
   'sitemap-blog.xml',
   'sitemap-learn.xml',
 ];
+
+/** Hub pages that must appear in at least one sitemap urlset. */
+export const REQUIRED_SITEMAP_HUB_PATHS = [
+  '/',
+  '/ipo',
+  '/mutual-funds',
+  '/mutual-funds/smart-money',
+  '/super-investors',
+  '/1-percent-club',
+  '/top-stocks',
+  '/broker',
+  '/tools',
+  '/blogs',
+  '/learn',
+];
+
+/** Astro sitemap filter excludes these — fail if they appear in a urlset. */
+export const SITEMAP_EXCLUDED_PATH_PREFIXES = [
+  '/dashboard',
+  '/search',
+  '/1-percent-club/holder/',
+];
+
+export const PORTFOLIO_OVERLAP_HUB_PATH = '/mutual-funds/portfolio-overlap-checker';
+
+/** Comparison deep links are served via vercel.json rewrite to the hub HTML. */
+export function isPortfolioOverlapRewritePath(pathname) {
+  return (
+    pathname.startsWith(`${PORTFOLIO_OVERLAP_HUB_PATH}/`)
+    && pathname !== `${PORTFOLIO_OVERLAP_HUB_PATH}/`
+    && pathname.includes('-vs-')
+  );
+}
+
+/** Map a site path to the expected Astro static HTML file in dist/. */
+export function locToDistHtml(distRoot, pathname) {
+  const path = (pathname || '/').replace(/\/$/, '') || '/';
+  if (path === '/') return join(distRoot, 'index.html');
+  return join(distRoot, ...path.slice(1).split('/'), 'index.html');
+}
+
+export function parseSitemapIndexChildNames(indexXml) {
+  return [...indexXml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((m) => m[1].trim())
+    .map((loc) => loc.replace(/^https:\/\/ipofins\.com\//, ''))
+    .filter((name) => name.endsWith('.xml'));
+}
+
+export function collectAllSitemapPaths(distRoot, childNames) {
+  const paths = new Set();
+  for (const name of childNames) {
+    const filePath = join(distRoot, name);
+    if (!existsSync(filePath)) continue;
+    const xml = readFileSync(filePath, 'utf8');
+    for (const loc of parseUrlsetLocs(xml)) {
+      const path = pathnameFromLoc(loc);
+      if (path) paths.add(path);
+    }
+  }
+  return paths;
+}
