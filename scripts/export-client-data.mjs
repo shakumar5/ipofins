@@ -37,6 +37,7 @@ import {
 } from './lib/fund-holdings-export.mjs';
 import { enrichHoldingsMetaWithOverlap } from './lib/mf-hub-holdings-meta.mjs';
 import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
+import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'data');
