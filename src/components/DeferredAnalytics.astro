@@ -2,33 +2,7 @@
 /** Vercel Analytics + web-vitals hooks — only after cookie consent, idle, and staggered from GA/AdSense. */
 ---
 
-<script is:inline>
-  (function () {
-    function bootDeferredAnalytics() {
-      if (window.__vercelAnalyticsBooted) return;
-      window.__vercelAnalyticsBooted = true;
-      import('@vercel/analytics').then(function (m) {
-        if (m.inject) m.inject();
-      });
-      import('../lib/web-vitals-report');
-    }
-
-    function scheduleDeferredAnalytics() {
-      if (window.__vercelAnalyticsScheduled) return;
-      window.__vercelAnalyticsScheduled = true;
-      var run = function () {
-        setTimeout(bootDeferredAnalytics, 8000);
-      };
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(run, { timeout: 20000 });
-      } else {
-        setTimeout(run, 10000);
-      }
-    }
-
-    if (localStorage.getItem('cookie-consent') === 'accepted') {
-      scheduleDeferredAnalytics();
-    }
-    window.addEventListener('cookie-consent-accepted', scheduleDeferredAnalytics);
-  })();
+<script>
+  import { initDeferredAnalytics } from '../lib/deferred-analytics-boot';
+  initDeferredAnalytics();
 </script>

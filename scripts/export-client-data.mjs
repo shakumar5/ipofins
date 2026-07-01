@@ -23,6 +23,8 @@ import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs'
 import {
   loadHoldingsMetaFromDb,
   buildHoldingsMetaFromJson,
+  enrichHoldingsMetaWithOverlap,
+  mergeHoldingsMeta,
 } from './lib/mf-hub-holdings-meta.mjs';
 import { filterMutualFundsToCurated } from './lib/canonical-fund-filter.mjs';
 import {
@@ -35,9 +37,9 @@ import {
   loadFundHoldingsIndexFromDb,
   serializeHoldingsMetaForDisk,
 } from './lib/fund-holdings-export.mjs';
-import { enrichHoldingsMetaWithOverlap, buildHoldingsMetaFromJson, mergeHoldingsMeta } from './lib/mf-hub-holdings-meta.mjs';
 import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
 import { buildTopStocksExport } from './lib/top-stocks-export.mjs';
+import { ensureMarketCapCategories } from './lib/backfill-market-cap-category.mjs';
 import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -771,7 +773,6 @@ async function main() {
       }
     }
     const enrichedMeta = enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs);
-    writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(enrichedMeta));
 
     let holdingsIndex = [];
     if (isDbConfigured()) {
@@ -817,6 +818,7 @@ async function main() {
     writeJson('mf-hub/meta.json', hub.meta);
     writeJson('mf-hub/best.json', hub.best);
     writeJson('mf-hub/all.json', hub.all);
+    writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(enrichedMeta, hub.all));
     doneMfHub(`${mfFunds.length} funds`);
   }
 
@@ -885,18 +887,35 @@ async function main() {
     }
   }
 
-  if (isDbConfigured()) {
-    const doneTopStocks = logStep('Top Stocks export');
-    try {
+  const doneTopStocks = logStep('Top Stocks export');
+  const emptyTopStocks = {
+    periods: { mutual_funds: '', super_investors: '', one_percent_club: '' },
+    buckets: {},
+    hasData: false,
+  };
+  try {
+    if (isDbConfigured()) {
+      const capBackfill = await withDbRetry(() => ensureMarketCapCategories(sql), {
+        label: 'market cap categories',
+      });
+      if (!capBackfill.skipped) {
+        console.log(
+          `  market cap backfill: ${capBackfill.classified} stocks (updated ${capBackfill.updated ?? 0})`,
+        );
+      }
       const topStocks = await withDbRetry(() => buildTopStocksExport(sql), {
         label: 'Top Stocks export',
       });
       writeJson('top-stocks.json', topStocks);
       doneTopStocks(topStocks.hasData ? 'ok' : 'empty');
-    } catch (e) {
-      console.warn('  ⚠ Top Stocks export failed:', e.message);
-      doneTopStocks('skipped');
+    } else {
+      writeJson('top-stocks.json', emptyTopStocks);
+      doneTopStocks('skipped (no DB)');
     }
+  } catch (e) {
+    console.warn('  ⚠ Top Stocks export failed:', e.message);
+    writeJson('top-stocks.json', emptyTopStocks);
+    doneTopStocks('fallback empty');
   }
 
   const doneFinalize = logStep('Finalize + verify');

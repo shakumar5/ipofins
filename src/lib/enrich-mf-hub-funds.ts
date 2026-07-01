@@ -1,4 +1,5 @@
 import { basesMatch, resolveDetailSlug, slugVariants } from './fund-detail-slug';
+import fundSlugAliases from '../data/fund-slug-aliases.json';
 import type { MfHubFundRow } from './mf-hub-build';
 
 export interface FundHoldingsMetaDisk {
@@ -16,6 +17,7 @@ export function enrichMfHubFundsWithHoldings(
   amfiAliases: Record<string, string> = {},
 ): MfHubFundRow[] {
   const stockCounts = meta.stockCounts || {};
+  const slugAliases: Record<string, string> = { ...fundSlugAliases, ...amfiAliases };
   const slugSet = new Set(
     meta.slugs?.length ? meta.slugs : Object.keys(stockCounts).filter((k) => (stockCounts[k] ?? 0) > 0),
   );
@@ -28,8 +30,13 @@ export function enrichMfHubFundsWithHoldings(
   };
 
   const resolveRow = (fund: MfHubFundRow) => {
+    if ((stockCounts[fund.slug] ?? 0) > 0) {
+      const direct = pack(fund.slug);
+      if (direct) return direct;
+    }
+
     for (const variant of slugVariants(fund.slug)) {
-      const alias = amfiAliases[variant];
+      const alias = slugAliases[variant];
       const hit = pack(alias);
       if (hit) return hit;
     }
@@ -61,14 +68,17 @@ export function enrichMfHubFundsWithHoldings(
 
   return funds.map((fund) => {
     const hit = resolveRow(fund);
-    if (!hit) {
-      return { ...fund, hasHoldings: false, stockCount: 0, detailSlug: null };
+    if (hit) {
+      return {
+        ...fund,
+        hasHoldings: true,
+        stockCount: hit.stockCount,
+        detailSlug: hit.detailSlug,
+      };
     }
-    return {
-      ...fund,
-      hasHoldings: true,
-      stockCount: hit.stockCount,
-      detailSlug: hit.detailSlug,
-    };
+    if (fund.hasHoldings === true && fund.stockCount && fund.stockCount > 0) {
+      return fund;
+    }
+    return { ...fund, hasHoldings: false, stockCount: 0, detailSlug: null };
   });
 }

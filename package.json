@@ -71,6 +71,7 @@
     "db:fix-amcs": "node scripts/node-with-ca.mjs db/seed/fix-amc-assignments.mjs",
     "db:compute-signals": "node scripts/node-with-ca.mjs db/compute/compute-signals.mjs",
     "db:compute-overlaps": "node scripts/node-with-ca.mjs db/compute/compute-overlaps.mjs",
+    "db:backfill-market-cap": "node scripts/node-with-ca.mjs db/compute/backfill-market-cap-category.mjs",
     "db:compute-all": "node scripts/node-with-ca.mjs db/compute/compute-signals.mjs && node scripts/node-with-ca.mjs db/compute/compute-overlaps.mjs",
     "db:refresh-holdings": "node scripts/node-with-ca.mjs scripts/pipeline/03-monthly-mf-holdings.mjs",
     "db:status": "node scripts/node-with-ca.mjs db/check-full-counts.mjs",

@@ -43,7 +43,13 @@ export default function TopStocksLoader({ initialPayload }: Props) {
       })
       .catch((err: Error) => {
         if (cancelled) return;
-        setError(err.message || 'Failed to load Top Stocks data');
+        const msg = err.message || '';
+        if (/404|not found/i.test(msg)) {
+          setPayload(emptyTopStocksPayload());
+          setError(null);
+          return;
+        }
+        setError(msg || 'Failed to load Top Stocks data');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
