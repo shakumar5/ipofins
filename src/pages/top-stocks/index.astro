@@ -34,7 +34,7 @@ const jsonLd = {
   description="See which large, mid, small and micro cap stocks mutual funds, super investors and 1% Club holders are accumulating or distributing."
   canonicalUrl={canonical}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
 
   <div class="container-wide py-8 sm:py-10 space-y-8">
     <PageHeader
