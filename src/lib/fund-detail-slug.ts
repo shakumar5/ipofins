@@ -92,7 +92,7 @@ export function resolveDetailSlug(
   stockCounts: Record<string, number>,
 ): string | null {
   const pack = (detailSlug: string | null | undefined): string | null => {
-    if (!detailSlug || !slugs.has(detailSlug) || !(stockCounts[detailSlug] ?? 0)) return null;
+    if (!detailSlug || !(stockCounts[detailSlug] ?? 0)) return null;
     return detailSlug;
   };
 

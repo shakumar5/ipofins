@@ -37,6 +37,7 @@ import {
 } from './lib/fund-holdings-export.mjs';
 import { enrichHoldingsMetaWithOverlap, buildHoldingsMetaFromJson, mergeHoldingsMeta } from './lib/mf-hub-holdings-meta.mjs';
 import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
+import { buildTopStocksExport } from './lib/top-stocks-export.mjs';
 import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -292,11 +293,37 @@ function alignFundOverlapExports(aliases = {}) {
     aligned.push({ slug: resolved, name: String(fund.name) });
   }
 
-  if (!changed && aligned.length === index.length) return;
-
   aligned.sort((a, b) => a.name.localeCompare(b.name));
+  const indexSlugSet = new Set(aligned.map((f) => f.slug));
+
+  const resolveRowSlug = (raw) => {
+    const slug = String(raw);
+    if (indexSlugSet.has(slug)) return slug;
+    for (const candidate of fundOverlapSlugCandidates(slug, aliases)) {
+      if (indexSlugSet.has(candidate)) return candidate;
+    }
+    return resolveSlug(slug) && indexSlugSet.has(resolveSlug(slug)) ? resolveSlug(slug) : slug;
+  };
+
+  let rowsNormalized = 0;
+  for (const rows of Object.values(bySlug)) {
+    if (!Array.isArray(rows)) continue;
+    for (const row of rows) {
+      const next = resolveRowSlug(row.slug);
+      if (next !== row.slug) {
+        row.slug = next;
+        rowsNormalized++;
+      }
+    }
+  }
+
+  if (!changed && aligned.length === index.length && rowsNormalized === 0) return;
+
   writeJson('fund-overlap-index.json', aligned);
-  console.log(`  ℹ Aligned fund-overlap index (${aligned.length} funds) with overlap pair slugs`);
+  if (rowsNormalized > 0) writeJson('fund-overlaps-by-fund.json', byFund);
+  console.log(
+    `  ℹ Aligned fund-overlap index (${aligned.length} funds)${rowsNormalized ? `; normalized ${rowsNormalized} row slug(s)` : ''}`,
+  );
 }
 
 function fundOverlapSlugCandidates(slug, aliases = {}) {
@@ -855,6 +882,20 @@ async function main() {
     } catch (e) {
       console.warn('  ⚠ 1% Club holder positions export failed:', e.message);
       doneOpcPositions('skipped');
+    }
+  }
+
+  if (isDbConfigured()) {
+    const doneTopStocks = logStep('Top Stocks export');
+    try {
+      const topStocks = await withDbRetry(() => buildTopStocksExport(sql), {
+        label: 'Top Stocks export',
+      });
+      writeJson('top-stocks.json', topStocks);
+      doneTopStocks(topStocks.hasData ? 'ok' : 'empty');
+    } catch (e) {
+      console.warn('  ⚠ Top Stocks export failed:', e.message);
+      doneTopStocks('skipped');
     }
   }
 

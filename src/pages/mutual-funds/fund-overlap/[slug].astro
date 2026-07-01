@@ -10,6 +10,7 @@ import {
   fundOverlapDetailHref,
   MF_LIST_BACK,
 } from '../../../lib/list-back-nav';
+import { buildFundOverlapPageSlugResolver } from '../../../lib/fund-overlap-slug';
 import ListBackLink from '../../../components/ListBackLink.astro';
 
 const defaultBack = defaultFundOverlapBack();
@@ -30,18 +31,23 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const { fundName } = Astro.props;
+const overlapIndex = await getFundsWithOverlaps();
+const { resolve: resolveOverlapPageSlug } = buildFundOverlapPageSlugResolver(overlapIndex);
 const overlaps = (await getFundOverlaps(slug!, 15)) as Array<Record<string, unknown>>;
 const holdingsMeta = await getFundHoldingsLinkMeta();
 
 const overlapRows = overlaps.map((row) => {
   const stockNames = parsePgTextArray(row.common_stock_names);
   const count = Number(row.common_stocks ?? stockNames.length);
+  const rawSlug = String(row.slug);
+  const pageSlug = resolveOverlapPageSlug(rawSlug, String(row.name));
   return {
-    slug: String(row.slug),
+    slug: pageSlug ?? rawSlug,
     name: String(row.name),
     overlapPct: row.overlap_pct != null ? Number(row.overlap_pct) : null,
     stockCount: count,
     stockNames: stockNames.length > 0 ? stockNames : [],
+    hasOverlapPage: Boolean(pageSlug),
   };
 });
 
@@ -109,7 +115,11 @@ const jsonLd = {
               return (
               <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30 align-top">
                 <td class="px-4 py-3">
-                  <a href={fundOverlapDetailHref(row.slug, 'fund-overlap')} class="font-medium text-primary-600 hover:underline">{row.name}</a>
+                  {row.hasOverlapPage ? (
+                    <a href={fundOverlapDetailHref(row.slug, 'fund-overlap')} class="font-medium text-primary-600 hover:underline">{row.name}</a>
+                  ) : (
+                    <span class="font-medium text-surface-900 dark:text-white">{row.name}</span>
+                  )}
                   {hasDetailPage && detailSlug && (
                     <span class="text-xs text-surface-400 block">
                       <a href={fundHoldingsHref(detailSlug)} class="hover:underline">View holdings →</a>
