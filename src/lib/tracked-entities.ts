@@ -146,6 +146,9 @@ export function getSuperInvestors(): Entity[] {
 
 export const SUPER_INVESTOR_TYPES: EntityType[] = ['individual', 'family_office', 'fii', 'dii'];
 
+/** Domestic & foreign institutional investors (LIC, large FIIs, etc.) */
+export const DII_FII_TYPES: EntityType[] = ['dii', 'fii'];
+
 export function getAllTrackedEntities(): Entity[] {
   return getSuperInvestors();
 }

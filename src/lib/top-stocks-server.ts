@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { sql } from './db';
 import { holderFilingKeySql, stockListingKeySql } from './holdings-dedupe';
-import { SUPER_INVESTOR_TYPES } from './tracked-entities';
+import { DII_FII_TYPES, SUPER_INVESTOR_TYPES } from './tracked-entities';
 import {
   buildBuckets,
   emptyTopStocksPayload,
@@ -156,6 +156,47 @@ async function loadSuperInvestorFlows(): Promise<{ period: string; rows: RawFlow
   return { period, rows };
 }
 
+async function loadDiiFiiFlows(): Promise<{ period: string; rows: RawFlowRow[] }> {
+  if (!sql) return { period: '', rows: [] };
+
+  const qRow = (await sql`
+    SELECT MAX(ec.quarter) AS q FROM entity_changes ec
+    JOIN tracked_entities te ON te.id = ec.entity_id
+    WHERE te.type = ANY(${DII_FII_TYPES}) AND ec.strategy_id IS NULL
+  `) as { q: string | null }[];
+  const quarter = qRow[0]?.q;
+  if (!quarter) return { period: '', rows: [] };
+
+  const periodRows = (await sql`
+    SELECT TRIM(TO_CHAR(${quarter}::date, 'FMMonth YYYY')) AS label
+  `) as { label: string }[];
+  const period = periodRows[0]?.label ? `Q ${periodRows[0].label}` : String(quarter);
+
+  const rows = (await sql`
+    WITH by_stock AS (
+      SELECT ec.stock_id,
+        SUM(GREATEST(ec.value_change_cr, 0)) AS bought_cr,
+        SUM(GREATEST(-ec.value_change_cr, 0)) AS sold_cr
+      FROM entity_changes ec
+      JOIN tracked_entities te ON te.id = ec.entity_id
+      WHERE ec.quarter = ${quarter}::date
+        AND ec.strategy_id IS NULL
+        AND te.type = ANY(${DII_FII_TYPES})
+        AND ec.change_type <> 'unchanged'
+      GROUP BY ec.stock_id
+    )
+    SELECT s.slug AS stock_slug, s.name AS stock_name, COALESCE(sec.name, '') AS sector,
+           s.market_cap_category, b.bought_cr, b.sold_cr
+    FROM by_stock b
+    JOIN stocks s ON s.id = b.stock_id
+    LEFT JOIN sectors sec ON sec.id = s.sector_id
+    WHERE s.market_cap_category IN ('large', 'mid', 'small', 'micro')
+      AND (b.bought_cr > 0 OR b.sold_cr > 0)
+  `) as RawFlowRow[];
+
+  return { period, rows };
+}
+
 async function loadOnePercentClubFlows(): Promise<{ period: string; rows: RawFlowRow[] }> {
   if (!sql) return { period: '', rows: [] };
 
@@ -218,20 +259,23 @@ async function loadOnePercentClubFlows(): Promise<{ period: string; rows: RawFlo
 }
 
 async function loadTopStocksPayloadFromDb(): Promise<TopStocksPayload> {
-  const [mf, si, opc] = await Promise.all([
+  const [mf, si, diiFii, opc] = await Promise.all([
     loadMutualFundFlows(),
     loadSuperInvestorFlows(),
+    loadDiiFiiFlows(),
     loadOnePercentClubFlows(),
   ]);
   const buckets = {
     ...buildBuckets('mutual_funds', mf.rows),
     ...buildBuckets('super_investors', si.rows),
+    ...buildBuckets('dii_fii', diiFii.rows),
     ...buildBuckets('one_percent_club', opc.rows),
   };
   return {
     periods: {
       mutual_funds: mf.period,
       super_investors: si.period,
+      dii_fii: diiFii.period,
       one_percent_club: opc.period,
     },
     buckets,

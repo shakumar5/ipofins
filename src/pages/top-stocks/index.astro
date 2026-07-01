@@ -2,10 +2,13 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import TopStocksLoader from '../../components/top-stocks/TopStocksLoader.tsx';
+import TopStocksInternalLinks from '../../components/top-stocks/TopStocksInternalLinks.astro';
 import { loadTopStocksPayload } from '../../lib/top-stocks-server';
+import { parseTopStocksFiltersFromSearch } from '../../lib/top-stocks-meta';
 import { canonicalFor } from '../../lib/tracked-entities';
 
 const initialPayload = await loadTopStocksPayload();
+const initialFilters = parseTopStocksFiltersFromSearch(Astro.url.search);
 const path = '/top-stocks';
 const canonical = canonicalFor(path);
 
@@ -42,6 +45,8 @@ const jsonLd = {
       source="Holdings and shareholding filings"
     />
 
-    <TopStocksLoader client:load initialPayload={initialPayload} />
+    <TopStocksLoader client:load initialPayload={initialPayload} initialFilters={initialFilters} />
+
+    <TopStocksInternalLinks />
   </div>
 </BaseLayout>

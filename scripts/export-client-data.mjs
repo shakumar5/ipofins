@@ -889,7 +889,7 @@ async function main() {
 
   const doneTopStocks = logStep('Top Stocks export');
   const emptyTopStocks = {
-    periods: { mutual_funds: '', super_investors: '', one_percent_club: '' },
+    periods: { mutual_funds: '', super_investors: '', dii_fii: '', one_percent_club: '' },
     buckets: {},
     hasData: false,
   };

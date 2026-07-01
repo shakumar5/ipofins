@@ -1,4 +1,9 @@
-import { basesMatch, resolveDetailSlug, slugVariants } from './fund-detail-slug';
+import {
+  basesMatch,
+  canonicalHoldingsPageSlug,
+  resolveDetailSlug,
+  slugVariants,
+} from './fund-detail-slug';
 import fundSlugAliases from '../data/fund-slug-aliases.json';
 import type { MfHubFundRow } from './mf-hub-build';
 
@@ -29,36 +34,47 @@ export function enrichMfHubFundsWithHoldings(
     return { detailSlug, stockCount };
   };
 
+  const toCanonical = (fundSlug: string, resolved: string): string =>
+    canonicalHoldingsPageSlug(fundSlug, resolved, slugAliases);
+
   const resolveRow = (fund: MfHubFundRow) => {
-    if ((stockCounts[fund.slug] ?? 0) > 0) {
-      const direct = pack(fund.slug);
-      if (direct) return direct;
+    // Trust export-built detailSlug when still valid — avoids replacing with listable slugs.
+    if (fund.detailSlug) {
+      const canonical = toCanonical(fund.slug, fund.detailSlug);
+      const existing = pack(canonical);
+      if (existing) return existing;
     }
 
     for (const variant of slugVariants(fund.slug)) {
       const alias = slugAliases[variant];
+      if (!alias) continue;
       const hit = pack(alias);
-      if (hit) return hit;
+      if (hit) return { detailSlug: alias, stockCount: hit.stockCount };
     }
 
     const viaDetail = resolveDetailSlug(fund.slug, '', slugSet, stockCounts);
-    const detailHit = pack(viaDetail);
-    if (detailHit) return detailHit;
+    if (viaDetail) {
+      const canonical = toCanonical(fund.slug, viaDetail);
+      const hit = pack(canonical);
+      if (hit) return hit;
+    }
 
     for (const slug of slugSet) {
       if (basesMatch(slug, fund.slug)) {
-        const hit = pack(slug);
+        const canonical = toCanonical(fund.slug, slug);
+        const hit = pack(canonical);
         if (hit) return hit;
       }
     }
 
     for (const variant of slugVariants(fund.slug)) {
       for (const candidate of [
-        variant + '-growth-option-direct-plan',
-        variant + '-direct-plan',
+        `${variant}-growth-option-direct-plan`,
+        `${variant}-direct-plan`,
         variant,
       ]) {
-        const hit = pack(candidate);
+        const canonical = toCanonical(fund.slug, candidate);
+        const hit = pack(canonical);
         if (hit) return hit;
       }
     }
@@ -76,7 +92,7 @@ export function enrichMfHubFundsWithHoldings(
         detailSlug: hit.detailSlug,
       };
     }
-    if (fund.hasHoldings === true && fund.stockCount && fund.stockCount > 0) {
+    if (fund.hasHoldings === true && fund.stockCount && fund.stockCount > 0 && fund.detailSlug) {
       return fund;
     }
     return { ...fund, hasHoldings: false, stockCount: 0, detailSlug: null };

@@ -40,6 +40,19 @@ export function fundHoldingsPath(detailSlug: string): string {
   return `/mutual-funds/fund/${detailSlug}-holdings`;
 }
 
+/** Map listable / AMFI slug → canonical static holdings page slug when aliases exist. */
+export function canonicalHoldingsPageSlug(
+  fundSlug: string,
+  resolvedSlug: string,
+  aliases: Record<string, string> = ALIASES,
+): string {
+  for (const variant of slugVariants(fundSlug)) {
+    const canonical = aliases[variant];
+    if (canonical) return canonical;
+  }
+  return resolvedSlug;
+}
+
 export interface FundHoldingsLinkMeta {
   slugs: Set<string>;
   stockCounts: Record<string, number>;
@@ -96,18 +109,28 @@ export function resolveDetailSlug(
     return detailSlug;
   };
 
+  const finish = (detailSlug: string | null | undefined): string | null => {
+    if (!detailSlug) return null;
+    const canonical = canonicalHoldingsPageSlug(fundSlug, detailSlug);
+    return pack(canonical);
+  };
+
   for (const variant of slugVariants(fundSlug)) {
     const alias = ALIASES[variant];
     if (alias) {
-      const hit = pack(alias);
+      const hit = finish(alias);
       if (hit) return hit;
     }
   }
 
-  if (pack(fundSlug)) return fundSlug;
+  const direct = finish(fundSlug);
+  if (direct) return direct;
 
   for (const s of slugs) {
-    if (basesMatch(s, fundSlug) && pack(s)) return s;
+    if (basesMatch(s, fundSlug)) {
+      const hit = finish(s);
+      if (hit) return hit;
+    }
   }
 
   const candidates: string[] = [];
@@ -122,7 +145,7 @@ export function resolveDetailSlug(
   }
 
   for (const c of candidates) {
-    const hit = pack(c);
+    const hit = finish(c);
     if (hit) return hit;
   }
 

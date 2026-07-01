@@ -119,19 +119,14 @@ export async function loadFundHoldingsIndexFromDb(sql, overlapSlugs = []) {
   return fundRows.map(mapFundRow);
 }
 
-/** Mirror resolved hub row counts onto AMFI / table slugs for client reconciliation. */
+/** Ensure canonical holdings page slugs carry resolved hub stock counts (not listable AMFI slugs). */
 export function expandStockCountsFromHubRows(stockCounts, hubRows = []) {
   const counts = { ...(stockCounts || {}) };
   for (const row of hubRows) {
-    if (!row?.slug || !row.hasHoldings || !row.detailSlug) continue;
-    const count = Math.max(
-      Number(row.stockCount) || 0,
-      Number(counts[row.detailSlug]) || 0,
-      Number(counts[row.slug]) || 0,
-    );
+    if (!row?.hasHoldings || !row.detailSlug) continue;
+    const count = Math.max(Number(row.stockCount) || 0, Number(counts[row.detailSlug]) || 0);
     if (count <= 0) continue;
     counts[row.detailSlug] = Math.max(counts[row.detailSlug] || 0, count);
-    counts[row.slug] = Math.max(counts[row.slug] || 0, count);
   }
   return counts;
 }
