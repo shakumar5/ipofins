@@ -920,6 +920,51 @@ export function summarizeQuarterTrend(history: EntityQuarterHistoryRow[]): strin
   return parts.length ? parts.join(' · ') : 'Portfolio steady quarter-on-quarter';
 }
 
+export interface PortfolioQoQ {
+  pctChange: number | null;
+  deltaCr: number | null;
+  holdingsDelta: number | null;
+  priorQuarter: string | null;
+}
+
+/** Quarter-on-quarter portfolio change from entity_quarterly_stats history (newest first). */
+export function computePortfolioQoQ(history: EntityQuarterHistoryRow[]): PortfolioQoQ {
+  if (history.length < 2) {
+    return { pctChange: null, deltaCr: null, holdingsDelta: null, priorQuarter: null };
+  }
+  const latest = history[0]!;
+  const prior = history[1]!;
+  const latestVal = latest.portfolioValueCr;
+  const priorVal = prior.portfolioValueCr;
+  let pctChange: number | null = null;
+  let deltaCr: number | null = null;
+  if (latestVal != null && priorVal != null && priorVal > 0) {
+    deltaCr = latestVal - priorVal;
+    pctChange = (deltaCr / priorVal) * 100;
+  }
+  const holdingsDelta =
+    latest.totalHoldings != null && prior.totalHoldings != null
+      ? latest.totalHoldings - prior.totalHoldings
+      : null;
+  return { pctChange, deltaCr, holdingsDelta, priorQuarter: prior.quarter };
+}
+
+/** Signed QoQ % label for profile headers, e.g. "+12.4% QoQ". */
+export function formatPortfolioQoQPct(pct: number | null | undefined): string | null {
+  const n = toNum(pct);
+  if (n == null || Math.abs(n) < 0.05) return null;
+  const sign = n > 0 ? '+' : '';
+  return `${sign}${n.toFixed(1)}% QoQ`;
+}
+
+/** Signed ₹ Cr delta for profile headers, e.g. "+₹530 Cr". */
+export function formatPortfolioDeltaCr(deltaCr: number | null | undefined): string | null {
+  const n = toNum(deltaCr);
+  if (n == null || Math.abs(n) < 0.05) return null;
+  const sign = n > 0 ? '+' : '−';
+  return `${sign}${formatCr(Math.abs(n))}`;
+}
+
 // ─── Neon enrichment (migration 005 — optional) ──────────────────
 //
 // Wrapped in try/catch + a feature check so the static build never hard-fails

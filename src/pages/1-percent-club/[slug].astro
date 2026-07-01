@@ -13,6 +13,7 @@ import {
   ONE_PERCENT_CLUB_HUB,
 } from '../../lib/tracked-entities';
 import StockCrossLinks from '../../components/tracked/StockCrossLinks.astro';
+import OwnershipBreakdown from '../../components/tracked/OwnershipBreakdown.astro';
 import { loadSmartMoneyStockSlugs } from '../../lib/smart-money-stock-slugs';
 import { stockSignalPath } from '../../lib/stock-signal-meta';
 
@@ -130,6 +131,8 @@ const latestQuarter = detail.summary.quarter;
     showOnePercentClub={false}
     latestQuarter={latestQuarter}
   />
+
+  <OwnershipBreakdown detail={detail} />
 
   <section class="container-wide py-4 pb-10">
     <OnePercentStockDetail client:load detail={detail} mfStockSignalUrl={mfStockSignalUrl} />
