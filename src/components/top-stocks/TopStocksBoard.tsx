@@ -9,7 +9,7 @@ import {
   type TopStocksFlow,
   type TopStocksPayload,
   type TopStocksSource,
-} from '../../lib/top-stocks';
+} from '../../lib/top-stocks-shared';
 import { formatCr, onePercentStockUrl } from '../../lib/tracked-entities';
 
 interface Props {

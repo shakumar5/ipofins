@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import FundTable from './FundTable';
+import { fetchJsonCached } from '../../lib/client-data';
+import {
+  enrichMfHubFundsWithHoldings,
+  FUND_HOLDINGS_ALIASES_URL,
+  FUND_HOLDINGS_META_URL,
+  type FundHoldingsMetaDisk,
+} from '../../lib/enrich-mf-hub-funds';
 import { loadMfHubFunds, loadMfHubMeta, type MfHubMeta } from '../../lib/mf-hub-client';
 import type { MfHubFundRow } from '../../lib/mf-hub-build';
 
@@ -17,9 +24,18 @@ export default function FundTableLoader({ table, basePath, defaultCategory = 'Al
   useEffect(() => {
     let cancelled = false;
 
-    loadMfHubFunds(table)
-      .then((rows) => {
-        if (!cancelled) setFunds(rows);
+    Promise.all([
+      loadMfHubFunds(table),
+      fetchJsonCached<FundHoldingsMetaDisk>(FUND_HOLDINGS_META_URL).catch(() => null),
+      fetchJsonCached<Record<string, string>>(FUND_HOLDINGS_ALIASES_URL).catch(() => ({})),
+    ])
+      .then(([rows, holdingsMeta, amfiAliases]) => {
+        if (cancelled) return;
+        if (holdingsMeta?.stockCounts && Object.keys(holdingsMeta.stockCounts).length > 0) {
+          setFunds(enrichMfHubFundsWithHoldings(rows, holdingsMeta, amfiAliases));
+          return;
+        }
+        setFunds(rows);
       })
       .catch((err: Error) => {
         if (!cancelled) setError(err.message || 'Failed to load funds');

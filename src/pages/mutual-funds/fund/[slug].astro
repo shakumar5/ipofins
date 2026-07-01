@@ -3,7 +3,8 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PageHeader from '../../../components/layout/PageHeader.astro';
 import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug, type FundRecord } from '../../../lib/data/funds';
-import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount } from '../../../lib/data/holdings';
+import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount, getFundsWithOverlaps } from '../../../lib/data/holdings';
+import { buildFundOverlapPageSlugResolver } from '../../../lib/fund-overlap-slug';
 import { readFundHoldingsAliasesFromDisk } from '../../../lib/holdings-compare-server';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 import { catToSlug } from '../../../lib/fund-category-slug';
@@ -102,6 +103,9 @@ const faqJsonLd = {
 const fundHoldingsRows = (await getFundHoldings(fund.slug)) as Array<Record<string, unknown>>;
 const portfolioStockCount = await getFundPortfolioStockCount(fund.slug);
 const fundOverlaps = (await getFundOverlaps(fund.slug, 5)) as Array<Record<string, unknown>>;
+const overlapIndex = await getFundsWithOverlaps();
+const { resolve: resolveOverlapPageSlug } = buildFundOverlapPageSlugResolver(overlapIndex);
+const selfOverlapPageSlug = resolveOverlapPageSlug(fund.slug, fund.name);
 const latestMonth = fundHoldingsRows[0]?.month
   ? new Date(String(fundHoldingsRows[0].month)).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
   : '';
@@ -278,14 +282,32 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4 section-accent">Portfolio Overlap</h2>
       <p class="text-sm text-surface-500 mb-4">Funds that share the most stock holdings with {fund.name}.</p>
       <div class="space-y-2">
-        {fundOverlaps.map((row) => (
-          <a href={fundOverlapDetailHref(String(row.slug), 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })} class="card-compact flex items-center justify-between hover:shadow-md transition-shadow">
-            <span class="text-sm font-medium text-surface-900 dark:text-white">{row.name}</span>
-            <span class="text-sm font-bold text-primary-600">{row.overlap_pct != null ? `${Number(row.overlap_pct).toFixed(1)}% overlap` : '—'}</span>
-          </a>
-        ))}
+        {fundOverlaps.map((row) => {
+          const pageSlug =
+            (row.overlapPageSlug as string | null | undefined) ??
+            resolveOverlapPageSlug(String(row.slug), String(row.name));
+          const cardClass = 'card-compact flex items-center justify-between transition-shadow';
+          const inner = (
+            <>
+              <span class="text-sm font-medium text-surface-900 dark:text-white">{row.name}</span>
+              <span class="text-sm font-bold text-primary-600">{row.overlap_pct != null ? `${Number(row.overlap_pct).toFixed(1)}% overlap` : '—'}</span>
+            </>
+          );
+          return pageSlug ? (
+            <a
+              href={fundOverlapDetailHref(pageSlug, 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })}
+              class={`${cardClass} hover:shadow-md`}
+            >
+              {inner}
+            </a>
+          ) : (
+            <div class={cardClass}>{inner}</div>
+          );
+        })}
       </div>
-      <a href={fundOverlapDetailHref(fund.slug, 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })} class="inline-block mt-3 text-sm text-primary-600 hover:underline">View full overlap analysis →</a>
+      {selfOverlapPageSlug && (
+        <a href={fundOverlapDetailHref(selfOverlapPageSlug, 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })} class="inline-block mt-3 text-sm text-primary-600 hover:underline">View full overlap analysis →</a>
+      )}
     </section>
   )}
 

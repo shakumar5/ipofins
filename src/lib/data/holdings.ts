@@ -3,6 +3,7 @@
  */
 
 import { requireDb } from '../db';
+import { buildFundOverlapPageSlugResolver } from '../fund-overlap-slug';
 import {
   monthsFromIndex,
   readFundHoldingsMetaFromDisk,
@@ -920,10 +921,20 @@ export async function getAMCHoldingsComparison(
 export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Record<string, unknown>[]> {
   const disk = readFundOverlapsByFundFromDisk();
   if (disk?.bySlug) {
+    const index = readFundOverlapIndexFromDisk();
+    const { resolve } = index?.length
+      ? buildFundOverlapPageSlugResolver(index)
+      : { resolve: (s: string) => s };
+
     for (const slug of fundSlugCandidates(fundSlug)) {
       const rows = disk.bySlug[slug];
       if (rows?.length) {
-        return rows.slice(0, limit).map((row) => ({ ...row })) as Record<string, unknown>[];
+        return rows.slice(0, limit).map((row) => {
+          const rawSlug = String(row.slug);
+          const fundName = row.name != null ? String(row.name) : undefined;
+          const pageSlug = resolve(rawSlug, fundName);
+          return { ...row, slug: pageSlug ?? rawSlug, overlapPageSlug: pageSlug } as Record<string, unknown>;
+        });
       }
     }
   }

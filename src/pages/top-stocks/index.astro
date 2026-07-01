@@ -1,11 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
-import TopStocksBoard from '../../components/top-stocks/TopStocksBoard.tsx';
-import { loadTopStocksPayload } from '../../lib/top-stocks';
+import TopStocksLoader from '../../components/top-stocks/TopStocksLoader.tsx';
+import { loadTopStocksPayload } from '../../lib/top-stocks-server';
 import { canonicalFor } from '../../lib/tracked-entities';
 
-const payload = await loadTopStocksPayload();
+const initialPayload = await loadTopStocksPayload();
 const path = '/top-stocks';
 const canonical = canonicalFor(path);
 
@@ -38,10 +38,10 @@ const jsonLd = {
       eyebrow="Market flows"
       title="Top Stocks"
       subtitle="Net rupee accumulation and distribution across mutual funds, super investors, and every 1% or larger non-promoter holder."
-      freshness={payload.hasData ? 'Latest filing period' : undefined}
-      source="Neon build time"
+      freshness={initialPayload.hasData ? 'Latest filing period' : undefined}
+      source="Holdings and shareholding filings"
     />
 
-    <TopStocksBoard client:load payload={payload} />
+    <TopStocksLoader client:load initialPayload={initialPayload} />
   </div>
 </BaseLayout>
