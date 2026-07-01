@@ -213,9 +213,13 @@ function bseQuarterEndLabel(quarter) {
 function holderTypeFromBseRow(row) {
   const blob = `${row.FLd_ShareholderType || row.Fld_ShareholderType || ''} ${row.Fld_SubCategory || ''} ${row.Fld_Level || ''}`.toLowerCase();
   if (/promoter/.test(blob)) return 'promoter';
+  if (/individual|huf|resident|noninstitutional|non.institutional/.test(blob)) return 'individual';
   if (/foreign|fii|fpi/.test(blob)) return 'fii';
-  if (/mutual|insurance|bank|institution|dii|venture|alternate investment/.test(blob)) return 'dii';
-  if (/individual|huf|resident/.test(blob)) return 'individual';
+  if (
+    /\b(mutual|insurance|bank|dii|venture)\b|alternate investment|financial institut/.test(blob)
+  ) {
+    return 'dii';
+  }
   return 'public';
 }
 
@@ -352,7 +356,7 @@ function parseBSEShareholdingHTML(html, sourceUrl) {
     if (inPromoter) holderType = 'promoter';
     else if (inPublic) holderType = 'public';
     else if (/foreign|fii|fiis/i.test(name)) holderType = 'fii';
-    else if (/mutual fund|mf|insurance|lic|dii/i.test(name)) holderType = 'dii';
+    else if (/\b(mutual fund|insurance|lic|dii)\b/i.test(name)) holderType = 'dii';
 
     rows.push({
       holderName: name,
@@ -450,9 +454,10 @@ export async function fetchNSEShareholdingPatternPuppeteer(stock, quarter) {
         let holderType = 'unknown';
         const cat = category.toLowerCase();
         if (/promoter/.test(cat) || /promoter/.test(name.toLowerCase())) holderType = 'promoter';
-        else if (/foreign|fii|fpi/.test(cat)) holderType = 'fii';
-        else if (/mutual|insurance|dii|bank|financial instit/.test(cat)) holderType = 'dii';
-        else if (/individual|huf|director|key managerial/.test(cat)) holderType = 'individual';
+    else if (/foreign|fii|fpi/.test(cat)) holderType = 'fii';
+    else if (/individual|huf|director|key managerial|noninstitutional|non.institutional/.test(cat)) {
+      holderType = 'individual';
+    } else if (/\b(mutual|insurance|dii|bank)\b|financial instit/.test(cat)) holderType = 'dii';
         else if (/public|body corporate|corporate|llp|trust|others/.test(cat)) holderType = 'public';
 
         out.push({

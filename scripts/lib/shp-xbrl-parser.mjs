@@ -12,9 +12,15 @@ function holderTypeFromContext(ctx, category) {
   if (/individualsorhuf/.test(c) && !/residentindividual|otherindian|otherforeign|nonresident/.test(c)) {
     return 'promoter';
   }
+  // Public individuals/HUFs — must run before broad "institution" (matches "noninstitutional").
+  if (/noninstitutional|non.institutional|non_institutional/.test(c)) return 'individual';
+  if (/individual|huf|director|keymanagerial|key managerial/.test(c)) return 'individual';
   if (/foreign|fii|fpi/.test(c)) return 'fii';
-  if (/mutual|insurance|dii|bank|institution/.test(c)) return 'dii';
-  if (/individual|huf|director/.test(c)) return 'individual';
+  if (
+    /\b(mutual|insurance|dii|bank)\b|institutionsdomestic|institutionsforeign|financialinstitut/.test(c)
+  ) {
+    return 'dii';
+  }
   return 'public';
 }
 

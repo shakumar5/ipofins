@@ -105,10 +105,12 @@ function classifyHolder(holderRow) {
 
   let holderType = holderRow.holderType || 'unknown';
   if (isPromoter) holderType = 'promoter';
-  if (/^fii|foreign\s/i.test(holderType)) holderType = 'fii';
-  if (/^dii|mutual\s+fund|insurance|lic/i.test(holderType)) holderType = 'dii';
   if (holderType === 'individuals' || holderType === 'individual') holderType = 'individual';
   if (holderType === 'body corporate') holderType = 'public';
+  if (/^fii|foreign\s/i.test(holderType)) holderType = 'fii';
+  if (/^dii|mutual\s+fund|insurance/i.test(holderType) || /^lic$/i.test(holderType.trim())) {
+    holderType = 'dii';
+  }
 
   return { isPromoter, holderType };
 }

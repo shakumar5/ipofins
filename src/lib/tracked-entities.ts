@@ -146,6 +146,12 @@ export function getSuperInvestors(): Entity[] {
 
 export const SUPER_INVESTOR_TYPES: EntityType[] = ['individual', 'family_office', 'fii', 'dii'];
 
+/** Top Stocks — super-investor flows (stock-pickers only; institutions use DII & FII). */
+export const SUPER_INVESTOR_FLOW_TYPES: EntityType[] = ['individual', 'family_office'];
+
+/** Domestic & foreign institutional investors (LIC, large FIIs, etc.) */
+export const DII_FII_TYPES: EntityType[] = ['dii', 'fii'];
+
 export function getAllTrackedEntities(): Entity[] {
   return getSuperInvestors();
 }
@@ -2156,6 +2162,7 @@ function bucketShpHolders(rows: OnePercentRow[]): Omit<StockShareholdingDetail, 
   const onePercentClub: OnePercentRow[] = [];
 
   for (const row of rows) {
+    const entityType = (row.entityType || '').toLowerCase();
     const type = (row.holderType || '').toLowerCase();
     const isPromoter = type === 'promoter';
     const isSI = Boolean(row.entitySlug && hasSuperInvestorProfile(row.entitySlug));
@@ -2164,6 +2171,25 @@ function bucketShpHolders(rows: OnePercentRow[]): Omit<StockShareholdingDetail, 
       promoters.push(row);
       continue;
     }
+
+    // Curated tracked-entity type wins over mis-parsed SHP holder_type (e.g. individual → dii).
+    if (entityType === 'individual' || entityType === 'family_office') {
+      superInvestors.push(row);
+      continue;
+    }
+    if (entityType === 'fii') {
+      fii.push(row);
+      continue;
+    }
+    if (entityType === 'dii') {
+      if (isMutualFundHolderName(row.holderName, row.holderType)) {
+        mutualFunds.push(row);
+      } else {
+        dii.push(row);
+      }
+      continue;
+    }
+
     if (isSI) {
       superInvestors.push(row);
       continue;

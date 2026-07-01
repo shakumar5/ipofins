@@ -5,13 +5,15 @@ import {
   emptyTopStocksPayload,
   type TopStocksPayload,
 } from '../../lib/top-stocks-shared';
+import type { TopStocksFilters } from '../../lib/top-stocks-meta';
 import TopStocksBoard from './TopStocksBoard';
 
 interface Props {
   initialPayload: TopStocksPayload;
+  initialFilters?: TopStocksFilters;
 }
 
-export default function TopStocksLoader({ initialPayload }: Props) {
+export default function TopStocksLoader({ initialPayload, initialFilters }: Props) {
   const [payload, setPayload] = useState<TopStocksPayload>(
     initialPayload.hasData ? initialPayload : emptyTopStocksPayload(),
   );
@@ -83,5 +85,5 @@ export default function TopStocksLoader({ initialPayload }: Props) {
     );
   }
 
-  return <TopStocksBoard payload={payload} />;
+  return <TopStocksBoard payload={payload} initialFilters={initialFilters} />;
 }

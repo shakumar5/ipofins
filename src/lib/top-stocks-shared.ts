@@ -2,13 +2,18 @@
  * Top Stocks — shared types and bucket helpers (safe for client bundles).
  */
 
-export type TopStocksSource = 'mutual_funds' | 'super_investors' | 'one_percent_club';
+export type TopStocksSource =
+  | 'mutual_funds'
+  | 'super_investors'
+  | 'dii_fii'
+  | 'one_percent_club';
 export type TopStocksFlow = 'accumulation' | 'distribution';
 export type TopStocksCap = 'large' | 'mid' | 'small' | 'micro';
 
 export const TOP_STOCKS_SOURCE_OPTIONS: { id: TopStocksSource; label: string }[] = [
   { id: 'mutual_funds', label: 'Mutual Funds' },
   { id: 'super_investors', label: 'Super Investors' },
+  { id: 'dii_fii', label: 'DII & FII' },
   { id: 'one_percent_club', label: '1% Club' },
 ];
 
@@ -110,7 +115,7 @@ export function buildBuckets(source: TopStocksSource, rows: RawFlowRow[]): Recor
 
 export function emptyTopStocksPayload(): TopStocksPayload {
   return {
-    periods: { mutual_funds: '', super_investors: '', one_percent_club: '' },
+    periods: { mutual_funds: '', super_investors: '', dii_fii: '', one_percent_club: '' },
     buckets: {},
     hasData: false,
   };

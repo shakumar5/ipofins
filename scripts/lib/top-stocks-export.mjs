@@ -8,7 +8,8 @@ import {
 
 const STOCK_LISTING_KEY = stockListingKeySql('s');
 const HOLDER_FILING_KEY = holderFilingKeySql('sph.holder_name');
-const SUPER_INVESTOR_TYPES = ['individual', 'family_office', 'fii', 'dii'];
+const SUPER_INVESTOR_FLOW_TYPES = ['individual', 'family_office'];
+const DII_FII_TYPES = ['dii', 'fii'];
 
 const TOP_STOCKS_CAP_OPTIONS = [
   { id: 'large' },
@@ -140,11 +141,11 @@ async function loadMutualFundFlows(sql) {
   return { period, rows };
 }
 
-async function loadSuperInvestorFlows(sql) {
+async function loadEntityFlows(sql, entityTypes) {
   const qRow = await sql`
     SELECT MAX(ec.quarter) AS q FROM entity_changes ec
     JOIN tracked_entities te ON te.id = ec.entity_id
-    WHERE te.type = ANY(${SUPER_INVESTOR_TYPES}) AND ec.strategy_id IS NULL
+    WHERE te.type = ANY(${entityTypes}) AND ec.strategy_id IS NULL
   `;
   const quarter = qRow[0]?.q;
   if (!quarter) return { period: '', rows: [] };
@@ -163,7 +164,7 @@ async function loadSuperInvestorFlows(sql) {
       JOIN tracked_entities te ON te.id = ec.entity_id
       WHERE ec.quarter = ${quarter}::date
         AND ec.strategy_id IS NULL
-        AND te.type = ANY(${SUPER_INVESTOR_TYPES})
+        AND te.type = ANY(${entityTypes})
         AND ec.change_type <> 'unchanged'
       GROUP BY ec.stock_id
     )
@@ -177,6 +178,14 @@ async function loadSuperInvestorFlows(sql) {
   `;
 
   return { period, rows };
+}
+
+async function loadSuperInvestorFlows(sql) {
+  return loadEntityFlows(sql, SUPER_INVESTOR_FLOW_TYPES);
+}
+
+async function loadDiiFiiFlows(sql) {
+  return loadEntityFlows(sql, DII_FII_TYPES);
 }
 
 async function loadOnePercentClubFlows(sql) {
@@ -239,20 +248,23 @@ async function loadOnePercentClubFlows(sql) {
 }
 
 export async function buildTopStocksExport(sql) {
-  const [mf, si, opc] = await Promise.all([
+  const [mf, si, diiFii, opc] = await Promise.all([
     loadMutualFundFlows(sql),
     loadSuperInvestorFlows(sql),
+    loadDiiFiiFlows(sql),
     loadOnePercentClubFlows(sql),
   ]);
   const buckets = {
     ...buildBuckets('mutual_funds', mf.rows),
     ...buildBuckets('super_investors', si.rows),
+    ...buildBuckets('dii_fii', diiFii.rows),
     ...buildBuckets('one_percent_club', opc.rows),
   };
   return {
     periods: {
       mutual_funds: mf.period,
       super_investors: si.period,
+      dii_fii: diiFii.period,
       one_percent_club: opc.period,
     },
     buckets,
