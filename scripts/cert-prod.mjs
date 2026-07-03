@@ -99,6 +99,7 @@ const pagePaths = [
   ['/mutual-funds/smart-money/stock-signal/tata-consultancy-services-limited/', 'TCS stock signal'],
   ['/mutual-funds/smart-money/signal/bse-limited/', 'BSE detail'],
   ['/mutual-funds/smart-money/sector-intelligence', 'sectors'],
+  ['/mutual-funds/smart-money/sector-intelligence/banks', 'sector-banks'],
 ];
 
 for (const [path, label] of pagePaths) {

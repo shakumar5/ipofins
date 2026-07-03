@@ -3,18 +3,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import AuthorByline from '../../components/AuthorByline.astro';
 import { BRAND_URL } from '../../lib/brand';
-import articlesData from '../../data/articles.json';
+import { getLearnArticles } from '../../lib/learn-articles';
 
 export function getStaticPaths() {
-  return articlesData
-    .filter(article => article.content && article.content.trim().length > 0)
-    .map(article => ({
-      params: { slug: article.slug },
-      props: { article },
-    }));
+  return getLearnArticles().map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
 }
 
 const { article } = Astro.props;
+const isInsight = 'tier' in article && Boolean(article.tier);
+const relatedArticles = getLearnArticles()
+  .filter((a) => a.slug !== article.slug)
+  .slice(0, 4);
 
 const articleUrl = `${BRAND_URL}/learn/${article.slug}`;
 
@@ -25,8 +27,8 @@ const jsonLd = {
   "description": article.excerpt,
   "url": articleUrl,
   "mainEntityOfPage": articleUrl,
-  "datePublished": "2026-01-01",
-  "dateModified": "2026-06-01",
+  "datePublished": article.date || "2026-01-01",
+  "dateModified": article.date || "2026-06-01",
   "author": { "@type": "Organization", "name": "IPOFins" },
   "publisher": {
     "@type": "Organization",
@@ -61,25 +63,40 @@ const jsonLd = {
       <!-- Header -->
       <div class="mb-8">
         <PageHeader
-          eyebrow={article.category}
+          eyebrow={isInsight ? 'Market Intelligence' : article.category}
           title={article.title}
           subtitle={article.excerpt}
+          freshness={isInsight && article.month ? `Data: ${article.month}` : undefined}
+          source={isInsight ? 'SEBI AMC disclosures' : undefined}
         >
-          <p class="mt-2 text-xs text-surface-400 dark:text-surface-500">{article.readTime} read</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <p class="text-xs text-surface-400 dark:text-surface-500">{article.readTime} read</p>
+            {isInsight && article.tier && (
+              <span class="insights-article-badge insights-article-badge--tier">Tier {article.tier}</span>
+            )}
+          </div>
           <AuthorByline date={'date' in article && article.date ? String(article.date) : 'June 2026'} />
         </PageHeader>
       </div>
 
       <!-- Content -->
-      <div class="prose dark:prose-invert max-w-none text-surface-700 dark:text-surface-300 leading-relaxed space-y-4">
-        <div set:html={article.content} />
-      </div>
+      {isInsight ? (
+        <div class="insights-article-shell">
+          <div class="insights-article-panel">
+            <div class="insights-article" set:html={article.content} />
+          </div>
+        </div>
+      ) : (
+        <div class="prose dark:prose-invert max-w-none text-surface-700 dark:text-surface-300 leading-relaxed space-y-4">
+          <div set:html={article.content} />
+        </div>
+      )}
 
       <!-- Related Articles -->
       <div class="mt-12 pt-8 border-t border-surface-200 dark:border-surface-700">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">More from Learn</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {articlesData.filter(a => a.slug !== article.slug && a.content && a.content.trim().length > 0).slice(0, 4).map(a => (
+          {relatedArticles.map(a => (
             <a href={`/learn/${a.slug}`} class="card-compact group block">
               <span class="text-xs text-primary-600 dark:text-primary-400">{a.category}</span>
               <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors mt-1">{a.title}</h3>

@@ -34,6 +34,7 @@ export function parseSmartMoneyTabFromPathname(pathname: string): SmartMoneyTab 
 
   for (const [tab, slug] of Object.entries(TAB_SLUGS) as [Exclude<SmartMoneyTab, 'tracker'>, string][]) {
     if (rest === slug) return tab;
+    if (rest.startsWith(`${slug}/`)) return null;
   }
   return null;
 }

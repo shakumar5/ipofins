@@ -2,6 +2,8 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
 import PortfolioOverlapChecker from '../../../components/funds/PortfolioOverlapChecker.tsx';
+import InsightsArticleCallout from '../../../components/insights/InsightsArticleCallout.astro';
+import { getInsightCallout } from '../../../lib/insights-callouts';
 import { BRAND_URL } from '../../../lib/brand';
 import { mfTabConfig } from '../../../lib/mf-section-config';
 import { loadPortfolioOverlapExport } from '../../../lib/portfolio-overlap-data';
@@ -18,6 +20,7 @@ const fundNameBySlug = overlapData
   : new Map<string, string>();
 const pageMeta = getPortfolioOverlapPageMeta(initialSlugs, fundNameBySlug, overlapData?.month);
 const canonicalPath = pageMeta.path || '/mutual-funds/portfolio-overlap-checker';
+const overlapInsight = getInsightCallout('overlap');
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -51,6 +54,12 @@ const jsonLd = {
       heading={pageMeta.heading || cfg.heading}
       subtitle={pageMeta.subtitle || cfg.subtitle}
     />
+  </section>
+
+  <section class="container-wide pb-4">
+    <div class="max-w-2xl">
+      <InsightsArticleCallout article={overlapInsight} label="Overlap analysis" />
+    </div>
   </section>
 
   <section class="container-wide pb-12">

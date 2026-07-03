@@ -39,14 +39,15 @@ export function parseTrackerFromPathname(pathname: string): {
   segment: string;
 } | null {
   if (!pathname.startsWith(TRACKER_BASE_PATH)) return null;
-  const rest = pathname.slice(TRACKER_BASE_PATH.length).replace(/^\//, '');
-  if (!rest || rest.startsWith('signal/')) return null;
+  const rest = pathname.slice(TRACKER_BASE_PATH.length).replace(/^\//, '').split('?')[0];
+  const segmentOnly = rest.split('/')[0];
+  if (!segmentOnly || segmentOnly.startsWith('signal/')) return null;
 
-  const inIdx = rest.indexOf('-in-');
+  const inIdx = segmentOnly.indexOf('-in-');
   if (inIdx < 1) return null;
 
-  const viewPart = rest.slice(0, inIdx);
-  const monthPart = rest.slice(inIdx + 4);
+  const viewPart = segmentOnly.slice(0, inIdx);
+  const monthPart = segmentOnly.slice(inIdx + 4);
   if (!MONTH_SLUG_RE.test(monthPart)) return null;
 
   const view = SLUG_TO_VIEW.get(viewPart);
@@ -55,7 +56,7 @@ export function parseTrackerFromPathname(pathname: string): {
   return {
     view,
     monthLabel: monthDisplay(monthPart),
-    segment: rest,
+    segment: segmentOnly,
   };
 }
 

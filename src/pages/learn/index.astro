@@ -1,10 +1,12 @@
 ﻿---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BRAND_URL } from '../../lib/brand';
-import articlesData from '../../data/articles.json';
+import { getLearnArticles, getInsightsArticles } from '../../lib/learn-articles';
 import PageHeader from '../../components/layout/PageHeader.astro';
 
-const articles = articlesData.filter(article => article.content && article.content.trim().length > 0);
+const articles = getLearnArticles();
+const insightsArticles = getInsightsArticles();
+const evergreenArticles = articles.filter((a) => !insightsArticles.some((i) => i.slug === a.slug));
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -56,10 +58,44 @@ const faqJsonLd = {
     />
   </section>
 
-  <!-- Articles Grid -->
+  <!-- Market Intelligence (auto-generated) -->
+  {insightsArticles.length > 0 && (
+    <section class="container-wide py-6">
+      <div class="mb-4">
+        <h2 class="text-xl font-bold text-surface-900 dark:text-white">Market Intelligence</h2>
+        <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">
+          Data-driven articles refreshed when mutual fund holdings and institutional data updates.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {insightsArticles.map(article => (
+          <a href={`/learn/${article.slug}`} class="insights-index-card card group block">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="insights-article-badge">Market Intelligence</span>
+              <span class="text-xs text-surface-400 dark:text-surface-500">{article.readTime}</span>
+              {article.month && (
+                <span class="insights-article-badge insights-article-badge--tier">{article.month}</span>
+              )}
+            </div>
+            <h3 class="text-base font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors mb-2">
+              {article.title}
+            </h3>
+            <p class="text-sm text-surface-500 dark:text-surface-400 line-clamp-2">
+              {article.excerpt}
+            </p>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- Evergreen Guides -->
   <section class="container-wide py-6">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white">Guides & Education</h2>
+    </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {articles.map(article => (
+      {evergreenArticles.map(article => (
         <a href={`/learn/${article.slug}`} class="card group block">
           <div class="flex items-center gap-2 mb-3">
             <span class="badge bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">

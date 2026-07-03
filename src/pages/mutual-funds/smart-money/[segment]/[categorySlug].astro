@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import SmartMoneyHubView from '../../../../components/funds/SmartMoneyHubView.astro';
+import { BRAND_URL } from '../../../../lib/brand';
+import { resolveSmartMoneyPage } from '../../../../lib/smart-money-page-context';
+import { smartMoneyPathFromSegment } from '../../../../lib/smart-money-static-segments';
+import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import {
+  parseTrackerListFiltersFromSearch,
+  trackerPathWithListFilters,
+} from '../../../../lib/smart-money-tracker-filters-meta';
+import { loadTrackerCategoryPathParams } from '../../../../lib/smart-money-tracker-filters-server';
+
+export function getStaticPaths() {
+  const rows = loadTrackerCategoryPathParams();
+  if (!rows.length) {
+    return [{ params: { segment: '_placeholder', categorySlug: 'all' }, props: { segment: '_placeholder', categoryName: 'All' } }];
+  }
+  return rows.map(({ segment, categorySlug, categoryName }) => ({
+    params: { segment, categorySlug },
+    props: { segment, categoryName },
+  }));
+}
+
+const { segment, categoryName } = Astro.props;
+const isPlaceholder = segment === '_placeholder';
+const pathname = isPlaceholder ? '/mutual-funds/smart-money' : smartMoneyPathFromSegment(`${segment}/${Astro.params.categorySlug}`);
+
+if (!isPlaceholder && Astro.url.search) {
+  const legacy = parseTrackerListFiltersFromSearch(Astro.url.search);
+  if (legacy.category !== 'All' && legacy.category !== categoryName) {
+    return Astro.redirect(trackerPathWithListFilters(smartMoneyPathFromSegment(segment), legacy), 301);
+  }
+}
+
+const trackerPathname = isPlaceholder ? '/mutual-funds/smart-money' : smartMoneyPathFromSegment(segment);
+const { parsed, parsedTab, pageMeta, trackerBootstrap } = resolveSmartMoneyPage(trackerPathname);
+const sm = loadSmartMoneyTrackerLinks();
+const initialTrackerFilters = isPlaceholder
+  ? undefined
+  : {
+      category: categoryName,
+      sector: parseTrackerListFiltersFromSearch(Astro.url.search).sector,
+    };
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: pageMeta.heading || 'Smart Money Tracker',
+  description: pageMeta.description,
+  url: `${BRAND_URL}${pathname}`,
+};
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pathname}`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  {trackerBootstrap && !trackerBootstrap.data && (
+    <>
+      <link slot="head" rel="preload" href={trackerBootstrap.preloadMonthUrl} as="fetch" crossorigin />
+      <link slot="head" rel="preload" href="/data/smart-money-tracker-index.json" as="fetch" crossorigin />
+    </>
+  )}
+  {isPlaceholder ? (
+    <div class="container-wide py-12 text-center text-sm text-surface-500">
+      <p>Run <code>npm run export:client-data</code> to generate tracker category pages.</p>
+    </div>
+  ) : (
+    <SmartMoneyHubView
+      pageMeta={pageMeta}
+      parsed={parsed}
+      parsedTab={parsedTab}
+      sm={sm}
+      trackerBootstrap={trackerBootstrap}
+      initialTrackerFilters={initialTrackerFilters}
+    />
+  )}
+</BaseLayout>

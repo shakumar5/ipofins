@@ -6,6 +6,64 @@ import { join } from 'path';
 export const SITE = 'https://ipofins.com';
 export const SITEMAP_URL_LIMIT = 45_000;
 
+/** Indexable Top Stocks filter URLs (path-based landing pages). */
+export function collectTopStocksFilterSitemapUrls(site = SITE) {
+  const sourceSlugs = {
+    mutual_funds: 'mutual-funds',
+    super_investors: 'super-investors',
+    dii_fii: 'dii-fii',
+    one_percent_club: 'one-percent-club',
+  };
+  const caps = ['large', 'mid', 'small', 'micro'];
+  const flows = ['accumulation', 'distribution'];
+  const urls = [];
+  for (const [source, sourceSlug] of Object.entries(sourceSlugs)) {
+    for (const cap of caps) {
+      for (const flow of flows) {
+        urls.push(`${site}/top-stocks/${sourceSlug}/${cap}/${flow}`);
+      }
+    }
+  }
+  return urls;
+}
+
+/** Indexable Smart Money Signal filter URLs (month × cap × signal). */
+export function collectSmartMoneySignalFilterSitemapUrls(site = SITE, cwd = process.cwd()) {
+  const indexPath = join(cwd, 'public', 'data', 'smart-money-signals-index.json');
+  if (!existsSync(indexPath)) return [];
+  let index;
+  try {
+    index = JSON.parse(readFileSync(indexPath, 'utf8'));
+  } catch {
+    return [];
+  }
+  const months = index.months || [];
+  const categories = index.categories || [];
+  const base = `${site}/mutual-funds/smart-money/smart-money-signal`;
+  const urls = [];
+  const signalSlugs = [
+    'aggressive-accumulation',
+    'strong-accumulation',
+    'moderate-accumulation',
+    'light-accumulation',
+    'neutral',
+    'light-distribution',
+    'distribution',
+    'strong-distribution',
+  ];
+  const categorySlug = (cat) => cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  for (const month of months) {
+    const mSlug = month.toLowerCase().replace(/\s+/g, '-');
+    for (const category of categories) {
+      const cSlug = categorySlug(category);
+      for (const signalSlug of signalSlugs) {
+        urls.push(`${base}/${mSlug}/${cSlug}/${signalSlug}`);
+      }
+    }
+  }
+  return urls;
+}
+
 export function escapeXml(value) {
   return String(value)
     .replace(/&/g, '&amp;')

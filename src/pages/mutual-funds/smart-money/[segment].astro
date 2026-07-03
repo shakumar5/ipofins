@@ -5,6 +5,14 @@ import { BRAND_URL } from '../../../lib/brand';
 import { resolveSmartMoneyPage } from '../../../lib/smart-money-page-context';
 import { loadSmartMoneyStaticSegments, smartMoneyPathFromSegment } from '../../../lib/smart-money-static-segments';
 import { loadSmartMoneyTrackerLinks } from '../../../lib/smart-money-tracker-links';
+import {
+  parseSmartMoneySignalsListFiltersFromSearch,
+  smartMoneySignalsListPath,
+} from '../../../lib/smart-money-signals-list-meta';
+import {
+  parseTrackerListFiltersFromSearch,
+  trackerPathWithListFilters,
+} from '../../../lib/smart-money-tracker-filters-meta';
 
 export function getStaticPaths() {
   return loadSmartMoneyStaticSegments().map((segment) => ({
@@ -17,6 +25,20 @@ const { segment } = Astro.props;
 const pathname = smartMoneyPathFromSegment(segment);
 const { parsed, parsedTab, pageMeta, trackerBootstrap } = resolveSmartMoneyPage(pathname);
 const sm = loadSmartMoneyTrackerLinks();
+
+if (segment === 'smart-money-signal' && Astro.url.search) {
+  const legacy = parseSmartMoneySignalsListFiltersFromSearch(Astro.url.search);
+  return Astro.redirect(smartMoneySignalsListPath(legacy), 301);
+}
+
+if (parsed && Astro.url.search) {
+  const legacy = parseTrackerListFiltersFromSearch(Astro.url.search);
+  if (legacy.category !== 'All') {
+    return Astro.redirect(trackerPathWithListFilters(pathname, legacy), 301);
+  }
+}
+
+const initialTrackerFilters = parsed ? parseTrackerListFiltersFromSearch(Astro.url.search) : undefined;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -43,5 +65,12 @@ const jsonLd = {
   {(parsedTab === 'signals' || parsedTab === 'stock-signal') && (
     <link slot="head" rel="preload" href="/data/smart-money-signals-index.json" as="fetch" crossorigin />
   )}
-  <SmartMoneyHubView pageMeta={pageMeta} parsed={parsed} parsedTab={parsedTab} sm={sm} trackerBootstrap={trackerBootstrap} />
+  <SmartMoneyHubView
+    pageMeta={pageMeta}
+    parsed={parsed}
+    parsedTab={parsedTab}
+    sm={sm}
+    trackerBootstrap={trackerBootstrap}
+    initialTrackerFilters={initialTrackerFilters}
+  />
 </BaseLayout>

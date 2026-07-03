@@ -57,6 +57,10 @@ test('classify mutual-funds routes', () => {
   assert.equal(classifySitemapBucket('/mutual-funds'), 'sitemap-mutual-funds.xml');
   assert.equal(classifySitemapBucket('/mutual-funds/smart-money'), 'sitemap-smart-money.xml');
   assert.equal(
+    classifySitemapBucket('/mutual-funds/smart-money/sector-intelligence/banks'),
+    'sitemap-smart-money.xml',
+  );
+  assert.equal(
     classifySitemapBucket('/mutual-funds/portfolio-overlap-checker'),
     'sitemap-portfolio-overlap.xml',
   );

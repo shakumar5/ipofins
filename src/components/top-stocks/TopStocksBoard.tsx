@@ -12,6 +12,7 @@ import {
 } from '../../lib/top-stocks-shared';
 import {
   DEFAULT_TOP_STOCKS_FILTERS,
+  parseTopStocksFiltersFromPathname,
   parseTopStocksFiltersFromSearch,
   topStocksPath,
   type TopStocksFilters,
@@ -26,7 +27,12 @@ interface Props {
 
 function readFiltersFromLocation(): TopStocksFilters {
   if (typeof window === 'undefined') return DEFAULT_TOP_STOCKS_FILTERS;
-  return parseTopStocksFiltersFromSearch(window.location.search);
+  const fromPath = parseTopStocksFiltersFromPathname(window.location.pathname);
+  if (fromPath) return fromPath;
+  if (window.location.search) {
+    return parseTopStocksFiltersFromSearch(window.location.search);
+  }
+  return DEFAULT_TOP_STOCKS_FILTERS;
 }
 
 function stockHref(source: TopStocksSource, stockSlug: string): string {
@@ -56,7 +62,7 @@ export default function TopStocksBoard({ payload, initialFilters }: Props) {
     const path = topStocksPath(next);
     const current = `${window.location.pathname}${window.location.search}`;
     if (current !== path) {
-      window.history.replaceState(null, '', path);
+      window.history.pushState(null, '', path);
     }
   }, []);
 

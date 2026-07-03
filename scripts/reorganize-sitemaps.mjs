@@ -13,6 +13,8 @@ import {
   SITEMAP_URL_LIMIT,
   chunkUrls,
   classifySitemapBucket,
+  collectSmartMoneySignalFilterSitemapUrls,
+  collectTopStocksFilterSitemapUrls,
   parseUrlsetLocs,
   pathnameFromLoc,
   todayIso,
@@ -181,7 +183,14 @@ function main() {
 
   const astroUrls = collectAstroUrls();
   const overlapStagingUrls = collectOverlapStagingUrls();
-  const allLocs = [...new Set([...astroUrls, ...overlapStagingUrls])];
+  const allLocs = [
+    ...new Set([
+      ...astroUrls,
+      ...overlapStagingUrls,
+      ...collectTopStocksFilterSitemapUrls(),
+      ...collectSmartMoneySignalFilterSitemapUrls(),
+    ]),
+  ];
 
   if (!allLocs.length) {
     console.warn('  ⚠ reorganize-sitemaps: no URLs found — skip');

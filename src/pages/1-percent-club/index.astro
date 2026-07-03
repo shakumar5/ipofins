@@ -16,6 +16,9 @@ import {
   ONE_PERCENT_CLUB_HUB,
 } from '../../lib/tracked-entities';
 import { loadSmartMoneyStockSlugs } from '../../lib/smart-money-stock-slugs';
+import { topStocksPath } from '../../lib/top-stocks-meta';
+import InsightsArticleCallout from '../../components/insights/InsightsArticleCallout.astro';
+import { getInsightCallout } from '../../lib/insights-callouts';
 
 // 1% Club is Neon-driven. When the 005 tables are empty/absent, all queries
 // return empty arrays / nulls and the page renders a graceful "curated roster"
@@ -25,6 +28,7 @@ const topStocks = await getOnePercentTopStocks(60);
 const searchIndex = await getOnePercentSearchIndex();
 const trackedSnapshot = await getTrackedSnapshot();
 const mfStocks = loadSmartMoneyStockSlugs().map((s) => ({ slug: s.slug, name: s.stockName }));
+const onePercentInsight = getInsightCallout('one-percent');
 
 const hasData = topStocks.length > 0;
 const path = '/1-percent-club';
@@ -112,6 +116,10 @@ const faqJsonLd = {
     >
       <div class="mt-4"><SuperInvestorsSubNav active="club" /></div>
     </PageHeader>
+
+    <div class="mt-4 max-w-2xl">
+      <InsightsArticleCallout article={onePercentInsight} label="1% Club snapshot" />
+    </div>
   </section>
 
   <section id="search" class="container-wide pb-8 max-w-3xl scroll-mt-28">
@@ -200,7 +208,7 @@ const faqJsonLd = {
           1,700+ stocks appears here — including mystery holders. In the meantime, browse the curated rosters:
         </p>
         <div class="nav-btn-group justify-center">
-          <a href="/top-stocks?source=one_percent_club&flow=accumulation&cap=large" class="btn-primary px-6 py-3">Top Stocks (₹ flows)</a>
+          <a href={topStocksPath({ source: 'one_percent_club', flow: 'accumulation' })} class="btn-primary px-6 py-3">Top Stocks (₹ flows)</a>
           <a href="/super-investors" class="btn-secondary px-6 py-3">Super Investors</a>
           <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
         </div>

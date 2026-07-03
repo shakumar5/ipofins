@@ -1,12 +1,19 @@
-import { useMemo, useState, useTransition, useDeferredValue } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, useDeferredValue } from 'react';
 
-import type { SmartMoneySignalRow, SmartMoneySignalsData } from '../../lib/smart-money-signals';
+import type { SmartMoneySignalRow, SmartMoneySignalsData, SmartMoneySignalType } from '../../lib/smart-money-signals';
 
 import { SIGNAL_OPTIONS, stockCapDisplayLabel } from '../../lib/smart-money-signals';
+import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import { signalDetailHref } from '../../lib/list-back-nav';
+import {
+  DEFAULT_SIGNALS_LIST_FILTERS,
+  getSmartMoneySignalsListPageMeta,
+  parseSmartMoneySignalsListFiltersFromPathname,
+  parseSmartMoneySignalsListFiltersFromSearch,
+  smartMoneySignalsListPath,
+  type SmartMoneySignalsListFilters,
+} from '../../lib/smart-money-signals-list-meta';
 import FilterSelect from './FilterSelect';
-
-
 
 interface Props {
   data: SmartMoneySignalsData;
@@ -14,19 +21,111 @@ interface Props {
   onMonthChange?: (month: string) => void;
   onCategoryChange?: (category: string) => void;
   loading?: boolean;
+  initialFilters?: Partial<SmartMoneySignalsListFilters>;
 }
 
 const INITIAL_ROWS = 20;
 const ROWS_PAGE = 20;
 
-export default function SmartMoneySignalTable({ data, month: monthProp, onMonthChange, onCategoryChange, loading }: Props) {
-  const [monthLocal, setMonthLocal] = useState(data.months[0] || '');
+function readFiltersFromLocation(defaultMonth: string, categories: string[]): SmartMoneySignalsListFilters {
+  if (typeof window === 'undefined') {
+    return {
+      month: defaultMonth,
+      category: DEFAULT_SIGNALS_LIST_FILTERS.category,
+      signal: DEFAULT_SIGNALS_LIST_FILTERS.signal,
+    };
+  }
+  const fromPath = parseSmartMoneySignalsListFiltersFromPathname(
+    window.location.pathname,
+    categories,
+    defaultMonth,
+  );
+  if (fromPath) return fromPath;
+  if (window.location.search) {
+    return parseSmartMoneySignalsListFiltersFromSearch(window.location.search, defaultMonth);
+  }
+  return {
+    month: defaultMonth,
+    category: DEFAULT_SIGNALS_LIST_FILTERS.category,
+    signal: DEFAULT_SIGNALS_LIST_FILTERS.signal,
+  };
+}
+
+export default function SmartMoneySignalTable({
+  data,
+  month: monthProp,
+  onMonthChange,
+  onCategoryChange,
+  loading,
+  initialFilters,
+}: Props) {
+  const defaultMonth = monthProp || data.months[0] || '';
+  const [monthLocal, setMonthLocal] = useState(defaultMonth);
   const month = monthProp ?? monthLocal;
 
-  const [category, setCategory] = useState('All');
-  const [signalFilter, setSignalFilter] = useState<string>('All');
+  const [category, setCategory] = useState(
+    () => initialFilters?.category ?? DEFAULT_SIGNALS_LIST_FILTERS.category,
+  );
+  const [signalFilter, setSignalFilter] = useState<SmartMoneySignalType | 'All'>(
+    () => initialFilters?.signal ?? DEFAULT_SIGNALS_LIST_FILTERS.signal,
+  );
   const [visibleLimit, setVisibleLimit] = useState(INITIAL_ROWS);
   const [, startTransition] = useTransition();
+  const monthRef = useRef(month);
+  const categoryRef = useRef(category);
+  monthRef.current = month;
+  categoryRef.current = category;
+
+  const syncUrl = useCallback(
+    (next: SmartMoneySignalsListFilters) => {
+      if (typeof window === 'undefined') return;
+      const path = smartMoneySignalsListPath(next);
+      const current = `${window.location.pathname}${window.location.search}`;
+      if (current !== path) {
+        window.history.pushState(null, '', path);
+      }
+      applyClientPageMeta(getSmartMoneySignalsListPageMeta(next));
+    },
+    [],
+  );
+
+  const applyFilters = useCallback((next: SmartMoneySignalsListFilters) => {
+    if (!monthProp) setMonthLocal(next.month);
+    setCategory(next.category);
+    setSignalFilter(next.signal);
+  }, [monthProp]);
+
+  const updateFilters = useCallback(
+    (patch: Partial<SmartMoneySignalsListFilters>) => {
+      const next: SmartMoneySignalsListFilters = {
+        month,
+        category,
+        signal: signalFilter,
+        ...patch,
+      };
+      applyFilters(next);
+      syncUrl(next);
+    },
+    [applyFilters, category, month, signalFilter, syncUrl],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncFromUrl = () => {
+      const next = readFiltersFromLocation(defaultMonth, data.categories);
+      applyFilters(next);
+      if (next.month && next.month !== monthRef.current) onMonthChange?.(next.month);
+      else if (next.category !== categoryRef.current) onCategoryChange?.(next.category);
+      applyClientPageMeta(getSmartMoneySignalsListPageMeta(next));
+    };
+    syncFromUrl();
+    window.addEventListener('popstate', syncFromUrl);
+    window.addEventListener('pageshow', syncFromUrl);
+    return () => {
+      window.removeEventListener('popstate', syncFromUrl);
+      window.removeEventListener('pageshow', syncFromUrl);
+    };
+  }, [applyFilters, data.categories, defaultMonth, onCategoryChange, onMonthChange]);
 
   const deferredMonth = useDeferredValue(month);
   const deferredCategory = useDeferredValue(category);
@@ -69,6 +168,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
                 setVisibleLimit(INITIAL_ROWS);
               });
               onCategoryChange?.(next);
+              updateFilters({ category: next });
             }}
           >
             {data.categories.map((c) => (
@@ -88,6 +188,7 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
                 else setMonthLocal(next);
                 setVisibleLimit(INITIAL_ROWS);
               });
+              updateFilters({ month: next });
             }}
             disabled={loading}
           >
@@ -101,10 +202,14 @@ export default function SmartMoneySignalTable({ data, month: monthProp, onMonthC
             name="sm-signal-filter"
             label="Signal"
             value={signalFilter}
-            onChange={(e) => startTransition(() => {
-              setSignalFilter(e.target.value);
-              setVisibleLimit(INITIAL_ROWS);
-            })}
+            onChange={(e) => {
+              const next = e.target.value as SmartMoneySignalType | 'All';
+              startTransition(() => {
+                setSignalFilter(next);
+                setVisibleLimit(INITIAL_ROWS);
+              });
+              updateFilters({ signal: next });
+            }}
           >
             {SIGNAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

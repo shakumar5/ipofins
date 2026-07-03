@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BRAND_NAME, withBrandSuffix } from '../../lib/brand';
 import { getAllFunds, getHoldingsStats, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug } from '../../lib/data/funds';
 import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import { topStocksPath } from '../../lib/top-stocks-meta';
 import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
 import MfSectionTabs from '../../components/funds/MfSectionTabs.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
@@ -253,7 +254,7 @@ const faqJsonLd = {
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on {BRAND_NAME}</h2>
     <div class="nav-btn-group">
       <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>
-      <a href="/top-stocks?source=mutual_funds&flow=accumulation&cap=large" class="btn-secondary px-6 py-3">Top Stocks (₹ flows)</a>
+      <a href={topStocksPath({ source: 'mutual_funds', flow: 'accumulation' })} class="btn-secondary px-6 py-3">Top Stocks (₹ flows)</a>
       <a href={sm.mostBought} class="btn-secondary px-6 py-3">Most Bought Stocks</a>
       <a href={sm.holdingsChanges} class="btn-secondary px-6 py-3">Holdings Changes</a>
       <a href="/tools/lumpsum-calculator" class="btn-secondary px-6 py-3">Lumpsum Calculator</a>

@@ -2,9 +2,9 @@ import { Fragment, useDeferredValue, useMemo, useState, useTransition, type Reac
 
 import type { SmartMoneyMonthData } from '../../lib/data/holdings';
 import type { SectorIntelligenceData, SectorIntelligenceRow } from '../../lib/sector-intelligence';
-import { buildSectorStockMoves, type SectorStockMoveSummary } from '../../lib/holdings-utils';
-import { stockSignalPath } from '../../lib/stock-signal-meta';
+import { sectorIntelligencePath } from '../../lib/sector-intelligence-meta';
 import { SIGNAL_OPTIONS } from '../../lib/smart-money-signals';
+import SectorStockMovesPanel from './SectorStockMovesPanel';
 
 interface Props {
   data: SectorIntelligenceData;
@@ -123,72 +123,6 @@ function ColumnSearch({
           ×
         </button>
       )}
-    </div>
-  );
-}
-
-const MOVE_LISTS: {
-  key: keyof ReturnType<typeof buildSectorStockMoves>;
-  label: string;
-  metric: 'funds' | 'weight';
-}[] = [
-  { key: 'mostBought', label: 'Most bought', metric: 'weight' },
-  { key: 'increased', label: 'Most funds adding', metric: 'funds' },
-  { key: 'fresh', label: 'Fresh entries', metric: 'funds' },
-  { key: 'decreased', label: 'Decreased', metric: 'weight' },
-  { key: 'exits', label: 'Complete exits', metric: 'funds' },
-];
-
-function formatMoveMetric(stock: SectorStockMoveSummary, metric: 'funds' | 'weight'): string {
-  if (metric === 'funds') return `${stock.fundCount} fund${stock.fundCount === 1 ? '' : 's'}`;
-  const sign = stock.weightTotal >= 0 ? '+' : '';
-  return `${sign}${stock.weightTotal.toFixed(2)}%`;
-}
-
-function SectorStockMovesPanel({
-  sector,
-  monthMoves,
-}: {
-  sector: string;
-  monthMoves: SmartMoneyMonthData;
-}) {
-  const moves = useMemo(() => buildSectorStockMoves(sector, monthMoves, 5), [sector, monthMoves]);
-  const hasAny = MOVE_LISTS.some(({ key }) => moves[key].length > 0);
-
-  if (!hasAny) {
-    return (
-      <p className="text-xs text-surface-500 dark:text-surface-400 py-2">
-        No stock-level moves in this sector for {monthMoves.month}.
-      </p>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
-      {MOVE_LISTS.map(({ key, label, metric }) => (
-        <div key={key} className="rounded-lg bg-surface-50 dark:bg-surface-800/60 p-2.5 border border-surface-100 dark:border-surface-700">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-1.5">
-            {label}
-          </p>
-          {moves[key].length === 0 ? (
-            <p className="text-xs text-surface-400">—</p>
-          ) : (
-            <ul className="space-y-1">
-              {moves[key].map((stock) => (
-                <li key={stock.stockSlug}>
-                  <a
-                    href={stockSignalPath(stock.stockSlug)}
-                    className="flex items-start justify-between gap-2 text-xs hover:text-primary-600 dark:hover:text-primary-400"
-                  >
-                    <span className="font-medium text-surface-900 dark:text-white line-clamp-2">{stock.stockName}</span>
-                    <span className="text-surface-500 tabular-nums shrink-0">{formatMoveMetric(stock, metric)}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
@@ -316,7 +250,12 @@ export default function SectorIntelligenceTable({ data, monthMoves = null }: Pro
               <ul className="space-y-1 text-sm">
                 {topAccumulating.map((r) => (
                   <li key={r.sector} className="flex justify-between gap-2">
-                    <span className="font-medium text-surface-900 dark:text-white">{r.sector}</span>
+                    <a
+                      href={sectorIntelligencePath(r.sectorSlug)}
+                      className="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
+                    >
+                      {r.sector}
+                    </a>
                     <span className="text-green-600 tabular-nums">{r.signalEmoji} +{r.aumChangePct}%</span>
                   </li>
                 ))}
@@ -329,7 +268,12 @@ export default function SectorIntelligenceTable({ data, monthMoves = null }: Pro
               <ul className="space-y-1 text-sm">
                 {topDistributing.map((r) => (
                   <li key={r.sector} className="flex justify-between gap-2">
-                    <span className="font-medium text-surface-900 dark:text-white">{r.sector}</span>
+                    <a
+                      href={sectorIntelligencePath(r.sectorSlug)}
+                      className="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
+                    >
+                      {r.sector}
+                    </a>
                     <span className="text-red-500 tabular-nums">{r.signalEmoji} {r.aumChangePct}%</span>
                   </li>
                 ))}
@@ -424,7 +368,13 @@ export default function SectorIntelligenceTable({ data, monthMoves = null }: Pro
                   <div className="min-w-0">
                     <p className="text-xs text-surface-400 tabular-nums">#{index + 1}</p>
                     <p className="text-sm font-semibold text-surface-900 dark:text-white flex items-center gap-1.5">
-                      {row.sector}
+                      <a
+                        href={sectorIntelligencePath(row.sectorSlug)}
+                        className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.sector}
+                      </a>
                       {monthMoves && (
                         <span className="text-surface-400 text-xs" aria-hidden>{isExpanded ? '▲' : '▼'}</span>
                       )}
@@ -550,7 +500,15 @@ export default function SectorIntelligenceTable({ data, monthMoves = null }: Pro
                       </td>
                       <td className="px-4 py-3 text-surface-400 tabular-nums">{index + 1}</td>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-surface-900 dark:text-white">{row.sector}</p>
+                        <p className="font-semibold text-surface-900 dark:text-white">
+                          <a
+                            href={sectorIntelligencePath(row.sectorSlug)}
+                            className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {row.sector}
+                          </a>
+                        </p>
                         <p className="text-xs text-surface-400 mt-0.5">
                           {row.currentPct}% of equity · {row.fundsIncreasing}↑ / {row.fundsDecreasing}↓ funds
                         </p>

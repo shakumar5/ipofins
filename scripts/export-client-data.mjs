@@ -5,6 +5,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdir
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { platform } from 'os';
+import { spawnSync } from 'node:child_process';
+import { nodeExtraArgs } from './lib/node-runner.mjs';
 import { buildHolderPositionsRecord } from './lib/holder-positions-export.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
@@ -39,8 +41,11 @@ import {
   serializeHoldingsMetaForDisk,
 } from './lib/fund-holdings-export.mjs';
 import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
-import { buildTopStocksExport } from './lib/top-stocks-export.mjs';
-import { ensureMarketCapCategories } from './lib/backfill-market-cap-category.mjs';
+import {
+  EMPTY_TOP_STOCKS,
+  exportTopStocksFromDb,
+  writeTopStocksJson,
+} from './lib/finalize-top-stocks-export.mjs';
 import { sql, isDbConfigured, withDbRetry, formatDbError } from './lib/db.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -833,33 +838,18 @@ async function main() {
   }
 
   const doneTopStocks = logStep('Top Stocks export');
-  const emptyTopStocks = {
-    periods: { mutual_funds: '', super_investors: '', dii_fii: '', one_percent_club: '' },
-    buckets: {},
-    hasData: false,
-  };
   try {
     if (isDbConfigured()) {
-      const capBackfill = await withDbRetry(() => ensureMarketCapCategories(sql), {
-        label: 'market cap categories',
-      });
-      if (!capBackfill.skipped) {
-        console.log(
-          `  market cap backfill: ${capBackfill.classified} stocks (updated ${capBackfill.updated ?? 0})`,
-        );
-      }
-      const topStocks = await withDbRetry(() => buildTopStocksExport(sql), {
-        label: 'Top Stocks export',
-      });
-      writeJson('top-stocks.json', topStocks);
+      const topStocks = await exportTopStocksFromDb();
+      writeTopStocksJson(topStocks);
       doneTopStocks(topStocks.hasData ? 'ok' : 'empty');
     } else {
-      writeJson('top-stocks.json', emptyTopStocks);
+      writeTopStocksJson(EMPTY_TOP_STOCKS);
       doneTopStocks('skipped (no DB)');
     }
   } catch (e) {
     console.warn('  ⚠ Top Stocks export failed:', e.message);
-    writeJson('top-stocks.json', emptyTopStocks);
+    writeTopStocksJson(EMPTY_TOP_STOCKS);
     doneTopStocks('fallback empty');
   }
 
@@ -882,6 +872,16 @@ async function main() {
     join(OUT_DIR, '.export-stamp.json'),
     JSON.stringify({ exportedAt: new Date().toISOString(), durationSec: Number(totalSec) }),
   );
+
+  const insights = spawnSync(
+    process.execPath,
+    [...nodeExtraArgs(), join(dirname(fileURLToPath(import.meta.url)), 'generate-insights-articles.mjs')],
+    { stdio: 'inherit', cwd: join(dirname(fileURLToPath(import.meta.url)), '..'), env: process.env },
+  );
+  if ((insights.status ?? 1) !== 0) {
+    console.warn('  ⚠ Insights article generation failed — build will retry');
+  }
+
   console.log(`\n  ✅ Export complete (${totalSec}s total)\n`);
 }
 
