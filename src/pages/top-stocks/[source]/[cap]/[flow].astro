@@ -2,9 +2,10 @@
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import PageHeader from '../../../../components/layout/PageHeader.astro';
 import TopStocksLoader from '../../../../components/top-stocks/TopStocksLoader.tsx';
-import TopStocksInternalLinks from '../../../../components/top-stocks/TopStocksInternalLinks.astro';
+import TopStocksGuide from '../../../../components/top-stocks/TopStocksGuide.astro';
 import { loadTopStocksPayload } from '../../../../lib/top-stocks-server';
 import {
+  DEFAULT_TOP_STOCKS_FILTERS,
   loadTopStocksFilterPathParams,
   parseTopStocksFiltersFromPathname,
   topStocksPath,
@@ -75,6 +76,6 @@ const jsonLd = {
 
     <TopStocksLoader client:load initialPayload={initialPayload} initialFilters={filters} />
 
-    <TopStocksInternalLinks />
+    <TopStocksGuide />
   </div>
 </BaseLayout>

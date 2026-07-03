@@ -35,6 +35,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "Can SIPs help build a retirement corpus?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. SIPs in equity mutual funds are one of the most effective ways to build a retirement corpus. Historical equity returns of 12-15% CAGR over 15+ years significantly outpace inflation." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -96,35 +99,34 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Retirement Planning</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a retirement corpus?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A retirement corpus is the total amount of money required to maintain your desired lifestyle after retirement. It must account for inflation, medical expenses, and your life expectancy. The corpus should generate enough returns to cover monthly expenses without depleting the principal too quickly.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How much retirement corpus do I need?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A common rule of thumb is 25-30x your annual expenses at retirement. If you need ₹2L/month at 60, your corpus should be ₹6-7.2 Cr. Use this calculator for a precise number based on your specific situation including inflation and post-retirement returns.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why is inflation so important in retirement planning?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">At 6% inflation, ₹50,000/month today becomes ₹2.87L/month in 30 years. Most people underestimate this. Without accounting for inflation, you'll run out of money 10-15 years into retirement. This is the #1 retirement planning mistake.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">At what age should I start planning for retirement?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Immediately. Starting at 25 vs 35 can reduce your required monthly SIP by 50-60%. For example, to build ₹5 Cr by 60 at 12% returns: starting at 25 needs ~₹7,500/month, starting at 35 needs ~₹20,000/month. Compounding rewards early starters disproportionately.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can SIPs build a retirement corpus?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, SIPs in equity mutual funds are the most accessible way to build a large retirement corpus. Historical NIFTY 50 returns have been 12-13% CAGR over 20+ years. Combine equity SIPs with NPS (additional tax benefits) and PPF (risk-free component) for a balanced retirement portfolio.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How much should I save monthly for retirement?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A general guideline: save 20-30% of your monthly income for retirement. But the exact amount depends on your goals. Use this calculator to find your specific number. Consider using a <a href="/tools/step-up-sip-calculator" class="text-primary-600 hover:underline">Step-Up SIP</a> to increase contributions as your salary grows.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions - Retirement Planning" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is a retirement corpus?</span>
+        <p>A retirement corpus is the total amount of money required to maintain your desired lifestyle after retirement. It must account for inflation, medical expenses, and your life expectancy. The corpus should generate enough returns to cover monthly expenses without depleting the principal too quickly.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How much retirement corpus do I need?</span>
+        <p>A common rule of thumb is 25-30x your annual expenses at retirement. If you need ₹2L/month at 60, your corpus should be ₹6-7.2 Cr. Use this calculator for a precise number based on your specific situation including inflation and post-retirement returns.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Why is inflation so important in retirement planning?</span>
+        <p>At 6% inflation, ₹50,000/month today becomes ₹2.87L/month in 30 years. Most people underestimate this. Without accounting for inflation, you'll run out of money 10-15 years into retirement. This is the #1 retirement planning mistake.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">At what age should I start planning for retirement?</span>
+        <p>Immediately. Starting at 25 vs 35 can reduce your required monthly SIP by 50-60%. For example, to build ₹5 Cr by 60 at 12% returns: starting at 25 needs ~₹7,500/month, starting at 35 needs ~₹20,000/month. Compounding rewards early starters disproportionately.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can SIPs build a retirement corpus?</span>
+        <p>Yes, SIPs in equity mutual funds are the most accessible way to build a large retirement corpus. Historical NIFTY 50 returns have been 12-13% CAGR over 20+ years. Combine equity SIPs with NPS (additional tax benefits) and PPF (risk-free component) for a balanced retirement portfolio.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How much should I save monthly for retirement?</span>
+        <p>A general guideline: save 20-30% of your monthly income for retirement. But the exact amount depends on your goals. Use this calculator to find your specific number. Consider using a <a href="/tools/step-up-sip-calculator" class="text-primary-600 hover:underline">Step-Up SIP</a> to increase contributions as your salary grows.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

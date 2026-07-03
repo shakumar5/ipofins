@@ -8,6 +8,11 @@ import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links'
 import { monthSlug } from '../../utils/month-slug';
 import { mfTabConfig } from '../../lib/mf-section-config';
 import { holdingsChangesDetailHref } from '../../lib/list-back-nav';
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuidePanel from '../../components/content-guide/ContentGuidePanel.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import ContentGuideExplore from '../../components/content-guide/ContentGuideExplore.astro';
 
 const cfg = mfTabConfig('holdings-changes');
 const sm = loadSmartMoneyTrackerLinks();
@@ -108,83 +113,91 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <!-- Info -->
-  <section class="container-wide py-8">
-    <div class="max-w-3xl text-sm text-surface-600 dark:text-surface-300 space-y-3">
-      <h2 class="text-lg font-bold text-surface-900 dark:text-white">About Holdings Changes</h2>
-      <p>Mutual funds are required by SEBI to disclose their complete portfolio holdings every month. By comparing consecutive months, we identify which stocks were newly added, removed, or had their weight changed significantly.</p>
-      <p>This helps investors understand: What are the best fund managers buying? Which sectors are they bullish on? What stocks are they exiting?</p>
-      <p class="text-xs text-surface-400 mt-4">📋 Data source: AMC monthly portfolio disclosure filings. Updated every 15 days.<br/>📊 Available months: {monthsList.join(', ')}<br/>🏦 AMCs covered: {amcCount}<br/>📈 Funds tracked: {fundCount}</p>
-    </div>
-  </section>
+  <ContentGuideSection
+    eyebrow="Guide"
+    title="About Holdings Changes"
+    intro="Mutual funds disclose complete portfolio holdings every month. Comparing consecutive months shows which stocks were newly added, removed, or had weight changed significantly."
+  >
+    <ContentGuidePanel>
+      <div class="content-guide__prose">
+        <p>This helps investors understand: What are fund managers buying? Which sectors are they bullish on? What stocks are they exiting?</p>
+        <p class="content-guide__meta">
+          Data source: AMC monthly portfolio disclosure filings · Updated every 15 days ·
+          Months: {monthsList.join(', ')} · AMCs: {amcCount} · Funds: {fundCount}
+        </p>
+      </div>
 
-  <!-- How to Use -->
-  <section class="container-wide py-6">
-    <div class="max-w-3xl">
-      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">How to Use This Tool</h2>
-      <div class="space-y-3 text-sm text-surface-600 dark:text-surface-300">
-        <div class="flex gap-3 items-start">
-          <span class="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-          <p><strong>Select an AMC</strong> — Choose the fund house you want to track (HDFC, ICICI, Axis, DSP, etc.)</p>
-        </div>
-        <div class="flex gap-3 items-start">
-          <span class="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
-          <p><strong>Choose Fund Type</strong> — Filter by category: Large Cap, Mid Cap, Small Cap, Flexi Cap, or All</p>
-        </div>
-        <div class="flex gap-3 items-start">
-          <span class="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
-          <p><strong>Select Two Months</strong> — Pick "From" (older) and "To" (newer) month to compare</p>
-        </div>
-        <div class="flex gap-3 items-start">
-          <span class="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
-          <p><strong>View Changes</strong> — See new stocks added (green) and stocks removed (red) from the portfolio</p>
+      <div class="content-guide__details" style="margin-top: 1rem;">
+        <summary>How to use this tool</summary>
+        <div class="content-guide__details-body">
+          <div class="content-guide__steps">
+            <div class="content-guide__step">
+              <span class="content-guide__step-num">1</span>
+              <p class="content-guide__step-body"><strong>Select an AMC</strong> — Choose the fund house you want to track (HDFC, ICICI, Axis, DSP, etc.)</p>
+            </div>
+            <div class="content-guide__step">
+              <span class="content-guide__step-num">2</span>
+              <p class="content-guide__step-body"><strong>Choose Fund Type</strong> — Filter by category: Large Cap, Mid Cap, Small Cap, Flexi Cap, or All</p>
+            </div>
+            <div class="content-guide__step">
+              <span class="content-guide__step-num">3</span>
+              <p class="content-guide__step-body"><strong>Select Two Months</strong> — Pick "From" (older) and "To" (newer) month to compare</p>
+            </div>
+            <div class="content-guide__step">
+              <span class="content-guide__step-num">4</span>
+              <p class="content-guide__step-body"><strong>View Changes</strong> — See new stocks added (green) and stocks removed (red) from the portfolio</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </ContentGuidePanel>
+  </ContentGuideSection>
 
-  <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Related: Smart Money Tracker</h2>
-    <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">AMC-level changes above; industry-wide stock rankings below ({sm.latestMonth}).</p>
+  <ContentGuideExplore
+    title="Related: Smart Money Tracker"
+    subtitle={`AMC-level changes above; industry-wide stock rankings below (${sm.latestMonth}).`}
+    bordered
+  >
     <SmartMoneyInternalLinks variant="inline" showHub={false} showTabs />
-  </section>
+  </ContentGuideExplore>
 
-  <!-- FAQ Section -->
-  <section class="container-wide py-8">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4 max-w-3xl">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What are mutual fund holdings changes?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Holdings changes show which stocks a mutual fund has newly bought (added) or sold (removed) between two consecutive months. SEBI mandates all mutual funds to publish their complete portfolio on a monthly basis. By comparing the portfolio of Month A with Month B, we can identify what the fund manager is buying and selling.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How can I use this to make better investment decisions?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">By tracking what professional fund managers are buying, you can identify stocks that have institutional conviction. If multiple top-performing funds are adding the same stock, it signals strong fundamentals. See industry-wide views: <a href={sm.mostBought} class="text-primary-600 hover:underline">Most Bought Stocks</a>, <a href={sm.mostSold} class="text-primary-600 hover:underline">Most Sold</a>, and <a href={sm.sectorIntelligence} class="text-primary-600 hover:underline">Sector Intelligence</a>.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why does it show "No portfolio changes detected"?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">This happens in two cases: (1) The fund is an index fund — these track a fixed benchmark like Nifty 50 and rarely change their holdings. (2) Data is available for only one month — we need two months to compare. Try selecting a different AMC or fund type. Active funds (Flexi Cap, Mid Cap, Small Cap) tend to show more changes than passive/index funds.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How often is the holdings data updated?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">AMCs typically publish monthly portfolio disclosures by the 10th–15th of the following month (e.g., April data is available by mid-May). We update our data within 5 days of publication. Currently available months are shown in the dropdown. New months are added automatically when we process the latest AMC disclosures.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What does the weight percentage (%) mean?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">The percentage shown (e.g., 4.37%) represents the proportion of the fund's total Net Asset Value (NAV) invested in that particular stock. A higher percentage means the fund has more conviction in that stock. Top holdings typically range from 3% to 10% of NAV. Fund detail pages show the top 20 holdings by default with a Show more option for the full portfolio.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which AMCs and fund types are covered?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">We currently track {amcCount} AMCs including HDFC, ICICI Prudential, Axis, DSP, Aditya Birla Sun Life, Motilal Oswal, Edelweiss, and more. Only equity-oriented funds are shown (we exclude debt, liquid, gold, and silver funds). You can filter by fund type: Large Cap, Mid Cap, Small Cap, Flexi Cap, Multi Cap, and Others.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Where does the holdings data come from?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">All data comes directly from the official monthly portfolio disclosure filings published by each AMC on their website, as mandated by SEBI. We process the original Excel files published by fund houses. No third-party or estimated data is used — this is the same data available on each AMC's statutory disclosures page.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I see individual fund holdings without comparing?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes! Go to any mutual fund's detail page (via <a href="/mutual-funds/all" class="text-primary-600 hover:underline">All Funds</a>) — if holdings data is available, it shows the latest month's stocks with sector and weight (top 20 by default, expandable to the full portfolio). Funds with available holdings show a green "Y" badge in the Holdings column on the fund listing page.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered>
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What are mutual fund holdings changes?</span>
+        Holdings changes show which stocks a mutual fund has newly bought (added) or sold (removed) between two consecutive months. SEBI mandates all mutual funds to publish their complete portfolio monthly.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How can I use this to make better investment decisions?</span>
+        By tracking what professional fund managers are buying, you can identify stocks with institutional conviction. See industry-wide views:
+        <a href={sm.mostBought} class="content-guide__link">Most Bought Stocks</a>,
+        <a href={sm.mostSold} class="content-guide__link">Most Sold</a>, and
+        <a href={sm.sectorIntelligence} class="content-guide__link">Sector Intelligence</a>.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Why does it show "No portfolio changes detected"?</span>
+        This happens when the fund is an index fund (rarely changes holdings) or when only one month of data is available. Try a different AMC or fund type — active funds show more changes than passive/index funds.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How often is the holdings data updated?</span>
+        AMCs publish monthly portfolio disclosures by the 10th–15th of the following month. We update within 5 days of publication. New months are added automatically.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What does the weight percentage (%) mean?</span>
+        The percentage represents the proportion of the fund's total NAV invested in that stock. Top holdings typically range from 3% to 10% of NAV.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Which AMCs and fund types are covered?</span>
+        We track {amcCount} AMCs including HDFC, ICICI Prudential, Axis, DSP, Aditya Birla Sun Life, Motilal Oswal, Edelweiss, and more. Only equity-oriented funds are shown.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Where does the holdings data come from?</span>
+        All data comes from official monthly portfolio disclosure filings published by each AMC on their website, as mandated by SEBI.
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I see individual fund holdings without comparing?</span>
+        Yes — go to any fund detail page via <a href="/mutual-funds/all" class="content-guide__link">All Funds</a> for the latest month's stocks with sector and weight.
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 </BaseLayout>

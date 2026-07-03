@@ -11,6 +11,8 @@ import {
   getPortfolioOverlapPageMeta,
   parseComparisonFromPathname,
 } from '../../../lib/portfolio-overlap-meta';
+import ContentGuideSection from '../../../components/content-guide/ContentGuideSection.astro';
+import ContentGuidePanel from '../../../components/content-guide/ContentGuidePanel.astro';
 
 const cfg = mfTabConfig('overlap-checker');
 const initialSlugs = parseComparisonFromPathname(Astro.url.pathname);
@@ -66,15 +68,16 @@ const jsonLd = {
     <PortfolioOverlapChecker client:load initialSlugs={initialSlugs} />
   </section>
 
-  <section class="container-narrow pb-12">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How overlap is calculated</h2>
-    <div class="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-300">
-      <p>
-        For each stock held by <strong>all</strong> selected funds, we take the smallest portfolio weight (% of NAV) among those funds and add it up. That total is the overlap percentage — the same method used for pairwise fund overlap on IPOFins.
-      </p>
-      <p>
-        Example: if Fund A holds HDFC Bank at 8% and Fund B at 6%, that stock contributes 6% to the two-fund overlap. Common holdings lists every stock name in that intersection.
-      </p>
-    </div>
-  </section>
+  <ContentGuideSection eyebrow="Guide" title="How overlap is calculated" bordered>
+    <ContentGuidePanel>
+      <div class="content-guide__prose">
+        <p>
+          For each stock held by <strong>all</strong> selected funds, we take the smallest portfolio weight (% of NAV) among those funds and add it up. That total is the overlap percentage — the same method used for pairwise fund overlap on IPOFins.
+        </p>
+        <p>
+          Example: if Fund A holds HDFC Bank at 8% and Fund B at 6%, that stock contributes 6% to the two-fund overlap. Common holdings lists every stock name in that intersection.
+        </p>
+      </div>
+    </ContentGuidePanel>
+  </ContentGuideSection>
 </BaseLayout>

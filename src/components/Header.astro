@@ -2,6 +2,7 @@
 import { BRAND_NAME } from '../lib/brand';
 import BrandLogo from './BrandLogo.astro';
 import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
+import { topStocksPath } from '../lib/top-stocks-meta';
 
 const sm = loadSmartMoneyTrackerLinks();
 const { pathname } = Astro.url;
@@ -12,18 +13,19 @@ const navLinks = [
   { label: 'Smart Money', href: sm.hub, shortLabel: 'SM' },
   { label: 'Super Investors', href: '/super-investors', shortLabel: 'SI' },
   { label: '1% Club', href: '/1-percent-club', shortLabel: '1%' },
-  { label: 'Top Stocks', href: '/top-stocks', shortLabel: 'Top' },
+  { label: 'Top Stocks', href: topStocksPath(), activePrefix: '/top-stocks', shortLabel: 'Top' },
   { label: 'Brokers', href: '/broker' },
   { label: 'Tools', href: '/tools' },
   { label: 'Blogs', href: '/blogs' },
   { label: 'Learn', href: '/learn' },
 ];
 
-function isNavActive(href: string): boolean {
-  if (href === '/') return pathname === '/';
-  if (pathname === href) return true;
-  if (!pathname.startsWith(`${href}/`)) return false;
-  if (href === '/mutual-funds' && pathname.startsWith('/mutual-funds/smart-money')) return false;
+function isNavActive(href: string, activePrefix?: string): boolean {
+  const prefix = activePrefix ?? href;
+  if (prefix === '/') return pathname === '/';
+  if (pathname === href || pathname === prefix) return true;
+  if (!pathname.startsWith(`${prefix}/`)) return false;
+  if (prefix === '/mutual-funds' && pathname.startsWith('/mutual-funds/smart-money')) return false;
   return true;
 }
 ---
@@ -41,7 +43,7 @@ function isNavActive(href: string): boolean {
         <div class="site-header-nav-fade site-header-nav-fade--right" aria-hidden="true"></div>
         <nav class="site-header-nav" aria-label="Main navigation">
           {navLinks.map((link) => {
-            const active = isNavActive(link.href);
+            const active = isNavActive(link.href, link.activePrefix);
             return (
               <a
                 href={link.href}
@@ -133,7 +135,7 @@ function isNavActive(href: string): boolean {
           <kbd class="text-[10px] font-medium text-surface-400 border border-surface-300 dark:border-surface-600 px-1.5 py-0.5 rounded">Ctrl K</kbd>
         </button>
         {navLinks.map((link) => {
-          const active = isNavActive(link.href);
+          const active = isNavActive(link.href, link.activePrefix);
           return (
             <a
               href={link.href}

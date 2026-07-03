@@ -1,0 +1,15 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+  bordered?: boolean;
+}
+
+const { title, subtitle, bordered = true } = Astro.props;
+---
+
+<section class:list={['content-guide container-wide pb-12', bordered && 'content-guide--bordered']}>
+  <h2 class="content-guide__title">{title}</h2>
+  {subtitle && <p class="content-guide__explore-sub">{subtitle}</p>}
+  <slot />
+</section>

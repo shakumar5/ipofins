@@ -1,0 +1,39 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  intro?: string;
+  bordered?: boolean;
+  variant?: 'default' | 'faq';
+  container?: 'wide' | 'narrow';
+  class?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  intro,
+  bordered = false,
+  variant = 'default',
+  container = 'wide',
+  class: className = '',
+} = Astro.props;
+
+const containerClass = container === 'narrow' ? 'container-narrow' : 'container-wide';
+---
+
+<section
+  class:list={[
+    'content-guide',
+    containerClass,
+    'pb-12',
+    bordered && 'content-guide--bordered',
+    variant === 'faq' && 'content-guide--faq',
+    className,
+  ]}
+>
+  {eyebrow && <p class="content-guide__eyebrow">{eyebrow}</p>}
+  <h2 class="content-guide__title">{title}</h2>
+  {intro && <p class="content-guide__intro">{intro}</p>}
+  <slot />
+</section>

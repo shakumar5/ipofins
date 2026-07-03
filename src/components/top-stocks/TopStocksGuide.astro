@@ -1,0 +1,165 @@
+---
+import { topStocksPath } from '../../lib/top-stocks-meta';
+import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import { SUPER_INVESTORS_HUB, ONE_PERCENT_CLUB_HUB } from '../../lib/tracked-entities';
+import ContentGuideSection from '../content-guide/ContentGuideSection.astro';
+import ContentGuidePanel from '../content-guide/ContentGuidePanel.astro';
+import ContentGuideCard from '../content-guide/ContentGuideCard.astro';
+import ContentGuideFaqList from '../content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../content-guide/ContentGuideFaqItem.astro';
+import ContentGuideExplore from '../content-guide/ContentGuideExplore.astro';
+import TopStocksInternalLinks from './TopStocksInternalLinks.astro';
+
+const sm = loadSmartMoneyTrackerLinks();
+
+const link = (href: string, label: string) =>
+  `<a href="${href}" class="content-guide__link">${label}</a>`;
+---
+
+<ContentGuideSection
+  eyebrow="Guide"
+  title="How Top Stocks Works"
+  intro="Top Stocks ranks equities by net institutional rupee flows — who is buying and selling, in crore rupees, from the latest regulatory filings. Filter by data source, market-cap bucket, and accumulation vs distribution."
+>
+  <ContentGuidePanel>
+    <div class="content-guide__cards">
+      <ContentGuideCard number={1} title="Mutual Funds">
+        <p>
+          Uses <strong>monthly AMC portfolio disclosures</strong> (equity-oriented schemes). For each stock we sum
+          rupee value added on fresh entries and position increases (<strong>Bought</strong>) vs exits and reductions
+          (<strong>Sold</strong>). <strong>Net</strong> = Bought − Sold.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(topStocksPath({ source: 'mutual_funds', flow: 'accumulation' }), 'MF Accumulation'),
+          link(topStocksPath({ source: 'mutual_funds', flow: 'distribution' }), 'MF Distribution'),
+          link(sm.hub, 'Smart Money Tracker'),
+          link(sm.holdingsChanges, 'Holdings Changes'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+
+      <ContentGuideCard number={2} title="Super Investors">
+        <p>
+          Tracks marquee individual investors, family offices, and similar holders from
+          <strong>quarterly shareholding pattern</strong> filings. Value change is measured in ₹ crore between the
+          latest quarter and the prior one.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(topStocksPath({ source: 'super_investors', flow: 'accumulation' }), 'Super Investor Accumulation'),
+          link(SUPER_INVESTORS_HUB, 'Super Investors Hub'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+
+      <ContentGuideCard number={3} title="DII & FII">
+        <p>
+          Aggregates <strong>Domestic Institutional Investors</strong> and <strong>Foreign Institutional Investors</strong>
+          from quarterly shareholding data — mutual funds, insurance, banks, sovereign funds, and other regulated
+          categories filing on Indian exchanges.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(topStocksPath({ source: 'dii_fii', flow: 'accumulation' }), 'DII/FII Accumulation'),
+          link(topStocksPath({ source: 'dii_fii', flow: 'distribution' }), 'DII/FII Distribution'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+
+      <ContentGuideCard number={4} title="1% Club">
+        <p>
+          Every <strong>non-promoter shareholder holding 1% or more</strong> of a listed company must appear in the
+          quarterly shareholding pattern. We compare disclosed holding value quarter-on-quarter to surface where
+          significant holders are adding or trimming.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(topStocksPath({ source: 'one_percent_club', flow: 'accumulation' }), '1% Club Accumulation'),
+          link(ONE_PERCENT_CLUB_HUB, '1% Club Hub'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+    </div>
+
+    <details class="content-guide__details" id="how-top-stocks-ranked">
+      <summary>How rupee flows and rankings are calculated</summary>
+      <div class="content-guide__details-body">
+        <div>
+          <h4 class="content-guide__subhead">Bought, Sold, and Net (₹ Cr)</h4>
+          <ul class="content-guide__list">
+            <li><strong>Bought</strong> — rupee value of new positions plus increases in existing holdings</li>
+            <li><strong>Sold</strong> — rupee value of complete exits plus reductions in existing holdings</li>
+            <li><strong>Net</strong> — Bought minus Sold for the comparison period</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="content-guide__subhead">Accumulation vs Distribution</h4>
+          <p>
+            <strong>Accumulation</strong> shows the top 50 stocks with the highest <em>positive</em> net flow (net buyers).
+            <strong>Distribution</strong> shows the top 50 with the largest <em>negative</em> net flow (net sellers).
+          </p>
+        </div>
+        <div>
+          <h4 class="content-guide__subhead">Market-cap buckets</h4>
+          <p>
+            Stocks are grouped into Large, Mid, Small, and Micro cap using exchange market-cap classification on IPOFins.
+            Rankings are computed <strong>within each bucket</strong> — a mid-cap name is not compared against large-cap flows.
+          </p>
+        </div>
+        <div>
+          <h4 class="content-guide__subhead">Update frequency</h4>
+          <ul class="content-guide__list">
+            <li><strong>Mutual Funds</strong> — latest monthly holdings-change period (AMC portfolio statements)</li>
+            <li><strong>Super Investors, DII/FII, 1% Club</strong> — latest quarter with shareholding pattern data</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <p class="content-guide__footnote">
+      All figures come from SEBI-mandated public filings. Rupee amounts reflect disclosed holding value changes, not live market orders.
+      Not investment advice.
+    </p>
+  </ContentGuidePanel>
+</ContentGuideSection>
+
+<ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered>
+  <ContentGuideFaqList>
+    <ContentGuideFaqItem open>
+      <span slot="question">What is Top Stocks on IPOFins?</span>
+      A ranked list of equities by <strong>net institutional rupee flow</strong> — how much money (in ₹ crore) moved into or out of each stock
+      during the latest filing period. Use it to see where mutual funds, super investors, DIIs/FIIs, or 1% Club holders
+      are collectively buying or selling, filtered by market-cap bucket.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">How is Top Stocks different from Smart Money Tracker?</span>
+      <a href={sm.hub} class="content-guide__link">Smart Money Tracker</a> focuses on <strong>mutual fund portfolio weight changes</strong> month-on-month
+      (fresh entries, complete exits, most bought/sold by fund count). Top Stocks converts activity into
+      <strong>rupee flows</strong> and supports four sources — not just mutual funds — so you can compare MF flows with
+      super-investor or FII activity on the same stock.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">What does Accumulation vs Distribution mean?</span>
+      <strong>Accumulation</strong> ranks stocks where institutions were net buyers (positive net ₹ flow).
+      <strong>Distribution</strong> ranks stocks where they were net sellers (negative net ₹ flow). Switch the Flow filter
+      above the table to change views.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">Why are amounts shown in crore rupees?</span>
+      Holding disclosures report market value of positions. Converting to ₹ Cr makes it easier to compare flows across
+      stocks with very different share prices and lot sizes. A ₹500 Cr net buy is a larger institutional bet than a ₹5 Cr net buy.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">Which market-cap filter should I use?</span>
+      Large-cap stocks have the deepest institutional coverage. Mid and small caps can show sharper flow swings but with
+      fewer reporting holders. Micro-cap flows are the most volatile — treat them as exploratory, not consensus signals.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">How often is Top Stocks updated?</span>
+      Mutual fund data updates when new monthly AMC portfolio disclosures are ingested. Super investor, DII/FII, and 1% Club
+      data updates each quarter after shareholding pattern filings. The period label above the table shows the active comparison window.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">Is this investment advice?</span>
+      No. Top Stocks summarizes public regulatory filings. Institutional buying does not guarantee future returns, and
+      sellers may be rebalancing rather than exiting a thesis. Always do your own research.
+    </ContentGuideFaqItem>
+  </ContentGuideFaqList>
+</ContentGuideSection>
+
+<ContentGuideExplore title="Explore Top Stocks views" subtitle="Jump to other sources, flows, and related institutional trackers.">
+  <TopStocksInternalLinks />
+</ContentGuideExplore>

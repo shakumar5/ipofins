@@ -1,0 +1,274 @@
+---
+import type { SmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import ContentGuideSection from '../content-guide/ContentGuideSection.astro';
+import ContentGuidePanel from '../content-guide/ContentGuidePanel.astro';
+import ContentGuideCard from '../content-guide/ContentGuideCard.astro';
+import ContentGuideFaqList from '../content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../content-guide/ContentGuideFaqItem.astro';
+import ContentGuideExplore from '../content-guide/ContentGuideExplore.astro';
+import SmartMoneyInternalLinks from '../funds/SmartMoneyInternalLinks.astro';
+
+interface Props {
+  sm: SmartMoneyTrackerLinks;
+}
+
+const { sm } = Astro.props;
+
+const link = (href: string, label: string) =>
+  `<a href="${href}" class="content-guide__link">${label}</a>`;
+---
+
+<ContentGuideSection
+  eyebrow="Guide"
+  title="How Smart Money Works"
+  intro="Every month, SEBI-regulated AMCs publish their complete equity portfolio holdings. IPOFins processes these official disclosures and builds four complementary views of institutional activity."
+>
+  <ContentGuidePanel>
+    <div class="content-guide__cards">
+      <ContentGuideCard number={1} title="Smart Money Tracker">
+        <p>
+          Compares each fund's portfolio month-on-month by <strong>portfolio weight (% of NAV)</strong>, not share quantity alone.
+          <strong>Most Bought</strong> and <strong>Most Sold</strong> rank by number of funds. <strong>Fresh Entries</strong> and
+          <strong>Complete Exits</strong> show stocks newly added or fully sold out. Filter by fund category and sector.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(sm.hub, 'Smart Money Hub'),
+          link(sm.mostBought, `Most Bought (${sm.latestMonth})`),
+          link(sm.mostSold, 'Most Sold'),
+          link(sm.freshEntries, 'Fresh Entries'),
+          link(sm.completeExits, 'Complete Exits'),
+          link(sm.holdingsChanges, 'Holdings Changes by AMC'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+
+      <ContentGuideCard number={2} title="Smart Money Signal">
+        <p>
+          Ranked table of stocks scored <strong>0–100</strong>. Each stock appears once — fund activity is aggregated across all schemes
+          and scored vs peers in the same <strong>market-cap bucket</strong> (Large / Mid / Small / Micro).
+        </p>
+        <p>
+          <strong>Conviction Score</strong> = how active vs peers. <strong>Smart Money Signal</strong> = buy/sell direction this month,
+          with intensity from the score.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(sm.signals, 'Smart Money Signal'),
+          link(sm.stockSignal, 'Stock Signal'),
+          link(sm.mostBought, 'Most Bought Stocks'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+
+      <ContentGuideCard number={3} title="Stock Signal">
+        <p>Browse individual stocks with a full institutional activity card for each name:</p>
+        <ul>
+          <li><strong>Smart Money</strong> — Conviction Score, Smart Money Signal, Institutional Confidence</li>
+          <li><strong>Mutual Fund Activity</strong> — Funds Holding, Increased/Reduced, Fresh Entries, Complete Exits</li>
+          <li><strong>Top Fund Holders</strong> — largest category funds by portfolio weight</li>
+        </ul>
+        <p class="content-guide__links" set:html={[
+          link(sm.stockSignal, 'Stock Signal'),
+          link(sm.signals, 'Smart Money Signal'),
+          link(sm.mostBought, 'Most Bought Stocks'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+
+      <ContentGuideCard number={4} title="Sector Intelligence">
+        <p>
+          Zooms out from individual stocks to <strong>sector-level rotation</strong> — Banks, Capital Markets, Pharmaceuticals,
+          IT - Software, Auto Components, and dozens more from AMC disclosures.
+        </p>
+        <p>
+          Shows conviction score, Smart Money Signal, AUM change, weight delta, and multi-month trend for the latest two disclosure months.
+        </p>
+        <p class="content-guide__links" set:html={[
+          link(sm.sectorIntelligence, 'Sector Intelligence'),
+          link(sm.hub, 'Smart Money Tracker'),
+          link(sm.holdingsChanges, 'Holdings Changes'),
+          link('/mutual-funds/all', 'All Funds'),
+        ].join(' · ')} />
+      </ContentGuideCard>
+    </div>
+
+    <details class="content-guide__details" id="how-scoring-works">
+      <summary>How conviction scoring works (full methodology)</summary>
+      <div class="content-guide__details-body">
+        <p>Stock-level signals use peer-percentile scoring within each market-cap bucket. Scores and labels update monthly from AMC portfolio disclosures.</p>
+
+        <div>
+          <h4 class="content-guide__subhead">Conviction Score (0–100)</h4>
+          <p>Ranks how <strong>active</strong> a stock was vs other stocks in the same cap bucket this month. It is a relative rank — not a buy/sell recommendation.</p>
+          <ul class="content-guide__list">
+            <li><strong>90–100</strong> — among the most active names in the bucket</li>
+            <li><strong>75–89</strong> — well above average activity</li>
+            <li><strong>50–74</strong> — moderate activity vs peers</li>
+            <li><strong>25–49</strong> — below-average activity</li>
+            <li><strong>0–24</strong> — near the bottom of the bucket</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="content-guide__subhead">Six score factors</h4>
+          <p>Each factor earns points vs the <strong>category leader</strong> that month. Points sum to the final score (max 100).</p>
+          <div class="data-table-premium overflow-x-auto -mx-1">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th class="text-left">Factor</th>
+                  <th class="text-left whitespace-nowrap">Max pts</th>
+                  <th class="text-left">What it measures</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-medium">Net Weight Change</td>
+                  <td class="tabular-nums">35</td>
+                  <td>Aggregate month-on-month portfolio weight change across all funds holding the stock</td>
+                </tr>
+                <tr>
+                  <td class="font-medium">Net Buying Funds</td>
+                  <td class="tabular-nums">20</td>
+                  <td>(Increased + fresh entries) − (reduced + complete exits); only when net flow is positive</td>
+                </tr>
+                <tr>
+                  <td class="font-medium">Fresh Entries</td>
+                  <td class="tabular-nums">15</td>
+                  <td>Funds that newly initiated a position this month</td>
+                </tr>
+                <tr>
+                  <td class="font-medium">Complete Exits</td>
+                  <td class="tabular-nums">10</td>
+                  <td>Fewer full sell-outs = more points (inverted vs bucket leader)</td>
+                </tr>
+                <tr>
+                  <td class="font-medium">AMC Breadth</td>
+                  <td class="tabular-nums">10</td>
+                  <td>Distinct AMCs buying; rewards broad participation</td>
+                </tr>
+                <tr>
+                  <td class="font-medium">Trend Consistency</td>
+                  <td class="tabular-nums">10</td>
+                  <td>Consecutive months where every holder increased portfolio weight</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="content-guide__subhead">Activity counts</h4>
+          <p>Shown in the stock detail view and used to determine signal direction:</p>
+          <ul class="content-guide__list">
+            <li><strong>Funds holding</strong> — schemes with a position after the month</li>
+            <li><strong>Increased / Reduced</strong> — existing holders who raised or trimmed weight</li>
+            <li><strong>Fresh entries</strong> — new positions started this month</li>
+            <li><strong>Complete exits</strong> — funds that sold out entirely</li>
+            <li><strong>Net buying</strong> — increased + fresh − reduced − exits</li>
+            <li><strong>Net weight MoM</strong> — combined % change in portfolio weight</li>
+            <li><strong>AMCs buying</strong> — distinct asset managers with buy-side activity</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="content-guide__subhead">Smart Money Signal labels</h4>
+          <p>Direction comes from net fund flow first; score sets intensity within that direction.</p>
+          <div class="content-guide__signal-grid">
+            <div class="content-guide__signal-box">
+              <p class="content-guide__signal-box-title">When funds are net buyers</p>
+              <ul>
+                <li>🚀 Aggressive Accumulation — score 90+</li>
+                <li>🟢 Strong Accumulation — score 75–89</li>
+                <li>🟡 Moderate Accumulation — score 50–74</li>
+                <li>🔵 Light Accumulation — score &lt; 50</li>
+              </ul>
+            </div>
+            <div class="content-guide__signal-box">
+              <p class="content-guide__signal-box-title">When funds are net sellers</p>
+              <ul>
+                <li>🔴 Strong Distribution — score 75+ or &lt; 25</li>
+                <li>🟠 Distribution — score 50–74</li>
+                <li>🟠 Light Distribution — score 25–49</li>
+              </ul>
+            </div>
+          </div>
+          <p class="mt-2">⚪ <strong>Neutral</strong> — mixed or flat activity (net flow and weight change both near zero).</p>
+        </div>
+
+        <div>
+          <h4 class="content-guide__subhead">Institutional Confidence (stars)</h4>
+          <p>Based on how many AMCs hold the stock — breadth of institutional coverage:</p>
+          <ul class="content-guide__list">
+            <li><strong>★★★★★ Very High</strong> — 20+ AMCs</li>
+            <li><strong>★★★★☆ High</strong> — 15–19 AMCs</li>
+            <li><strong>★★★☆☆ Medium</strong> — 10–14 AMCs</li>
+            <li><strong>★★☆☆☆ Low</strong> — 5–9 AMCs</li>
+            <li><strong>★☆☆☆☆ Very Low</strong> — fewer than 5 AMCs</li>
+          </ul>
+        </div>
+
+        <p>
+          <strong>Quick read:</strong> Score = how loud vs peers · Signal = buying or selling + how strong · Activity counts = what actually happened.
+        </p>
+      </div>
+    </details>
+
+    <p class="content-guide__footnote">
+      Data is sourced exclusively from official AMC monthly portfolio disclosure filings mandated by SEBI. Not investment advice.
+      Past institutional activity does not guarantee future performance.
+    </p>
+  </ContentGuidePanel>
+</ContentGuideSection>
+
+<ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered>
+  <ContentGuideFaqList>
+    <ContentGuideFaqItem>
+      <span slot="question">What is the difference between Conviction Score and Smart Money Signal?</span>
+      <strong>Conviction Score (0–100)</strong> ranks how active a stock was vs peers in the same market-cap bucket — it is relative, not a buy/sell call.
+      <strong>Smart Money Signal</strong> reflects whether funds were net buyers or sellers this month, with intensity from the score.
+      See <a href="#how-scoring-works" class="content-guide__link">How conviction scoring works</a> for the full factor breakdown.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem open>
+      <span slot="question">What is Sector Intelligence and how is it different from Smart Money Tracker?</span>
+      <a href={sm.hub} class="content-guide__link">Smart Money Tracker</a> focuses on <strong>individual stocks</strong>.
+      <a href={sm.sectorIntelligence} class="content-guide__link">Sector Intelligence</a> aggregates across all funds to show <strong>sector-level rotation</strong>.
+      Use Tracker for stock ideas; use Sector Intelligence for macro allocation trends.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">What is the Stock Signal tab?</span>
+      <a href={sm.stockSignal} class="content-guide__link">Stock Signal</a> lets you pick any stock and see conviction score, signal, confidence level,
+      fund activity counts, and top holders. It is the stock-level drill-down companion to the ranked
+      <a href={sm.signals} class="content-guide__link">Smart Money Signal</a> table.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">Which funds are included in Sector Intelligence?</span>
+      All active mutual fund schemes with equity holdings data for the comparison month — typically 500+ schemes across 40+ AMCs.
+      Broader than the <a href="/mutual-funds/all" class="content-guide__link">All Funds</a> list because sector rotation benefits from maximum coverage.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">What does AUM Change mean for a sector?</span>
+      We sum disclosed market value of every stock holding in a sector across all funds. AUM Change is the month-on-month percentage change in that total —
+      capturing both price movement and active buying/selling.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">How are comparison months selected?</span>
+      Automatically from the two most recent months with holdings data in the database. When new disclosures are ingested, the comparison advances — no configuration needed.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">What sector names are used?</span>
+      Sector classifications as disclosed in AMC portfolio filings (e.g. "Banks", "Capital Markets", "Pharmaceuticals & Biotechnology") — not remapped into custom macro buckets.
+    </ContentGuideFaqItem>
+    <ContentGuideFaqItem>
+      <span slot="question">How should I use this for investment research?</span>
+      Sector Intelligence is a <strong>starting point</strong>, not a buy/sell signal. Cross-reference with
+      <a href={sm.holdingsChanges} class="content-guide__link">Holdings Changes</a>,
+      <a href={sm.mostBought} class="content-guide__link">Most Bought Stocks</a>,
+      <a href={sm.sectorIntelligence} class="content-guide__link">Sector Intelligence</a>, and
+      <a href={sm.signals} class="content-guide__link">Smart Money Signal</a>.
+    </ContentGuideFaqItem>
+  </ContentGuideFaqList>
+</ContentGuideSection>
+
+<ContentGuideExplore
+  title="Explore Smart Money Tracker Views"
+  subtitle={`Deep links for ${sm.latestMonth} — updated automatically when new disclosure months are added.`}
+>
+  <SmartMoneyInternalLinks variant="inline" showHub={false} showTabs={false} />
+</ContentGuideExplore>

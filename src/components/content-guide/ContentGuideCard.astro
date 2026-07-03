@@ -1,0 +1,18 @@
+---
+interface Props {
+  number?: string | number;
+  title: string;
+}
+
+const { number, title } = Astro.props;
+---
+
+<article class="content-guide__card">
+  <h3 class="content-guide__card-title">
+    {number != null && <span class="content-guide__card-num">{number}</span>}
+    <span>{title}</span>
+  </h3>
+  <div class="content-guide__card-body">
+    <slot />
+  </div>
+</article>

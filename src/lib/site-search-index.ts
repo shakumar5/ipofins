@@ -24,6 +24,7 @@ import { stockSignalPath } from './stock-signal-meta';
 import { loadSmartMoneyStockSlugs } from './smart-money-stock-slugs';
 import { sectorIntelligencePath } from './sector-intelligence-meta';
 import { loadSectorIntelligenceSlugs } from './sector-intelligence-slugs';
+import { topStocksPath } from './top-stocks-meta';
 
 export interface SiteSearchItem {
   t: string;
@@ -43,7 +44,7 @@ const HUB_PAGES: SiteSearchItem[] = [
   { t: 'Mutual Fund Holdings Changes', u: '/mutual-funds/mutual-fund-holdings-changes', y: 'Fund', m: 'AMC portfolio diffs', k: 'holdings changes portfolio buy sell fund manager amc' },
   { t: 'Portfolio Overlap Checker', u: '/mutual-funds/portfolio-overlap-checker', y: 'Fund', m: 'Compare fund overlap', k: 'portfolio overlap checker common holdings duplicate exposure' },
   { t: 'Fund Overlap', u: '/mutual-funds/fund-overlap', y: 'Fund', m: 'Pairwise fund overlap', k: 'fund overlap pairwise portfolio concentration' },
-  { t: 'Top Stocks', u: '/top-stocks', y: 'Page', m: 'Net rupee stock flows by cap', k: 'top stocks accumulation distribution mutual funds super investors dii fii lic institutions 1 percent club large mid small micro' },
+  { t: 'Top Stocks', u: topStocksPath(), y: 'Page', m: 'Net rupee stock flows by cap', k: 'top stocks accumulation distribution mutual funds super investors dii fii lic institutions 1 percent club large mid small micro' },
   { t: 'Super Investors', u: SUPER_INVESTORS_HUB, y: 'Page', m: 'Curated investor portfolios', k: 'super investors dolly khanna portfolio shareholding' },
   { t: '1% Club', u: ONE_PERCENT_CLUB_HUB, y: 'Page', m: '≥1% shareholders from SHP', k: 'one percent club shareholding pattern' },
   { t: 'IPO Subscription Status', u: '/ipo/subscription-status', y: 'IPO', m: 'Live oversubscription', k: 'ipo subscription status oversubscribed today' },

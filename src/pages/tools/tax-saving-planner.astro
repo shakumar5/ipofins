@@ -35,6 +35,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "How does this planner help?", "acceptedAnswer": { "@type": "Answer", "text": "The planner calculates your current tax liability without deductions and compares it with tax after applying all eligible deductions (HRA, 80C, 80CCD, 80D, Section 24). Shows exact tax saved and breakdown of each deduction." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -102,35 +105,34 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Tax Saving</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Section 80C?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Section 80C allows tax deductions up to ₹1.5 lakh per year. Eligible investments include ELSS mutual funds (3-year lock-in), PPF, EPF, NSC, 5-year tax-saving FD, life insurance premiums, home loan principal repayment, and children's tuition fees. ELSS is popular because of its shortest lock-in and potential for highest returns.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Section 80D?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Section 80D provides tax benefits on health insurance premiums. You can claim up to ₹25,000 for self and family, plus ₹25,000 for parents (₹50,000 if parents are senior citizens above 60). This means maximum 80D deduction can be ₹75,000 if your parents are senior citizens.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is HRA exemption calculated?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">HRA exemption is the minimum of three amounts: (1) Actual HRA received from employer, (2) Rent paid minus 10% of basic salary, (3) 50% of basic salary (metro cities) or 40% of basic (non-metro). The lowest of these three becomes your tax-exempt HRA amount.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I claim both HRA and home loan benefits?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. If you own a home in one city but rent in another for employment, you can claim both HRA exemption (on rent paid) and home loan deductions (Section 24 for interest, Section 80C for principal). This is common for people posted to different cities than where they own property.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the maximum total tax saving possible?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In the 30% bracket: 80C saves ₹46,800, NPS 80CCD saves ₹15,600, 80D saves ₹15,600-₹23,400, Section 24 saves up to ₹62,400, HRA can save significantly more. Total potential saving: ₹1.5L-₹2.5L+ depending on your salary and deductions utilized.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Old Regime vs New Regime — which is better?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">If your total deductions (HRA + 80C + 80D + NPS + Section 24) exceed ₹3-4 lakhs, Old Regime is usually better. New Regime is better for those with fewer deductions. This calculator helps you calculate Old Regime tax — compare with New Regime to decide.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions - Tax Saving" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is Section 80C?</span>
+        <p>Section 80C allows tax deductions up to ₹1.5 lakh per year. Eligible investments include ELSS mutual funds (3-year lock-in), PPF, EPF, NSC, 5-year tax-saving FD, life insurance premiums, home loan principal repayment, and children's tuition fees. ELSS is popular because of its shortest lock-in and potential for highest returns.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is Section 80D?</span>
+        <p>Section 80D provides tax benefits on health insurance premiums. You can claim up to ₹25,000 for self and family, plus ₹25,000 for parents (₹50,000 if parents are senior citizens above 60). This means maximum 80D deduction can be ₹75,000 if your parents are senior citizens.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How is HRA exemption calculated?</span>
+        <p>HRA exemption is the minimum of three amounts: (1) Actual HRA received from employer, (2) Rent paid minus 10% of basic salary, (3) 50% of basic salary (metro cities) or 40% of basic (non-metro). The lowest of these three becomes your tax-exempt HRA amount.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I claim both HRA and home loan benefits?</span>
+        <p>Yes. If you own a home in one city but rent in another for employment, you can claim both HRA exemption (on rent paid) and home loan deductions (Section 24 for interest, Section 80C for principal). This is common for people posted to different cities than where they own property.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the maximum total tax saving possible?</span>
+        <p>In the 30% bracket: 80C saves ₹46,800, NPS 80CCD saves ₹15,600, 80D saves ₹15,600-₹23,400, Section 24 saves up to ₹62,400, HRA can save significantly more. Total potential saving: ₹1.5L-₹2.5L+ depending on your salary and deductions utilized.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Old Regime vs New Regime — which is better?</span>
+        <p>If your total deductions (HRA + 80C + 80D + NPS + Section 24) exceed ₹3-4 lakhs, Old Regime is usually better. New Regime is better for those with fewer deductions. This calculator helps you calculate Old Regime tax — compare with New Regime to decide.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

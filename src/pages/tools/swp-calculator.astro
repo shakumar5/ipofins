@@ -78,6 +78,9 @@ const faqJsonLd = {
     },
   ],
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -139,47 +142,34 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions About SWP</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is SWP in mutual funds?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          SWP (Systematic Withdrawal Plan) withdraws a fixed amount from your fund on a schedule (usually monthly). Your remaining units stay invested and can keep growing. Platforms like Groww, Zerodha Coin, and MF Central support SWP setup.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is SWP different from SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          SIP adds money to a fund each month to build wealth. SWP takes money out for regular income. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> while accumulating and SWP when you need payouts in retirement.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is SWP good for retirement?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Yes — many retirees use SWP for monthly income. Keep withdrawals modest (often 6-8% of corpus per year) relative to expected returns so the corpus does not deplete too early. Pair with our <a href="/tools/retirement-calculator" class="text-primary-600 hover:underline">Retirement Calculator</a> for full planning.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is SWP return calculated?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Each month, the corpus earns returns on the remaining balance, then your fixed withdrawal is deducted. Total withdrawn is the sum of all monthly payouts. Remaining corpus is what's left after the last month — or zero if depleted early.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a safe monthly SWP amount?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          A conservative approach is 0.5-0.7% of corpus per month from equity-oriented funds. On ₹50 lakh, that's ₹25,000-₹35,000/month. Higher withdrawals work only if returns stay strong — test scenarios with this calculator before committing.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is SWP taxable in India?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Each SWP installment redeems mutual fund units. Only the capital gains portion is taxed — not the full withdrawal. Equity funds follow STCG/LTCG rules; debt funds are taxed per your income slab. Consult a CA for your specific portfolio mix.
-        </p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions About SWP" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is SWP in mutual funds?</span>
+        <p>SWP (Systematic Withdrawal Plan) withdraws a fixed amount from your fund on a schedule (usually monthly). Your remaining units stay invested and can keep growing. Platforms like Groww, Zerodha Coin, and MF Central support SWP setup.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How is SWP different from SIP?</span>
+        <p>SIP adds money to a fund each month to build wealth. SWP takes money out for regular income. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> while accumulating and SWP when you need payouts in retirement.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is SWP good for retirement?</span>
+        <p>Yes — many retirees use SWP for monthly income. Keep withdrawals modest (often 6-8% of corpus per year) relative to expected returns so the corpus does not deplete too early. Pair with our <a href="/tools/retirement-calculator" class="text-primary-600 hover:underline">Retirement Calculator</a> for full planning.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How is SWP return calculated?</span>
+        <p>Each month, the corpus earns returns on the remaining balance, then your fixed withdrawal is deducted. Total withdrawn is the sum of all monthly payouts. Remaining corpus is what's left after the last month — or zero if depleted early.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is a safe monthly SWP amount?</span>
+        <p>A conservative approach is 0.5-0.7% of corpus per month from equity-oriented funds. On ₹50 lakh, that's ₹25,000-₹35,000/month. Higher withdrawals work only if returns stay strong — test scenarios with this calculator before committing.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is SWP taxable in India?</span>
+        <p>Each SWP installment redeems mutual fund units. Only the capital gains portion is taxed — not the full withdrawal. Equity funds follow STCG/LTCG rules; debt funds are taxed per your income slab. Consult a CA for your specific portfolio mix.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <section class="container-narrow py-8">
     <div class="prose dark:prose-invert max-w-none text-sm">

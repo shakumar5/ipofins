@@ -8,6 +8,7 @@ import { getAllIPOs } from '../../lib/data/ipos';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../lib/affiliate-links';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import { buildShouldApplyFaqAnswer } from '../../lib/ipo-apply-faq';
+import { ipoDisplayText, ipoMetaLine } from '../../lib/ipo-list-sections';
 import { defaultIpoListBack, IPO_LIST_BACK } from '../../lib/list-back-nav';
 import ListBackLink from '../../components/ListBackLink.astro';
 import type { IPORecord } from '../../types/ipo';
@@ -36,6 +37,13 @@ const statusConfig = {
 };
 const statusInfo = statusConfig[ipo.status as keyof typeof statusConfig] || statusConfig['upcoming'];
 const shouldApplyAnswer = buildShouldApplyFaqAnswer(ipo, ipo.gmp);
+const sector = ipoDisplayText(ipo.sector);
+const issueSize = ipoDisplayText(ipo.issueSize);
+const headquarters = ipoDisplayText(ipo.headquarters);
+const priceRange = ipoDisplayText(ipo.priceRange);
+const openDate = ipoDisplayText(ipo.openDate);
+const closeDate = ipoDisplayText(ipo.closeDate);
+const pageSubtitle = ipoMetaLine(sector, issueSize, headquarters) || 'IPO details from SEBI DRHP filings';
 const defaultBack = defaultIpoListBack(ipo.type);
 const ipoBackVariants = Object.fromEntries(
   Object.entries(IPO_LIST_BACK).filter(([key]) => key !== 'sector'),
@@ -81,7 +89,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
 <IPOLayout
   activeTab={ipo.type === 'mainboard' ? 'mainboard' : 'sme'}
   title={`${ipo.name} IPO - Price, Subscription & Review | IPOFins`}
-  description={`${ipo.name} IPO: Price ₹${ipo.priceRange}, lot size ${ipo.lotSize}, issue size ${ipo.issueSize}. ${ipo.description?.slice(0, 100)}`}
+  description={`${ipo.name} IPO${priceRange ? `: Price ₹${priceRange}` : ''}${ipo.lotSize ? `, lot size ${ipo.lotSize}` : ''}${issueSize ? `, issue size ${issueSize}` : ''}. ${ipo.description?.slice(0, 100) || ''}`}
   jsonLd={jsonLd}
 >
   <!-- Header -->
@@ -96,7 +104,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
 
     <PageHeader
       title={`${ipo.name} IPO`}
-      subtitle={`${ipo.sector} • ${ipo.issueSize} • ${ipo.headquarters || ''}`}
+      subtitle={pageSubtitle}
       freshness={`Status: ${statusInfo.label}`}
       source="SEBI DRHP & exchange data"
     >
@@ -105,7 +113,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
         <div class="flex items-center gap-2 mb-2">
           <span class={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
           <span class="text-xs text-surface-500 uppercase">{ipo.type}</span>
-          <span class="text-xs text-surface-400">• {ipo.sector}</span>
+          {sector && <span class="text-xs text-surface-400">• {sector}</span>}
         </div>
       </div>
       <div class="flex items-center gap-4">
@@ -126,26 +134,36 @@ const jsonLd = [financialProductLd, breadcrumbLd];
   <!-- Key Metrics -->
   <section class="container-wide py-4">
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {priceRange && (
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Price Band</p>
-        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{ipo.priceRange}</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{priceRange}</p>
       </div>
+      )}
+      {ipo.lotSize > 0 && (
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Lot Size</p>
         <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.lotSize} shares</p>
       </div>
+      )}
+      {issueSize && (
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Issue Size</p>
-        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.issueSize}</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{issueSize}</p>
       </div>
+      )}
+      {openDate && (
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Open</p>
-        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.openDate}</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{openDate}</p>
       </div>
+      )}
+      {closeDate && (
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Close</p>
-        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.closeDate}</p>
+        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{closeDate}</p>
       </div>
+      )}
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Subscription</p>
         {ipo.subscription !== null && ipo.subscription !== undefined ? (
@@ -166,11 +184,11 @@ const jsonLd = [financialProductLd, breadcrumbLd];
           <tbody class="divide-y divide-surface-100 dark:divide-surface-700">
             <tr>
               <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Issue Open Date</td>
-              <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.openDate || '—'}</td>
+              <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{openDate || 'TBA'}</td>
             </tr>
             <tr>
               <td class="py-2.5 px-3 text-surface-500 dark:text-surface-400">Issue Close Date</td>
-              <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{ipo.closeDate || '—'}</td>
+              <td class="py-2.5 px-3 font-semibold text-surface-900 dark:text-white text-right">{closeDate || 'TBA'}</td>
             </tr>
             {ipo.allotmentDate && (
               <tr>

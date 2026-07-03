@@ -1,6 +1,6 @@
 ---
 import { ipoDetailHref, type IpoListFrom } from '../lib/list-back-nav';
-import { ipoRowMeta, type IPOListItem } from '../lib/ipo-list-sections';
+import { ipoRowMeta, ipoDisplayText, isIpoPlaceholder, type IPOListItem } from '../lib/ipo-list-sections';
 
 interface Props {
   ipo: IPOListItem;
@@ -21,9 +21,11 @@ const {
 } = Astro.props;
 
 const TitleTag = headingLevel;
-const meta = showIssueSize && ipo.issueSize
-  ? `${ipoRowMeta(ipo)} • ${ipo.issueSize}`
+const issueSizeLabel = ipoDisplayText(ipo.issueSize);
+const meta = showIssueSize && issueSizeLabel
+  ? `${ipoRowMeta(ipo)} • ${issueSizeLabel}`
   : ipoRowMeta(ipo);
+const priceRange = ipoDisplayText(ipo.priceRange);
 
 const badgeLabel =
   ipo.status === 'open'
@@ -61,14 +63,18 @@ const badgeLabel =
       <p class="text-xs ipo-meta mt-0.5">{meta}</p>
     </div>
     <div class="flex items-center gap-5 text-xs flex-shrink-0">
+      {priceRange && (
       <div>
         <span class="ipo-label">Price </span>
-        <span class="font-semibold text-surface-800 dark:text-surface-200">₹{ipo.priceRange}</span>
+        <span class="font-semibold text-surface-800 dark:text-surface-200">₹{priceRange}</span>
       </div>
+      )}
+      {(ipo.lotSize ?? 0) > 0 && (
       <div>
         <span class="ipo-label">Lot </span>
         <span class="font-semibold">{ipo.lotSize}</span>
       </div>
+      )}
       {ipo.subscription != null && ipo.subscription > 0 && (
         <div>
           <span class="ipo-label">Sub </span>

@@ -69,6 +69,9 @@ const registrars = [
   { name: "KFin Technologies (KFintech)", url: "https://ipostatus.kfintech.com/", description: "Check allotment for IPOs with KFintech as registrar" },
   { name: "BigShare Services", url: "https://ipo.bigshareonline.com/IPO_Status.html", description: "Check allotment for IPOs with BigShare as registrar" },
 ];
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <IPOLayout activeTab="allotment"
@@ -199,27 +202,26 @@ const registrars = [
   </section>
 
   <!-- FAQ -->
-  <section class="container-wide py-8">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">FAQ</h2>
-    <div class="space-y-4 max-w-3xl">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to check IPO allotment status?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Visit the registrar's website (Link Intime, KFintech, or BigShare), select the IPO, and enter your PAN or application number.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">When is allotment announced?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Typically 6 working days after the IPO closes. For example, if IPO closes on Monday, allotment is usually by the following Monday.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What if I don't get allotment?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Your money is automatically refunded within 1-2 days. The UPI mandate blocked amount is released to your bank account.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What are my chances of getting allotment?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In retail, if subscription is 10x, approximately 1 in 10 applicants get shares (lottery). Applying for 1 lot gives best probability per application.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="FAQ" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">How to check IPO allotment status?</span>
+        <p>Visit the registrar's website (Link Intime, KFintech, or BigShare), select the IPO, and enter your PAN or application number.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">When is allotment announced?</span>
+        <p>Typically 6 working days after the IPO closes. For example, if IPO closes on Monday, allotment is usually by the following Monday.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What if I don't get allotment?</span>
+        <p>Your money is automatically refunded within 1-2 days. The UPI mandate blocked amount is released to your bank account.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What are my chances of getting allotment?</span>
+        <p>In retail, if subscription is 10x, approximately 1 in 10 applicants get shares (lottery). Applying for 1 lot gives best probability per application.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related -->
   <section class="container-wide py-8">
