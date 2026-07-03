@@ -32,8 +32,6 @@ export function slimSignalRow(row) {
     stockName: row.stockName,
     stockSlug: row.stockSlug,
     sector: row.sector,
-    category: row.category,
-    month: row.month,
     convictionScore: row.convictionScore,
     signal: row.signal,
     signalEmoji: row.signalEmoji,
@@ -46,48 +44,59 @@ export function slimSignalRow(row) {
     amcCount: row.amcCount,
     amcsBuying: row.amcsBuying,
     buyingFunds: row.buyingFunds,
-    institutionalConfidence: row.institutionalConfidence,
-    confidenceStars: row.confidenceStars,
     consecutivePositiveMonths: row.consecutivePositiveMonths,
     fundsHolding: row.fundsHolding,
-    topFundHolders: Array.isArray(row.topFundHolders) ? row.topFundHolders.slice(0, 3) : [],
     ...(row.nseSymbol ? { nseSymbol: row.nseSymbol } : {}),
   };
 }
 
 /** Detail overlay keyed by stockSlug in detail JSON files. */
 export function detailSignalRow(row) {
+  const topFundHolders = Array.isArray(row.topFundHolders) ? row.topFundHolders.slice(0, 3) : [];
   const hasDetail =
     row.factorBreakdown ||
     row.factorScores ||
     row.fundActivity ||
-    row.interpretation;
+    row.interpretation ||
+    topFundHolders.length > 0;
   if (!hasDetail) return null;
 
   return {
     stockSlug: row.stockSlug,
-    factorScores: row.factorScores,
-    factorBreakdown: row.factorBreakdown,
-    fundActivity: row.fundActivity,
-    interpretation: row.interpretation,
+    ...(row.factorScores ? { factorScores: row.factorScores } : {}),
+    ...(row.factorBreakdown ? { factorBreakdown: row.factorBreakdown } : {}),
+    ...(row.fundActivity ? { fundActivity: row.fundActivity } : {}),
+    ...(row.interpretation ? { interpretation: row.interpretation } : {}),
+    ...(topFundHolders.length ? { topFundHolders } : {}),
   };
 }
 
-export function searchIndexEntry(row) {
+export function searchIndexEntry(row, envelope = {}) {
+  const category = row.category ?? envelope.category;
   return {
     stockSlug: row.stockSlug,
     stockName: row.stockName,
     sector: row.sector,
-    category: row.category,
+    category,
     convictionScore: row.convictionScore,
     signal: row.signal,
     ...(row.nseSymbol ? { nseSymbol: row.nseSymbol } : {}),
   };
 }
 
-/** Fail build if list export regresses (heavy fields or oversized files). */
+/** Fail build if list export regresses (heavy or envelope-redundant fields). */
 export function assertSlimListRow(row, context = '') {
-  const forbidden = ['factorBreakdown', 'factorScores', 'fundActivity', 'interpretation'];
+  const forbidden = [
+    'factorBreakdown',
+    'factorScores',
+    'fundActivity',
+    'interpretation',
+    'topFundHolders',
+    'institutionalConfidence',
+    'confidenceStars',
+    'month',
+    'category',
+  ];
   for (const key of forbidden) {
     if (key in row && row[key] != null) {
       throw new Error(`List row must not include ${key}${context ? ` (${context})` : ''}`);

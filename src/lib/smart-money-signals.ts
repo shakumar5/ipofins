@@ -311,6 +311,28 @@ export function amcInstitutionalConfidence(amcCount: number): { label: string; s
   return { label: 'Very Low', stars: 1 };
 }
 
+/** Rehydrate list-tier rows with envelope month/category and derived confidence labels. */
+export function hydrateSignalListRow(
+  row: SmartMoneySignalRow,
+  envelope: { month: string; category: string },
+): SmartMoneySignalRow {
+  const month = row.month || envelope.month;
+  const category = row.category || envelope.category;
+  const conf =
+    row.institutionalConfidence != null && row.confidenceStars != null
+      ? { label: row.institutionalConfidence, stars: row.confidenceStars }
+      : amcInstitutionalConfidence(row.amcCount ?? 0);
+
+  return {
+    ...row,
+    month,
+    category,
+    institutionalConfidence: conf.label,
+    confidenceStars: conf.stars,
+    topFundHolders: row.topFundHolders ?? [],
+  };
+}
+
 export function buildInterpretation(
   stockName: string,
   signal: SmartMoneySignalType,
