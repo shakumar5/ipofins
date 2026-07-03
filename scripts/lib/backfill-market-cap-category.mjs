@@ -1,7 +1,14 @@
 /**
- * Derive stocks.market_cap_category from SHP + entity holdings market caps.
- * SEBI-style rank buckets: top 100 large, 101-250 mid, 251-500 small, rest micro.
+ * Derive stocks.market_cap_category from AMFI Excel (preferred) or SHP + entity holdings.
+ * Buckets: see scripts/lib/market-cap-buckets.mjs (mid 101-250, micro 1501+).
  */
+
+import {
+  findLatestAmfiMarketCapFile,
+  parseAmfiMarketCapFile,
+} from './amfi-market-cap.mjs';
+import { rankToMarketCapCategory, MARKET_CAP_BUCKETS } from './market-cap-buckets.mjs';
+import { bulkApplyAmfiMarketCapCategories } from './pg-bulk.mjs';
 
 const MIN_MCAP_CR = 100;
 const MAX_MCAP_CR = 50_000_000;
@@ -10,9 +17,43 @@ const MAX_HOLDER_PCT = 90;
 
 /**
  * @param {import('@neondatabase/serverless').NeonQueryFunction} sql
- * @returns {Promise<{ updated: number, large: number, mid: number, small: number, micro: number }>}
+ * @param {Array<{ isin: string, nseSymbol: string | null, marketCapCategory: string | null }>} amfiRows
  */
-export async function backfillMarketCapCategory(sql) {
+async function backfillMarketCapCategoryFromAmfi(_sql, amfiRows) {
+  const rows = amfiRows
+    .filter((r) => r.marketCapCategory)
+    .map((r) => ({
+      isin: r.isin || null,
+      nse_symbol: r.nseSymbol || null,
+      market_cap_category: r.marketCapCategory,
+    }));
+
+  const { byIsin, byNseFallback } = await bulkApplyAmfiMarketCapCategories(rows);
+  const updated = byIsin + byNseFallback;
+
+  const caps = rows.reduce(
+    (acc, r) => {
+      acc[r.market_cap_category] = (acc[r.market_cap_category] || 0) + 1;
+      return acc;
+    },
+    { large: 0, mid: 0, small: 0, micro: 0 },
+  );
+
+  return {
+    source: 'amfi',
+    updated,
+    large: caps.large,
+    mid: caps.mid,
+    small: caps.small,
+    micro: caps.micro,
+  };
+}
+
+/**
+ * SHP-derived fallback for stocks not covered by AMFI file.
+ * @param {import('@neondatabase/serverless').NeonQueryFunction} sql
+ */
+async function backfillMarketCapCategoryFromShp(sql) {
   const stats = await sql`
     WITH latest_sph_quarter AS (
       SELECT stock_id, MAX(quarter) AS quarter
@@ -65,8 +106,8 @@ export async function backfillMarketCapCategory(sql) {
         stock_id,
         CASE
           WHEN rnk <= 100 THEN 'large'
-          WHEN rnk <= 250 THEN 'mid'
-          WHEN rnk <= 500 THEN 'small'
+          WHEN rnk <= ${MARKET_CAP_BUCKETS.mid.rankTo} THEN 'mid'
+          WHEN rnk <= ${MARKET_CAP_BUCKETS.small.rankTo} THEN 'small'
           ELSE 'micro'
         END AS category
       FROM ranked
@@ -76,6 +117,7 @@ export async function backfillMarketCapCategory(sql) {
       SET market_cap_category = c.category
       FROM classified c
       WHERE s.id = c.stock_id
+        AND s.market_cap_category IS NULL
         AND (s.market_cap_category IS DISTINCT FROM c.category)
       RETURNING c.category
     )
@@ -90,12 +132,36 @@ export async function backfillMarketCapCategory(sql) {
 
   const row = stats[0] ?? { updated: 0, large: 0, mid: 0, small: 0, micro: 0 };
   return {
+    source: 'shp',
     updated: Number(row.updated) || 0,
     large: Number(row.large) || 0,
     mid: Number(row.mid) || 0,
     small: Number(row.small) || 0,
     micro: Number(row.micro) || 0,
   };
+}
+
+/**
+ * @param {import('@neondatabase/serverless').NeonQueryFunction} sql
+ * @returns {Promise<{ updated: number, large: number, mid: number, small: number, micro: number, source?: string }>}
+ */
+export async function backfillMarketCapCategory(sql) {
+  const amfiFile = findLatestAmfiMarketCapFile();
+  if (amfiFile) {
+    const amfiRows = parseAmfiMarketCapFile(amfiFile);
+    const amfiResult = await backfillMarketCapCategoryFromAmfi(sql, amfiRows);
+    const shpResult = await backfillMarketCapCategoryFromShp(sql);
+    return {
+      source: 'amfi+shp-fallback',
+      updated: amfiResult.updated + shpResult.updated,
+      large: amfiResult.large + shpResult.large,
+      mid: amfiResult.mid + shpResult.mid,
+      small: amfiResult.small + shpResult.small,
+      micro: amfiResult.micro + shpResult.micro,
+    };
+  }
+
+  return backfillMarketCapCategoryFromShp(sql);
 }
 
 /**
@@ -111,3 +177,5 @@ export async function ensureMarketCapCategories(sql) {
   `;
   return { skipped: false, classified: after, ...result };
 }
+
+export { rankToMarketCapCategory };

@@ -125,6 +125,58 @@ export async function bulkUpsertStocks(rows, chunkSize = 500) {
 }
 
 /**
+ * Apply AMFI cap buckets to existing stocks only.
+ * Match: ISIN first (same as stockListingKey), then NSE symbol when stock has no ISIN.
+ * Does not write nse_symbol / bse_code — those come from NSE/BSE seed scripts.
+ */
+export async function bulkApplyAmfiMarketCapCategories(rows, chunkSize = 500) {
+  const valid = rows.filter((r) => r?.market_cap_category);
+  if (!valid.length) return { byIsin: 0, byNseFallback: 0 };
+
+  const pool = getPgPool();
+  let byIsin = 0;
+  let byNseFallback = 0;
+
+  for (let i = 0; i < valid.length; i += chunkSize) {
+    const chunk = valid.slice(i, i + chunkSize);
+    const isins = chunk.map((r) => r.isin || null);
+    const nseSymbols = chunk.map((r) => r.nse_symbol || null);
+    const categories = chunk.map((r) => r.market_cap_category);
+
+    const isinResult = await pool.query(
+      `UPDATE stocks s
+       SET market_cap_category = u.market_cap_category, updated_at = NOW()
+       FROM UNNEST($1::text[], $2::text[]) AS u(isin, market_cap_category)
+       WHERE NULLIF(TRIM(u.isin), '') IS NOT NULL
+         AND UPPER(TRIM(s.isin)) = UPPER(TRIM(u.isin))
+         AND s.market_cap_category IS DISTINCT FROM u.market_cap_category`,
+      [isins, categories],
+    );
+    byIsin += isinResult.rowCount ?? 0;
+
+    const nseResult = await pool.query(
+      `UPDATE stocks s
+       SET market_cap_category = u.market_cap_category, updated_at = NOW()
+       FROM UNNEST($1::text[], $2::text[], $3::text[])
+         AS u(isin, nse_symbol, market_cap_category)
+       WHERE NULLIF(TRIM(u.nse_symbol), '') IS NOT NULL
+         AND (s.isin IS NULL OR TRIM(s.isin) = '')
+         AND UPPER(TRIM(s.nse_symbol)) = UPPER(TRIM(u.nse_symbol))
+         AND s.market_cap_category IS DISTINCT FROM u.market_cap_category
+         AND NOT EXISTS (
+           SELECT 1 FROM stocks s2
+           WHERE NULLIF(TRIM(u.isin), '') IS NOT NULL
+             AND UPPER(TRIM(s2.isin)) = UPPER(TRIM(u.isin))
+         )`,
+      [isins, nseSymbols, categories],
+    );
+    byNseFallback += nseResult.rowCount ?? 0;
+  }
+
+  return { byIsin, byNseFallback };
+}
+
+/**
  * Bulk upsert NSE listed equities (name, slug, isin, nse_symbol).
  * Used by Super Investors / 1% Club — independent of MF holdings universe.
  */

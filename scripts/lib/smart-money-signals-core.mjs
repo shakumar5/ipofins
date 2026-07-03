@@ -38,6 +38,10 @@ const FACTOR_MAX = {
 export function normalizeStockCapCategory(raw) {
   const v = String(raw || '').toLowerCase().replace(/_/g, ' ').trim();
   if (!v) return 'Unknown';
+  if (v === 'micro' || v === 'micro cap') return 'Micro Cap';
+  if (v === 'mid' || v === 'mid cap') return 'Mid Cap';
+  if (v === 'small' || v === 'small cap') return 'Small Cap';
+  if (v === 'large' || v === 'large cap') return 'Large Cap';
   if (v.includes('micro')) return 'Micro Cap';
   if (v.includes('small')) return 'Small Cap';
   if (v.includes('mid')) return 'Mid Cap';
