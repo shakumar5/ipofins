@@ -60,7 +60,7 @@
     "verify:encoding": "node scripts/verify-source-encoding.mjs",
     "generate:insights": "node scripts/generate-insights-articles.mjs",
     "verify:insights": "node scripts/verify-insights-articles.mjs",
-    "check": "node scripts/verify-source-encoding.mjs && astro check",
+    "check": "node scripts/verify-source-encoding.mjs && node scripts/ensure-insights-articles-for-check.mjs && astro check",
     "preview": "astro preview",
     "astro": "astro",
     "predeploy": "npm run pipeline:predeploy",
