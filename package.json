@@ -35,6 +35,7 @@
     "db:sync-si-from-staging": "node scripts/node-with-ca.mjs db/seed/sync-si-staging-to-prod.mjs",
     "db:seed-listed-equities": "node scripts/node-with-ca.mjs db/seed/seed-listed-equities.mjs",
     "db:seed-bse-listed-equities": "node scripts/node-with-ca.mjs db/seed/seed-bse-listed-equities.mjs",
+    "db:seed-amfi-market-cap": "node scripts/node-with-ca.mjs db/seed/seed-amfi-market-cap.mjs",
     "db:backfill-symbols": "node scripts/node-with-ca.mjs db/seed/seed-listed-equities.mjs",
     "validate:si-pipeline": "node scripts/node-with-ca.mjs scripts/validate-si-pipeline.mjs",
     "validate:si-data": "node scripts/node-with-ca.mjs scripts/validate-si-data.mjs",

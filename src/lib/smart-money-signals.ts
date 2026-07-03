@@ -44,6 +44,11 @@ export type SignalCategory = StockCapCategory;
 export function normalizeStockCapCategory(raw: string | null | undefined): StockCapCategory {
   const v = String(raw || '').toLowerCase().replace(/_/g, ' ').trim();
   if (!v) return 'Unknown';
+  // Exact DB bucket ids first — mid and micro are distinct (never abbreviate both as "mcap").
+  if (v === 'micro' || v === 'micro cap') return 'Micro Cap';
+  if (v === 'mid' || v === 'mid cap') return 'Mid Cap';
+  if (v === 'small' || v === 'small cap') return 'Small Cap';
+  if (v === 'large' || v === 'large cap') return 'Large Cap';
   if (v.includes('micro')) return 'Micro Cap';
   if (v.includes('small')) return 'Small Cap';
   if (v.includes('mid')) return 'Mid Cap';

@@ -1,6 +1,8 @@
-/**
- * Top Stocks — shared types and bucket helpers (safe for client bundles).
- */
+import {
+  MARKET_CAP_BUCKETS,
+  MARKET_CAP_BUCKET_ORDER,
+  type MarketCapBucketId,
+} from './market-cap-buckets';
 
 export type TopStocksSource =
   | 'mutual_funds'
@@ -8,7 +10,7 @@ export type TopStocksSource =
   | 'dii_fii'
   | 'one_percent_club';
 export type TopStocksFlow = 'accumulation' | 'distribution';
-export type TopStocksCap = 'large' | 'mid' | 'small' | 'micro';
+export type TopStocksCap = MarketCapBucketId;
 
 export const TOP_STOCKS_SOURCE_OPTIONS: { id: TopStocksSource; label: string }[] = [
   { id: 'mutual_funds', label: 'Mutual Funds' },
@@ -22,12 +24,12 @@ export const TOP_STOCKS_FLOW_OPTIONS: { id: TopStocksFlow; label: string }[] = [
   { id: 'distribution', label: 'Distribution' },
 ];
 
-export const TOP_STOCKS_CAP_OPTIONS: { id: TopStocksCap; label: string }[] = [
-  { id: 'large', label: 'Large Cap' },
-  { id: 'mid', label: 'Mid Cap' },
-  { id: 'small', label: 'Small Cap' },
-  { id: 'micro', label: 'Micro Cap' },
-];
+export const TOP_STOCKS_CAP_OPTIONS: { id: TopStocksCap; label: string; description: string }[] =
+  MARKET_CAP_BUCKET_ORDER.map((id) => ({
+    id,
+    label: MARKET_CAP_BUCKETS[id].label,
+    description: MARKET_CAP_BUCKETS[id].description,
+  }));
 
 export interface TopStockRow {
   stockSlug: string;

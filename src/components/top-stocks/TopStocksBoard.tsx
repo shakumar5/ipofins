@@ -130,7 +130,7 @@ export default function TopStocksBoard({ payload, initialFilters }: Props) {
         </FilterSelect>
         <FilterSelect
           id="top-stocks-cap"
-          label="Market cap"
+          label="Market cap bucket"
           value={cap}
           onChange={(e) => updateFilters({ cap: e.target.value as TopStocksCap })}
         >
@@ -150,6 +150,10 @@ export default function TopStocksBoard({ payload, initialFilters }: Props) {
           Top 50 {capLabel} stocks by net rupees {flowLabel} ({sourceLabel})
         </p>
       )}
+
+      <p className="text-xs text-surface-500 dark:text-surface-400">
+        {TOP_STOCKS_CAP_OPTIONS.find((o) => o.id === cap)?.description}
+      </p>
 
       {rows.length === 0 ? (
         <div className="card text-center py-10">
