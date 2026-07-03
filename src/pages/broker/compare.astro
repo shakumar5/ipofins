@@ -21,6 +21,9 @@ const jsonLd = {
     ]
   }
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -103,31 +106,30 @@ const jsonLd = {
   </section>
 
   <!-- FAQ Section -->
-  <section class="container-wide py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4 max-w-3xl">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How do I choose the best broker for my needs?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Consider your trading frequency, investment style, and the features you need. If you trade frequently, low brokerage (₹20 flat) matters most. If you're a long-term investor, platform quality and mutual fund options are more important. Beginners should prioritize ease of use and educational resources.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What charges should I compare between brokers?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Compare: brokerage per trade, account opening fee, annual maintenance charge (AMC), demat charges, DP charges per sell transaction (₹13-18), margin interest rates, and call & trade charges. Many brokers offer zero account opening as promotional offers.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I have accounts with multiple brokers?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, you can hold demat and trading accounts with multiple brokers simultaneously. Many investors use one broker for long-term investments (for research tools) and another for active trading (for low brokerage). Your shares are linked to your PAN, so holdings are visible across all accounts.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Discount broker vs full-service broker — which is better?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Discount brokers (<a href="/broker/zerodha" class="text-primary-600 hover:underline">Zerodha</a>, <a href="/broker/groww" class="text-primary-600 hover:underline">Groww</a>, <a href="/broker/upstox" class="text-primary-600 hover:underline">Upstox</a>) charge flat ₹20/trade and are best for self-directed investors. Full-service brokers (<a href="/broker/icici-direct" class="text-primary-600 hover:underline">ICICI Direct</a>, <a href="/broker/hdfc-securities" class="text-primary-600 hover:underline">HDFC Securities</a>) charge percentage-based fees but offer research, advisory, and 3-in-1 accounts. Most modern investors prefer discount brokers for the cost savings.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How long does it take to open a trading account?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Most discount brokers offer instant account opening through e-KYC with Aadhaar. The process takes 10-15 minutes, and you can start trading within 24-48 hours after verification. You'll need PAN card, Aadhaar, bank details, and a selfie for video KYC.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">How do I choose the best broker for my needs?</span>
+        <p>Consider your trading frequency, investment style, and the features you need. If you trade frequently, low brokerage (₹20 flat) matters most. If you're a long-term investor, platform quality and mutual fund options are more important. Beginners should prioritize ease of use and educational resources.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What charges should I compare between brokers?</span>
+        <p>Compare: brokerage per trade, account opening fee, annual maintenance charge (AMC), demat charges, DP charges per sell transaction (₹13-18), margin interest rates, and call & trade charges. Many brokers offer zero account opening as promotional offers.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I have accounts with multiple brokers?</span>
+        <p>Yes, you can hold demat and trading accounts with multiple brokers simultaneously. Many investors use one broker for long-term investments (for research tools) and another for active trading (for low brokerage). Your shares are linked to your PAN, so holdings are visible across all accounts.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Discount broker vs full-service broker — which is better?</span>
+        <p>Discount brokers (<a href="/broker/zerodha" class="text-primary-600 hover:underline">Zerodha</a>, <a href="/broker/groww" class="text-primary-600 hover:underline">Groww</a>, <a href="/broker/upstox" class="text-primary-600 hover:underline">Upstox</a>) charge flat ₹20/trade and are best for self-directed investors. Full-service brokers (<a href="/broker/icici-direct" class="text-primary-600 hover:underline">ICICI Direct</a>, <a href="/broker/hdfc-securities" class="text-primary-600 hover:underline">HDFC Securities</a>) charge percentage-based fees but offer research, advisory, and 3-in-1 accounts. Most modern investors prefer discount brokers for the cost savings.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How long does it take to open a trading account?</span>
+        <p>Most discount brokers offer instant account opening through e-KYC with Aadhaar. The process takes 10-15 minutes, and you can start trading within 24-48 hours after verification. You'll need PAN card, Aadhaar, bank details, and a selfie for video KYC.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Broker Review Links -->
   <section class="container-wide py-8">

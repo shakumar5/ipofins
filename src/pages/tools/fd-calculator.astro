@@ -48,6 +48,9 @@ const faqJsonLd = {
     }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -82,27 +85,26 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is FD interest calculated?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">FD interest is calculated using the compound interest formula: A = P(1 + r/n)^(nt), where P is your principal amount, r is the annual interest rate, n is the compounding frequency (quarterly = 4, annually = 1), and t is the tenure in years.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the best compounding frequency for FD?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Quarterly compounding gives higher returns than annual compounding for the same interest rate. Most banks in India offer quarterly compounding on fixed deposits by default.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is FD interest taxable in India?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, FD interest is fully taxable as per your income tax slab. Banks deduct TDS at 10% if annual interest exceeds ₹40,000 (₹50,000 for senior citizens). You can claim a refund while filing your ITR if your total income is below the taxable limit.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the current FD interest rate in India 2026?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">As of 2026, major banks offer FD rates between 6.5% to 8% for general citizens and 7% to 8.5% for senior citizens. Small finance banks and NBFCs may offer slightly higher rates.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">How is FD interest calculated?</span>
+        <p>FD interest is calculated using the compound interest formula: A = P(1 + r/n)^(nt), where P is your principal amount, r is the annual interest rate, n is the compounding frequency (quarterly = 4, annually = 1), and t is the tenure in years.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the best compounding frequency for FD?</span>
+        <p>Quarterly compounding gives higher returns than annual compounding for the same interest rate. Most banks in India offer quarterly compounding on fixed deposits by default.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is FD interest taxable in India?</span>
+        <p>Yes, FD interest is fully taxable as per your income tax slab. Banks deduct TDS at 10% if annual interest exceeds ₹40,000 (₹50,000 for senior citizens). You can claim a refund while filing your ITR if your total income is below the taxable limit.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the current FD interest rate in India 2026?</span>
+        <p>As of 2026, major banks offer FD rates between 6.5% to 8% for general citizens and 7% to 8.5% for senior citizens. Small finance banks and NBFCs may offer slightly higher rates.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <section class="container-narrow py-8">
     <div class="prose dark:prose-invert max-w-none text-sm">

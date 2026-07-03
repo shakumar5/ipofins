@@ -3,7 +3,7 @@
  * https://zerodha.com/ipo/
  */
 
-import { fetchHTML, slugify, sleep } from './ipo-utils.mjs';
+import { fetchHTML, slugify, sleep, sanitizeIpoText } from './ipo-utils.mjs';
 
 function extractSection(html, startId, endId) {
   const startIdx = html.indexOf(`id="${startId}"`);
@@ -179,7 +179,10 @@ export async function fetchZerodhaIPODetail(ipo) {
     const issueSizeMatch = clean.match(/Issue size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
     if (issueSizeMatch) {
       const sizeStr = issueSizeMatch[1].replace(/<[^>]+>/g, '').trim();
-      ipo.issueSize = sizeStr.includes('cr') ? `₹${sizeStr.replace(/₹/g, '')}` : sizeStr;
+      const cleaned = sanitizeIpoText(sizeStr);
+      if (cleaned) {
+        ipo.issueSize = cleaned.includes('cr') ? `₹${cleaned.replace(/₹/g, '')}` : cleaned;
+      }
     }
 
     const aboutMatch = clean.match(

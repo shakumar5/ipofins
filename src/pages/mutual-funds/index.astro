@@ -7,7 +7,9 @@ import { topStocksPath } from '../../lib/top-stocks-meta';
 import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
 import MfSectionTabs from '../../components/funds/MfSectionTabs.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
-
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 const fundsData = await getAllFunds();
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const fundHref = (fund: { slug: string; schemeCode: string }) =>
@@ -176,78 +178,77 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ Section (High-volume Google searches) -->
-  <section class="container-wide py-8">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-3 max-w-3xl">
-      <details class="card-compact group" open>
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A mutual fund pools money from multiple investors and invests it in stocks, bonds, or other securities managed by a professional fund manager (AMC). Investors receive units proportional to their investment and returns are shared based on units held. Mutual funds are regulated by SEBI in India, making them a structured and transparent investment option for retail investors.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between ETF and mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">ETFs (Exchange-Traded Funds) trade on stock exchanges like shares in real-time at market price, while mutual fund units are bought and sold at end-of-day NAV. ETFs typically have lower expense ratios (0.01-0.3%) but require a demat account and incur brokerage charges per trade. Mutual funds offer SIP option, don't need a demat account for direct plans, and are easier for beginners. Both can track indices or be actively managed.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is a mutual fund calculator?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A mutual fund calculator estimates your future investment returns based on amount, expected return rate, and time period. <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP calculators</a> show how monthly investments grow over time, while <a href="/tools/lumpsum-calculator" class="text-primary-600 hover:underline">lumpsum calculators</a> show one-time investment growth. Use our free calculators for instant projections with visual charts.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between mutual fund and index fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Index funds are a type of mutual fund that passively tracks a market index (like Nifty 50 or Sensex) without active stock picking by a fund manager. Active mutual funds have managers who try to beat the index through research and selection. Index funds have lower expense ratios (0.1-0.5%) vs active funds (0.5-2.5%), but active funds may deliver higher returns in certain market conditions. For most long-term investors, a mix of both works well.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is XIRR in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">XIRR (Extended Internal Rate of Return) measures the annualised return on investments with irregular cash flows — perfect for SIP investments where amounts go in at different dates. Unlike CAGR which works for lumpsum, XIRR accounts for the exact timing of each SIP installment to give your true annualised return. A higher XIRR means better returns. You can calculate XIRR in Excel using the =XIRR() function with your SIP dates and amounts.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which mutual fund is best?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">The best mutual fund depends on your goals and risk appetite. For stability: Large Cap funds (Mirae Asset, ICICI Prudential). For growth: Mid Cap funds (Kotak, Axis). For aggressive returns: Small Cap funds (Quant, Nippon India). For tax saving: ELSS funds (Parag Parikh, Mirae Asset). Our <a href="/mutual-funds/best" class="text-primary-600 hover:underline">Best Mutual Funds</a> page ranks funds using multi-criteria scoring — top returns + ratings + consistency.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is NAV in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">NAV (Net Asset Value) is the per-unit price of a mutual fund calculated daily after market hours as: (Total Assets - Total Liabilities) ÷ Number of Outstanding Units. When you buy or redeem mutual fund units, the transaction happens at that day's closing NAV declared by the AMC. A higher NAV doesn't mean the fund is expensive — it simply reflects accumulated growth since inception.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is STP in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">STP (Systematic Transfer Plan) allows you to transfer a fixed amount from one mutual fund scheme to another at regular intervals (weekly, monthly, or quarterly). It's commonly used to gradually move a lump sum from a debt or liquid fund into an equity fund, combining the safety of debt parking with rupee cost averaging into equity. STPs help reduce market timing risk when deploying large amounts.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is SWP in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SWP (Systematic Withdrawal Plan) lets you withdraw a fixed amount from your mutual fund corpus at regular intervals (monthly or quarterly). It's ideal for creating regular income during retirement or for recurring expenses. Only the capital gains portion of each withdrawal is taxed, making SWP more tax-efficient than FD interest income. Your remaining corpus continues to grow while you withdraw.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is expense ratio in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Expense ratio is the annual fee charged by the AMC (fund house) for managing your money, expressed as a percentage of AUM. It covers fund management, administrative, marketing, and operational costs. Direct plans have lower expense ratios (0.3-1.5%) than regular plans (1-2.5%). A 1% difference in expense ratio can reduce your final corpus by 15-20% over 20 years, so always prefer lower expense ratio funds.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IDCW in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IDCW (Income Distribution cum Capital Withdrawal) is the renamed version of the old "Dividend" option in mutual funds. When a fund declares IDCW, it distributes a portion of the NAV to unit holders as cash. This reduces the fund's NAV proportionally — it's not "extra" income. IDCW is taxed at your income slab rate. The Growth option (which reinvests all gains) is generally more tax-efficient for long-term wealth building.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is CAGR in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">CAGR (Compound Annual Growth Rate) shows the smoothed annualised return of a mutual fund over a specific period. Formula: CAGR = (Final NAV / Initial NAV)^(1/Years) - 1. For example, if NAV grew from ₹100 to ₹200 in 5 years, CAGR = 14.87% per annum. CAGR is best for evaluating lumpsum investments. For SIP returns, use XIRR instead. Use our <a href="/tools/cagr-calculator" class="text-primary-600 hover:underline">CAGR Calculator</a> for instant calculations.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is SIP in mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SIP (Systematic Investment Plan) lets you invest a fixed amount (e.g., ₹500 or ₹5,000) every month into a mutual fund automatically. It averages your purchase cost over time (rupee cost averaging) and builds wealth through compounding. You can start, stop, or modify SIP anytime. Most platforms allow SIP starting from just ₹500/month.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between Direct and Regular mutual fund?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Direct plans have no distributor commission, so they give 0.5-1.5% higher returns annually compared to regular plans. Regular plans pay commission to distributors (brokers/advisors). Always invest in Direct plans through platforms like Groww, Zerodha Coin, or AMC websites for maximum returns over the long term.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How are mutual fund returns taxed?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Equity funds: STCG (held &lt;1 year) taxed at 20%. LTCG (held &gt;1 year) taxed at 12.5% above ₹1.25 lakh exemption. Debt funds: All gains taxed at your income tax slab rate regardless of holding period. ELSS has a mandatory 3-year lock-in with equity taxation rules. Dividend (IDCW) income is taxed at your slab rate.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How much should I invest in mutual funds per month?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">A common rule: invest 20-30% of your monthly income. Start with ₹500-₹5,000 if you're a beginner. Increase by 10% annually (step-up SIP). For ₹1 Cr corpus in 15 years at 12% returns, you need approximately ₹20,000/month SIP. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> for personalised projections.</p>
-      </details>
-    </div>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is a mutual fund?</span>
+        <p>A mutual fund pools money from multiple investors and invests it in stocks, bonds, or other securities managed by a professional fund manager (AMC). Investors receive units proportional to their investment and returns are shared based on units held. Mutual funds are regulated by SEBI in India, making them a structured and transparent investment option for retail investors.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the difference between ETF and mutual fund?</span>
+        <p>ETFs (Exchange-Traded Funds) trade on stock exchanges like shares in real-time at market price, while mutual fund units are bought and sold at end-of-day NAV. ETFs typically have lower expense ratios (0.01-0.3%) but require a demat account and incur brokerage charges per trade. Mutual funds offer SIP option, don't need a demat account for direct plans, and are easier for beginners. Both can track indices or be actively managed.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is a mutual fund calculator?</span>
+        <p>A mutual fund calculator estimates your future investment returns based on amount, expected return rate, and time period. <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP calculators</a> show how monthly investments grow over time, while <a href="/tools/lumpsum-calculator" class="text-primary-600 hover:underline">lumpsum calculators</a> show one-time investment growth. Use our free calculators for instant projections with visual charts.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the difference between mutual fund and index fund?</span>
+        <p>Index funds are a type of mutual fund that passively tracks a market index (like Nifty 50 or Sensex) without active stock picking by a fund manager. Active mutual funds have managers who try to beat the index through research and selection. Index funds have lower expense ratios (0.1-0.5%) vs active funds (0.5-2.5%), but active funds may deliver higher returns in certain market conditions. For most long-term investors, a mix of both works well.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is XIRR in mutual fund?</span>
+        <p>XIRR (Extended Internal Rate of Return) measures the annualised return on investments with irregular cash flows — perfect for SIP investments where amounts go in at different dates. Unlike CAGR which works for lumpsum, XIRR accounts for the exact timing of each SIP installment to give your true annualised return. A higher XIRR means better returns. You can calculate XIRR in Excel using the =XIRR() function with your SIP dates and amounts.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Which mutual fund is best?</span>
+        <p>The best mutual fund depends on your goals and risk appetite. For stability: Large Cap funds (Mirae Asset, ICICI Prudential). For growth: Mid Cap funds (Kotak, Axis). For aggressive returns: Small Cap funds (Quant, Nippon India). For tax saving: ELSS funds (Parag Parikh, Mirae Asset). Our <a href="/mutual-funds/best" class="text-primary-600 hover:underline">Best Mutual Funds</a> page ranks funds using multi-criteria scoring — top returns + ratings + consistency.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is NAV in mutual fund?</span>
+        <p>NAV (Net Asset Value) is the per-unit price of a mutual fund calculated daily after market hours as: (Total Assets - Total Liabilities) ÷ Number of Outstanding Units. When you buy or redeem mutual fund units, the transaction happens at that day's closing NAV declared by the AMC. A higher NAV doesn't mean the fund is expensive — it simply reflects accumulated growth since inception.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is STP in mutual fund?</span>
+        <p>STP (Systematic Transfer Plan) allows you to transfer a fixed amount from one mutual fund scheme to another at regular intervals (weekly, monthly, or quarterly). It's commonly used to gradually move a lump sum from a debt or liquid fund into an equity fund, combining the safety of debt parking with rupee cost averaging into equity. STPs help reduce market timing risk when deploying large amounts.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is SWP in mutual fund?</span>
+        <p>SWP (Systematic Withdrawal Plan) lets you withdraw a fixed amount from your mutual fund corpus at regular intervals (monthly or quarterly). It's ideal for creating regular income during retirement or for recurring expenses. Only the capital gains portion of each withdrawal is taxed, making SWP more tax-efficient than FD interest income. Your remaining corpus continues to grow while you withdraw.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is expense ratio in mutual fund?</span>
+        <p>Expense ratio is the annual fee charged by the AMC (fund house) for managing your money, expressed as a percentage of AUM. It covers fund management, administrative, marketing, and operational costs. Direct plans have lower expense ratios (0.3-1.5%) than regular plans (1-2.5%). A 1% difference in expense ratio can reduce your final corpus by 15-20% over 20 years, so always prefer lower expense ratio funds.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is IDCW in mutual fund?</span>
+        <p>IDCW (Income Distribution cum Capital Withdrawal) is the renamed version of the old "Dividend" option in mutual funds. When a fund declares IDCW, it distributes a portion of the NAV to unit holders as cash. This reduces the fund's NAV proportionally — it's not "extra" income. IDCW is taxed at your income slab rate. The Growth option (which reinvests all gains) is generally more tax-efficient for long-term wealth building.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is CAGR in mutual fund?</span>
+        <p>CAGR (Compound Annual Growth Rate) shows the smoothed annualised return of a mutual fund over a specific period. Formula: CAGR = (Final NAV / Initial NAV)^(1/Years) - 1. For example, if NAV grew from ₹100 to ₹200 in 5 years, CAGR = 14.87% per annum. CAGR is best for evaluating lumpsum investments. For SIP returns, use XIRR instead. Use our <a href="/tools/cagr-calculator" class="text-primary-600 hover:underline">CAGR Calculator</a> for instant calculations.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is SIP in mutual fund?</span>
+        <p>SIP (Systematic Investment Plan) lets you invest a fixed amount (e.g., ₹500 or ₹5,000) every month into a mutual fund automatically. It averages your purchase cost over time (rupee cost averaging) and builds wealth through compounding. You can start, stop, or modify SIP anytime. Most platforms allow SIP starting from just ₹500/month.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the difference between Direct and Regular mutual fund?</span>
+        <p>Direct plans have no distributor commission, so they give 0.5-1.5% higher returns annually compared to regular plans. Regular plans pay commission to distributors (brokers/advisors). Always invest in Direct plans through platforms like Groww, Zerodha Coin, or AMC websites for maximum returns over the long term.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How are mutual fund returns taxed?</span>
+        <p>Equity funds: STCG (held &lt;1 year) taxed at 20%. LTCG (held &gt;1 year) taxed at 12.5% above ₹1.25 lakh exemption. Debt funds: All gains taxed at your income tax slab rate regardless of holding period. ELSS has a mandatory 3-year lock-in with equity taxation rules. Dividend (IDCW) income is taxed at your slab rate.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How much should I invest in mutual funds per month?</span>
+        <p>A common rule: invest 20-30% of your monthly income. Start with ₹500-₹5,000 if you're a beginner. Increase by 10% annually (step-up SIP). For ₹1 Cr corpus in 15 years at 12% returns, you need approximately ₹20,000/month SIP. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> for personalised projections.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
     <a href="/blogs/mutual-funds" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
       More Mutual Fund FAQs (30+ questions) →
     </a>
-  </section>
+  </ContentGuideSection>
 
   <!-- Cross-section Links -->
   <section class="container-wide py-8">

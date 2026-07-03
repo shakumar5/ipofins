@@ -3,7 +3,7 @@
  * Missing fields on either side are filled from the other source.
  */
 
-import { fuzzyMatch, strictMatch, slugify, coalesce, parseDateToISO, ipoCanonicalKey } from './ipo-utils.mjs';
+import { fuzzyMatch, strictMatch, slugify, coalesce, parseDateToISO, ipoCanonicalKey, isIpoPlaceholder } from './ipo-utils.mjs';
 import { mergeGrowwDetailInto } from './groww-sources.mjs';
 
 const STATUS_RANK = { live: 5, open: 4, upcoming: 3, closed: 2, allotment: 2, listed: 1, 'drhp-filed': 0 };
@@ -72,6 +72,7 @@ function mergeField(target, source, field) {
   const t = target[field];
   const s = source[field];
   if (s === undefined || s === null || s === '') return;
+  if (typeof s === 'string' && isIpoPlaceholder(s)) return;
   if (Array.isArray(s) && s.length === 0) return;
 
   if (Array.isArray(s)) {

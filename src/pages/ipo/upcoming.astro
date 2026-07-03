@@ -4,6 +4,10 @@ import PageHeader from '../../components/layout/PageHeader.astro';
 import IPOStatusSections from '../../components/IPOStatusSections.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
+import { ipoDisplayText, ipoMetaLine } from '../../lib/ipo-list-sections';
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
 const drhpFiled = iposData.filter((ipo) => ipo.status === 'drhp-filed');
@@ -79,11 +83,11 @@ const faqJsonLd = {
                     <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{ipo.name}</h3>
                     <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-success-50 text-success-600 dark:bg-success-900/30 dark:text-success-400">Approved</span>
                   </div>
-                  <p class="text-xs ipo-meta mt-0.5">{ipo.sector} • {ipo.type.toUpperCase()}</p>
+                  <p class="text-xs ipo-meta mt-0.5">{ipoMetaLine(ipoDisplayText(ipo.sector), ipo.type.toUpperCase())}</p>
                 </div>
                 <div class="flex items-center gap-5 text-xs">
-                  {ipo.issueSize && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipo.issueSize}</span></div>}
-                  {ipo.drhpDate && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipo.drhpDate}</span></div>}
+                  {ipoDisplayText(ipo.issueSize) && <div><span class="ipo-label">Size </span><span class="font-bold text-surface-800 dark:text-surface-200">{ipoDisplayText(ipo.issueSize)}</span></div>}
+                  {ipoDisplayText(ipo.drhpDate) && <div><span class="ipo-label">Filed </span><span class="font-medium">{ipoDisplayText(ipo.drhpDate)}</span></div>}
                 </div>
               </div>
             </a>
@@ -113,17 +117,16 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-wide py-6">
-    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">FAQ</h2>
-    <div class="space-y-3 max-w-3xl">
-      <details class="card-compact group" open>
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which IPOs are upcoming in 2026?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Tata Capital (₹12,000 Cr), OYO (₹8,000 Cr), Ather Energy (₹4,500 Cr), InMobi (₹5,500 Cr), PhysicsWallah (₹2,800 Cr), Boat (₹2,000 Cr).</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">DRHP Filed vs SEBI Approved?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">DRHP Filed = under SEBI review. SEBI Approved = can launch within 12 months.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="FAQ" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">Which IPOs are upcoming in 2026?</span>
+        <p>Tata Capital (₹12,000 Cr), OYO (₹8,000 Cr), Ather Energy (₹4,500 Cr), InMobi (₹5,500 Cr), PhysicsWallah (₹2,800 Cr), Boat (₹2,000 Cr).</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">DRHP Filed vs SEBI Approved?</span>
+        <p>DRHP Filed = under SEBI review. SEBI Approved = can launch within 12 months.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 </IPOLayout>

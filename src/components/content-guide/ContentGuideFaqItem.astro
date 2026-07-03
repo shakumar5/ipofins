@@ -1,0 +1,14 @@
+---
+interface Props {
+  open?: boolean;
+}
+
+const { open = false } = Astro.props;
+---
+
+<details class="content-guide__faq-item group" open={open || undefined}>
+  <summary><slot name="question" /></summary>
+  <div class="content-guide__faq-answer">
+    <slot />
+  </div>
+</details>

@@ -93,11 +93,41 @@ export function tsToISO(ts) {
 export function coalesce(...vals) {
   for (const v of vals) {
     if (v === undefined || v === null) continue;
+    if (typeof v === 'string' && isIpoPlaceholder(v)) continue;
     if (typeof v === 'string' && v.trim() === '') continue;
     if (typeof v === 'number' && v === 0) continue;
     return v;
   }
   return null;
+}
+
+const IPO_PLACEHOLDER_RE =
+  /^(&ndash;|&mdash;|&#0*8211;|&#0*8212;|n\/a|na|tba|not available|not disclosed|pending|—|–|-|\.)$/i;
+
+export function decodeIpoHtmlEntities(text) {
+  return String(text || '')
+    .replace(/&ndash;/gi, '–')
+    .replace(/&mdash;/gi, '—')
+    .replace(/&#0*8211;/g, '–')
+    .replace(/&#0*8212;/g, '—')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
+export function isIpoPlaceholder(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'number') return !Number.isFinite(value) || value === 0;
+  const s = decodeIpoHtmlEntities(value).trim();
+  if (!s) return true;
+  if (IPO_PLACEHOLDER_RE.test(s)) return true;
+  if (/^[–—\-\s.&]+$/u.test(s)) return true;
+  return false;
+}
+
+export function sanitizeIpoText(value) {
+  if (isIpoPlaceholder(value)) return null;
+  return decodeIpoHtmlEntities(value);
 }
 
 export function formatIssueSizeCr(rupees) {

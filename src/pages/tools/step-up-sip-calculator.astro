@@ -35,6 +35,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "Is Step-Up SIP suitable for beginners?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is especially useful for young professionals expecting regular salary increments. Start with a comfortable amount and increase annually." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -107,35 +110,34 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ Section -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions About Step-Up SIP</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a Step-Up SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A Step-Up SIP allows investors to increase their SIP amount annually by a fixed percentage. It helps align investments with salary growth and can significantly increase long-term wealth creation. Most mutual fund platforms like Groww, Zerodha Coin, and Kuvera support this feature.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is Step-Up SIP different from a regular SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In a regular SIP, the investment amount remains constant every month for the entire duration. In a Step-Up SIP, the SIP amount increases periodically (usually every year) by a fixed percentage. This means you invest more as your income grows.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is Step-Up SIP better than a normal SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For most salaried investors, yes. Step-Up SIP generates a larger corpus because contributions increase over time while benefiting from compounding. A ₹10,000 SIP with 10% annual step-up at 12% returns for 20 years gives ~₹1.5 Cr vs ~₹1 Cr without step-up — that's 50% more wealth.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What step-up percentage should I choose?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Most investors choose between 5% and 15% annually depending on expected salary growth. A 10% step-up is most popular as it roughly matches average salary increments in India. Don't over-commit — choose a rate you can sustain for the full duration.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can a small annual increase make a big difference?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Absolutely. Even a 10% annual increase in SIP contributions can create 50-70% more wealth over 20-30 years compared to a flat SIP. The combination of increasing principal AND compound returns creates exponential growth.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is Step-Up SIP suitable for beginners?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. It is especially useful for young professionals (25-35) expecting regular salary increments. Start with a comfortable amount today and let the step-up feature automatically increase your investments as your career progresses.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions About Step-Up SIP" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is a Step-Up SIP?</span>
+        <p>A Step-Up SIP allows investors to increase their SIP amount annually by a fixed percentage. It helps align investments with salary growth and can significantly increase long-term wealth creation. Most mutual fund platforms like Groww, Zerodha Coin, and Kuvera support this feature.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How is Step-Up SIP different from a regular SIP?</span>
+        <p>In a regular SIP, the investment amount remains constant every month for the entire duration. In a Step-Up SIP, the SIP amount increases periodically (usually every year) by a fixed percentage. This means you invest more as your income grows.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is Step-Up SIP better than a normal SIP?</span>
+        <p>For most salaried investors, yes. Step-Up SIP generates a larger corpus because contributions increase over time while benefiting from compounding. A ₹10,000 SIP with 10% annual step-up at 12% returns for 20 years gives ~₹1.5 Cr vs ~₹1 Cr without step-up — that's 50% more wealth.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What step-up percentage should I choose?</span>
+        <p>Most investors choose between 5% and 15% annually depending on expected salary growth. A 10% step-up is most popular as it roughly matches average salary increments in India. Don't over-commit — choose a rate you can sustain for the full duration.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can a small annual increase make a big difference?</span>
+        <p>Absolutely. Even a 10% annual increase in SIP contributions can create 50-70% more wealth over 20-30 years compared to a flat SIP. The combination of increasing principal AND compound returns creates exponential growth.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is Step-Up SIP suitable for beginners?</span>
+        <p>Yes. It is especially useful for young professionals (25-35) expecting regular salary increments. Start with a comfortable amount today and let the step-up feature automatically increase your investments as your career progresses.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

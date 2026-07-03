@@ -48,6 +48,9 @@ const faqJsonLd = {
     }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -82,27 +85,26 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is NPS and how does it work?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">NPS (National Pension System) is a government-sponsored pension scheme. You contribute monthly or yearly during your working life, and at retirement (age 60), you must use at least 40% of the corpus to buy an annuity (monthly pension). The remaining 60% can be withdrawn tax-free.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the tax benefit of NPS?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">NPS offers an additional tax benefit of ₹50,000 under Section 80CCD(1B) over and above the ₹1.5 lakh limit of Section 80C. Employer contributions up to 10% of basic salary are also deductible under 80CCD(2) with no upper limit.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What returns can I expect from NPS?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">NPS returns depend on your asset allocation. Historically, NPS equity (Scheme E) has delivered 12-14% CAGR, corporate bonds 8-10%, and government securities 7-9%. A balanced allocation typically yields 9-11% over the long term.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I withdraw from NPS before retirement?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Partial withdrawal is allowed after 3 years for specific purposes (education, marriage, house purchase, medical treatment). Up to 25% of own contributions can be withdrawn, maximum 3 times during the entire tenure.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is NPS and how does it work?</span>
+        <p>NPS (National Pension System) is a government-sponsored pension scheme. You contribute monthly or yearly during your working life, and at retirement (age 60), you must use at least 40% of the corpus to buy an annuity (monthly pension). The remaining 60% can be withdrawn tax-free.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the tax benefit of NPS?</span>
+        <p>NPS offers an additional tax benefit of ₹50,000 under Section 80CCD(1B) over and above the ₹1.5 lakh limit of Section 80C. Employer contributions up to 10% of basic salary are also deductible under 80CCD(2) with no upper limit.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What returns can I expect from NPS?</span>
+        <p>NPS returns depend on your asset allocation. Historically, NPS equity (Scheme E) has delivered 12-14% CAGR, corporate bonds 8-10%, and government securities 7-9%. A balanced allocation typically yields 9-11% over the long term.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I withdraw from NPS before retirement?</span>
+        <p>Partial withdrawal is allowed after 3 years for specific purposes (education, marriage, house purchase, medical treatment). Up to 25% of own contributions can be withdrawn, maximum 3 times during the entire tenure.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <section class="container-narrow py-8">
     <div class="prose dark:prose-invert max-w-none text-sm">

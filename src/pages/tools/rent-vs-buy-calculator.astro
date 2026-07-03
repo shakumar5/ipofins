@@ -35,6 +35,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "Can investing while renting generate higher returns?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. If your investment returns (12-15% in equity MFs historically) exceed property appreciation (4-7% in most cities), renting and investing the difference (down payment + EMI-rent gap) often results in greater net wealth." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -106,35 +109,34 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Rent vs Buy</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is renting better than buying a house in India?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">It depends on your city, property prices, rent levels, and investment discipline. In expensive metros like Mumbai and Bangalore where rent-to-price ratio is low (1.5-2.5%), renting + investing often wins. In tier-2 cities with higher rental yields (3-4%), buying may be better.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What factors should I consider before buying?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Compare: total EMI payments over loan tenure, down payment opportunity cost, stamp duty (5-7%), maintenance costs, property appreciation potential, tax benefits (Section 24/80C), and what your money could earn if invested in equity mutual funds instead.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Does buying a house always create wealth?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">No. In many Indian cities, property prices have barely kept pace with inflation (4-6% CAGR) over the last decade. Meanwhile, equity mutual fund SIPs have delivered 12-15% CAGR. The interest paid on home loans (total 1.5-2x the property price) further reduces buying's financial advantage.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the 5% rule?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Multiply the property's value by 5% and divide by 12. If your monthly rent is less than this amount, renting is likely better financially. For a ₹1 Cr property: 5% = ₹5L/year = ₹41,667/month. If rent is ₹25,000, renting wins.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How does home loan interest affect the decision?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">At 8.5% interest for 20 years, you pay about ₹2.07 for every ₹1 borrowed. A ₹50L loan costs ₹1.03 Cr in total payments. This massive interest cost is the biggest hidden expense of home ownership that makes renting + investing attractive.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can investing while renting generate higher returns?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, if you have the discipline. Investing the down payment and monthly EMI-rent difference in equity mutual funds (12-15% historical CAGR) often beats property appreciation (4-7% in most cities). The key requirement is investment discipline — the money saved must actually be invested, not spent.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions - Rent vs Buy" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">Is renting better than buying a house in India?</span>
+        <p>It depends on your city, property prices, rent levels, and investment discipline. In expensive metros like Mumbai and Bangalore where rent-to-price ratio is low (1.5-2.5%), renting + investing often wins. In tier-2 cities with higher rental yields (3-4%), buying may be better.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What factors should I consider before buying?</span>
+        <p>Compare: total EMI payments over loan tenure, down payment opportunity cost, stamp duty (5-7%), maintenance costs, property appreciation potential, tax benefits (Section 24/80C), and what your money could earn if invested in equity mutual funds instead.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Does buying a house always create wealth?</span>
+        <p>No. In many Indian cities, property prices have barely kept pace with inflation (4-6% CAGR) over the last decade. Meanwhile, equity mutual fund SIPs have delivered 12-15% CAGR. The interest paid on home loans (total 1.5-2x the property price) further reduces buying's financial advantage.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the 5% rule?</span>
+        <p>Multiply the property's value by 5% and divide by 12. If your monthly rent is less than this amount, renting is likely better financially. For a ₹1 Cr property: 5% = ₹5L/year = ₹41,667/month. If rent is ₹25,000, renting wins.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How does home loan interest affect the decision?</span>
+        <p>At 8.5% interest for 20 years, you pay about ₹2.07 for every ₹1 borrowed. A ₹50L loan costs ₹1.03 Cr in total payments. This massive interest cost is the biggest hidden expense of home ownership that makes renting + investing attractive.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can investing while renting generate higher returns?</span>
+        <p>Yes, if you have the discipline. Investing the down payment and monthly EMI-rent difference in equity mutual funds (12-15% historical CAGR) often beats property appreciation (4-7% in most cities). The key requirement is investment discipline — the money saved must actually be invested, not spent.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

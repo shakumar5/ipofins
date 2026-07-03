@@ -12,6 +12,8 @@ import {
 import ListBackLink from '../../../../components/ListBackLink.astro';
 import InsightsArticleCallout from '../../../../components/insights/InsightsArticleCallout.astro';
 import { getInsightCallout } from '../../../../lib/insights-callouts';
+import ContentGuideSection from '../../../../components/content-guide/ContentGuideSection.astro';
+import ContentGuidePanel from '../../../../components/content-guide/ContentGuidePanel.astro';
 
 export async function getStaticPaths() {
   const bootstrap = loadHoldingsPageBootstrap();
@@ -148,11 +150,12 @@ const amcInsight = getInsightCallout('holdings-amc', { amcSlug: amcSlug || '', m
     </div>
   </section>
 
-  <section class="container-wide py-6">
-    <div class="max-w-3xl text-sm text-surface-600 dark:text-surface-300 space-y-3">
-      <h2 class="text-lg font-bold text-surface-900 dark:text-white">About {amcName} Holdings Changes</h2>
-      <p>This page shows the stocks that {amcName} mutual funds have bought (added) and sold (removed) in {displayMonth} compared to {previousMonth}. Data is sourced from official SEBI-mandated monthly portfolio disclosures published by {amcName}.</p>
-      <p>Tracking what professional fund managers are buying helps identify stocks with institutional conviction. If multiple funds from {amcName} are adding the same stock, it signals strong conviction in that company's fundamentals.</p>
-    </div>
-  </section>
+  <ContentGuideSection title={`About ${amcName} Holdings Changes`} bordered>
+    <ContentGuidePanel>
+      <div class="content-guide__prose">
+        <p>This page shows the stocks that {amcName} mutual funds have bought (added) and sold (removed) in {displayMonth} compared to {previousMonth}. Data is sourced from official SEBI-mandated monthly portfolio disclosures published by {amcName}.</p>
+        <p>Tracking what professional fund managers are buying helps identify stocks with institutional conviction. If multiple funds from {amcName} are adding the same stock, it signals strong conviction in that company's fundamentals.</p>
+      </div>
+    </ContentGuidePanel>
+  </ContentGuideSection>
 </BaseLayout>

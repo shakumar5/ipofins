@@ -570,9 +570,11 @@ export default function SectorIntelligenceTable({ data, monthMoves = null }: Pro
         Signal hints: {SIGNAL_OPTIONS.filter((o) => o.value !== 'All').map((o) => o.label).join(' · ')}
       </p>
 
-      <div className="mt-4 p-4 rounded-xl bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700 text-xs text-surface-500 dark:text-surface-400 space-y-3">
+      <div className="content-guide content-guide--bordered mt-8 pt-8">
+        <h2 className="content-guide__title mb-4">Understanding sector signals</h2>
+        <div className="content-guide__panel content-guide__prose space-y-4">
         <div>
-          <p className="font-semibold text-surface-700 dark:text-surface-300 mb-1">AUM Change — what it measures</p>
+          <p className="font-semibold text-surface-800 dark:text-surface-200 mb-1">AUM Change — what it measures</p>
           <p>
             We add up the disclosed market value (₹) of every stock holding in a sector across all funds with portfolio data,
             then compare {data.previousMonth} vs {data.currentMonth}. <strong className="text-surface-700 dark:text-surface-300">AUM Change</strong> is
@@ -601,6 +603,7 @@ export default function SectorIntelligenceTable({ data, monthMoves = null }: Pro
           <strong className="text-surface-700 dark:text-surface-300">Trend</strong> counts consecutive months of rising sector weight (↑ 3M = three straight months of allocation increase).
           See individual stock moves in <a href="/mutual-funds/mutual-fund-holdings-changes" className="text-primary-600 hover:underline">Holdings Changes</a>.
         </p>
+        </div>
       </div>
     </div>
   );

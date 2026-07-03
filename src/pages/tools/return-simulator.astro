@@ -32,6 +32,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "How does compounding work in investments?", "acceptedAnswer": { "@type": "Answer", "text": "Compounding means your returns generate further returns. ₹1 lakh at 12% becomes ₹1.76L in 5 years, ₹3.1L in 10 years, and ₹9.6L in 20 years. The longer you stay invested, the more powerful compounding becomes." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout title="Return Simulator 2026 - Investment Scenarios | IPOFins" description="Free investment return simulator. Compare how your lumpsum grows across conservative (8%), moderate (12%), and aggressive (18%) scenarios over 1-30 years." jsonLd={jsonLd}>
@@ -62,27 +65,26 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a lumpsum investment?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">A lumpsum investment means investing a large amount at once (as opposed to SIP). It works best in rising markets or when you have a long horizon (10+ years) to ride out volatility.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What returns can I expect from mutual funds?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Historical Indian market returns: Large-cap 12-14%, Mid-cap 15-18%, Small-cap 18-22%, Debt funds 7-9% CAGR over 10+ years. Past performance doesn't guarantee future results.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is lumpsum better than SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Lumpsum outperforms in rising markets; SIP wins in volatile/falling markets via rupee cost averaging. For most people, SIP is safer. Use lumpsum when markets are undervalued or you have 10+ year horizon.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How does compounding work?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Compounding = returns on returns. ₹1L at 12% becomes ₹1.76L (5yr), ₹3.1L (10yr), ₹9.6L (20yr). The longer you stay invested, the more powerful compounding gets. Time in market > timing the market.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is a lumpsum investment?</span>
+        <p>A lumpsum investment means investing a large amount at once (as opposed to SIP). It works best in rising markets or when you have a long horizon (10+ years) to ride out volatility.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What returns can I expect from mutual funds?</span>
+        <p>Historical Indian market returns: Large-cap 12-14%, Mid-cap 15-18%, Small-cap 18-22%, Debt funds 7-9% CAGR over 10+ years. Past performance doesn't guarantee future results.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is lumpsum better than SIP?</span>
+        <p>Lumpsum outperforms in rising markets; SIP wins in volatile/falling markets via rupee cost averaging. For most people, SIP is safer. Use lumpsum when markets are undervalued or you have 10+ year horizon.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How does compounding work?</span>
+        <p>Compounding = returns on returns. ₹1L at 12% becomes ₹1.76L (5yr), ₹3.1L (10yr), ₹9.6L (20yr). The longer you stay invested, the more powerful compounding gets. Time in market > timing the market.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- SEO Content -->
   <section class="container-narrow py-8">

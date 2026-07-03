@@ -35,6 +35,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "Can I calculate tax before selling investments?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Enter your purchase amount, expected sale amount, and holding period to estimate tax liability before making the sell decision. This helps in tax planning and deciding optimal sell timing." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -127,35 +130,34 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Investment Tax</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is LTCG tax on equity mutual funds?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Long-Term Capital Gains on equity mutual funds (held over 12 months) are taxed at 12.5% on gains exceeding ₹1.25 lakh per financial year. For example, if you sell equity MF with ₹2L profit after 14 months, taxable gain = ₹2L - ₹1.25L = ₹75,000. Tax = ₹75,000 × 12.5% = ₹9,375.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is STCG tax rate?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">STCG on equity (stocks/equity MFs sold within 12 months) is taxed at a flat 20% on the entire gain amount. There is no exemption for STCG. This was increased from 15% in the Union Budget 2024.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How are debt mutual funds taxed?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Since April 2023, debt mutual fund gains are always taxed at your income tax slab rate regardless of holding period. There is no LTCG benefit for debt funds anymore. If you're in the 30% bracket, you pay 30% tax on any gains from debt MFs.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Does this calculator use the latest 2024 tax rules?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. This calculator reflects all changes from the Union Budget 2024: equity STCG at 20% (up from 15%), equity LTCG at 12.5% (up from 10%), LTCG exemption increased to ₹1.25 lakh (from ₹1 lakh), and debt funds at slab rate.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I calculate tax before selling?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, that's the primary purpose of this tool. Enter your expected sale amount and holding period to estimate tax liability. This helps decide whether to wait for LTCG treatment (lower rate + exemption) or sell now.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How can I reduce capital gains tax legally?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Strategies: (1) Hold equity for 12+ months for LTCG treatment, (2) Harvest ₹1.25L LTCG exemption annually by selling and rebuying, (3) Set off losses against gains, (4) Time your sales across financial years to use exemption limit each year.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions - Investment Tax" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is LTCG tax on equity mutual funds?</span>
+        <p>Long-Term Capital Gains on equity mutual funds (held over 12 months) are taxed at 12.5% on gains exceeding ₹1.25 lakh per financial year. For example, if you sell equity MF with ₹2L profit after 14 months, taxable gain = ₹2L - ₹1.25L = ₹75,000. Tax = ₹75,000 × 12.5% = ₹9,375.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is STCG tax rate?</span>
+        <p>STCG on equity (stocks/equity MFs sold within 12 months) is taxed at a flat 20% on the entire gain amount. There is no exemption for STCG. This was increased from 15% in the Union Budget 2024.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How are debt mutual funds taxed?</span>
+        <p>Since April 2023, debt mutual fund gains are always taxed at your income tax slab rate regardless of holding period. There is no LTCG benefit for debt funds anymore. If you're in the 30% bracket, you pay 30% tax on any gains from debt MFs.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Does this calculator use the latest 2024 tax rules?</span>
+        <p>Yes. This calculator reflects all changes from the Union Budget 2024: equity STCG at 20% (up from 15%), equity LTCG at 12.5% (up from 10%), LTCG exemption increased to ₹1.25 lakh (from ₹1 lakh), and debt funds at slab rate.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I calculate tax before selling?</span>
+        <p>Yes, that's the primary purpose of this tool. Enter your expected sale amount and holding period to estimate tax liability. This helps decide whether to wait for LTCG treatment (lower rate + exemption) or sell now.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How can I reduce capital gains tax legally?</span>
+        <p>Strategies: (1) Hold equity for 12+ months for LTCG treatment, (2) Harvest ₹1.25L LTCG exemption annually by selling and rebuying, (3) Set off losses against gains, (4) Time your sales across financial years to use exemption limit each year.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

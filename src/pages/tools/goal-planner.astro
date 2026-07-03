@@ -35,6 +35,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "Which mutual fund category is suitable for long-term goals?", "acceptedAnswer": { "@type": "Answer", "text": "For 10+ years: Flexi Cap, Mid Cap, or Small Cap for aggressive growth. For 5-10 years: Large & Mid Cap or Balanced Advantage. For 3-5 years: Large Cap or Conservative Hybrid. Under 3 years: Debt or Liquid Funds." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -106,35 +109,34 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions - Goal-Based Investing</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is goal-based investing?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Goal-based investing means investing with a specific target in mind — child's education, marriage, home purchase, retirement, or any other financial milestone. Each goal gets its own investment plan with a defined amount, timeline, and appropriate fund category based on risk horizon.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Why is inflation adjustment important?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">At 6% inflation, costs double every 12 years. A college education costing ₹20L today will cost ₹40L in 12 years. Without inflation adjustment, you'll fall short of your goal. This planner automatically adjusts your target amount for future inflation.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Should I use SIP or lumpsum for goals?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For salaried individuals, SIP is more practical — invest monthly from your salary. Use lumpsum for windfalls (bonus, inheritance). For best results, combine both: regular SIP + lumpsum top-ups from annual bonuses. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> for detailed SIP projections.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which mutual funds for long-term goals (10+ years)?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For goals 10+ years away, equity-oriented funds work best: Flexi Cap Funds (diversified), Mid Cap Funds (higher growth potential), or Index Funds (low cost, market returns). The longer your time horizon, the more equity allocation you can afford because short-term volatility averages out.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What if I already have savings for this goal?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Enter your existing savings in the calculator. It will compute how much those savings will grow to, and reduce your remaining SIP/lumpsum requirement accordingly. Even a small existing amount significantly reduces future contributions needed because of compounding.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to plan for multiple goals simultaneously?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Run this calculator separately for each goal — education, marriage, home, retirement. Add up all the monthly SIPs needed. If the total exceeds your capacity, prioritize by deadline (nearest goals first) and use a <a href="/tools/step-up-sip-calculator" class="text-primary-600 hover:underline">Step-Up SIP</a> to gradually increase contributions as income grows.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions - Goal-Based Investing" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is goal-based investing?</span>
+        <p>Goal-based investing means investing with a specific target in mind — child's education, marriage, home purchase, retirement, or any other financial milestone. Each goal gets its own investment plan with a defined amount, timeline, and appropriate fund category based on risk horizon.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Why is inflation adjustment important?</span>
+        <p>At 6% inflation, costs double every 12 years. A college education costing ₹20L today will cost ₹40L in 12 years. Without inflation adjustment, you'll fall short of your goal. This planner automatically adjusts your target amount for future inflation.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Should I use SIP or lumpsum for goals?</span>
+        <p>For salaried individuals, SIP is more practical — invest monthly from your salary. Use lumpsum for windfalls (bonus, inheritance). For best results, combine both: regular SIP + lumpsum top-ups from annual bonuses. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP Calculator</a> for detailed SIP projections.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Which mutual funds for long-term goals (10+ years)?</span>
+        <p>For goals 10+ years away, equity-oriented funds work best: Flexi Cap Funds (diversified), Mid Cap Funds (higher growth potential), or Index Funds (low cost, market returns). The longer your time horizon, the more equity allocation you can afford because short-term volatility averages out.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What if I already have savings for this goal?</span>
+        <p>Enter your existing savings in the calculator. It will compute how much those savings will grow to, and reduce your remaining SIP/lumpsum requirement accordingly. Even a small existing amount significantly reduces future contributions needed because of compounding.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to plan for multiple goals simultaneously?</span>
+        <p>Run this calculator separately for each goal — education, marriage, home, retirement. Add up all the monthly SIPs needed. If the total exceeds your capacity, prioritize by deadline (nearest goals first) and use a <a href="/tools/step-up-sip-calculator" class="text-primary-600 hover:underline">Step-Up SIP</a> to gradually increase contributions as income grows.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

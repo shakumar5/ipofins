@@ -18,6 +18,9 @@ const jsonLd = {
     ]
   }
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -75,26 +78,25 @@ const jsonLd = {
   </section>
 
   <!-- FAQ -->
-  <section class="container-wide py-8">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Frequently Asked Questions</h2>
-    <div class="space-y-3 max-w-3xl">
-      <details class="card-compact group" open>
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Are these calculators free?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes, 100% free. No signup, no login, no hidden charges. All calculations run in your browser. No data stored.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How accurate are the results?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Our calculators use standard financial formulas and give mathematically accurate results. However, actual investment returns vary due to market conditions. Use as planning tools, not guarantees.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Can I use these on mobile?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes. All tools are fully responsive — sliders and inputs work on touch devices. No app needed.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Which calculator should I start with?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">For beginners: SIP Calculator (plan monthly investments). For loans: EMI Calculator. For comparing investments: CAGR Calculator. For IPO investing: IPO Profit Calculator.</p>
-      </details>
-    </div>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">Are these calculators free?</span>
+        <p>Yes, 100% free. No signup, no login, no hidden charges. All calculations run in your browser. No data stored.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How accurate are the results?</span>
+        <p>Our calculators use standard financial formulas and give mathematically accurate results. However, actual investment returns vary due to market conditions. Use as planning tools, not guarantees.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I use these on mobile?</span>
+        <p>Yes. All tools are fully responsive — sliders and inputs work on touch devices. No app needed.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Which calculator should I start with?</span>
+        <p>For beginners: SIP Calculator (plan monthly investments). For loans: EMI Calculator. For comparing investments: CAGR Calculator. For IPO investing: IPO Profit Calculator.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
     <a href="/blogs/tools" class="mt-4 inline-flex text-sm text-primary-600 hover:underline">More tool FAQs →</a>
-  </section>
+  </ContentGuideSection>
 </BaseLayout>

@@ -5,6 +5,7 @@
 import { requireDb } from '../db';
 import type { IPORecord, IPOStatus, IPOType, SubscriptionDetails } from '../../types/ipo';
 import { ipoCanonicalKey, pickPreferredIPO } from '../ipo-canonical';
+import { sanitizeIpoOptionalNumber, sanitizeIpoStringField } from '../ipo-list-sections';
 
 type IPORow = Record<string, unknown>;
 
@@ -28,23 +29,23 @@ function mapIPORow(row: IPORow): IPORecord {
     slug: String(row.slug),
     type: (row.type as IPOType) || 'mainboard',
     status: (row.status as IPOStatus) || 'upcoming',
-    priceRange: String(row.price_range || ''),
+    priceRange: sanitizeIpoStringField(row.price_range) ?? '',
     priceMax: row.price_max != null ? Number(row.price_max) : undefined,
-    lotSize: row.lot_size != null ? Number(row.lot_size) : 0,
-    issueSize: String(row.issue_size || ''),
-    sector: String(row.sector || ''),
-    openDate: formatDate(row.open_date),
-    closeDate: formatDate(row.close_date),
-    allotmentDate: formatDate(row.allotment_date),
-    listingDate: formatDate(row.listing_date),
-    description: row.description ? String(row.description) : undefined,
-    purpose: row.purpose ? String(row.purpose) : undefined,
+    lotSize: sanitizeIpoOptionalNumber(row.lot_size) ?? 0,
+    issueSize: sanitizeIpoStringField(row.issue_size) ?? '',
+    sector: sanitizeIpoStringField(row.sector) ?? '',
+    openDate: sanitizeIpoStringField(formatDate(row.open_date)),
+    closeDate: sanitizeIpoStringField(formatDate(row.close_date)),
+    allotmentDate: sanitizeIpoStringField(formatDate(row.allotment_date)),
+    listingDate: sanitizeIpoStringField(formatDate(row.listing_date)),
+    description: sanitizeIpoStringField(row.description),
+    purpose: sanitizeIpoStringField(row.purpose),
     highlights: Array.isArray(row.highlights) ? (row.highlights as string[]) : [],
     risks: Array.isArray(row.risks) ? (row.risks as string[]) : [],
-    founders: row.founders ? String(row.founders) : undefined,
-    headquarters: row.headquarters ? String(row.headquarters) : undefined,
-    founded: row.founded ? String(row.founded) : undefined,
-    registrar: row.registrar ? String(row.registrar) : undefined,
+    founders: sanitizeIpoStringField(row.founders),
+    headquarters: sanitizeIpoStringField(row.headquarters),
+    founded: sanitizeIpoStringField(row.founded),
+    registrar: sanitizeIpoStringField(row.registrar),
     drhpUrl: row.drhp_url ? String(row.drhp_url) : undefined,
     subscription: row.total_times != null ? Number(row.total_times) : null,
     subscriptionDetails: sub,

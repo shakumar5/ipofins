@@ -32,6 +32,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "How to calculate CAGR of mutual fund?", "acceptedAnswer": { "@type": "Answer", "text": "To calculate CAGR of a mutual fund: CAGR = (Current NAV / NAV at investment date)^(1/years) - 1. For example, if NAV grew from ₹100 to ₹250 in 5 years, CAGR = (250/100)^(1/5) - 1 = 20.11% per annum." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout title="CAGR Calculator 2026 - Free Online CAGR Calculator | IPOFins" description="Free online CAGR calculator. Calculate compound annual growth rate of your investments, mutual funds, or stocks. Instant results with formula explanation." jsonLd={jsonLd}>
@@ -62,27 +65,26 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is CAGR?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">CAGR (Compound Annual Growth Rate) represents the smoothed annual rate at which an investment grows. Formula: CAGR = (Final Value / Initial Value)^(1/Years) - 1. It eliminates year-to-year volatility to show a consistent growth rate.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the difference between CAGR and absolute return?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Absolute return shows total percentage growth regardless of time (e.g., 150% in 5 years), while CAGR shows annualized growth (e.g., 20% per year). CAGR is better for comparing investments over different time periods.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a good CAGR in India?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">In Indian markets: 7-8% for FDs/debt funds, 12-14% for Nifty 50/large-cap, 15-20% for mid-cap, 18-25% for small-cap over 10+ year periods. Anything above 15% CAGR over 5+ years is considered excellent.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to calculate CAGR of a mutual fund?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Use the formula: CAGR = (Current NAV / NAV at purchase)^(1/years) - 1. Example: NAV grew from ₹100 to ₹250 in 5 years → CAGR = (250/100)^(1/5) - 1 = 20.11% per annum. Or simply use our calculator above.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is CAGR?</span>
+        <p>CAGR (Compound Annual Growth Rate) represents the smoothed annual rate at which an investment grows. Formula: CAGR = (Final Value / Initial Value)^(1/Years) - 1. It eliminates year-to-year volatility to show a consistent growth rate.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the difference between CAGR and absolute return?</span>
+        <p>Absolute return shows total percentage growth regardless of time (e.g., 150% in 5 years), while CAGR shows annualized growth (e.g., 20% per year). CAGR is better for comparing investments over different time periods.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is a good CAGR in India?</span>
+        <p>In Indian markets: 7-8% for FDs/debt funds, 12-14% for Nifty 50/large-cap, 15-20% for mid-cap, 18-25% for small-cap over 10+ year periods. Anything above 15% CAGR over 5+ years is considered excellent.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to calculate CAGR of a mutual fund?</span>
+        <p>Use the formula: CAGR = (Current NAV / NAV at purchase)^(1/years) - 1. Example: NAV grew from ₹100 to ₹250 in 5 years → CAGR = (250/100)^(1/5) - 1 = 20.11% per annum. Or simply use our calculator above.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- SEO Content -->
   <section class="container-narrow py-8">

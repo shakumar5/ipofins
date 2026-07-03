@@ -133,6 +133,9 @@ const faqJsonLd = {
     }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -354,83 +357,58 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ Section -->
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions About SIP</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a SIP (Systematic Investment Plan)?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          SIP is a method of investing a fixed amount regularly in <a href="/mutual-funds" class="text-primary-600 hover:underline">mutual funds</a>. It helps in rupee cost averaging and building wealth over time through compounding. You can start a SIP with as little as ₹500 per month on platforms like Groww, Zerodha Coin, or directly through AMC websites.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How is SIP return calculated?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          SIP returns are calculated using the compound interest formula: <code>FV = P × ((1 + r)^n - 1) / r × (1 + r)</code>, where P is the monthly investment, r is the monthly rate of return (annual rate ÷ 12), and n is the total number of months. For example, ₹5,000/month at 12% for 10 years = ₹11.62 lakhs.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is a good SIP amount to start with?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          You can start with ₹500/month. However, ₹5,000-₹10,000/month is recommended for meaningful wealth creation over 10+ years. A good rule: invest 20-30% of your monthly income via SIP. Increase by 10% annually (step-up SIP) as your income grows.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is SIP safe? What are the risks?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          SIP in mutual funds is subject to market risk. However, SIP reduces timing risk through rupee cost averaging. Equity mutual fund SIPs have historically delivered 12-15% CAGR over 10+ year periods (based on NIFTY 50 historical data, source: NSE India). Past performance does not guarantee future returns. Investment in securities market is subject to market risks.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">SIP vs Lumpsum — which should I choose?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          SIP is better for salaried investors with regular income — it removes market timing pressure. <a href="/tools/lumpsum-calculator" class="text-primary-600 hover:underline">Lumpsum</a> may deliver higher returns if invested during market corrections. For most people, a combination works best: regular SIP + lumpsum top-ups during major market dips.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Step-Up SIP and how does it help?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Step-Up SIP increases your monthly investment by a fixed percentage (usually 10%) every year. This aligns with salary increments and dramatically boosts final corpus. A ₹10,000 SIP with 10% annual step-up at 12% returns for 15 years gives ~₹84 lakhs vs ~₹50.5 lakhs without step-up.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How much tax do I pay on SIP gains?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Equity fund SIP: STCG (held &lt;1 year) taxed at 20%. LTCG (held &gt;1 year) taxed at 12.5% on gains above ₹1.25 lakh/year. ELSS SIP qualifies for ₹1.5 lakh deduction under Section 80C. Each SIP installment's holding period is counted independently.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Can I stop or pause my SIP anytime?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Yes. You can stop, pause, or modify your SIP at any time without penalty. Your existing units remain invested and continue to grow. Most platforms allow skipping installments or changing amounts through their app or website.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is Rupee Cost Averaging?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Rupee cost averaging means your fixed SIP amount buys more units when NAV is low and fewer when NAV is high. Over time, this averages your purchase cost below the average NAV — giving you a built-in advantage without needing to time the market.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Which mutual funds are best for SIP in 2026?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          For stability: Large Cap or Flexi Cap funds. For growth: Mid Cap or Small Cap funds. For tax saving: ELSS funds. Always choose Direct-Growth plans for maximum returns (0.5-1.5% higher annually vs regular plans). Check our <a href="/mutual-funds/best" class="text-primary-600 hover:underline">Best Mutual Funds</a> page for current rankings.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is this SIP calculator accurate?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Yes. This calculator uses the standard SIP future value formula which is mathematically verified. All calculations run in your browser — no data is sent to any server. Use it as a planning tool; actual returns will vary based on market conditions and the specific fund you choose.
-        </p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How long should I continue my SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
-          Minimum 5 years for equity SIP, ideally 10-15+ years. Compounding grows exponentially — a ₹10,000 SIP at 12% gives ₹23L in 10 years but ₹1 Cr in 20 years. The extra 10 years adds ₹77 lakhs, showing the power of staying invested longer.
-        </p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions About SIP" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is a SIP (Systematic Investment Plan)?</span>
+        <p>SIP is a method of investing a fixed amount regularly in <a href="/mutual-funds" class="text-primary-600 hover:underline">mutual funds</a>. It helps in rupee cost averaging and building wealth over time through compounding. You can start a SIP with as little as ₹500 per month on platforms like Groww, Zerodha Coin, or directly through AMC websites.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How is SIP return calculated?</span>
+        <p>SIP returns are calculated using the compound interest formula: <code>FV = P × ((1 + r)^n - 1) / r × (1 + r)</code>, where P is the monthly investment, r is the monthly rate of return (annual rate ÷ 12), and n is the total number of months. For example, ₹5,000/month at 12% for 10 years = ₹11.62 lakhs.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is a good SIP amount to start with?</span>
+        <p>You can start with ₹500/month. However, ₹5,000-₹10,000/month is recommended for meaningful wealth creation over 10+ years. A good rule: invest 20-30% of your monthly income via SIP. Increase by 10% annually (step-up SIP) as your income grows.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is SIP safe? What are the risks?</span>
+        <p>SIP in mutual funds is subject to market risk. However, SIP reduces timing risk through rupee cost averaging. Equity mutual fund SIPs have historically delivered 12-15% CAGR over 10+ year periods (based on NIFTY 50 historical data, source: NSE India). Past performance does not guarantee future returns. Investment in securities market is subject to market risks.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">SIP vs Lumpsum — which should I choose?</span>
+        <p>SIP is better for salaried investors with regular income — it removes market timing pressure. <a href="/tools/lumpsum-calculator" class="text-primary-600 hover:underline">Lumpsum</a> may deliver higher returns if invested during market corrections. For most people, a combination works best: regular SIP + lumpsum top-ups during major market dips.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is Step-Up SIP and how does it help?</span>
+        <p>Step-Up SIP increases your monthly investment by a fixed percentage (usually 10%) every year. This aligns with salary increments and dramatically boosts final corpus. A ₹10,000 SIP with 10% annual step-up at 12% returns for 15 years gives ~₹84 lakhs vs ~₹50.5 lakhs without step-up.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How much tax do I pay on SIP gains?</span>
+        <p>Equity fund SIP: STCG (held &lt;1 year) taxed at 20%. LTCG (held &gt;1 year) taxed at 12.5% on gains above ₹1.25 lakh/year. ELSS SIP qualifies for ₹1.5 lakh deduction under Section 80C. Each SIP installment's holding period is counted independently.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Can I stop or pause my SIP anytime?</span>
+        <p>Yes. You can stop, pause, or modify your SIP at any time without penalty. Your existing units remain invested and continue to grow. Most platforms allow skipping installments or changing amounts through their app or website.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is Rupee Cost Averaging?</span>
+        <p>Rupee cost averaging means your fixed SIP amount buys more units when NAV is low and fewer when NAV is high. Over time, this averages your purchase cost below the average NAV — giving you a built-in advantage without needing to time the market.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Which mutual funds are best for SIP in 2026?</span>
+        <p>For stability: Large Cap or Flexi Cap funds. For growth: Mid Cap or Small Cap funds. For tax saving: ELSS funds. Always choose Direct-Growth plans for maximum returns (0.5-1.5% higher annually vs regular plans). Check our <a href="/mutual-funds/best" class="text-primary-600 hover:underline">Best Mutual Funds</a> page for current rankings.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is this SIP calculator accurate?</span>
+        <p>Yes. This calculator uses the standard SIP future value formula which is mathematically verified. All calculations run in your browser — no data is sent to any server. Use it as a planning tool; actual returns will vary based on market conditions and the specific fund you choose.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How long should I continue my SIP?</span>
+        <p>Minimum 5 years for equity SIP, ideally 10-15+ years. Compounding grows exponentially — a ₹10,000 SIP at 12% gives ₹23L in 10 years but ₹1 Cr in 20 years. The extra 10 years adds ₹77 lakhs, showing the power of staying invested longer.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- Related Calculators Section (Internal Linking) -->
   <section class="container-narrow py-8">

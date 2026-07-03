@@ -117,6 +117,9 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
   if (/^\d+\.?\d*%\s/.test(name)) return false;
   return true;
 });
+import ContentGuideSection from '../../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout
@@ -348,27 +351,26 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
   </section>
 
   <!-- FAQ Section -->
-  <section class="container-wide py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4 max-w-3xl">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is {fund.name} good for SIP?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">{fund.name} is a {fund.category} fund with {fund.riskLevel} risk. For SIP investors, consistency of returns matters more than absolute returns. Check the fund's rolling returns and standard deviation before committing to a SIP. {fund.category} funds are generally suitable for SIP with a minimum 5-year investment horizon for optimal results.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the risk level of this fund?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">{fund.name} is categorized as {fund.riskLevel} risk as per SEBI's riskometer methodology. This assessment considers market cap allocation, sector concentration, and historical portfolio volatility. {fund.riskLevel === 'high' || fund.riskLevel === 'very-high' ? 'Higher risk funds may deliver better long-term returns but expect 20-40% drawdowns during market corrections.' : 'This risk level indicates relatively stable returns with moderate portfolio fluctuation.'}</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to invest in this fund?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">You can invest in {fund.name} (Direct-Growth plan) through platforms like Groww, Zerodha Coin, Kuvera, or directly from the AMC website. Minimum SIP amount starts at ₹500/month on most platforms. Complete KYC (PAN + Aadhaar verification) is mandatory before your first investment.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What are the tax implications?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">For equity mutual funds in India: Short-term capital gains (units held less than 1 year) are taxed at 20%. Long-term capital gains (held more than 1 year) above ₹1.25 lakh in a financial year are taxed at 12.5%. ELSS funds have a mandatory 3-year lock-in period. Dividend income from mutual funds is added to your income and taxed at your applicable slab rate.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">Is {fund.name} good for SIP?</span>
+        <p>{fund.name} is a {fund.category} fund with {fund.riskLevel} risk. For SIP investors, consistency of returns matters more than absolute returns. Check the fund's rolling returns and standard deviation before committing to a SIP. {fund.category} funds are generally suitable for SIP with a minimum 5-year investment horizon for optimal results.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the risk level of this fund?</span>
+        <p>{fund.name} is categorized as {fund.riskLevel} risk as per SEBI's riskometer methodology. This assessment considers market cap allocation, sector concentration, and historical portfolio volatility. {fund.riskLevel === 'high' || fund.riskLevel === 'very-high' ? 'Higher risk funds may deliver better long-term returns but expect 20-40% drawdowns during market corrections.' : 'This risk level indicates relatively stable returns with moderate portfolio fluctuation.'}</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to invest in this fund?</span>
+        <p>You can invest in {fund.name} (Direct-Growth plan) through platforms like Groww, Zerodha Coin, Kuvera, or directly from the AMC website. Minimum SIP amount starts at ₹500/month on most platforms. Complete KYC (PAN + Aadhaar verification) is mandatory before your first investment.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What are the tax implications?</span>
+        <p>For equity mutual funds in India: Short-term capital gains (units held less than 1 year) are taxed at 20%. Long-term capital gains (held more than 1 year) above ₹1.25 lakh in a financial year are taxed at 12.5%. ELSS funds have a mandatory 3-year lock-in period. Dividend income from mutual funds is added to your income and taxed at your applicable slab rate.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
 

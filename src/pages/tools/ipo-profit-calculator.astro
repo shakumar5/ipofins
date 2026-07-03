@@ -32,6 +32,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "Is IPO profit taxable?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. If you sell on listing day (within 1 year), profit is taxed as Short-Term Capital Gains (STCG) at 15%. If held for over 1 year, it's Long-Term Capital Gains (LTCG) taxed at 10% above ₹1 lakh exemption." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <BaseLayout title="IPO Profit Calculator 2026 - Listing Gains Calculator | IPOFins" description="Free IPO profit calculator. Estimate your potential profit or loss from IPO listing based on issue price, expected listing price, and lot size." jsonLd={jsonLd}>
@@ -62,27 +65,26 @@ const faqJsonLd = {
     </div>
   </section>
 
-  <section class="container-narrow py-12">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-4">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How to calculate profit from IPO?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">IPO Profit = (Listing Price - Issue Price) × Number of Shares. Example: 1 lot of 30 shares at ₹500, listed at ₹650 → profit = (650-500) × 30 = ₹4,500.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How much can I invest in an IPO?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Retail investors can apply up to ₹2,00,000. You must apply in lot multiples — minimum is 1 lot, maximum depends on lot size and price band staying within ₹2L.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the minimum investment for IPO?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Minimum is 1 lot × upper price band. If lot size = 30 shares at ₹500, minimum = ₹15,000. This varies per IPO.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Is IPO profit taxable in India?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes. Selling on listing day = STCG at 15%. Holding over 1 year = LTCG at 10% (above ₹1L exemption). Most IPO investors sell on listing day, so 15% tax applies.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">How to calculate profit from IPO?</span>
+        <p>IPO Profit = (Listing Price - Issue Price) × Number of Shares. Example: 1 lot of 30 shares at ₹500, listed at ₹650 → profit = (650-500) × 30 = ₹4,500.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How much can I invest in an IPO?</span>
+        <p>Retail investors can apply up to ₹2,00,000. You must apply in lot multiples — minimum is 1 lot, maximum depends on lot size and price band staying within ₹2L.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the minimum investment for IPO?</span>
+        <p>Minimum is 1 lot × upper price band. If lot size = 30 shares at ₹500, minimum = ₹15,000. This varies per IPO.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is IPO profit taxable in India?</span>
+        <p>Yes. Selling on listing day = STCG at 15%. Holding over 1 year = LTCG at 10% (above ₹1L exemption). Most IPO investors sell on listing day, so 15% tax applies.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 
   <!-- SEO Content -->
   <section class="container-narrow py-8">

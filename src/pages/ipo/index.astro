@@ -31,6 +31,9 @@ const faqJsonLd = {
     { "@type": "Question", "name": "How to check NSDL IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Visit the NSDL allotment status page at https://www.kfintech.com/ipostatus or the specific registrar's portal. Select the IPO name, enter your PAN number or application number, and click submit. NSDL depository participants can also check via their demat account statement once allotment is credited. Allotment typically reflects within 6 working days after the IPO closes." } }
   ]
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <IPOLayout title="All IPOs India 2026 - Mainboard & SME | IPOFins" description="Complete list of all IPOs in India 2026. Mainboard, SME, live, upcoming, and listed IPOs with subscription data and analysis." jsonLd={jsonLd} activeTab="all">
@@ -47,66 +50,65 @@ const faqJsonLd = {
   </section>
 
   <!-- FAQ Section -->
-  <section class="container-wide py-8">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-    <div class="space-y-3 max-w-3xl">
-      <details class="card-compact group" open>
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is an IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">IPO (Initial Public Offering) is when a private company sells its shares to the public for the first time on a stock exchange (BSE/NSE). After the IPO, anyone can buy and sell the company's shares on the market.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to apply for IPO in India?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is IPO subscription status?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Subscription shows how many times each investor category oversubscribed the IPO (e.g. 10x means ten times the shares available were bid for). Data comes from exchange filings during the open period.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the minimum amount to invest in IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Minimum = 1 lot × upper price band. Example: lot size 30 shares at ₹500 = ₹15,000 minimum. Maximum for retail category is ₹2,00,000. You must apply in lot multiples.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to check IPO allotment status?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN or application number. Allotment is announced ~6 days after close. If not allotted, money is unblocked automatically.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the difference between Mainboard and SME IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Mainboard IPOs are for larger companies (issue size ₹500+ Cr) listed on main BSE/NSE. SME IPOs are for smaller companies on BSE SME/NSE Emerge platform. SME IPOs have higher risk but sometimes give higher listing gains.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What happens after IPO allotment?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">If allotted: shares are credited to your Demat account before listing day. If not allotted: blocked amount is released to your bank within 1-2 days. On listing day, you can hold or sell the shares at market price.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">Is IPO investment risky?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Yes, IPO investment carries risk. Not all IPOs list at a premium — some list below issue price (loss). Risk factors: company fundamentals, market conditions, overvaluation, sector outlook. Always research before applying.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to increase IPO allotment chances?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Apply for 1 lot only (all 1-lot applications have equal lottery chance in retail). Apply from multiple Demat accounts (family members). Applying for more lots from same PAN doesn't increase probability.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is DRHP and RHP in IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">DRHP (Draft Red Herring Prospectus) is filed with SEBI for approval — contains all details except final price. RHP (Red Herring Prospectus) is the final document with confirmed price band, filed after SEBI approval, just before IPO opens.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to buy pre-IPO shares?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Pre-IPO shares can be bought through unlisted share dealers or platforms like Tata Capital Unlisted, Stockify, or UnlistedZone. These are private transactions outside stock exchanges. Risks include low liquidity, no SEBI regulation, price manipulation, and lock-in periods post-listing. Always verify the seller's credibility and understand that pre-IPO investing carries significantly higher risk than applying through the normal IPO process.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is SME IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">SME IPO (Small and Medium Enterprise IPO) is an initial public offering by smaller companies listed on BSE SME or NSE Emerge platforms. SME IPOs have lower issue sizes (typically ₹5-50 Cr), smaller lot sizes, and relaxed SEBI listing requirements compared to mainboard IPOs. They often show higher listing gains but carry more risk due to lower liquidity, limited institutional coverage, and smaller company size.</p>
-      </details>
-      <details class="card-compact group">
-        <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">How to check NSDL IPO allotment status?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">Visit the NSDL allotment status page at the registrar's portal (KFintech or Link Intime). Select the IPO name, enter your PAN number or application number, and click submit. NSDL depository participants can also check via their demat account statement once allotment is credited. Allotment typically reflects within 6 working days after the IPO subscription period closes.</p>
-      </details>
-    </div>
+  <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is an IPO?</span>
+        <p>IPO (Initial Public Offering) is when a private company sells its shares to the public for the first time on a stock exchange (BSE/NSE). After the IPO, anyone can buy and sell the company's shares on the market.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to apply for IPO in India?</span>
+        <p>Open a Demat account with any broker (Zerodha, Groww, Upstox). When an IPO opens, apply through your broker's app via UPI (ASBA). Approve the UPI mandate. The amount is blocked (not deducted) until allotment. Minimum application is 1 lot.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is IPO subscription status?</span>
+        <p>Subscription shows how many times each investor category oversubscribed the IPO (e.g. 10x means ten times the shares available were bid for). Data comes from exchange filings during the open period.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the minimum amount to invest in IPO?</span>
+        <p>Minimum = 1 lot × upper price band. Example: lot size 30 shares at ₹500 = ₹15,000 minimum. Maximum for retail category is ₹2,00,000. You must apply in lot multiples.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to check IPO allotment status?</span>
+        <p>Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN or application number. Allotment is announced ~6 days after close. If not allotted, money is unblocked automatically.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the difference between Mainboard and SME IPO?</span>
+        <p>Mainboard IPOs are for larger companies (issue size ₹500+ Cr) listed on main BSE/NSE. SME IPOs are for smaller companies on BSE SME/NSE Emerge platform. SME IPOs have higher risk but sometimes give higher listing gains.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What happens after IPO allotment?</span>
+        <p>If allotted: shares are credited to your Demat account before listing day. If not allotted: blocked amount is released to your bank within 1-2 days. On listing day, you can hold or sell the shares at market price.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is IPO investment risky?</span>
+        <p>Yes, IPO investment carries risk. Not all IPOs list at a premium — some list below issue price (loss). Risk factors: company fundamentals, market conditions, overvaluation, sector outlook. Always research before applying.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to increase IPO allotment chances?</span>
+        <p>Apply for 1 lot only (all 1-lot applications have equal lottery chance in retail). Apply from multiple Demat accounts (family members). Applying for more lots from same PAN doesn't increase probability.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is DRHP and RHP in IPO?</span>
+        <p>DRHP (Draft Red Herring Prospectus) is filed with SEBI for approval — contains all details except final price. RHP (Red Herring Prospectus) is the final document with confirmed price band, filed after SEBI approval, just before IPO opens.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to buy pre-IPO shares?</span>
+        <p>Pre-IPO shares can be bought through unlisted share dealers or platforms like Tata Capital Unlisted, Stockify, or UnlistedZone. These are private transactions outside stock exchanges. Risks include low liquidity, no SEBI regulation, price manipulation, and lock-in periods post-listing. Always verify the seller's credibility and understand that pre-IPO investing carries significantly higher risk than applying through the normal IPO process.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is SME IPO?</span>
+        <p>SME IPO (Small and Medium Enterprise IPO) is an initial public offering by smaller companies listed on BSE SME or NSE Emerge platforms. SME IPOs have lower issue sizes (typically ₹5-50 Cr), smaller lot sizes, and relaxed SEBI listing requirements compared to mainboard IPOs. They often show higher listing gains but carry more risk due to lower liquidity, limited institutional coverage, and smaller company size.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How to check NSDL IPO allotment status?</span>
+        <p>Visit the NSDL allotment status page at the registrar's portal (KFintech or Link Intime). Select the IPO name, enter your PAN number or application number, and click submit. NSDL depository participants can also check via their demat account statement once allotment is credited. Allotment typically reflects within 6 working days after the IPO subscription period closes.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
     <a href="/blogs/ipo" class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
       More IPO FAQs (30+ questions) →
     </a>
-  </section>
+  </ContentGuideSection>
 
   <section class="container-wide py-8">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>

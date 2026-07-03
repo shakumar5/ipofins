@@ -16,6 +16,9 @@ const jsonLd = {
   "description": "All SME IPOs on BSE SME and NSE Emerge with subscription and listing data.",
   "url": "https://ipofins.com/ipo/sme",
 };
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
 ---
 
 <IPOLayout title="SME IPOs India 2026 - BSE SME & NSE Emerge | IPOFins" description="All SME IPOs in India 2026. Track small and medium enterprise IPOs on BSE SME and NSE Emerge platforms." activeTab="sme" jsonLd={jsonLd}>
@@ -70,25 +73,24 @@ const jsonLd = {
   </section>
 
   <!-- FAQ Section -->
-  <section class="container-wide py-8">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-6">SME IPO FAQs</h2>
-    <div class="space-y-4 max-w-3xl">
-      <details class="card group" open>
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is an SME IPO?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">SME (Small and Medium Enterprise) IPOs are listed on BSE SME or NSE Emerge platforms. These are smaller companies with issue sizes typically ₹5–50 Cr. They have relaxed listing requirements compared to mainboard. SME IPOs can give very high listing gains (50–100%+) but carry higher risk due to lower liquidity and limited company track record.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">What is the minimum investment for an SME IPO?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">SME IPOs have a minimum lot size of ₹1–2 lakh (higher than mainboard). For example, if lot size is 2000 shares at ₹60, minimum investment is ₹1,20,000. This higher minimum is set by SEBI to ensure only investors who can afford the risk participate in SME IPOs.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">Are SME IPOs riskier than Mainboard IPOs?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">Yes, generally. SME companies are smaller, have shorter operating history, lower liquidity after listing, and less analyst coverage. However, some SME IPOs deliver exceptional returns (100%+ listing gains). Do thorough research — check promoter background, financials, industry outlook, and subscription trends before applying.</p>
-      </details>
-      <details class="card group">
-        <summary class="cursor-pointer font-medium text-surface-900 dark:text-white">How long does it take to sell SME IPO shares after listing?</summary>
-        <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">You can sell on listing day itself. However, SME stocks have lower liquidity — there might not be enough buyers at your desired price. Many SME stocks hit upper/lower circuits on listing day. It's recommended to place limit orders rather than market orders. Lock-in for anchor investors is 30/90 days.</p>
-      </details>
-    </div>
-  </section>
+  <ContentGuideSection title="SME IPO FAQs" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is an SME IPO?</span>
+        <p>SME (Small and Medium Enterprise) IPOs are listed on BSE SME or NSE Emerge platforms. These are smaller companies with issue sizes typically ₹5–50 Cr. They have relaxed listing requirements compared to mainboard. SME IPOs can give very high listing gains (50–100%+) but carry higher risk due to lower liquidity and limited company track record.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What is the minimum investment for an SME IPO?</span>
+        <p>SME IPOs have a minimum lot size of ₹1–2 lakh (higher than mainboard). For example, if lot size is 2000 shares at ₹60, minimum investment is ₹1,20,000. This higher minimum is set by SEBI to ensure only investors who can afford the risk participate in SME IPOs.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Are SME IPOs riskier than Mainboard IPOs?</span>
+        <p>Yes, generally. SME companies are smaller, have shorter operating history, lower liquidity after listing, and less analyst coverage. However, some SME IPOs deliver exceptional returns (100%+ listing gains). Do thorough research — check promoter background, financials, industry outlook, and subscription trends before applying.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">How long does it take to sell SME IPO shares after listing?</span>
+        <p>You can sell on listing day itself. However, SME stocks have lower liquidity — there might not be enough buyers at your desired price. Many SME stocks hit upper/lower circuits on listing day. It's recommended to place limit orders rather than market orders. Lock-in for anchor investors is 30/90 days.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
 </IPOLayout>
