@@ -5,6 +5,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import SuperInvestorsSubNav from '../../components/tracked/SuperInvestorsSubNav.astro';
 import SastUpdatesFeed from '../../components/tracked/SastUpdatesFeed.tsx';
+import InsightsArticleCallout from '../../components/insights/InsightsArticleCallout.astro';
+import { getInsightCallout } from '../../lib/insights-callouts';
 import {
   canonicalFor,
   SUPER_INVESTORS_HUB,
@@ -24,6 +26,7 @@ function loadCuratedFeed(): SastUpdatesPayload | null {
 }
 
 const initialCurated = loadCuratedFeed();
+const sastInsight = getInsightCallout('sast');
 
 const path = SAST_UPDATES_HUB;
 const canonical = canonicalFor(path);
@@ -74,6 +77,10 @@ const jsonLd = {
         <SuperInvestorsSubNav active="sast" />
       </div>
     </PageHeader>
+
+    <div class="mt-6 max-w-2xl">
+      <InsightsArticleCallout article={sastInsight} label="SAST digest" />
+    </div>
 
     <div class="mt-8">
       <SastUpdatesFeed

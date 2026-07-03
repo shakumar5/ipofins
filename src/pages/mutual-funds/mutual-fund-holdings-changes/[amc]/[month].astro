@@ -10,6 +10,8 @@ import {
   MF_LIST_BACK,
 } from '../../../../lib/list-back-nav';
 import ListBackLink from '../../../../components/ListBackLink.astro';
+import InsightsArticleCallout from '../../../../components/insights/InsightsArticleCallout.astro';
+import { getInsightCallout } from '../../../../lib/insights-callouts';
 
 export async function getStaticPaths() {
   const bootstrap = loadHoldingsPageBootstrap();
@@ -67,6 +69,7 @@ const defaultBack = defaultHoldingsChangesBack();
 const holdingsBackVariants = Object.fromEntries(
   Object.entries(MF_LIST_BACK).filter(([key]) => key !== 'holdings-changes'),
 );
+const amcInsight = getInsightCallout('holdings-amc', { amcSlug: amcSlug || '', monthSlug: monthParam || undefined });
 ---
 
 <BaseLayout title={pageTitle} description={pageDesc} jsonLd={jsonLd}>
@@ -100,6 +103,12 @@ const holdingsBackVariants = Object.fromEntries(
     <div class="mt-4 flex flex-wrap gap-2">
       <a href={defaultBack.href} class="px-4 py-2 text-sm font-medium text-surface-600 bg-surface-100 dark:bg-surface-800 rounded-lg hover:bg-surface-200 transition-colors">← {defaultBack.label}</a>
     </div>
+
+    {amcInsight && (
+      <div class="mt-4 max-w-2xl">
+        <InsightsArticleCallout article={amcInsight} label="AMC holdings analysis" />
+      </div>
+    )}
   </section>
 
   <section class="container-wide py-4">

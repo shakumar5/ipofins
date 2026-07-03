@@ -5,6 +5,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdir
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { platform } from 'os';
+import { spawnSync } from 'node:child_process';
+import { nodeExtraArgs } from './lib/node-runner.mjs';
 import { buildHolderPositionsRecord } from './lib/holder-positions-export.mjs';
 import { buildSmartMoneyExports } from './lib/smart-money-export.mjs';
 import { buildSmartMoneySignalsExport } from './lib/smart-money-signals-export.mjs';
@@ -870,6 +872,16 @@ async function main() {
     join(OUT_DIR, '.export-stamp.json'),
     JSON.stringify({ exportedAt: new Date().toISOString(), durationSec: Number(totalSec) }),
   );
+
+  const insights = spawnSync(
+    process.execPath,
+    [...nodeExtraArgs(), join(dirname(fileURLToPath(import.meta.url)), 'generate-insights-articles.mjs')],
+    { stdio: 'inherit', cwd: join(dirname(fileURLToPath(import.meta.url)), '..'), env: process.env },
+  );
+  if ((insights.status ?? 1) !== 0) {
+    console.warn('  ⚠ Insights article generation failed — build will retry');
+  }
+
   console.log(`\n  ✅ Export complete (${totalSec}s total)\n`);
 }
 

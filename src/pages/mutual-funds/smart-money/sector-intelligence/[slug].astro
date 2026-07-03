@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
+import PageHeader from '../../../../components/layout/PageHeader.astro';
+import ListBackLink from '../../../../components/ListBackLink.astro';
+import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
+import SectorIntelligenceDetail from '../../../../components/funds/SectorIntelligenceDetail.tsx';
+import InsightsArticleCallout from '../../../../components/insights/InsightsArticleCallout.astro';
+import { getInsightCallout } from '../../../../lib/insights-callouts';
+import { BRAND_URL } from '../../../../lib/brand';
+import { SMART_MONEY_LIST_BACK } from '../../../../lib/list-back-nav';
+import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import {
+  getSectorIntelligencePageMeta,
+  sectorIntelligencePath,
+} from '../../../../lib/sector-intelligence-meta';
+import { loadSectorIntelligenceSlugs } from '../../../../lib/sector-intelligence-slugs';
+import {
+  findSectorIntelligenceRow,
+  loadTrackerMonthMovesForSectorIntel,
+  readSectorIntelligenceFromDisk,
+  SECTOR_INTELLIGENCE_JSON_PATH,
+} from '../../../../lib/sector-intelligence-server';
+
+export function getStaticPaths() {
+  const sectors = loadSectorIntelligenceSlugs();
+  if (!sectors.length) {
+    return [{ params: { slug: '_placeholder' }, props: { sectorSlug: '_placeholder', sectorName: 'Sector' } }];
+  }
+  return sectors.map(({ slug, sectorName }) => ({
+    params: { slug },
+    props: { sectorSlug: slug, sectorName },
+  }));
+}
+
+const { sectorSlug, sectorName } = Astro.props;
+const isPlaceholder = sectorSlug === '_placeholder';
+const sectorData = readSectorIntelligenceFromDisk();
+const row = isPlaceholder ? null : findSectorIntelligenceRow(sectorSlug, sectorData);
+const monthMoves = isPlaceholder ? null : loadTrackerMonthMovesForSectorIntel();
+const pageMeta = isPlaceholder
+  ? getSectorIntelligencePageMeta()
+  : getSectorIntelligencePageMeta(sectorName, sectorSlug, sectorData?.currentMonth);
+const sm = loadSmartMoneyTrackerLinks();
+const defaultBack = SMART_MONEY_LIST_BACK.sectors;
+const smBackVariants = Object.fromEntries(
+  Object.entries(SMART_MONEY_LIST_BACK).filter(([key]) => key !== 'sectors'),
+);
+const sectorInsight = getInsightCallout('sectors');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: pageMeta.heading || sectorName,
+  description: pageMeta.description,
+  url: `${BRAND_URL}${pageMeta.path}`,
+};
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  description={pageMeta.description}
+  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  {!isPlaceholder && (
+    <link slot="head" rel="preload" href={SECTOR_INTELLIGENCE_JSON_PATH} as="fetch" crossorigin />
+  )}
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={sm.hub} class="hover:text-primary-600 transition-colors">Smart Money</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href={sectorIntelligencePath()} class="hover:text-primary-600 transition-colors">Sector Intelligence</a></li>
+      {!isPlaceholder && (
+        <>
+          <li><span class="mx-1">/</span></li>
+          <li class="text-surface-900 dark:text-white font-medium">{sectorName}</li>
+        </>
+      )}
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-4">
+    {!isPlaceholder && (
+      <ListBackLink
+        id="sector-intelligence-detail-back"
+        defaultHref={defaultBack.href}
+        defaultLabel={defaultBack.label}
+        variants={smBackVariants}
+        class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
+      />
+    )}
+    <PageHeader
+      title={pageMeta.heading || sectorName}
+      subtitle={pageMeta.subtitle}
+      freshness={sectorData?.currentMonth ? `Updated ${sectorData.currentMonth}` : undefined}
+      source="AMC monthly portfolio disclosures"
+    >
+      {!isPlaceholder && <div class="mt-4"><SmartMoneySubNav active="sectors" /></div>}
+    </PageHeader>
+
+    {!isPlaceholder && (
+      <div class="mt-4 max-w-2xl">
+        <InsightsArticleCallout article={sectorInsight} label="Sector rotation analysis" />
+      </div>
+    )}
+  </section>
+
+  <section class="container-wide pb-12">
+    {isPlaceholder ? (
+      <div class="text-center py-12 text-surface-500 text-sm">
+        <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate sector pages.</p>
+        <a href={sectorIntelligencePath()} class="text-primary-600 mt-2 inline-block">← Sector Intelligence</a>
+      </div>
+    ) : row && sectorData ? (
+      <SectorIntelligenceDetail client:load row={row} data={sectorData} monthMoves={monthMoves} />
+    ) : (
+      <div class="text-center py-12 text-surface-500 text-sm">
+        <p>Sector not found in the latest export.</p>
+        <a href={sectorIntelligencePath()} class="text-primary-600 mt-2 inline-block">← Sector Intelligence</a>
+      </div>
+    )}
+  </section>
+
+  {!isPlaceholder && (
+    <section class="container-wide pb-12">
+      <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-2">More Smart Money</h2>
+      <SmartMoneyInternalLinks variant="inline" showHub={false} showTabs={false} monthNote={false} />
+    </section>
+  )}
+</BaseLayout>

@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../../components/layout/PageHeader.astro';
+import TopStocksLoader from '../../../../components/top-stocks/TopStocksLoader.tsx';
+import TopStocksInternalLinks from '../../../../components/top-stocks/TopStocksInternalLinks.astro';
+import { loadTopStocksPayload } from '../../../../lib/top-stocks-server';
+import {
+  loadTopStocksFilterPathParams,
+  parseTopStocksFiltersFromPathname,
+  topStocksPath,
+  TOP_STOCKS_SOURCE_SLUGS,
+  type TopStocksFilters,
+} from '../../../../lib/top-stocks-meta';
+import {
+  TOP_STOCKS_CAP_OPTIONS,
+  TOP_STOCKS_SOURCE_OPTIONS,
+} from '../../../../lib/top-stocks-shared';
+import { canonicalFor } from '../../../../lib/tracked-entities';
+
+export function getStaticPaths() {
+  return loadTopStocksFilterPathParams().map((filters) => ({
+    params: {
+      source: TOP_STOCKS_SOURCE_SLUGS[filters.source],
+      cap: filters.cap,
+      flow: filters.flow,
+    },
+    props: { filters },
+  }));
+}
+
+const { filters } = Astro.props as { filters: TopStocksFilters };
+const pathname = topStocksPath(filters);
+const parsed = parseTopStocksFiltersFromPathname(pathname);
+if (!parsed) {
+  return Astro.redirect(topStocksPath(DEFAULT_TOP_STOCKS_FILTERS), 301);
+}
+
+const initialPayload = await loadTopStocksPayload();
+const canonical = canonicalFor(pathname);
+
+const sourceLabel = TOP_STOCKS_SOURCE_OPTIONS.find((o) => o.id === filters.source)?.label ?? filters.source;
+const capLabel = TOP_STOCKS_CAP_OPTIONS.find((o) => o.id === filters.cap)?.label ?? filters.cap;
+const flowLabel = filters.flow === 'accumulation' ? 'Accumulation' : 'Distribution';
+const pageTitle = `Top ${capLabel} Stocks — ${sourceLabel} ${flowLabel} | IPOFins`;
+const pageDescription = `Top ${capLabel.toLowerCase()} stocks by net rupee ${filters.flow} from ${sourceLabel}. Ranked by institutional buying and selling from latest filings.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: pageTitle,
+  description: pageDescription,
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Top Stocks', item: canonicalFor('/top-stocks') },
+      { '@type': 'ListItem', position: 3, name: `${sourceLabel} ${capLabel} ${flowLabel}`, item: canonical },
+    ],
+  },
+};
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonicalUrl={canonical}>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+  <div class="container-wide py-8 sm:py-10 space-y-8">
+    <PageHeader
+      eyebrow="Market flows"
+      title={`Top ${capLabel} Stocks`}
+      subtitle={`Net rupee ${filters.flow} from ${sourceLabel} — ${TOP_STOCKS_CAP_OPTIONS.find((o) => o.id === filters.cap)?.description ?? ''}`}
+      freshness={initialPayload.hasData ? 'Latest filing period' : undefined}
+      source="Holdings and shareholding filings"
+    />
+
+    <TopStocksLoader client:load initialPayload={initialPayload} initialFilters={filters} />
+
+    <TopStocksInternalLinks />
+  </div>
+</BaseLayout>

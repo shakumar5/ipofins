@@ -15,6 +15,15 @@ const STAMP = join(ROOT, 'public', 'data', '.export-stamp.json');
 const REQUIRED = join(ROOT, 'public', 'data', 'smart-money-signals-index.json');
 const MAX_AGE_MIN = Number(process.env.EXPORT_MAX_AGE_MINUTES || 180);
 
+function runInsightsGenerate() {
+  const gen = spawnSync(
+    process.execPath,
+    [...nodeExtraArgs(), join(ROOT, 'scripts', 'generate-insights-articles.mjs')],
+    { stdio: 'inherit', cwd: ROOT, env: process.env },
+  );
+  if ((gen.status ?? 1) !== 0) process.exit(gen.status ?? 1);
+}
+
 function shouldSkip() {
   if (process.env.SKIP_EXPORT === '1' || process.argv.includes('--skip')) return true;
   if (process.env.FORCE_EXPORT === '1') return false;
@@ -57,6 +66,7 @@ if (shouldSkip()) {
     { stdio: 'inherit', cwd: ROOT, env: process.env },
   );
   if ((ensure.status ?? 1) !== 0) process.exit(ensure.status ?? 1);
+  runInsightsGenerate();
   process.exit(0);
 }
 
@@ -74,4 +84,8 @@ const topStocks = spawnSync(
   { stdio: 'inherit', cwd: ROOT, env: process.env },
 );
 
-process.exit(topStocks.status ?? 1);
+if ((topStocks.status ?? 1) !== 0) process.exit(topStocks.status ?? 1);
+
+runInsightsGenerate();
+
+process.exit(0);

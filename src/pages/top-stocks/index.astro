@@ -1,52 +1,14 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHeader from '../../components/layout/PageHeader.astro';
-import TopStocksLoader from '../../components/top-stocks/TopStocksLoader.tsx';
-import TopStocksInternalLinks from '../../components/top-stocks/TopStocksInternalLinks.astro';
-import { loadTopStocksPayload } from '../../lib/top-stocks-server';
-import { parseTopStocksFiltersFromSearch } from '../../lib/top-stocks-meta';
-import { canonicalFor } from '../../lib/tracked-entities';
+import {
+  DEFAULT_TOP_STOCKS_FILTERS,
+  parseTopStocksFiltersFromSearch,
+  topStocksPath,
+} from '../../lib/top-stocks-meta';
 
-const initialPayload = await loadTopStocksPayload();
-const initialFilters = parseTopStocksFiltersFromSearch(Astro.url.search);
-const path = '/top-stocks';
-const canonical = canonicalFor(path);
+if (Astro.url.search) {
+  const filters = parseTopStocksFiltersFromSearch(Astro.url.search);
+  return Astro.redirect(topStocksPath(filters), 301);
+}
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
-  name: 'Top Stocks',
-  description:
-    'Rank Indian stocks by net rupee accumulation or distribution from mutual funds, super investors, and the 1% Club.',
-  url: canonical,
-  breadcrumb: {
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
-      { '@type': 'ListItem', position: 2, name: 'Top Stocks', item: canonical },
-    ],
-  },
-};
+return Astro.redirect(topStocksPath(DEFAULT_TOP_STOCKS_FILTERS), 301);
 ---
-
-<BaseLayout
-  title="Top Stocks | IPOFins"
-  description="See which large, mid, small and micro cap stocks mutual funds, super investors and 1% Club holders are accumulating or distributing."
-  canonicalUrl={canonical}
->
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
-
-  <div class="container-wide py-8 sm:py-10 space-y-8">
-    <PageHeader
-      eyebrow="Market flows"
-      title="Top Stocks"
-      subtitle="Net rupee accumulation and distribution across mutual funds, super investors, and every 1% or larger non-promoter holder."
-      freshness={initialPayload.hasData ? 'Latest filing period' : undefined}
-      source="Holdings and shareholding filings"
-    />
-
-    <TopStocksLoader client:load initialPayload={initialPayload} initialFilters={initialFilters} />
-
-    <TopStocksInternalLinks />
-  </div>
-</BaseLayout>

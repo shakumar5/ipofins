@@ -2,7 +2,7 @@
  * Site-wide search index for Ctrl+K overlay and /search page.
  * Item shape: { t: title, u: url, y: category, m?: meta, k?: keywords }
  */
-import articlesData from '../data/articles.json';
+import { getLearnArticles } from './learn-articles';
 import brokersData from '../data/brokers.json';
 import toolsData from '../data/tools.json';
 import { getAllIPOs } from './data/ipos';
@@ -22,6 +22,8 @@ import {
 } from './tracked-entities';
 import { stockSignalPath } from './stock-signal-meta';
 import { loadSmartMoneyStockSlugs } from './smart-money-stock-slugs';
+import { sectorIntelligencePath } from './sector-intelligence-meta';
+import { loadSectorIntelligenceSlugs } from './sector-intelligence-slugs';
 
 export interface SiteSearchItem {
   t: string;
@@ -71,6 +73,16 @@ export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
   ]);
 
   const mfSlugs = new Set(loadSmartMoneyStockSlugs().map((s) => s.slug));
+
+  for (const { slug, sectorName } of loadSectorIntelligenceSlugs()) {
+    items.push({
+      t: `${sectorName} Sector Intelligence`,
+      u: sectorIntelligencePath(slug),
+      y: 'Sector',
+      m: 'Mutual fund sector rotation',
+      k: `${sectorName} sector intelligence smart money mutual funds rotation`,
+    });
+  }
 
   for (const { slug, stockName } of onePercentStocks) {
     items.push({
@@ -137,14 +149,13 @@ export async function buildSiteSearchIndex(): Promise<SiteSearchItem[]> {
     });
   }
 
-  for (const article of articlesData) {
-    if (!article.content?.trim()) continue;
+  for (const article of getLearnArticles()) {
     items.push({
       t: article.title,
       u: `/learn/${article.slug}`,
-      y: 'Learn',
+      y: article.tier ? 'Insights' : 'Learn',
       m: article.excerpt?.slice(0, 80),
-      k: `${article.title} ${article.category} learn guide`,
+      k: `${article.title} ${article.category} learn guide insights smart money`,
     });
   }
 

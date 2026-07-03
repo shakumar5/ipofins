@@ -1,0 +1,40 @@
+---
+import type { LearnArticle } from '../../lib/learn-articles';
+
+interface Props {
+  article: LearnArticle | null | undefined;
+  label?: string;
+  class?: string;
+}
+
+const { article, label = 'Market analysis', class: className = '' } = Astro.props;
+---
+
+{article && (
+  <aside
+    class:list={[
+      'rounded-xl border border-primary-200/80 dark:border-primary-800/50 bg-primary-50/60 dark:bg-primary-950/30 px-4 py-3',
+      className,
+    ]}
+    aria-label="Related market analysis"
+  >
+    <p class="text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300 mb-1">
+      {label}
+    </p>
+    <a
+      href={`/learn/${article.slug}`}
+      class="group block no-underline hover:no-underline"
+    >
+      <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors leading-snug">
+        {article.title}
+      </h3>
+      <p class="mt-1 text-xs text-surface-600 dark:text-surface-400 line-clamp-2 leading-relaxed">
+        {article.excerpt}
+      </p>
+      <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary-700 dark:text-primary-300 group-hover:underline">
+        Read analysis
+        <span aria-hidden="true">→</span>
+      </span>
+    </a>
+  </aside>
+)}

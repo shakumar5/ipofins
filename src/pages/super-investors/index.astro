@@ -19,6 +19,7 @@ import {
   SUPER_INVESTORS_HUB,
   ONE_PERCENT_CLUB_HUB,
 } from '../../lib/tracked-entities';
+import { topStocksPath } from '../../lib/top-stocks-meta';
 
 // Curated roster is always present; enrich with live Neon stats when 005 is populated.
 const all = getSuperInvestors().sort((a, b) => tierRank(a.tier) - tierRank(b.tier));
@@ -208,8 +209,8 @@ const faqJsonLd = {
   <section class="container-wide py-8">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
     <div class="nav-btn-group">
-      <a href="/top-stocks?source=dii_fii&flow=accumulation&cap=large" class="btn-secondary px-6 py-3">DII & FII Flows</a>
-      <a href="/top-stocks?source=super_investors&flow=accumulation&cap=large" class="btn-secondary px-6 py-3">Top Stocks (₹ flows)</a>
+      <a href={topStocksPath({ source: 'dii_fii', flow: 'accumulation' })} class="btn-secondary px-6 py-3">DII & FII Flows</a>
+      <a href={topStocksPath({ source: 'super_investors', flow: 'accumulation' })} class="btn-secondary px-6 py-3">Top Stocks (₹ flows)</a>
       <a href="/1-percent-club" class="btn-secondary px-6 py-3">1% Club</a>
       <a href="/mutual-funds/smart-money" class="btn-secondary px-6 py-3">MF Smart Money</a>
       <a href="/methodology" class="btn-secondary px-6 py-3">Methodology</a>

@@ -23,6 +23,16 @@ import {
   type SmartMoneyTab,
 } from '../../lib/smart-money-meta';
 import {
+  parseSmartMoneySignalsListFiltersFromPathname,
+  parseSmartMoneySignalsListFiltersFromSearch,
+  smartMoneySignalsListPath,
+  type SmartMoneySignalsListFilters,
+} from '../../lib/smart-money-signals-list-meta';
+import {
+  parseTrackerListFiltersFromSearch,
+  type TrackerListFilters,
+} from '../../lib/smart-money-tracker-filters-meta';
+import {
   getSmartMoneyTrackerPageMeta,
   parseTrackerFromPathname,
   trackerPathFromViewMonth,
@@ -48,6 +58,8 @@ interface SmartMoneyPageProps {
   initialTrackerIndex?: TrackerIndexDisk | null;
   initialTrackerMonth?: string | null;
   initialTrackerData?: SmartMoneyTrackerData | null;
+  initialSignalsFilters?: Partial<SmartMoneySignalsListFilters>;
+  initialTrackerFilters?: TrackerListFilters;
 }
 
 type Tab = SmartMoneyTab;
@@ -64,6 +76,8 @@ export default function SmartMoneyPage({
   initialTrackerIndex = null,
   initialTrackerMonth = null,
   initialTrackerData = null,
+  initialSignalsFilters,
+  initialTrackerFilters,
 }: SmartMoneyPageProps) {
   const [tab, setTab] = useState<Tab>(() => {
     if (initialTracker) return 'tracker';
@@ -286,9 +300,35 @@ export default function SmartMoneyPage({
         try {
           const { loadSignalsIndex, loadSignalsMonth } = await loadSmartMoneyClient();
           const index = await loadSignalsIndex();
-          const month = index.months[0] || '';
+          const urlFilters =
+            typeof window !== 'undefined'
+              ? parseSmartMoneySignalsListFiltersFromPathname(
+                  window.location.pathname,
+                  index.categories,
+                  index.months[0] || '',
+                ) ??
+                parseSmartMoneySignalsListFiltersFromSearch(
+                  window.location.search,
+                  index.months[0] || '',
+                )
+              : parseSmartMoneySignalsListFiltersFromSearch('', index.months[0] || '');
+          if (
+            typeof window !== 'undefined' &&
+            window.location.search &&
+            parseSmartMoneySignalsListFiltersFromPathname(
+              window.location.pathname,
+              index.categories,
+              index.months[0] || '',
+            )
+          ) {
+            window.history.replaceState(null, '', smartMoneySignalsListPath(urlFilters));
+          }
+          const month =
+            initialSignalsFilters?.month || urlFilters.month || index.months[0] || '';
+          const category =
+            initialSignalsFilters?.category || urlFilters.category || 'All';
           if (!month) throw new Error('No signal months available');
-          const data = await loadSignalsMonth(month, 'All');
+          const data = await loadSignalsMonth(month, category);
           if (cancelled) return;
           startTransition(() => {
             setSignalsData(data);
@@ -305,7 +345,7 @@ export default function SmartMoneyPage({
       cancelled = true;
       cancelSchedule();
     };
-  }, [tab, signalsData, signalsMonth, signalsRetry, startTransition]);
+  }, [tab, signalsData, signalsMonth, signalsRetry, startTransition, initialSignalsFilters]);
 
   useEffect(() => {
     if (tab !== 'sectors' || sectorData || sectorLoadStarted.current) return;
@@ -376,6 +416,8 @@ export default function SmartMoneyPage({
             loadingMonth={trackerLoading}
             initialView={initialTracker?.view}
             initialMonth={initialTracker?.monthLabel}
+            initialCategory={initialTrackerFilters?.category}
+            initialSector={initialTrackerFilters?.sector}
             onMonthChange={(month) => {
               if (!trackerData.byMonth[month]) loadTrackerForMonth(month);
             }}
@@ -394,6 +436,7 @@ export default function SmartMoneyPage({
             data={signalsData}
             loading={signalsLoading}
             month={signalsMonth}
+            initialFilters={initialSignalsFilters}
             onMonthChange={loadSignalsForMonth}
             onCategoryChange={(category) => {
               if (signalsMonth) loadSignalsForMonth(signalsMonth, category);

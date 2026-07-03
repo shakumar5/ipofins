@@ -14,6 +14,13 @@ import {
   TRACKER_VIEW_OPTIONS,
   type TrackerViewType,
 } from '../../lib/smart-money-tracker-meta';
+import {
+  DEFAULT_TRACKER_LIST_FILTERS,
+  parseTrackerListFiltersFromPathname,
+  parseTrackerListFiltersFromSearch,
+  trackerPathWithListFilters,
+  type TrackerListFilters,
+} from '../../lib/smart-money-tracker-filters-meta';
 import FilterSelect from './FilterSelect';
 
 type ViewType = TrackerViewType;
@@ -29,6 +36,8 @@ interface Props {
   loadingMonth?: boolean;
   initialView?: ViewType;
   initialMonth?: string;
+  initialCategory?: string;
+  initialSector?: string;
 }
 
 function sortKeyForView(_next: ViewType): SortKey {
@@ -105,11 +114,13 @@ export default function SmartMoneyTracker({
   loadingMonth,
   initialView,
   initialMonth,
+  initialCategory,
+  initialSector,
 }: Props) {
   const defaultMonth = resolveInitialMonth(data, initialMonth);
   const [view, setView] = useState<ViewType>(initialView || 'most_bought');
-  const [category, setCategory] = useState('All');
-  const [sector, setSector] = useState('All');
+  const [category, setCategory] = useState(initialCategory || DEFAULT_TRACKER_LIST_FILTERS.category);
+  const [sector, setSector] = useState(initialSector || DEFAULT_TRACKER_LIST_FILTERS.sector);
   const [month, setMonth] = useState(defaultMonth);
   const [sortKey, setSortKey] = useState<SortKey>(() => sortKeyForView(initialView || 'most_bought'));
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -129,13 +140,36 @@ export default function SmartMoneyTracker({
 
   const syncTrackerUrl = useCallback((nextView: ViewType, monthLabel: string, replace = true) => {
     if (typeof window === 'undefined' || !monthLabel) return;
-    const path = trackerPathFromViewMonth(nextView, monthLabel);
+    const path = trackerPathWithListFilters(trackerPathFromViewMonth(nextView, monthLabel), {
+      category,
+      sector,
+    });
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (current !== path) {
       if (replace) window.history.replaceState({ smTracker: true, view: nextView, month: monthLabel }, '', path);
       else window.history.pushState({ smTracker: true, view: nextView, month: monthLabel }, '', path);
     }
     applyClientPageMeta(getSmartMoneyTrackerPageMeta(nextView, monthLabel));
+  }, [category, sector]);
+
+  const syncTrackerFiltersUrl = useCallback(
+    (next: Partial<TrackerListFilters>) => {
+      if (typeof window === 'undefined') return;
+      const path = trackerPathWithListFilters(trackerPathFromViewMonth(view, month), {
+        category: next.category ?? category,
+        sector: next.sector ?? sector,
+      });
+      const current = `${window.location.pathname}${window.location.search}`;
+      if (current !== path) {
+        window.history.pushState({ smTracker: true, view, month }, '', path);
+      }
+    },
+    [category, month, sector, view],
+  );
+
+  const applyTrackerFilters = useCallback((next: TrackerListFilters) => {
+    setCategory(next.category);
+    setSector(next.sector);
   }, []);
 
   useEffect(() => {
@@ -147,6 +181,13 @@ export default function SmartMoneyTracker({
       setSortKey(sortKeyForView(parsed.view));
       setSortDir('desc');
       setExpanded(null);
+      applyTrackerFilters(
+        parseTrackerListFiltersFromPathname(
+          window.location.pathname,
+          window.location.search,
+          data.categories,
+        ),
+      );
       if (data.months.some((m) => m.label === parsed.monthLabel)) {
         setMonth(parsed.monthLabel);
         if (!data.byMonth[parsed.monthLabel]) onMonthChange?.(parsed.monthLabel);
@@ -155,8 +196,12 @@ export default function SmartMoneyTracker({
     };
     syncFromUrl();
     window.addEventListener('popstate', syncFromUrl);
-    return () => window.removeEventListener('popstate', syncFromUrl);
-  }, [data.months, data.byMonth, onMonthChange]);
+    window.addEventListener('pageshow', syncFromUrl);
+    return () => {
+      window.removeEventListener('popstate', syncFromUrl);
+      window.removeEventListener('pageshow', syncFromUrl);
+    };
+  }, [applyTrackerFilters, data.categories, data.months, data.byMonth, onMonthChange]);
 
   const applyView = (next: ViewType) => {
     startTransition(() => {
@@ -292,7 +337,11 @@ export default function SmartMoneyTracker({
             name="sm-tracker-category"
             label="Category"
             value={category}
-            onChange={(e) => startTransition(() => { setCategory(e.target.value); setExpanded(null); setVisibleLimit(TRACKER_INITIAL_ROWS); })}
+            onChange={(e) => {
+              const next = e.target.value;
+              startTransition(() => { setCategory(next); setExpanded(null); setVisibleLimit(TRACKER_INITIAL_ROWS); });
+              syncTrackerFiltersUrl({ category: next });
+            }}
           >
             {data.categories.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -304,7 +353,11 @@ export default function SmartMoneyTracker({
             name="sm-tracker-sector"
             label="Sector"
             value={sector}
-            onChange={(e) => startTransition(() => { setSector(e.target.value); setExpanded(null); setVisibleLimit(TRACKER_INITIAL_ROWS); })}
+            onChange={(e) => {
+              const next = e.target.value;
+              startTransition(() => { setSector(next); setExpanded(null); setVisibleLimit(TRACKER_INITIAL_ROWS); });
+              syncTrackerFiltersUrl({ sector: next });
+            }}
           >
             {sectorOptions.map((s) => (
               <option key={s} value={s}>{s}</option>
