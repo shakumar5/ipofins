@@ -456,7 +456,7 @@ function writeSignalsByCategory(signals) {
       }
 
       for (const row of listRows) {
-        const entry = searchIndexEntry(row);
+        const entry = searchIndexEntry(row, { month, category });
         const prev = searchBySlug.get(row.stockSlug);
         if (!prev || entry.convictionScore > prev.convictionScore) {
           searchBySlug.set(row.stockSlug, entry);
@@ -562,7 +562,10 @@ function migrateSignalsExportTiersOnDisk() {
 
       const payload = JSON.parse(readFileSync(join(dir, name), 'utf8'));
       for (const row of payload.rows || []) {
-        const entry = searchIndexEntry(row);
+        const entry = searchIndexEntry(row, {
+          month: payload.month ?? month,
+          category: payload.category,
+        });
         const prev = searchBySlug.get(row.stockSlug);
         if (!prev || entry.convictionScore > prev.convictionScore) {
           searchBySlug.set(row.stockSlug, entry);

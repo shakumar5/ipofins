@@ -9,6 +9,7 @@ import {
 } from './smart-money-signals-meta';
 import {
   dedupeSignalsByStock,
+  hydrateSignalListRow,
   signalMarketCapFilterOptions,
   type SmartMoneySignalRow,
   type SmartMoneySignalsData,
@@ -65,9 +66,12 @@ export function loadSignalsMonthFromDisk(
   index: SignalsIndexDisk,
   cwd = process.cwd(),
 ): SmartMoneySignalsData | null {
-  const chunks = index.categories.map(
-    (cat) => readSignalsCategoryFromDisk(month, cat, cwd)?.rows ?? [],
-  );
+  const chunks = index.categories.map((cat) => {
+    const file = readSignalsCategoryFromDisk(month, cat, cwd);
+    if (!file) return [];
+    const envelope = { month: file.month ?? month, category: file.category ?? cat };
+    return file.rows.map((row) => hydrateSignalListRow(row, envelope));
+  });
   const merged = chunks.flat();
   if (!merged.length) return null;
 

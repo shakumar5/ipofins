@@ -6,7 +6,7 @@ import type {
   SmartMoneySignalsData,
   SmartMoneySignalRow,
 } from './smart-money-signals';
-import { buildInterpretation, dedupeSignalsByStock, signalMarketCapFilterOptions } from './smart-money-signals';
+import { buildInterpretation, dedupeSignalsByStock, hydrateSignalListRow, signalMarketCapFilterOptions } from './smart-money-signals';
 import {
   signalCategoryDetailPublicUrl,
   signalSearchPublicUrl,
@@ -39,6 +39,7 @@ export interface SmartMoneySignalDetailOverlay {
   factorBreakdown?: SmartMoneySignalRow['factorBreakdown'];
   fundActivity?: FundActivityLists;
   interpretation?: string;
+  topFundHolders?: string[];
 }
 
 interface TrackerIndex {
@@ -85,6 +86,7 @@ function mergeSignalWithDetail(
     ...(detail.factorScores ? { factorScores: detail.factorScores } : {}),
     ...(detail.factorBreakdown ? { factorBreakdown: detail.factorBreakdown } : {}),
     ...(detail.fundActivity ? { fundActivity: detail.fundActivity } : {}),
+    ...(detail.topFundHolders?.length ? { topFundHolders: detail.topFundHolders } : {}),
     interpretation:
       detail.interpretation ||
       list.interpretation ||
@@ -169,7 +171,8 @@ export async function loadSignalsSearchIndex(month: string): Promise<SignalSearc
 
 async function loadSignalsCategoryChunk(month: string, category: string): Promise<SmartMoneySignalRow[]> {
   const file = await fetchJsonCached<SignalsMonthFile>(signalCategoryUrl(month, category));
-  return file.rows;
+  const envelope = { month: file.month ?? month, category: file.category ?? category };
+  return file.rows.map((row) => hydrateSignalListRow(row, envelope));
 }
 
 async function loadSignalsMonolithFiltered(
