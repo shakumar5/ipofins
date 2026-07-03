@@ -44,6 +44,13 @@ if (shouldSkip()) {
   );
   if ((finalize.status ?? 1) !== 0) process.exit(finalize.status ?? 1);
 
+  const topStocks = spawnSync(
+    process.execPath,
+    [...nodeExtraArgs(), join(ROOT, 'scripts', 'finalize-top-stocks-export.mjs')],
+    { stdio: 'inherit', cwd: ROOT, env: process.env },
+  );
+  if ((topStocks.status ?? 1) !== 0) process.exit(topStocks.status ?? 1);
+
   const ensure = spawnSync(
     process.execPath,
     [...nodeExtraArgs(), join(ROOT, 'scripts', 'ensure-portfolio-overlap-sitemaps.mjs')],
@@ -59,4 +66,12 @@ const result = spawnSync(
   { stdio: 'inherit', cwd: ROOT, env: process.env },
 );
 
-process.exit(result.status ?? 1);
+if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+
+const topStocks = spawnSync(
+  process.execPath,
+  [...nodeExtraArgs(), join(ROOT, 'scripts', 'finalize-top-stocks-export.mjs')],
+  { stdio: 'inherit', cwd: ROOT, env: process.env },
+);
+
+process.exit(topStocks.status ?? 1);
