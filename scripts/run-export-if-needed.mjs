@@ -37,6 +37,13 @@ function shouldSkip() {
 }
 
 if (shouldSkip()) {
+  const finalize = spawnSync(
+    process.execPath,
+    [...nodeExtraArgs(), join(ROOT, 'scripts', 'finalize-signals-on-disk.mjs')],
+    { stdio: 'inherit', cwd: ROOT, env: process.env },
+  );
+  if ((finalize.status ?? 1) !== 0) process.exit(finalize.status ?? 1);
+
   const ensure = spawnSync(
     process.execPath,
     [...nodeExtraArgs(), join(ROOT, 'scripts', 'ensure-portfolio-overlap-sitemaps.mjs')],
