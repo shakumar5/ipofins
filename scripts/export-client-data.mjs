@@ -18,6 +18,7 @@ import {
   signalSearchFileName,
   slimSignalRow,
 } from './lib/signal-export-utils.mjs';
+import { finalizeSignalsOnDisk } from './lib/finalize-signals-on-disk.mjs';
 import { unpackMonthHoldings, latestMonthForFund } from './lib/holdings-month.mjs';
 import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs';
 import {
@@ -541,51 +542,9 @@ function migrateSignalsExportTiersOnDisk() {
   if (!existsSync(indexPath)) return;
 
   const index = JSON.parse(readFileSync(indexPath, 'utf8'));
-  if (index.dataTier === 'list+detail+search') {
-    // Still re-slim any legacy list files (e.g. interpretation left in old exports).
-    const dir = join(OUT_DIR, 'smart-money-signals');
-    if (existsSync(dir)) reslimAllSignalListFiles(dir);
-    return;
-  }
+  finalizeSignalsOnDisk();
 
-  const dir = join(OUT_DIR, 'smart-money-signals');
-  if (!existsSync(dir)) return;
-
-  reslimAllSignalListFiles(dir);
-
-  for (const month of index.months || []) {
-    const searchBySlug = new Map();
-
-    for (const name of readdirSync(dir)) {
-      if (!name.endsWith('.json') || name.includes('--detail') || name.includes('--search')) continue;
-      if (!name.startsWith(`${monthFileSlug(month)}--`)) continue;
-
-      const payload = JSON.parse(readFileSync(join(dir, name), 'utf8'));
-      for (const row of payload.rows || []) {
-        const entry = searchIndexEntry(row, {
-          month: payload.month ?? month,
-          category: payload.category,
-        });
-        const prev = searchBySlug.get(row.stockSlug);
-        if (!prev || entry.convictionScore > prev.convictionScore) {
-          searchBySlug.set(row.stockSlug, entry);
-        }
-      }
-    }
-
-    if (!searchBySlug.size) continue;
-
-    const searchName = signalSearchFileName(month);
-    const searchRel = join('smart-money-signals', searchName);
-    const searchPayload = {
-      month,
-      stocks: [...searchBySlug.values()].sort((a, b) => b.convictionScore - a.convictionScore),
-    };
-    writeFileSync(join(OUT_DIR, searchRel), JSON.stringify(searchPayload));
-    console.log(
-      `  ✓ migrated ${searchRel} (${(readFileSync(join(OUT_DIR, searchRel)).length / 1024).toFixed(0)} KB, ${searchPayload.stocks.length} stocks)`,
-    );
-  }
+  if (index.dataTier === 'list+detail+search') return;
 
   writeJson('smart-money-signals-index.json', {
     ...index,
@@ -639,23 +598,6 @@ function verifySmartMoneyExports() {
   const sector = JSON.parse(readFileSync(join(OUT_DIR, 'sector-intelligence.json'), 'utf8'));
   if (!Array.isArray(sector?.rows) || sector.rows.length === 0) {
     throw new Error('sector-intelligence.json has no rows — sector export failed or was skipped.');
-  }
-}
-
-function reslimAllSignalListFiles(dir) {
-  for (const name of readdirSync(dir)) {
-    if (!name.endsWith('.json') || name.includes('--detail') || name.includes('--search')) continue;
-
-    const listPath = join(dir, name);
-    const payload = JSON.parse(readFileSync(listPath, 'utf8'));
-    const listRows = (payload.rows || []).map(slimSignalRow);
-    for (const row of listRows) {
-      assertSlimListRow(row, name);
-    }
-    writeFileSync(
-      listPath,
-      JSON.stringify({ month: payload.month, category: payload.category, rows: listRows }),
-    );
   }
 }
 
