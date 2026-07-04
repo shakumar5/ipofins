@@ -187,6 +187,62 @@ export function isFundDetailPath(pathname) {
   return /^\/mutual-funds\/fund\/.+-holdings$/.test(pathname || '');
 }
 
+/**
+ * Canonical fund detail paths (/mutual-funds/fund/<slug>-holdings) that are
+ * indexable and self-canonical, built from fund-holdings-index.json — the same
+ * source getFundsWithHoldings() uses to generate the pages. Shared by
+ * reorganize-sitemaps.mjs (to drop alias redirects) and verify-sitemaps.mjs (to
+ * fail the build if an alias ever leaks back in).
+ *
+ * `dataDirs` is an ordered list of directories to look for the index in. Returns
+ * null when the index is unavailable/empty so callers can fall back to keeping
+ * all fund URLs rather than emptying the funds sitemap.
+ */
+export function loadCanonicalFundPaths(dataDirs) {
+  for (const base of dataDirs) {
+    const path = join(base, 'fund-holdings-index.json');
+    if (!existsSync(path)) continue;
+    try {
+      const index = JSON.parse(readFileSync(path, 'utf8'));
+      if (!Array.isArray(index) || !index.length) return null;
+      const paths = new Set(
+        index
+          .map((f) => f?.slug)
+          .filter(Boolean)
+          .map((slug) => `/mutual-funds/fund/${slug}-holdings`),
+      );
+      return paths.size ? paths : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Sitemap hygiene guard. Given the sitemap loc paths (and, when available, the
+ * canonical fund path set), return any paths that must never be advertised:
+ *   - fundAliasLeaks: /mutual-funds/fund/<slug>-holdings URLs that are NOT
+ *     canonical (i.e. noindex meta-refresh alias redirects).
+ *   - defaultComboLeaks: the default Top Stocks combo, which canonicalizes to the
+ *     /top-stocks hub.
+ * verify-sitemaps.mjs fails the build when either is non-empty, turning a silent
+ * regression of reorganize-sitemaps.mjs into a loud, pre-deploy error.
+ */
+export function findForbiddenSitemapPaths(paths, { canonicalFundPaths } = {}) {
+  const fundAliasLeaks = [];
+  const defaultComboLeaks = [];
+  for (const path of paths) {
+    if (path === TOP_STOCKS_DEFAULT_COMBO_PATH) {
+      defaultComboLeaks.push(path);
+    }
+    if (canonicalFundPaths && isFundDetailPath(path) && !canonicalFundPaths.has(path)) {
+      fundAliasLeaks.push(path);
+    }
+  }
+  return { fundAliasLeaks, defaultComboLeaks };
+}
+
 export const CANONICAL_SITEMAP_INDEX = [
   'sitemap-ipos.xml',
   'sitemap-mutual-funds.xml',

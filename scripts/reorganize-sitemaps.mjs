@@ -16,6 +16,7 @@ import {
   collectSmartMoneySignalFilterSitemapUrls,
   collectTopStocksFilterSitemapUrls,
   isFundDetailPath,
+  loadCanonicalFundPaths,
   TOP_STOCKS_DEFAULT_COMBO_PATH,
   parseUrlsetLocs,
   pathnameFromLoc,
@@ -63,36 +64,8 @@ function collectOverlapUrlsFromJson() {
   return funds ? buildOverlapUrls(funds) : [];
 }
 
-/**
- * Canonical fund detail paths (/mutual-funds/fund/<slug>-holdings) that are
- * indexable and self-canonical. Built from fund-holdings-index.json — the same
- * source getFundsWithHoldings() uses to generate the pages — so it matches the
- * build exactly. Alias slugs (AMFI/listable variants) get emitted by Astro as
- * noindex meta-refresh redirects and must NOT be advertised in the sitemap.
- *
- * Returns null when the index is unavailable/empty so we fall back to keeping all
- * fund URLs rather than shipping an empty funds sitemap.
- */
-function loadCanonicalFundPaths() {
-  for (const base of [join(ROOT, 'public', 'data'), join(DIST, 'data')]) {
-    const path = join(base, 'fund-holdings-index.json');
-    if (!existsSync(path)) continue;
-    try {
-      const index = JSON.parse(readFileSync(path, 'utf8'));
-      if (!Array.isArray(index) || !index.length) return null;
-      const paths = new Set(
-        index
-          .map((f) => f?.slug)
-          .filter(Boolean)
-          .map((slug) => `/mutual-funds/fund/${slug}-holdings`),
-      );
-      return paths.size ? paths : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
+/** Directories to search for the fund holdings index, most-specific first. */
+const FUND_INDEX_DATA_DIRS = [join(ROOT, 'public', 'data'), join(DIST, 'data')];
 
 function bucketUrls(allLocs, canonicalFundPaths) {
   const buckets = new Map(CANONICAL_SITEMAP_INDEX.map((name) => [name, []]));
@@ -251,7 +224,7 @@ function main() {
     return;
   }
 
-  const canonicalFundPaths = loadCanonicalFundPaths();
+  const canonicalFundPaths = loadCanonicalFundPaths(FUND_INDEX_DATA_DIRS);
   if (!canonicalFundPaths) {
     console.warn('  ⚠ fund-holdings-index.json unavailable — keeping all fund URLs (alias redirects included)');
   }
