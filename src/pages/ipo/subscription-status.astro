@@ -4,7 +4,8 @@ import PageHeader from '../../components/layout/PageHeader.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import { ipoDetailHref } from '../../lib/list-back-nav';
-import { ipoDisplayText, ipoMetaLine } from '../../lib/ipo-list-sections';
+import { ipoDisplayText, ipoMetaLine, formatSubscriptionTimes } from '../../lib/ipo-list-sections';
+import IpoSubscriptionBars from '../../components/IpoSubscriptionBars.astro';
 
 function ipoSubscriptionMeta(ipo: typeof iposData[number]): string {
   const price = ipoDisplayText(ipo.priceRange);
@@ -70,7 +71,7 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
 
 <IPOLayout activeTab="subscription"
   title={`IPO Subscription Status Today (${today}) - Live Updates`}
-  description={`Live IPO subscription status ${today}. Track real-time subscription data for all open IPOs — Retail, HNI, QIB category-wise. Updated every 12 hours.`}
+  description={`IPO subscription status ${today}. Track subscription data for all open IPOs — Retail, HNI, QIB category-wise. Refreshed on each site rebuild.`}
   jsonLd={jsonLd}
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
@@ -80,8 +81,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   <section class="container-wide pt-8 pb-6">
     <PageHeader
       title={`IPO Subscription Status — ${today}`}
-      subtitle="Real-time subscription data for all currently open IPOs. Track how many times each IPO is subscribed across Retail, HNI, and QIB categories."
-      freshness="Live data — Updated every 12 hours"
+      subtitle="Subscription data for all currently open IPOs. Track how many times each IPO is subscribed across Retail, HNI, and QIB categories."
+      freshness="Refreshed on each site rebuild (market days)"
       source="BSE/NSE subscription feeds"
     />
   </section>
@@ -112,42 +113,18 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
                     <div class="text-right">
                       <p class="text-xs text-surface-500">Total Subscription</p>
                       {ipo.subscription ? (
-                        <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400">{ipo.subscription}x</p>
+                        <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400">{formatSubscriptionTimes(ipo.subscription)}x</p>
                       ) : (
                         <p class="text-lg font-semibold text-surface-400 dark:text-surface-500">Awaiting data</p>
                       )}
                     </div>
                   </div>
                   {(ipo as any).subscriptionDetails ? (
-                    <div class="space-y-4">
-                      <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Retail Individual (RII)</span>
-                          <span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionDetails.retail?.toFixed(2) || '—'}x</span>
-                        </div>
-                        <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                          <div class="bg-primary-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.retail || 0) * 10, 100)}%`}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Non-Institutional (NII/HNI)</span>
-                          <span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionDetails.nii?.toFixed(2) || '—'}x</span>
-                        </div>
-                        <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                          <div class="bg-success-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.nii || 0) * 8, 100)}%`}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Qualified Institutional (QIB)</span>
-                          <span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionDetails.qib?.toFixed(2) || '—'}x</span>
-                        </div>
-                        <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                          <div class="bg-warning-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.qib || 0) * 5, 100)}%`}></div>
-                        </div>
-                      </div>
-                    </div>
+                    <IpoSubscriptionBars
+                      retail={(ipo as any).subscriptionDetails.retail}
+                      nii={(ipo as any).subscriptionDetails.nii}
+                      qib={(ipo as any).subscriptionDetails.qib}
+                    />
                   ) : (
                     <p class="text-sm text-surface-500 text-center py-2">Category-wise subscription data not available</p>
                   )}
@@ -177,42 +154,18 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
                     <div class="text-right">
                       <p class="text-xs text-surface-500">Total Subscription</p>
                       {ipo.subscription ? (
-                        <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400">{ipo.subscription}x</p>
+                        <p class="text-3xl font-extrabold text-primary-600 dark:text-primary-400">{formatSubscriptionTimes(ipo.subscription)}x</p>
                       ) : (
                         <p class="text-lg font-semibold text-surface-400 dark:text-surface-500">Awaiting data</p>
                       )}
                     </div>
                   </div>
                   {(ipo as any).subscriptionDetails ? (
-                    <div class="space-y-4">
-                      <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Retail Individual (RII)</span>
-                          <span class="text-sm font-bold text-primary-600">{(ipo as any).subscriptionDetails.retail?.toFixed(2) || '—'}x</span>
-                        </div>
-                        <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                          <div class="bg-primary-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.retail || 0) * 10, 100)}%`}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Non-Institutional (NII/HNI)</span>
-                          <span class="text-sm font-bold text-success-500">{(ipo as any).subscriptionDetails.nii?.toFixed(2) || '—'}x</span>
-                        </div>
-                        <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                          <div class="bg-success-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.nii || 0) * 8, 100)}%`}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                          <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Qualified Institutional (QIB)</span>
-                          <span class="text-sm font-bold text-warning-500">{(ipo as any).subscriptionDetails.qib?.toFixed(2) || '—'}x</span>
-                        </div>
-                        <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-3">
-                          <div class="bg-warning-500 h-3 rounded-full transition-all" style={`width: ${Math.min(((ipo as any).subscriptionDetails.qib || 0) * 5, 100)}%`}></div>
-                        </div>
-                      </div>
-                    </div>
+                    <IpoSubscriptionBars
+                      retail={(ipo as any).subscriptionDetails.retail}
+                      nii={(ipo as any).subscriptionDetails.nii}
+                      qib={(ipo as any).subscriptionDetails.qib}
+                    />
                   ) : (
                     <p class="text-sm text-surface-500 text-center py-2">Category-wise subscription data not available</p>
                   )}

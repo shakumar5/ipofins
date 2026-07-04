@@ -1,6 +1,6 @@
 ---
 import { ipoDetailHref, type IpoListFrom } from '../lib/list-back-nav';
-import { ipoRowMeta, ipoDisplayText, isIpoPlaceholder, type IPOListItem } from '../lib/ipo-list-sections';
+import { ipoRowMeta, ipoDisplayText, formatSubscriptionTimes, type IPOListItem } from '../lib/ipo-list-sections';
 
 interface Props {
   ipo: IPOListItem;
@@ -78,7 +78,7 @@ const badgeLabel =
       {ipo.subscription != null && ipo.subscription > 0 && (
         <div>
           <span class="ipo-label">Sub </span>
-          <span class="font-bold text-primary-700 dark:text-primary-400">{ipo.subscription}x</span>
+          <span class="font-bold text-primary-700 dark:text-primary-400">{formatSubscriptionTimes(ipo.subscription)}x</span>
         </div>
       )}
       {ipo.aiScore != null && ipo.aiScore > 0 && (

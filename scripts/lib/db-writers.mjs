@@ -5,6 +5,15 @@
 
 import { sql, isDbConfigured } from './db.mjs';
 import { slugify, ipoCanonicalKey, pickPreferredSlug } from './ipo-utils.mjs';
+import { buildListingLookup, normalizeStockName } from './stock-utils.mjs';
+import {
+  yahooSymbol,
+  toUtcMidnightMs,
+  fetchYahooDailySeries,
+  computePostListingSnapshot,
+  snapshotHasData,
+  searchYahooSymbols,
+} from './ipo-post-listing.mjs';
 import { buildFundMatcher } from './fund-match.mjs';
 import {
   indexTerRecords,
@@ -331,6 +340,165 @@ export async function upsertIPOs(ipoList) {
 
   console.log(`    ✅ Upserted ${count} IPOs`);
   return count;
+}
+
+/** Strip IPO/company noise so Yahoo search matches the traded name. */
+function cleanIpoName(name) {
+  return String(name || '')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b(IPO|NSE SME|BSE SME|SME|Mainboard)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Conservative name equality so a wrong Yahoo hit never writes bad prices. */
+function ipoNameMatches(ipoName, candidateName) {
+  const a = normalizeStockName(ipoName);
+  const b = normalizeStockName(candidateName);
+  if (!a || !b) return false;
+  if (a === b || a.startsWith(b) || b.startsWith(a)) return true;
+  const ta = a.split(' ').filter(Boolean);
+  const tb = b.split(' ').filter(Boolean);
+  if (!ta.length || !tb.length || ta[0] !== tb[0]) return false;
+  const shared = ta.filter((t) => tb.includes(t)).length;
+  return shared >= Math.min(2, Math.min(ta.length, tb.length));
+}
+
+/**
+ * Fill post-listing price columns (current_price, price_1w…price_1y, return_*)
+ * for listed IPOs. Each IPO is matched to a traded symbol (stocks master first,
+ * then a name-checked Yahoo search) and priced from the daily close series.
+ * Non-destructive: only writes columns we can source; unresolved IPOs are left
+ * untouched.
+ *
+ * @param {{ dryRun?: boolean, delayMs?: number }} [opts]
+ */
+export async function updateIPOPostListingPerformance({ dryRun = false, delayMs = 300 } = {}) {
+  requireDb();
+
+  const ipos = await sql`
+    SELECT i.id, i.name, i.slug, i.listing_date, p.issue_price, p.listing_price
+    FROM ipos i
+    JOIN ipo_performance p ON p.ipo_id = i.id
+    WHERE i.listing_date IS NOT NULL
+      AND i.listing_date <= CURRENT_DATE
+      AND p.listing_price IS NOT NULL
+    ORDER BY i.listing_date DESC
+  `;
+
+  if (ipos.length === 0) {
+    console.log('    ℹ️  No listed IPOs with a listing price to update');
+    return { updated: 0, unmatched: 0, noData: 0, total: 0 };
+  }
+
+  const stockRows = await sql`
+    SELECT id, name, slug, isin, nse_symbol, bse_code FROM stocks
+  `;
+  const resolveListing = buildListingLookup(stockRows, slugify);
+
+  const nowMs = Date.now();
+  const pause = () => (delayMs > 0 ? new Promise((r) => setTimeout(r, delayMs)) : null);
+  let updated = 0;
+  let unmatched = 0;
+  let noData = 0;
+
+  for (const ipo of ipos) {
+    const listingMs = toUtcMidnightMs(ipo.listing_date);
+    if (listingMs == null) {
+      unmatched++;
+      continue;
+    }
+
+    // Resolve a traded symbol lazily: master NSE → Yahoo search (name-checked) → master BSE.
+    const listing = resolveListing({ name: ipo.name });
+    const masterNse = listing.nse_symbol ? `${String(listing.nse_symbol).trim().toUpperCase()}.NS` : null;
+    const masterBse = listing.bse_code ? `${String(listing.bse_code).trim()}.BO` : null;
+
+    const tried = new Set();
+    let series = [];
+    let usedSymbol = null;
+    let hadCandidate = false;
+
+    const tryCandidate = async (symbol) => {
+      if (!symbol || tried.has(symbol)) return false;
+      tried.add(symbol);
+      hadCandidate = true;
+      const fetched = await fetchYahooDailySeries(symbol, listingMs, nowMs);
+      await pause();
+      if (fetched.length > 0) {
+        series = fetched;
+        usedSymbol = symbol;
+        return true;
+      }
+      return false;
+    };
+
+    let ok = await tryCandidate(masterNse);
+    if (!ok) {
+      const searchHits = await searchYahooSymbols(cleanIpoName(ipo.name));
+      await pause();
+      const searched = searchHits
+        .filter((hit) => ipoNameMatches(ipo.name, hit.name))
+        .map((hit) => hit.symbol);
+      for (const symbol of searched) {
+        if (await tryCandidate(symbol)) {
+          ok = true;
+          break;
+        }
+      }
+    }
+    if (!ok) ok = await tryCandidate(masterBse);
+
+    if (!hadCandidate) {
+      unmatched++;
+      console.log(`    ⚠️  No listing symbol for ${ipo.name} (${ipo.slug})`);
+      continue;
+    }
+    if (series.length === 0) {
+      noData++;
+      console.log(`    ⚠️  No price series for ${ipo.name} (${[...tried].join(', ')})`);
+      continue;
+    }
+
+    const issuePrice = ipo.issue_price != null ? Number(ipo.issue_price) : null;
+    const snap = computePostListingSnapshot({ listingMs, issuePrice, series, nowMs });
+    if (!snapshotHasData(snap)) {
+      noData++;
+      continue;
+    }
+
+    if (dryRun) {
+      console.log(
+        `    • ${ipo.name} (${usedSymbol}) cur=${snap.current_price ?? '—'}` +
+          ` 1w=${snap.price_1w ?? '—'} 1m=${snap.price_1m ?? '—'} 3m=${snap.price_3m ?? '—'}` +
+          ` 6m=${snap.price_6m ?? '—'} 1y=${snap.price_1y ?? '—'}`,
+      );
+      updated++;
+      continue;
+    }
+
+    await sql`
+      UPDATE ipo_performance SET
+        current_price = ${snap.current_price},
+        price_1w = ${snap.price_1w},
+        price_1m = ${snap.price_1m},
+        price_3m = ${snap.price_3m},
+        price_6m = ${snap.price_6m},
+        price_1y = ${snap.price_1y},
+        return_1m_pct = ${snap.return_1m_pct},
+        return_1y_pct = ${snap.return_1y_pct},
+        last_updated = NOW()
+      WHERE ipo_id = ${ipo.id}
+    `;
+    updated++;
+  }
+
+  const verb = dryRun ? 'Would update' : 'Updated';
+  console.log(
+    `    ✅ ${verb} ${updated} IPO performance rows` +
+      ` (${unmatched} unmatched, ${noData} no data, ${ipos.length} listed)`,
+  );
+  return { updated, unmatched, noData, total: ipos.length };
 }
 
 /** Write subscription rows from merged IPO objects */

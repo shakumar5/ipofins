@@ -25,6 +25,9 @@ const founders = ipoDisplayText(ipo.founders);
 const founded = ipoDisplayText(ipo.founded);
 const registrar = ipoDisplayText(ipo.registrar);
 const drhpDate = ipoDisplayText(ipo.drhpDate);
+const description = ipoDisplayText(ipo.description);
+const purpose = ipoDisplayText(ipo.purpose);
+const drhpUrl = ipo.drhpUrl;
 const pageSubtitle = ipoMetaLine(sector, headquarters) || 'Upcoming IPO — details from SEBI DRHP';
 
 const jsonLd = {
@@ -76,12 +79,14 @@ const jsonLd = {
   </section>
 
   <!-- Company Overview -->
+  {description && (
   <section class="container-wide py-4">
     <div class="card">
       <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">About {ipo.name}</h2>
-      <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{ipo.description}</p>
+      <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{description}</p>
     </div>
   </section>
+  )}
 
   <!-- Key Details Grid -->
   <section class="container-wide py-4">
@@ -152,18 +157,21 @@ const jsonLd = {
   )}
 
   <!-- Purpose of IPO -->
+  {purpose && (
   <section class="container-wide py-4">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Why This IPO? (Purpose)</h2>
     <div class="card">
-      <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{ipo.purpose}</p>
+      <p class="text-sm text-surface-600 dark:text-surface-300 leading-relaxed">{purpose}</p>
     </div>
   </section>
+  )}
 
   <!-- DRHP Document Link -->
+  {drhpUrl && (
   <section class="container-wide py-4">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Documents</h2>
     <a
-      href={ipo.drhpUrl}
+      href={drhpUrl}
       target="_blank"
       rel="noopener noreferrer"
       class="card-compact group inline-flex items-center gap-3 hover:shadow-md transition-shadow"
@@ -177,6 +185,7 @@ const jsonLd = {
       </div>
     </a>
   </section>
+  )}
 
   <!-- Timeline -->
   <section class="container-wide py-4">
@@ -186,7 +195,7 @@ const jsonLd = {
         <div class="flex items-center gap-4">
           <div class="w-3 h-3 bg-success-500 rounded-full flex-shrink-0"></div>
           <div>
-            <p class="text-sm font-medium text-surface-900 dark:text-white">DRHP Filed — {ipo.drhpDate}</p>
+            <p class="text-sm font-medium text-surface-900 dark:text-white">DRHP Filed{drhpDate ? ` — ${drhpDate}` : ''}</p>
             <p class="text-xs text-surface-500">Draft documents submitted to SEBI</p>
           </div>
         </div>

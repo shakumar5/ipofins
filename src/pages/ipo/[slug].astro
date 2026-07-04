@@ -4,11 +4,18 @@ import PageHeader from '../../components/layout/PageHeader.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import AIInsightBox from '../../components/AIInsightBox.astro';
 import IpoRiskScore from '../../components/IpoRiskScore.astro';
+import IpoSubscriptionBars from '../../components/IpoSubscriptionBars.astro';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../lib/affiliate-links';
 import { withCorrectStatuses } from '../../utils/ipo-status';
 import { buildShouldApplyFaqAnswer } from '../../lib/ipo-apply-faq';
-import { ipoDisplayText, ipoMetaLine } from '../../lib/ipo-list-sections';
+import {
+  ipoDisplayText,
+  ipoMetaLine,
+  ipoUpperPrice,
+  ipoMinInvestment,
+  formatSubscriptionTimes,
+} from '../../lib/ipo-list-sections';
 import { defaultIpoListBack, IPO_LIST_BACK } from '../../lib/list-back-nav';
 import ListBackLink from '../../components/ListBackLink.astro';
 import type { IPORecord } from '../../types/ipo';
@@ -32,6 +39,7 @@ const statusConfig = {
   allotment: { label: 'Allotment', class: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
   listed: { label: 'Listed', class: 'badge-listed' },
   'drhp-filed': { label: 'DRHP Filed', class: 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300' },
+  'sebi-approved': { label: 'SEBI Approved', class: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' },
   failed: { label: 'Failed', class: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
   withdrawn: { label: 'Withdrawn', class: 'bg-surface-100 text-surface-500 dark:bg-surface-700 dark:text-surface-400' },
 };
@@ -44,6 +52,46 @@ const priceRange = ipoDisplayText(ipo.priceRange);
 const openDate = ipoDisplayText(ipo.openDate);
 const closeDate = ipoDisplayText(ipo.closeDate);
 const pageSubtitle = ipoMetaLine(sector, issueSize, headquarters) || 'IPO details from SEBI DRHP filings';
+
+// Safe price maths (handles missing bands and en-dash separators)
+const issuePrice = ipoUpperPrice(ipo);
+const minInvestment = ipoMinInvestment(ipo);
+const subscriptionLabel = formatSubscriptionTimes(ipo.subscription);
+const priceBandFaq = priceRange
+  ? `The price band is ₹${priceRange} per share with a lot size of ${ipo.lotSize} shares.${minInvestment ? ` Minimum investment: ₹${minInvestment.toLocaleString('en-IN')}.` : ''}`
+  : `The price band for ${ipo.name} IPO has not been announced yet. It is published in the RHP shortly before the issue opens.`;
+
+// Post-listing price journey (only rows we actually have data for)
+const postListingPoints = ipo.status === 'listed'
+  ? ([
+      { label: 'Listing', price: ipo.listingPrice },
+      { label: '1 Week', price: ipo.price1w },
+      { label: '1 Month', price: ipo.price1m },
+      { label: '3 Months', price: ipo.price3m },
+      { label: '6 Months', price: ipo.price6m },
+      { label: '1 Year', price: ipo.price1y },
+      { label: 'Current', price: ipo.currentPrice },
+    ].filter((p) => p.price != null) as Array<{ label: string; price: number }>)
+  : [];
+const hasPostListing = postListingPoints.length > 0 && issuePrice != null && issuePrice > 0;
+
+const listingGainPct =
+  ipo.listingPrice != null && issuePrice != null && issuePrice > 0
+    ? ((ipo.listingPrice - issuePrice) / issuePrice) * 100
+    : null;
+
+const postListingRows = hasPostListing
+  ? postListingPoints.map((point) => ({
+      label: point.label,
+      price: point.price,
+      pct: ((point.price - (issuePrice as number)) / (issuePrice as number)) * 100,
+    }))
+  : [];
+
+const lastUpdated = ipo.lastUpdated ? new Date(ipo.lastUpdated) : null;
+const lastUpdatedLabel = lastUpdated && !Number.isNaN(lastUpdated.getTime())
+  ? lastUpdated.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  : null;
 const defaultBack = defaultIpoListBack(ipo.type);
 const ipoBackVariants = Object.fromEntries(
   Object.entries(IPO_LIST_BACK).filter(([key]) => key !== 'sector'),
@@ -105,7 +153,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
     <PageHeader
       title={`${ipo.name} IPO`}
       subtitle={pageSubtitle}
-      freshness={`Status: ${statusInfo.label}`}
+      freshness={`Status: ${statusInfo.label}${lastUpdatedLabel ? ` • Updated ${lastUpdatedLabel}` : ''}`}
       source="SEBI DRHP & exchange data"
     >
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-4">
@@ -122,7 +170,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
             <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               <span class="text-xl font-bold text-white">{ipo.aiScore}</span>
             </div>
-            <p class="text-xs text-surface-500 mt-1" title="Quantitative score based on financials, valuation, and sector data">IPOFins Score</p>
+            <a href="/methodology" class="text-xs text-surface-500 hover:text-primary-600 mt-1 inline-block" title="Quantitative score from subscription demand, disclosed risk, and listing data. Not investment advice.">IPOFins Score</a>
           </div>
         )}
         <IpoRiskScore ipo={ipo} size="lg" />
@@ -166,8 +214,8 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       )}
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Subscription</p>
-        {ipo.subscription !== null && ipo.subscription !== undefined ? (
-          <p class="text-base font-bold mt-1 text-primary-600">{ipo.subscription}x</p>
+        {subscriptionLabel ? (
+          <p class="text-base font-bold mt-1 text-primary-600">{subscriptionLabel}x</p>
         ) : (
           <p class="text-base font-bold mt-1 text-surface-400">—</p>
         )}
@@ -297,24 +345,15 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       <div class="card">
         <div class="space-y-3">
           {ipo.subscriptionDetails ? (
-            <>
-              <div>
-                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">Retail (RII)</span><span class="text-sm font-bold text-primary-600">{ipo.subscriptionDetails.retail?.toFixed(1) || '—'}x</span></div>
-                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-primary-500 h-2.5 rounded-full" style={`width: ${Math.min((ipo.subscriptionDetails.retail || 0) * 10, 100)}%`}></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">NII (HNI)</span><span class="text-sm font-bold text-success-500">{ipo.subscriptionDetails.nii?.toFixed(1) || '—'}x</span></div>
-                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-success-500 h-2.5 rounded-full" style={`width: ${Math.min((ipo.subscriptionDetails.nii || 0) * 10, 100)}%`}></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between mb-1"><span class="text-sm text-surface-600">QIB</span><span class="text-sm font-bold text-warning-500">{ipo.subscriptionDetails.qib?.toFixed(1) || '—'}x</span></div>
-                <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2.5"><div class="bg-warning-500 h-2.5 rounded-full" style={`width: ${Math.min((ipo.subscriptionDetails.qib || 0) * 5, 100)}%`}></div></div>
-              </div>
-            </>
+            <IpoSubscriptionBars
+              retail={ipo.subscriptionDetails.retail}
+              nii={ipo.subscriptionDetails.nii}
+              qib={ipo.subscriptionDetails.qib}
+            />
           ) : null}
           <div class="pt-3 border-t border-surface-200 dark:border-surface-700 flex justify-between">
             <span class="font-semibold text-surface-900 dark:text-white">Total</span>
-            <span class="text-lg font-bold text-primary-600">{ipo.subscription}x</span>
+            <span class="text-lg font-bold text-primary-600">{subscriptionLabel}x</span>
           </div>
         </div>
       </div>
@@ -349,31 +388,47 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="card-compact text-center">
           <p class="text-xs text-surface-500">Issue Price</p>
-          <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{ipo.priceMax || ipo.priceRange.split('-').pop()}</p>
+          <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{issuePrice ? `₹${issuePrice}` : '—'}</p>
         </div>
         <div class="card-compact text-center">
           <p class="text-xs text-surface-500">Listing Price</p>
-          <p class={`text-base font-bold mt-1 ${ipo.listingPrice >= (ipo.priceMax || 0) ? 'text-success-500' : 'text-danger-500'}`}>
+          <p class={`text-base font-bold mt-1 ${ipo.listingPrice >= (issuePrice || 0) ? 'text-success-500' : 'text-danger-500'}`}>
             ₹{ipo.listingPrice}
           </p>
         </div>
         <div class="card-compact text-center">
           <p class="text-xs text-surface-500">Listing Gain/Loss</p>
-          {(() => {
-            const issueP = ipo.priceMax || parseInt(ipo.priceRange.split('-').pop() || '0');
-            const listP = ipo.listingPrice as number;
-            const pct = issueP > 0 ? (((listP - issueP) / issueP) * 100).toFixed(2) : '0';
-            return (
-              <p class={`text-base font-bold mt-1 ${parseFloat(pct) >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-                {parseFloat(pct) >= 0 ? '+' : ''}{pct}%
-              </p>
-            );
-          })()}
+          {listingGainPct != null ? (
+            <p class={`text-base font-bold mt-1 ${listingGainPct >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+              {listingGainPct >= 0 ? '+' : ''}{listingGainPct.toFixed(2)}%
+            </p>
+          ) : (
+            <p class="text-base font-bold mt-1 text-surface-400">—</p>
+          )}
         </div>
         <div class="card-compact text-center">
           <p class="text-xs text-surface-500">Listing Date</p>
           <p class="text-base font-bold text-surface-900 dark:text-white mt-1">{ipo.listingDate || '—'}</p>
         </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Price Since Listing (post-listing performance journey) -->
+  {hasPostListing && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Price Since Listing</h2>
+      <p class="text-xs text-surface-500 mb-3">Returns are measured against the ₹{issuePrice} issue price.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {postListingRows.map((point) => (
+          <div class="card-compact text-center">
+            <p class="text-xs text-surface-500">{point.label}</p>
+            <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{point.price.toLocaleString('en-IN')}</p>
+            <p class={`text-xs font-semibold mt-0.5 ${point.pct >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+              {point.pct >= 0 ? '+' : ''}{point.pct.toFixed(1)}%
+            </p>
+          </div>
+        ))}
       </div>
     </section>
   )}
@@ -507,7 +562,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
     <div class="space-y-3 max-w-3xl">
       <details class="card-compact group" open>
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What is the price band of {ipo.name} IPO?</summary>
-        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">The price band is ₹{ipo.priceRange} per share with a lot size of {ipo.lotSize} shares. Minimum investment: ₹{parseInt(ipo.priceRange.split('-').pop() || '0') * ipo.lotSize}.</p>
+        <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">{priceBandFaq}</p>
       </details>
       <details class="card-compact group">
         <summary class="cursor-pointer font-medium text-sm text-surface-900 dark:text-white">What does {ipo.name} do?</summary>

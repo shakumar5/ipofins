@@ -11,7 +11,9 @@ import {
   SITEMAP_EXCLUDED_PATH_PREFIXES,
   PORTFOLIO_OVERLAP_HUB_PATH,
   collectAllSitemapPaths,
+  findForbiddenSitemapPaths,
   isPortfolioOverlapRewritePath,
+  loadCanonicalFundPaths,
   locToDistHtml,
   parseSitemapIndexChildNames,
   parseUrlsetLocs,
@@ -81,6 +83,36 @@ function main() {
     if (SITEMAP_EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))) {
       report(`Excluded path must not be in sitemap: ${path}`);
     }
+  }
+
+  // Hygiene guard: fail loudly if reorganize-sitemaps.mjs ever regresses and lets
+  // noindex fund alias redirects or the /top-stocks default combo (both
+  // canonicalize elsewhere) back into the sitemap. Skips the fund check when the
+  // holdings index is unavailable, mirroring the reorganizer's keep-all fallback.
+  const canonicalFundPaths = loadCanonicalFundPaths([
+    join(DIST, 'data'),
+    join(ROOT, 'public', 'data'),
+  ]);
+  if (!canonicalFundPaths) {
+    console.warn('  ⚠ fund-holdings-index.json unavailable — skipping fund alias sitemap guard');
+  }
+  const { fundAliasLeaks, defaultComboLeaks } = findForbiddenSitemapPaths(allPaths, {
+    canonicalFundPaths,
+  });
+  if (defaultComboLeaks.length) {
+    report(`Top Stocks default combo must not be in sitemap (canonicalizes to /top-stocks): ${defaultComboLeaks[0]}`);
+  }
+  if (fundAliasLeaks.length) {
+    report(`${fundAliasLeaks.length} noindex fund alias URL(s) leaked into sitemap (expected only canonical -holdings pages)`);
+    for (const p of fundAliasLeaks.slice(0, MAX_MISSING_REPORT)) {
+      console.error(`       ${p}`);
+    }
+    if (fundAliasLeaks.length > MAX_MISSING_REPORT) {
+      console.error(`       … and ${fundAliasLeaks.length - MAX_MISSING_REPORT} more`);
+    }
+  }
+  if (canonicalFundPaths && !fundAliasLeaks.length && !defaultComboLeaks.length) {
+    console.log(`  ✓ sitemap hygiene: no alias/default-combo leaks (${canonicalFundPaths.size} canonical fund pages)`);
   }
 
   const hubHtml = locToDistHtml(DIST, PORTFOLIO_OVERLAP_HUB_PATH);

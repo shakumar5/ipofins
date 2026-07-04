@@ -8,6 +8,81 @@ export function getRiskTierLabel(score: number): RiskTier {
   return 'High risk';
 }
 
+/**
+ * Distinct DRHP risk *content* categories (not raw count). Each category adds
+ * risk once, so two IPOs that both list "5 risks" score differently based on
+ * what those risks actually are. Total content contribution is capped so a long
+ * boilerplate list cannot max out the score.
+ */
+const RISK_TEXT_SIGNALS: Array<{ re: RegExp; delta: number }> = [
+  { re: /loss|losses|not profitable|negative.*profit|incurred a loss/, delta: 1.6 },
+  { re: /top \d+ customers?|key customers?|limited number of customers?|customers?.*concentrat|concentrat.*customers?|\d+%.*customers?/, delta: 1.0 },
+  { re: /government|discom|public sector|state-owned|\bpsu\b/, delta: 0.8 },
+  { re: /debt|borrow|leverage|working capital|interest cost|trade receivable/, delta: 0.8 },
+  { re: /limited.*track|new entrant|commenced operations|short operating history|relatively new/, delta: 0.7 },
+  { re: /regulatory|\bsebi\b|compliance|litigation|legal proceeding/, delta: 0.6 },
+  { re: /limited number of suppliers?|suppliers?.*concentrat|top \d+ suppliers?/, delta: 0.6 },
+  { re: /geographic|concentrated in [a-z]+|single (state|region|market)/, delta: 0.5 },
+  { re: /competition|competitive/, delta: 0.4 },
+];
+
+/**
+ * Transparent, deterministic IPO risk score (1–10) built from the evidence we
+ * actually have: DRHP risk content, subscription demand, issue structure, and
+ * (when available) financials. Replaces the old `4 + risk_count` formula that
+ * collapsed almost every IPO to 9.
+ */
+export function computeIpoRiskScore(ipo: IPORecord): number {
+  let risk = 5;
+
+  const risksText = (ipo.risks || []).join(' \n ').toLowerCase();
+  let contentDelta = 0;
+  for (const signal of RISK_TEXT_SIGNALS) {
+    if (signal.re.test(risksText)) contentDelta += signal.delta;
+  }
+  risk += Math.min(3, contentDelta);
+
+  const latestProfit = latestMetric(ipo.financials, 'profit');
+  if (latestProfit != null && latestProfit < 0) risk += 1.2;
+  else if (latestProfit != null && latestProfit > 0) risk -= 0.8;
+
+  const latestRevenue = latestMetric(ipo.financials, 'revenue');
+  const issueCr = parseIssueSizeCr(ipo.issueSize);
+  if (latestRevenue != null && issueCr != null && latestRevenue > 0) {
+    const multiple = issueCr / latestRevenue;
+    if (multiple >= 8) risk += 1.0;
+    else if (multiple <= 3) risk -= 0.5;
+  }
+
+  const qib = ipo.subscriptionDetails?.qib ?? null;
+  const total = ipo.subscription ?? null;
+  const hasSubscriptionPhase = !['upcoming', 'drhp-filed', 'sebi-approved'].includes(ipo.status);
+  // Only apply subscription signals when the IPO has actually opened for bidding.
+  // A zero value before subscription opens should not penalise the score.
+  if (hasSubscriptionPhase) {
+    if (qib != null && qib > 0) {
+      if (qib >= 10) risk -= 1.5;
+      else if (qib >= 3) risk -= 0.8;
+      else if (qib < 1) risk += 1.5;
+      else risk += 0.3;
+    } else if (total != null && total > 0) {
+      if (total >= 10) risk -= 1.0;
+      else if (total >= 3) risk -= 0.4;
+      else if (total < 2) risk += 1.0;
+    }
+  }
+
+  if (ipo.type === 'sme') risk += 1.0;
+  if (ipo.purpose && /offer for sale|\bofs\b|existing investors|promoter.*sell/i.test(ipo.purpose)) {
+    risk += 0.5;
+  }
+  if (ipo.kpis?.debtEquity != null && ipo.kpis.debtEquity > 1) risk += 0.7;
+  if (ipo.kpis?.patMargin != null && ipo.kpis.patMargin < 5) risk += 0.5;
+  else if (ipo.kpis?.patMargin != null && ipo.kpis.patMargin >= 15) risk -= 0.5;
+
+  return Math.max(1, Math.min(10, Math.round(risk)));
+}
+
 type FactorCandidate = {
   id: string;
   weight: number;
@@ -155,7 +230,10 @@ function collectCandidates(ipo: IPORecord): FactorCandidate[] {
   }
 
   const qib = ipo.subscriptionDetails?.qib;
-  if (qib != null) {
+  // Only use subscription signals once the IPO is actually open or past — not for
+  // upcoming/drhp-filed/sebi-approved IPOs where a zero means "not yet available".
+  const hasSubscriptionPhase = !['upcoming', 'drhp-filed', 'sebi-approved'].includes(ipo.status);
+  if (qib != null && qib > 0 && hasSubscriptionPhase) {
     if (qib < 1) {
       out.push({
         id: 'qib-weak',
@@ -171,7 +249,7 @@ function collectCandidates(ipo: IPORecord): FactorCandidate[] {
         text: `Strong institutional demand (QIB ${qib.toFixed(1)}x subscription)`,
       });
     }
-  } else if (ipo.subscription != null) {
+  } else if (ipo.subscription != null && ipo.subscription > 0 && hasSubscriptionPhase) {
     if (ipo.subscription < 2) {
       out.push({
         id: 'sub-weak',

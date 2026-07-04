@@ -6,17 +6,20 @@ import { getAllIPOs } from '../../../lib/data/ipos';
 import { getIpoPerformancePageMeta } from '../../../lib/ipo-performance-meta';
 import { BRAND_URL } from '../../../lib/brand';
 import { withCorrectStatuses } from '../../../utils/ipo-status';
+import { ipoPerformanceYears } from '../../../lib/ipo-list-sections';
 
 const iposData = withCorrectStatuses(await getAllIPOs());
 
-export function getStaticPaths() {
-  return ['2024', '2025', '2026'].map(year => ({
+export async function getStaticPaths() {
+  const ipos = withCorrectStatuses(await getAllIPOs());
+  return ipoPerformanceYears(ipos).map(year => ({
     params: { year },
     props: { year },
   }));
 }
 
 const { year } = Astro.props;
+const availableYears = ipoPerformanceYears(iposData);
 
 function rowYear(listingDate: string | undefined): string | null {
   if (!listingDate) return null;
@@ -110,7 +113,7 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
 
     <!-- Year Selector -->
     <div class="mt-4 flex gap-2">
-      {['2024', '2025', '2026'].map(y => (
+      {availableYears.map(y => (
         <a
           href={`/ipo/performance/${y}`}
           class={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${

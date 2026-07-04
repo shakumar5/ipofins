@@ -34,12 +34,12 @@ function runScript(scriptName, extraArgs = []) {
 }
 
 async function syncNav() {
-  console.log('\n  [1/3] NAV sync (AMFI)...');
+  console.log('\n  [1/4] NAV sync (AMFI)...');
   const navStart = Date.now();
   const amfiFunds = await fetchAMFINAVs();
   await upsertFundsFromAMFI(amfiFunds);
   await computeFundReturnsFromNavs();
-  console.log(`  [1/3] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
+  console.log(`  [1/4] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
 }
 
 async function main() {
@@ -55,15 +55,22 @@ async function main() {
 
   await syncNav();
 
-  console.log('\n  [2/3] IPO sync (incremental, quick)...');
+  console.log('\n  [2/4] IPO sync (incremental, quick)...');
   const ipoStart = Date.now();
   await runScript('00-ipo-broker-sync.mjs', ['--no-clean', '--quick']);
-  console.log(`  [2/3] IPO done in ${((Date.now() - ipoStart) / 1000).toFixed(1)}s`);
+  console.log(`  [2/4] IPO done in ${((Date.now() - ipoStart) / 1000).toFixed(1)}s`);
 
-  console.log('\n  [3/3] IPO subscription refresh...');
+  console.log('\n  [3/4] IPO subscription refresh...');
   const subStart = Date.now();
   await runScript('02-ipo-subscription.mjs');
-  console.log(`  [3/3] Subscription done in ${((Date.now() - subStart) / 1000).toFixed(1)}s`);
+  console.log(`  [3/4] Subscription done in ${((Date.now() - subStart) / 1000).toFixed(1)}s`);
+
+  console.log('\n  [4/4] IPO post-listing prices...');
+  const perfStart = Date.now();
+  await runScript('05-ipo-post-listing-prices.mjs').catch((err) =>
+    console.warn(`  ⚠️  Post-listing prices step failed (non-fatal): ${err.message}`),
+  );
+  console.log(`  [4/4] Post-listing prices done in ${((Date.now() - perfStart) / 1000).toFixed(1)}s`);
 
   console.log('\n  🔍 Verifying Neon schema...');
   await runScript('verify-schema.mjs');

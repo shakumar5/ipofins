@@ -49,6 +49,76 @@ export function sanitizeIpoOptionalNumber(value: unknown): number | undefined {
   return n;
 }
 
+/**
+ * Upper end of an IPO price band. Prefers the stored numeric `priceMax`,
+ * then falls back to parsing every number out of `priceRange` (handles
+ * "500-550", "500 – 550", "₹500 to ₹550") and taking the largest.
+ */
+export function ipoUpperPrice(input: {
+  priceMax?: number | null;
+  priceRange?: string;
+}): number | null {
+  if (input.priceMax != null && input.priceMax > 0) return input.priceMax;
+  const nums = String(input.priceRange ?? '').match(/\d[\d,.]*/g);
+  if (!nums?.length) return null;
+  const parsed = nums
+    .map((n) => parseFloat(n.replace(/,/g, '')))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return parsed.length ? Math.max(...parsed) : null;
+}
+
+/** Minimum retail investment = upper band × lot size, or null when unknown. */
+export function ipoMinInvestment(input: {
+  priceMax?: number | null;
+  priceRange?: string;
+  lotSize?: number | null;
+}): number | null {
+  const upper = ipoUpperPrice(input);
+  const lot = input.lotSize ?? 0;
+  if (!upper || !lot || lot <= 0) return null;
+  return Math.round(upper * lot);
+}
+
+/** Consistent "times subscribed" formatting (no trailing "x"). */
+export function formatSubscriptionTimes(value?: number | null): string | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (value >= 100) return Math.round(value).toLocaleString('en-IN');
+  if (value >= 10) return value.toFixed(1);
+  return value.toFixed(2);
+}
+
+/**
+ * Honest subscription-bar width. Uses a log scale so 1×, 10× and 100×+
+ * are visually distinct (a flat ×10 cap made 12× and 120× look identical).
+ */
+export function subscriptionBarWidth(value?: number | null): number {
+  if (value == null || value <= 0) return 0;
+  return Math.min(100, Math.max(4, (Math.log10(value + 1) / 2) * 100));
+}
+
+/** Canonical sector → URL slug (shared by the sector page and nav). */
+export function ipoSectorSlug(sector?: string | null): string {
+  return String(sector ?? '')
+    .toLowerCase()
+    .replace(/[&]+/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+/** Available IPO performance years (desc), always including the current year. */
+export function ipoPerformanceYears(
+  ipos: Array<{ listingDate?: string }>,
+): string[] {
+  const years = new Set<string>();
+  years.add(String(new Date().getFullYear()));
+  for (const ipo of ipos) {
+    if (!ipo.listingDate) continue;
+    const y = new Date(ipo.listingDate).getFullYear();
+    if (!Number.isNaN(y)) years.add(String(y));
+  }
+  return [...years].sort((a, b) => Number(b) - Number(a));
+}
+
 export interface IPOListItem {
   name: string;
   slug: string;

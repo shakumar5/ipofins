@@ -1,0 +1,50 @@
+---
+import { formatSubscriptionTimes, subscriptionBarWidth } from '../lib/ipo-list-sections';
+
+interface Props {
+  retail?: number | null;
+  nii?: number | null;
+  qib?: number | null;
+  size?: 'sm' | 'md';
+}
+
+const { retail = null, nii = null, qib = null, size = 'md' } = Astro.props;
+const barHeight = size === 'sm' ? 'h-2' : 'h-3';
+
+const rows = [
+  { label: 'Retail (RII)', value: retail, bar: 'bg-primary-500', text: 'text-primary-600 dark:text-primary-400' },
+  { label: 'NII (HNI)', value: nii, bar: 'bg-success-500', text: 'text-success-500' },
+  { label: 'QIB', value: qib, bar: 'bg-warning-500', text: 'text-warning-500' },
+].map((row) => {
+  const times = formatSubscriptionTimes(row.value);
+  return {
+    label: row.label,
+    bar: row.bar,
+    text: row.text,
+    valueLabel: times ? times + 'x' : '—',
+    ariaLabel: row.label + ' subscription ' + (times ? times + ' times' : 'not available'),
+    valueNow: row.value ?? 0,
+    width: subscriptionBarWidth(row.value),
+  };
+});
+---
+
+<div class={size === 'sm' ? 'space-y-3' : 'space-y-4'}>
+  {rows.map((row) => (
+    <div>
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-sm font-medium text-surface-700 dark:text-surface-300">{row.label}</span>
+        <span class={`text-sm font-bold ${row.text}`}>{row.valueLabel}</span>
+      </div>
+      <div
+        class={`w-full bg-surface-200 dark:bg-surface-700 rounded-full ${barHeight}`}
+        role="progressbar"
+        aria-valuenow={row.valueNow}
+        aria-valuemin={0}
+        aria-label={row.ariaLabel}
+      >
+        <div class={`${row.bar} ${barHeight} rounded-full transition-all duration-500`} style={`width: ${row.width}%`}></div>
+      </div>
+    </div>
+  ))}
+</div>

@@ -13,6 +13,7 @@ import {
   classifySitemapBucket,
   collectTopStocksFilterSitemapUrls,
   escapeXml,
+  findForbiddenSitemapPaths,
   isFundDetailPath,
   isPortfolioOverlapRewritePath,
   locToDistHtml,
@@ -131,6 +132,33 @@ test('collectTopStocksFilterSitemapUrls excludes the default combo (canonicalize
   assert.ok(!urls.includes(`${SITE}${TOP_STOCKS_DEFAULT_COMBO_PATH}`));
   // A non-default combo is still present.
   assert.ok(urls.includes(`${SITE}/top-stocks/mutual-funds/large/distribution`));
+});
+
+test('findForbiddenSitemapPaths flags fund alias + default-combo leaks', () => {
+  const canonicalFundPaths = new Set([
+    '/mutual-funds/fund/hdfc-mid-cap-fund-growth-option-direct-plan-holdings',
+  ]);
+  const paths = [
+    '/', // ignored
+    '/mutual-funds/fund/hdfc-mid-cap-fund-growth-option-direct-plan-holdings', // canonical → ok
+    '/mutual-funds/fund/hdfc-mid-cap-fund-holdings', // alias → leak
+    TOP_STOCKS_DEFAULT_COMBO_PATH, // default combo → leak
+    '/top-stocks/mutual-funds/large/distribution', // non-default combo → ok
+  ];
+  const { fundAliasLeaks, defaultComboLeaks } = findForbiddenSitemapPaths(paths, {
+    canonicalFundPaths,
+  });
+  assert.deepEqual(fundAliasLeaks, ['/mutual-funds/fund/hdfc-mid-cap-fund-holdings']);
+  assert.deepEqual(defaultComboLeaks, [TOP_STOCKS_DEFAULT_COMBO_PATH]);
+});
+
+test('findForbiddenSitemapPaths skips fund check when canonical set is absent', () => {
+  const paths = ['/mutual-funds/fund/anything-holdings', TOP_STOCKS_DEFAULT_COMBO_PATH];
+  const { fundAliasLeaks, defaultComboLeaks } = findForbiddenSitemapPaths(paths, {});
+  // No canonical set → do not flag fund URLs (mirrors reorganizer keep-all fallback).
+  assert.deepEqual(fundAliasLeaks, []);
+  // Default-combo guard still applies with or without the fund index.
+  assert.deepEqual(defaultComboLeaks, [TOP_STOCKS_DEFAULT_COMBO_PATH]);
 });
 
 test('isPortfolioOverlapRewritePath detects comparison deep links', () => {

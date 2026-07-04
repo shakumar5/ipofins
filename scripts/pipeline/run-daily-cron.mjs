@@ -32,12 +32,12 @@ function runScript(scriptName, extraArgs = []) {
 }
 
 async function syncNav() {
-  console.log('\n  [1/3] NAV sync (AMFI)...');
+  console.log('\n  [1/4] NAV sync (AMFI)...');
   const navStart = Date.now();
   const amfiFunds = await fetchAMFINAVs();
   await upsertFundsFromAMFI(amfiFunds);
   await computeFundReturnsFromNavs();
-  console.log(`  [1/3] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
+  console.log(`  [1/4] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
 }
 
 async function main() {
@@ -50,10 +50,14 @@ async function main() {
   await syncNav();
   const ipoArgs = ['--no-clean'];
   if (QUICK) ipoArgs.push('--quick');
-  console.log('\n  [2/3] IPO sync...');
+  console.log('\n  [2/4] IPO sync...');
   await runScript('00-ipo-broker-sync.mjs', ipoArgs);
-  console.log('\n  [3/3] Subscription...');
+  console.log('\n  [3/4] Subscription...');
   await runScript('02-ipo-subscription.mjs');
+  console.log('\n  [4/4] Post-listing prices...');
+  await runScript('05-ipo-post-listing-prices.mjs').catch((err) =>
+    console.warn(`  ⚠️  Post-listing prices step failed (non-fatal): ${err.message}`),
+  );
   await runScript('verify-schema.mjs');
   console.log(`\n  Daily cron complete in ${((Date.now() - totalStart) / 1000).toFixed(1)}s\n`);
 }

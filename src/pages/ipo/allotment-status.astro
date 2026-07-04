@@ -228,9 +228,9 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Pages</h2>
     <div class="nav-btn-group">
       <a href="/ipo/subscription-status" class="btn-secondary px-6 py-3">Subscription Status</a>
-      <a href="/ipo/subscription-status" class="btn-secondary px-6 py-3">Subscription Status</a>
+      <a href="/ipo/upcoming" class="btn-secondary px-6 py-3">Upcoming IPOs</a>
       <a href="/ipo" class="btn-secondary px-6 py-3">All IPOs</a>
-      <a href="/ipo/performance/2026" class="btn-secondary px-6 py-3">IPO Performance 2026</a>
+      <a href={`/ipo/performance/${new Date().getFullYear()}`} class="btn-secondary px-6 py-3">IPO Performance</a>
     </div>
   </section>
 </IPOLayout>

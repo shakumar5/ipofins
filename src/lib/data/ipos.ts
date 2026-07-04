@@ -6,6 +6,17 @@ import { requireDb } from '../db';
 import type { IPORecord, IPOStatus, IPOType, SubscriptionDetails } from '../../types/ipo';
 import { ipoCanonicalKey, pickPreferredIPO } from '../ipo-canonical';
 import { sanitizeIpoOptionalNumber, sanitizeIpoStringField } from '../ipo-list-sections';
+import { withIpoScore } from '../ipo-score';
+import { computeIpoRiskScore } from '../ipo-risk-factors';
+
+/** Recompute the risk score from real evidence (DB stores a legacy count-based value). */
+function withComputedRisk<T extends IPORecord>(ipo: T): T {
+  return { ...ipo, riskScore: computeIpoRiskScore(ipo) };
+}
+
+function optNumber(val: unknown): number | null {
+  return val != null ? Number(val) : null;
+}
 
 type IPORow = Record<string, unknown>;
 
@@ -49,8 +60,17 @@ function mapIPORow(row: IPORow): IPORecord {
     drhpUrl: row.drhp_url ? String(row.drhp_url) : undefined,
     subscription: row.total_times != null ? Number(row.total_times) : null,
     subscriptionDetails: sub,
-    gmp: row.gmp != null ? Number(row.gmp) : null,
-    listingPrice: row.listing_price != null ? Number(row.listing_price) : null,
+    // GMP has been removed from the product (no authorized source); kept null for type compatibility.
+    gmp: null,
+    listingPrice: optNumber(row.listing_price),
+    currentPrice: optNumber(row.current_price),
+    price1w: optNumber(row.price_1w),
+    price1m: optNumber(row.price_1m),
+    price3m: optNumber(row.price_3m),
+    price6m: optNumber(row.price_6m),
+    price1y: optNumber(row.price_1y),
+    return1mPct: optNumber(row.return_1m_pct),
+    return1yPct: optNumber(row.return_1y_pct),
     riskScore: row.risk_score != null ? Number(row.risk_score) : 5,
     aiScore: null,
     aiSummary: null,
@@ -67,16 +87,14 @@ async function queryIPOs(whereClause?: { slug: string }) {
       SELECT
         i.*,
         s.total_times, s.retail_times, s.nii_times, s.qib_times,
-        g.gmp,
-        p.listing_price, p.listing_gain_pct
+        p.listing_price, p.listing_gain_pct, p.current_price,
+        p.price_1w, p.price_1m, p.price_3m, p.price_6m, p.price_1y,
+        p.return_1m_pct, p.return_1y_pct
       FROM ipos i
       LEFT JOIN LATERAL (
         SELECT total_times, retail_times, nii_times, qib_times
         FROM ipo_subscriptions WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
       ) s ON true
-      LEFT JOIN LATERAL (
-        SELECT gmp FROM ipo_gmp_history WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
-      ) g ON true
       LEFT JOIN ipo_performance p ON p.ipo_id = i.id
       WHERE i.slug = ${whereClause.slug}
       LIMIT 1
@@ -88,16 +106,14 @@ async function queryIPOs(whereClause?: { slug: string }) {
     SELECT
       i.*,
       s.total_times, s.retail_times, s.nii_times, s.qib_times,
-      g.gmp,
-      p.listing_price, p.listing_gain_pct
+      p.listing_price, p.listing_gain_pct, p.current_price,
+      p.price_1w, p.price_1m, p.price_3m, p.price_6m, p.price_1y,
+      p.return_1m_pct, p.return_1y_pct
     FROM ipos i
     LEFT JOIN LATERAL (
       SELECT total_times, retail_times, nii_times, qib_times
       FROM ipo_subscriptions WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
     ) s ON true
-    LEFT JOIN LATERAL (
-      SELECT gmp FROM ipo_gmp_history WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
-    ) g ON true
     LEFT JOIN ipo_performance p ON p.ipo_id = i.id
     ORDER BY
       CASE i.status
@@ -123,7 +139,9 @@ let allIPOsCache: Promise<IPORecord[]> | null = null;
 
 export async function getAllIPOs(): Promise<IPORecord[]> {
   if (!allIPOsCache) {
-    allIPOsCache = queryIPOs().then((rows) => dedupeIPORecords(rows.map(mapIPORow)));
+    allIPOsCache = queryIPOs().then((rows) =>
+      dedupeIPORecords(rows.map(mapIPORow)).map(withComputedRisk).map(withIpoScore),
+    );
   }
   return allIPOsCache;
 }
@@ -135,7 +153,7 @@ export async function getIPOBySlug(slug: string): Promise<IPORecord | null> {
 
   const rows = await queryIPOs({ slug });
   if (rows.length === 0) return null;
-  const candidate = mapIPORow(rows[0]);
+  const candidate = withIpoScore(withComputedRisk(mapIPORow(rows[0])));
   const key = ipoCanonicalKey(candidate.name);
   return all.find((i) => ipoCanonicalKey(i.name) === key) ?? candidate;
 }
