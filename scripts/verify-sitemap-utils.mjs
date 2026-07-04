@@ -9,8 +9,11 @@ import {
   REQUIRED_SITEMAP_HUB_PATHS,
   SITEMAP_EXCLUDED_PATH_PREFIXES,
   SITE,
+  TOP_STOCKS_DEFAULT_COMBO_PATH,
   classifySitemapBucket,
+  collectTopStocksFilterSitemapUrls,
   escapeXml,
+  isFundDetailPath,
   isPortfolioOverlapRewritePath,
   locToDistHtml,
   parseSitemapIndexChildNames,
@@ -106,6 +109,28 @@ test('parseSitemapIndexChildNames filters xml children only', () => {
     'sitemap-top-stocks.xml',
     'sitemap-ipos.xml',
   ]);
+});
+
+test('isFundDetailPath detects fund holdings pages (canonical + alias)', () => {
+  assert.equal(isFundDetailPath('/mutual-funds/fund/sbi-bluechip-holdings'), true);
+  assert.equal(
+    isFundDetailPath('/mutual-funds/fund/hdfc-mid-cap-fund-growth-option-direct-plan-holdings'),
+    true,
+  );
+  // Non fund-detail paths must not match (so the canonical filter never touches them).
+  assert.equal(isFundDetailPath('/mutual-funds/fund/'), false);
+  assert.equal(isFundDetailPath('/mutual-funds/portfolio-overlap-checker'), false);
+  assert.equal(isFundDetailPath('/mutual-funds'), false);
+  assert.equal(isFundDetailPath('/top-stocks'), false);
+});
+
+test('collectTopStocksFilterSitemapUrls excludes the default combo (canonicalizes to hub)', () => {
+  const urls = collectTopStocksFilterSitemapUrls();
+  // 4 sources × 4 caps × 2 flows = 32 combos, minus the default combo = 31.
+  assert.equal(urls.length, 31);
+  assert.ok(!urls.includes(`${SITE}${TOP_STOCKS_DEFAULT_COMBO_PATH}`));
+  // A non-default combo is still present.
+  assert.ok(urls.includes(`${SITE}/top-stocks/mutual-funds/large/distribution`));
 });
 
 test('isPortfolioOverlapRewritePath detects comparison deep links', () => {

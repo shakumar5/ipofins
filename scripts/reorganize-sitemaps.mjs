@@ -15,6 +15,8 @@ import {
   classifySitemapBucket,
   collectSmartMoneySignalFilterSitemapUrls,
   collectTopStocksFilterSitemapUrls,
+  isFundDetailPath,
+  TOP_STOCKS_DEFAULT_COMBO_PATH,
   parseUrlsetLocs,
   pathnameFromLoc,
   todayIso,
@@ -61,19 +63,65 @@ function collectOverlapUrlsFromJson() {
   return funds ? buildOverlapUrls(funds) : [];
 }
 
-function bucketUrls(allLocs) {
+/**
+ * Canonical fund detail paths (/mutual-funds/fund/<slug>-holdings) that are
+ * indexable and self-canonical. Built from fund-holdings-index.json — the same
+ * source getFundsWithHoldings() uses to generate the pages — so it matches the
+ * build exactly. Alias slugs (AMFI/listable variants) get emitted by Astro as
+ * noindex meta-refresh redirects and must NOT be advertised in the sitemap.
+ *
+ * Returns null when the index is unavailable/empty so we fall back to keeping all
+ * fund URLs rather than shipping an empty funds sitemap.
+ */
+function loadCanonicalFundPaths() {
+  for (const base of [join(ROOT, 'public', 'data'), join(DIST, 'data')]) {
+    const path = join(base, 'fund-holdings-index.json');
+    if (!existsSync(path)) continue;
+    try {
+      const index = JSON.parse(readFileSync(path, 'utf8'));
+      if (!Array.isArray(index) || !index.length) return null;
+      const paths = new Set(
+        index
+          .map((f) => f?.slug)
+          .filter(Boolean)
+          .map((slug) => `/mutual-funds/fund/${slug}-holdings`),
+      );
+      return paths.size ? paths : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function bucketUrls(allLocs, canonicalFundPaths) {
   const buckets = new Map(CANONICAL_SITEMAP_INDEX.map((name) => [name, []]));
+  let droppedFundAliases = 0;
 
   for (const loc of allLocs) {
     const path = pathnameFromLoc(loc);
     if (!path || path === '/404') continue;
     if (path.startsWith('/1-percent-club/holder/')) continue;
+    // Default Top Stocks combo canonicalizes to the /top-stocks hub — never list
+    // it (hub is already in the sitemap) to avoid GSC "Duplicate canonical".
+    if (path === TOP_STOCKS_DEFAULT_COMBO_PATH) continue;
+    // Drop noindex fund alias redirect pages: keep only canonical fund pages so
+    // the sitemap never advertises noindex/redirect URLs (GSC "Excluded by
+    // noindex" / "Page with redirect" / "Duplicate canonical").
+    if (canonicalFundPaths && isFundDetailPath(path) && !canonicalFundPaths.has(path)) {
+      droppedFundAliases += 1;
+      continue;
+    }
     const bucket = classifySitemapBucket(path);
     if (!buckets.has(bucket)) buckets.set(bucket, []);
     // Always emit the normalized non-trailing-slash form (pathnameFromLoc strips it)
     // so sitemap URLs match the pages' canonical tags. Astro's raw sitemap uses
     // trailing slashes; mixing the two produced "Alternate/Duplicate canonical" in GSC.
     buckets.get(bucket).push(`${SITE}${path}`);
+  }
+
+  if (droppedFundAliases) {
+    console.log(`  ✓ dropped ${droppedFundAliases} noindex fund alias redirect URLs from sitemap`);
   }
 
   return buckets;
@@ -203,7 +251,11 @@ function main() {
     return;
   }
 
-  const buckets = bucketUrls(allLocs);
+  const canonicalFundPaths = loadCanonicalFundPaths();
+  if (!canonicalFundPaths) {
+    console.warn('  ⚠ fund-holdings-index.json unavailable — keeping all fund URLs (alias redirects included)');
+  }
+  const buckets = bucketUrls(allLocs, canonicalFundPaths);
   writeBucketSitemaps(buckets);
 
   const prebuilt = findPrebuiltOverlapSitemaps(DIST);
