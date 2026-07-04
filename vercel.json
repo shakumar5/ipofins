@@ -39,6 +39,12 @@
     },
     {
       "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.ipofins.com" }],
+      "destination": "https://ipofins.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
       "has": [{ "type": "host", "value": "ipofins.vercel.app" }],
       "destination": "https://ipofins.com/:path*",
       "permanent": true

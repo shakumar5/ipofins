@@ -35,10 +35,10 @@ const SECURITY_HEADERS = {
 const config = {
   version: 3,
   routes: [
-    // ── Security headers (all responses) ──
+    // -- Security headers (all responses) --
     { src: '/(.*)', headers: SECURITY_HEADERS, continue: true },
 
-    // ── Cache-Control ──
+    // -- Cache-Control --
     {
       src: '/_astro/(.*)',
       headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
@@ -60,7 +60,16 @@ const config = {
       continue: true,
     },
 
-    // ── Canonical host redirect (vercel.app → ipofins.com) ──
+    // -- Canonical host redirects: force the single apex host (ipofins.com). --
+    // www and the Vercel preview host both serve the whole site (HTTP 200), which
+    // makes Google treat them as a duplicate site. Redirect them to the apex so
+    // there is exactly one indexable host.
+    {
+      src: '/(.*)',
+      has: [{ type: 'host', value: 'www.ipofins.com' }],
+      status: 308,
+      headers: { Location: 'https://ipofins.com/$1' },
+    },
     {
       src: '/(.*)',
       has: [{ type: 'host', value: 'ipofins.vercel.app' }],
@@ -68,7 +77,7 @@ const config = {
       headers: { Location: 'https://ipofins.com/$1' },
     },
 
-    // ── Redirects for renamed / removed routes (keep in sync with vercel.json) ──
+    // -- Redirects for renamed / removed routes (keep in sync with vercel.json) --
     { src: '/ipo/gmp-today/?', status: 308, headers: { Location: '/ipo/subscription-status' } },
     {
       src: '/mutual-funds/holdings-changes/(.+)',
@@ -81,17 +90,32 @@ const config = {
       headers: { Location: '/mutual-funds/mutual-fund-holdings-changes' },
     },
 
-    // ── Portfolio overlap comparison deep links → hub HTML ──
+    // -- Portfolio overlap comparison deep links -> hub HTML --
     {
       src: '/mutual-funds/portfolio-overlap-checker/([^/]+-vs-[^/]+)/?',
       dest: '/mutual-funds/portfolio-overlap-checker/index.html',
     },
 
-    // ── Serve static files from the build output ──
+    // -- Serve static files from the build output --
     { handle: 'filesystem' },
+
+    // -- Post-filesystem fallbacks (only run when no static file matched) --
+    // Fund detail pages live at /mutual-funds/fund/<slug>-holdings. Bare <slug>
+    // URLs (the old format Google still has indexed) 404 today; redirect them to
+    // the -holdings page. Placed after `filesystem` so real -holdings pages win.
+    //
+    // A <slug>-holdings URL that still misses here is a delisted fund: serve a
+    // real 404. This route MUST come first so the bare-slug redirect below never
+    // re-appends -holdings to it (which would cause an infinite redirect loop).
+    { src: '/mutual-funds/fund/(.+)-holdings/?$', dest: '/404.html', status: 404 },
+    {
+      src: '/mutual-funds/fund/([^/]+)/?$',
+      status: 308,
+      headers: { Location: '/mutual-funds/fund/$1-holdings' },
+    },
   ],
 };
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_FILE, `${JSON.stringify(config, null, 2)}\n`);
-console.log(`  ✓ Wrote ${OUT_FILE} (${config.routes.length} routes)`);
+console.log(`  Wrote ${OUT_FILE} (${config.routes.length} routes)`);
