@@ -1,9 +1,15 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ipofins.com/sitemap-index.xml
-
 # Block crawlers from non-content pages
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /admin
+
+# Portfolio-overlap fund comparison deep links (/portfolio-overlap-checker/<a>-vs-<b>)
+# are client-rendered duplicates that all canonicalize to the hub tool. Google had
+# discovered ~136k of them (crawl-budget drain). Block to stop crawling; the hub page
+# itself (/mutual-funds/portfolio-overlap-checker) stays indexable.
+Disallow: /mutual-funds/portfolio-overlap-checker/*-vs-
+
+Sitemap: https://ipofins.com/sitemap-index.xml

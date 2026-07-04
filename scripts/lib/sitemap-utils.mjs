@@ -142,7 +142,15 @@ export function classifySitemapBucket(pathname) {
     return 'sitemap-stocks.xml';
   }
   if (path.startsWith('/mutual-funds/smart-money')) return 'sitemap-smart-money.xml';
-  if (path.startsWith('/mutual-funds/portfolio-overlap-checker')) return 'sitemap-portfolio-overlap.xml';
+  if (path.startsWith('/mutual-funds/portfolio-overlap-checker')) {
+    // Only "-vs-" comparison deep links belong to the overlap bucket (which is
+    // no longer listed in sitemap-index.xml — they serve one shared hub HTML with
+    // a hub canonical, so Google treats them as duplicates). The hub page itself
+    // stays in the mutual-funds sitemap so it remains indexable.
+    return isPortfolioOverlapRewritePath(path)
+      ? 'sitemap-portfolio-overlap.xml'
+      : 'sitemap-mutual-funds.xml';
+  }
   if (path.startsWith('/mutual-funds/fund/')) return 'sitemap-funds.xml';
   if (/^\/mutual-funds\/mutual-fund-holdings-changes\/[^/]+/.test(path)) return 'sitemap-amcs.xml';
   if (path === '/mutual-funds' || path.startsWith('/mutual-funds/')) return 'sitemap-mutual-funds.xml';

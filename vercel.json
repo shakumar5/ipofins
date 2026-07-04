@@ -28,6 +28,22 @@
       "permanent": true
     },
     {
+      "source": "/mutual-funds/holdings-changes",
+      "destination": "/mutual-funds/mutual-fund-holdings-changes",
+      "permanent": true
+    },
+    {
+      "source": "/mutual-funds/holdings-changes/:path*",
+      "destination": "/mutual-funds/mutual-fund-holdings-changes/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.ipofins.com" }],
+      "destination": "https://ipofins.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "ipofins.vercel.app" }],
       "destination": "https://ipofins.com/:path*",

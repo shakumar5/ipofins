@@ -1,14 +1,53 @@
 ---
-import {
-  DEFAULT_TOP_STOCKS_FILTERS,
-  parseTopStocksFiltersFromSearch,
-  topStocksPath,
-} from '../../lib/top-stocks-meta';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import TopStocksLoader from '../../components/top-stocks/TopStocksLoader.tsx';
+import TopStocksGuide from '../../components/top-stocks/TopStocksGuide.astro';
+import { loadTopStocksPayload } from '../../lib/top-stocks-server';
+import { DEFAULT_TOP_STOCKS_FILTERS } from '../../lib/top-stocks-meta';
+import { canonicalFor } from '../../lib/tracked-entities';
 
-if (Astro.url.search) {
-  const filters = parseTopStocksFiltersFromSearch(Astro.url.search);
-  return Astro.redirect(topStocksPath(filters), 301);
-}
+// The hub renders the default view (interactive board defaults to these filters)
+// and self-canonicalises to /top-stocks, so the clean hub URL is the indexable one
+// instead of soft-redirecting to a single filter combination.
+const filters = DEFAULT_TOP_STOCKS_FILTERS;
+const initialPayload = await loadTopStocksPayload();
+const canonical = canonicalFor('/top-stocks');
 
-return Astro.redirect(topStocksPath(DEFAULT_TOP_STOCKS_FILTERS), 301);
+const pageTitle = 'Top Stocks - Where Smart Money Is Buying & Selling | IPOFins';
+const pageDescription =
+  'Track the top stocks by net rupee flow across mutual funds, super investors, DII/FII and the 1% club. See what big money is accumulating and distributing from the latest disclosures.';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: pageTitle,
+  description: pageDescription,
+  url: canonical,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Top Stocks', item: canonical },
+    ],
+  },
+};
 ---
+
+<BaseLayout title={pageTitle} description={pageDescription} canonicalUrl={canonical}>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+  <div class="container-wide py-8 sm:py-10 space-y-8">
+    <PageHeader
+      eyebrow="Market flows"
+      title="Top Stocks"
+      subtitle="Where mutual funds, super investors, DII/FII and the 1% club are putting money to work - ranked by net rupee flow from the latest filings."
+      freshness={initialPayload.hasData ? 'Latest filing period' : undefined}
+      source="Holdings and shareholding filings"
+    />
+
+    <TopStocksLoader client:load initialPayload={initialPayload} initialFilters={filters} />
+
+    <TopStocksGuide />
+  </div>
+</BaseLayout>

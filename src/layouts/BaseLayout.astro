@@ -26,7 +26,11 @@ const {
 } = Astro.props;
 
 const siteUrl = BRAND_URL;
-const canonical = canonicalUrl || new URL(Astro.url.pathname, siteUrl).href;
+// Canonicalise to the non-trailing-slash form (except root) so the default
+// canonical matches sitemap URLs and explicit canonicalFor() values, avoiding
+// duplicate trailing-slash vs non-slash signals in Search Console.
+const normalizedPathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const canonical = canonicalUrl || new URL(normalizedPathname, siteUrl).href;
 const socialImage = resolveOgImageUrl(ogImage);
 
 // Site-wide Organization schema for brand authority
