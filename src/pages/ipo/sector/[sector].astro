@@ -4,10 +4,11 @@ import PageHeader from '../../../components/layout/PageHeader.astro';
 import IPOCard from '../../../components/IPOCard.astro';
 import { getAllIPOs } from '../../../lib/data/ipos';
 import { withCorrectStatuses } from '../../../utils/ipo-status';
+import { ipoSectorSlug } from '../../../lib/ipo-list-sections';
 
 export async function getStaticPaths() {
   const allIPOs = withCorrectStatuses(await getAllIPOs());
-  const sectorSlugs = [...new Set(allIPOs.map(ipo => ipo.sector?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')).filter(Boolean))];
+  const sectorSlugs = [...new Set(allIPOs.map(ipo => ipoSectorSlug(ipo.sector)).filter(Boolean))];
   return sectorSlugs.map(sector => ({
     params: { sector },
     props: { sector },
@@ -17,7 +18,7 @@ export async function getStaticPaths() {
 const { sector } = Astro.props;
 const iposData = withCorrectStatuses(await getAllIPOs());
 const sectorName = sector.replace(/-/g, ' ').replace(/\band\b/g, '&').replace(/\b\w/g, (c: string) => c.toUpperCase());
-const sectorIPOs = iposData.filter(ipo => ipo.sector?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === sector);
+const sectorIPOs = iposData.filter(ipo => ipoSectorSlug(ipo.sector) === sector);
 const sectors = [...new Set(iposData.map(ipo => ipo.sector).filter(Boolean))].sort() as string[];
 
 const jsonLd = {
@@ -119,9 +120,9 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
     <div class="flex flex-wrap gap-2">
       {sectors.map(s => (
         <a
-          href={`/ipo/sector/${s?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
+          href={`/ipo/sector/${ipoSectorSlug(s)}`}
           class={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-            s?.toLowerCase().replace(/[&]+/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === sector
+            ipoSectorSlug(s) === sector
               ? 'bg-primary-600 text-white'
               : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:bg-surface-200'
           }`}

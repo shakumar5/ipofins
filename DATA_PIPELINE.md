@@ -20,7 +20,8 @@ Grey Market Premium (GMP) is **not published by any authorized source** (NSE, BS
 | 0 | `npm run pipeline:ipo` | Manual | Zerodha + Groww | `ipos`, `ipo_subscriptions`, `ipo_performance` |
 | 1 | `npm run pipeline:daily` | Daily (manual) | AMFI NAV + IPO quick sync | `funds`, `fund_navs`, `ipos`, … |
 | 2 | `npm run pipeline:subscription` | Hourly during IPO season | Groww subscription | `ipo_subscriptions` |
-| — | `npm run pipeline:predeploy` | Before deploy | NAV + IPO quick + subscription + verify | Same as above |
+| 5 | `npm run pipeline:ipo-performance` | Daily (in cron) | Yahoo Finance daily close | `ipo_performance` (post-listing prices) |
+| — | `npm run pipeline:predeploy` | Before deploy | NAV + IPO quick + subscription + post-listing prices + verify | Same as above |
 | 3 | `npm run pipeline:monthly` | 1–2× per month | AMFI holdings Excel + TER | `fund_holdings`, signals, overlaps |
 | 4 | `npm run pipeline:superinvestor` | Quarterly / backfill | NSE/BSE SHP | `shareholding_pattern_holders`, `entity_holdings` |
 | — | `npm run pipeline:cron:daily` | **Auto: weekdays 9 AM IST** | AMFI NAV + Zerodha/Groww IPO (full detail) + subscription | `funds`, `fund_navs`, `ipos`, … |
@@ -91,6 +92,23 @@ flowchart LR
 6. **Write** to `ipos`, `ipo_subscriptions`, `ipo_performance`.
 
 Flags: `--no-clean` (incremental upsert), `--quick` (skip closed IPO detail fetches).
+
+### IPO post-listing prices (`pipeline:ipo-performance`)
+
+Populates the post-listing columns on `ipo_performance` (`current_price`, `price_1w`,
+`price_1m`, `price_3m`, `price_6m`, `price_1y`, `return_1m_pct`, `return_1y_pct`) that
+power the **"Price Since Listing"** section on the IPO detail page.
+
+1. Select listed IPOs (`listing_date ≤ today`, `listing_price` present).
+2. Resolve each to a traded symbol: **stocks master** (ISIN/NSE/BSE/name) → **Yahoo
+   Finance search** by company name (name-checked so a wrong hit never writes prices).
+3. Fetch the daily close series (Yahoo `chart` API), then read the close **as of**
+   `listing_date + {1w, 1m, 3m, 6m, 1y}` plus the latest close (`current_price`).
+4. Returns are computed against the issue price. Milestones still in the future, or
+   points with no nearby trade (illiquid SME guard), stay `null` — the UI hides them.
+
+Non-destructive `UPDATE` on existing `ipo_performance` rows. Runs automatically in the
+daily cron and pre-deploy pipeline; run standalone with `-- --dry-run` to preview.
 
 ### IPO status lifecycle (build + pipeline)
 

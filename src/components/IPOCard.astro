@@ -1,5 +1,6 @@
 ---
 import { ipoDetailHref } from '../lib/list-back-nav';
+import { formatSubscriptionTimes, subscriptionBarWidth } from '../lib/ipo-list-sections';
 
 interface Props {
   name: string;
@@ -108,12 +109,18 @@ const detailHref = listFrom
     <div class="mb-4">
       <div class="flex items-center justify-between mb-1">
         <span class="text-xs text-surface-500 dark:text-surface-400">Subscription</span>
-        <span class="text-xs font-semibold text-primary-700 dark:text-primary-400">{subscription}x</span>
+        <span class="text-xs font-semibold text-primary-700 dark:text-primary-400">{formatSubscriptionTimes(subscription)}x</span>
       </div>
-      <div class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2">
+      <div
+        class="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-2"
+        role="progressbar"
+        aria-valuenow={subscription}
+        aria-valuemin={0}
+        aria-label={`Subscription ${formatSubscriptionTimes(subscription)} times`}
+      >
         <div
           class="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all duration-500"
-          style={`width: ${Math.min(subscription * 10, 100)}%`}
+          style={`width: ${subscriptionBarWidth(subscription)}%`}
         />
       </div>
     </div>
@@ -123,7 +130,7 @@ const detailHref = listFrom
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
     {aiScore !== undefined && aiScore !== null && (
       <div class="flex items-center gap-1">
-        <span class="text-xs text-surface-600 dark:text-surface-400" title="Quantitative score based on financials, valuation, and sector data">IPOFins Score:</span>
+        <span class="text-xs text-surface-600 dark:text-surface-400" title="Quantitative score from subscription demand, disclosed risk, and listing data. Not investment advice.">IPOFins Score:</span>
         <span class={`text-xs font-bold ${aiScore >= 7 ? 'text-success-500' : aiScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>
           {aiScore}/10
         </span>

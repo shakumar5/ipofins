@@ -1,6 +1,9 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import { OG_IPO_IMAGE } from '../lib/og-images';
+import { getAllIPOs } from '../lib/data/ipos';
+import { withCorrectStatuses } from '../utils/ipo-status';
+import { ipoSectorSlug, ipoPerformanceYears } from '../lib/ipo-list-sections';
 
 interface Props {
   title: string;
@@ -13,6 +16,18 @@ interface Props {
 
 const { title, description, ogImage = OG_IPO_IMAGE, canonicalUrl, jsonLd, activeTab } = Astro.props;
 
+// Derive nav destinations from real data so tabs never point at a 404.
+const iposForNav = withCorrectStatuses(await getAllIPOs());
+
+const performanceYear = ipoPerformanceYears(iposForNav)[0] ?? String(new Date().getFullYear());
+
+const sectorCounts = new Map<string, number>();
+for (const ipo of iposForNav) {
+  const slug = ipoSectorSlug(ipo.sector);
+  if (slug) sectorCounts.set(slug, (sectorCounts.get(slug) ?? 0) + 1);
+}
+const topSectorSlug = [...sectorCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+
 const tabs = [
   { key: 'all', label: 'All', href: '/ipo' },
   { key: 'mainboard', label: 'Mainboard', href: '/ipo/mainboard' },
@@ -20,8 +35,8 @@ const tabs = [
   { key: 'upcoming', label: 'Upcoming', href: '/ipo/upcoming' },
   { key: 'subscription', label: 'Subscription', href: '/ipo/subscription-status' },
   { key: 'allotment', label: 'Allotment', href: '/ipo/allotment-status' },
-  { key: 'performance', label: 'Performance', href: '/ipo/performance/2026' },
-  { key: 'sector', label: 'Sector', href: '/ipo/sector/healthcare' },
+  { key: 'performance', label: 'Performance', href: `/ipo/performance/${performanceYear}` },
+  ...(topSectorSlug ? [{ key: 'sector', label: 'Sector', href: `/ipo/sector/${topSectorSlug}` }] : []),
 ];
 ---
 

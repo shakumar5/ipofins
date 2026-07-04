@@ -94,11 +94,21 @@ export interface IPORecord {
   // ── Listing (Zerodha + Groww fallback) ──────────────────────
   listingPrice?: number | null;
 
+  // ── Post-listing performance (ipo_performance table) ─────────
+  currentPrice?: number | null;
+  price1w?: number | null;
+  price1m?: number | null;
+  price3m?: number | null;
+  price6m?: number | null;
+  price1y?: number | null;
+  return1mPct?: number | null;
+  return1yPct?: number | null;
+
   // ── Financials & KPIs (Groww detail page) ───────────────────
   financials?: IPOFinancials;
   kpis?: IPOKPIs;
 
-  // ── AI Analysis (not yet implemented — always null) ──────────
+  // ── IPOFins Score (computed in lib/ipo-score.ts at build time) ─
   aiScore?: number | null;
   aiSummary?: string | null;
   verdict?: IPOVerdict;

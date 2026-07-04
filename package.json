@@ -15,6 +15,7 @@
     "pipeline:daily:full": "node scripts/node-with-ca.mjs scripts/pipeline/01-daily-nav-ipo.mjs -- --full-ipo",
     "pipeline:nav": "node scripts/node-with-ca.mjs scripts/pipeline/sync-nav-only.mjs",
     "pipeline:subscription": "node scripts/node-with-ca.mjs scripts/pipeline/02-ipo-subscription.mjs",
+    "pipeline:ipo-performance": "node scripts/node-with-ca.mjs scripts/pipeline/05-ipo-post-listing-prices.mjs",
     "pipeline:predeploy": "node scripts/node-with-ca.mjs scripts/pipeline/run-predeploy-data.mjs",
     "pipeline:cron:daily": "node scripts/node-with-ca.mjs scripts/pipeline/run-daily-cron.mjs",
     "pipeline:cron:monthly": "node scripts/node-with-ca.mjs scripts/pipeline/run-monthly-cron.mjs",
