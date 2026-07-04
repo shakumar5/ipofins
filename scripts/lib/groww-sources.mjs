@@ -124,6 +124,9 @@ export async function fetchGrowwSubscription() {
       };
       for (const rate of ipo.subscriptionRates || []) {
         const val = Math.round(rate.subscriptionRate * 100) / 100;
+        // Skip zero values — Groww returns 0 for categories that haven't opened yet.
+        // Storing 0 as a real subscription figure would incorrectly signal "no demand".
+        if (val <= 0) continue;
         switch (rate.category) {
           case 'RETAIL':
             entry.retail = val;
@@ -233,6 +236,8 @@ export async function fetchGrowwIPODetail(growwSlug, ipoName) {
     detail.subscriptionDetails = {};
     for (const rate of ipo.subscriptionRates) {
       const val = Math.round(rate.subscriptionRate * 100) / 100;
+      // Skip zero values — treat them as "not yet available", not as real demand data.
+      if (val <= 0) continue;
       if (rate.category === 'RETAIL') detail.subscriptionDetails.retail = val;
       if (rate.category === 'NII') detail.subscriptionDetails.nii = val;
       if (rate.category === 'QIB') detail.subscriptionDetails.qib = val;
@@ -274,7 +279,8 @@ export function mergeGrowwDetailInto(target, detail) {
   if (detail.highlights?.length) target.highlights = detail.highlights;
   if (detail.risks?.length) {
     target.risks = detail.risks;
-    target.riskScore = Math.min(10, 4 + detail.risks.length);
+    // riskScore is recomputed at build time by computeIpoRiskScore() in src/lib/ipo-risk-factors.ts;
+    // do not store a count-based approximation here.
   }
   if (detail.growwSlug) target.growwSlug = detail.growwSlug;
   if (detail.subscription) target.subscription = detail.subscription;

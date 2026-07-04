@@ -56,15 +56,20 @@ export function computeIpoRiskScore(ipo: IPORecord): number {
 
   const qib = ipo.subscriptionDetails?.qib ?? null;
   const total = ipo.subscription ?? null;
-  if (qib != null) {
-    if (qib >= 10) risk -= 1.5;
-    else if (qib >= 3) risk -= 0.8;
-    else if (qib < 1) risk += 1.5;
-    else risk += 0.3;
-  } else if (total != null) {
-    if (total >= 10) risk -= 1.0;
-    else if (total >= 3) risk -= 0.4;
-    else if (total < 2) risk += 1.0;
+  const hasSubscriptionPhase = !['upcoming', 'drhp-filed', 'sebi-approved'].includes(ipo.status);
+  // Only apply subscription signals when the IPO has actually opened for bidding.
+  // A zero value before subscription opens should not penalise the score.
+  if (hasSubscriptionPhase) {
+    if (qib != null && qib > 0) {
+      if (qib >= 10) risk -= 1.5;
+      else if (qib >= 3) risk -= 0.8;
+      else if (qib < 1) risk += 1.5;
+      else risk += 0.3;
+    } else if (total != null && total > 0) {
+      if (total >= 10) risk -= 1.0;
+      else if (total >= 3) risk -= 0.4;
+      else if (total < 2) risk += 1.0;
+    }
   }
 
   if (ipo.type === 'sme') risk += 1.0;
@@ -225,7 +230,10 @@ function collectCandidates(ipo: IPORecord): FactorCandidate[] {
   }
 
   const qib = ipo.subscriptionDetails?.qib;
-  if (qib != null) {
+  // Only use subscription signals once the IPO is actually open or past — not for
+  // upcoming/drhp-filed/sebi-approved IPOs where a zero means "not yet available".
+  const hasSubscriptionPhase = !['upcoming', 'drhp-filed', 'sebi-approved'].includes(ipo.status);
+  if (qib != null && qib > 0 && hasSubscriptionPhase) {
     if (qib < 1) {
       out.push({
         id: 'qib-weak',
@@ -241,7 +249,7 @@ function collectCandidates(ipo: IPORecord): FactorCandidate[] {
         text: `Strong institutional demand (QIB ${qib.toFixed(1)}x subscription)`,
       });
     }
-  } else if (ipo.subscription != null) {
+  } else if (ipo.subscription != null && ipo.subscription > 0 && hasSubscriptionPhase) {
     if (ipo.subscription < 2) {
       out.push({
         id: 'sub-weak',

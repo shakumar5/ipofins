@@ -218,7 +218,8 @@ export async function fetchZerodhaIPODetail(ipo) {
       ipo.listingPrice = parseFloat(listingPriceMatch[1].replace(/,/g, ''));
     }
 
-    if (ipo.risks?.length) ipo.riskScore = Math.min(10, 4 + ipo.risks.length);
+    // riskScore is recomputed at build time by computeIpoRiskScore() in src/lib/ipo-risk-factors.ts;
+    // do not store a count-based approximation here.
 
     return ipo;
   } catch (err) {
