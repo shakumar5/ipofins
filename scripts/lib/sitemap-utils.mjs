@@ -6,7 +6,17 @@ import { join } from 'path';
 export const SITE = 'https://ipofins.com';
 export const SITEMAP_URL_LIMIT = 45_000;
 
-/** Indexable Top Stocks filter URLs (path-based landing pages). */
+/**
+ * The default Top Stocks filter combo. Its landing page canonicalizes to the
+ * /top-stocks hub (see src/lib/top-stocks-meta.ts DEFAULT_TOP_STOCKS_FILTERS and
+ * top-stocks/index.astro), so it must NOT be advertised in the sitemap — the hub
+ * page (/top-stocks) already covers it. Submitting both produced GSC "Duplicate,
+ * Google chose different canonical than user".
+ */
+export const TOP_STOCKS_DEFAULT_COMBO_PATH = '/top-stocks/mutual-funds/large/accumulation';
+
+/** Indexable Top Stocks filter URLs (path-based landing pages), excluding the
+ * default combo which canonicalizes to the /top-stocks hub. */
 export function collectTopStocksFilterSitemapUrls(site = SITE) {
   const sourceSlugs = {
     mutual_funds: 'mutual-funds',
@@ -20,7 +30,9 @@ export function collectTopStocksFilterSitemapUrls(site = SITE) {
   for (const [source, sourceSlug] of Object.entries(sourceSlugs)) {
     for (const cap of caps) {
       for (const flow of flows) {
-        urls.push(`${site}/top-stocks/${sourceSlug}/${cap}/${flow}`);
+        const path = `/top-stocks/${sourceSlug}/${cap}/${flow}`;
+        if (path === TOP_STOCKS_DEFAULT_COMBO_PATH) continue;
+        urls.push(`${site}${path}`);
       }
     }
   }
@@ -159,6 +171,20 @@ export function classifySitemapBucket(pathname) {
   if (path.startsWith('/learn')) return 'sitemap-learn.xml';
 
   return 'sitemap-tools.xml';
+}
+
+/**
+ * True for a fund holdings detail page path (/mutual-funds/fund/<slug>-holdings).
+ *
+ * These come in two flavours: the canonical page (indexable, self-canonical) and
+ * AMFI/listable alias slugs that Astro emits as noindex meta-refresh redirects to
+ * the canonical page. Only canonical fund paths belong in the sitemap — see
+ * reorganize-sitemaps.mjs, which drops the alias redirects using the fund holdings
+ * index. Submitting the aliases caused GSC "Excluded by noindex", "Page with
+ * redirect", and "Duplicate, Google chose different canonical" at scale.
+ */
+export function isFundDetailPath(pathname) {
+  return /^\/mutual-funds\/fund\/.+-holdings$/.test(pathname || '');
 }
 
 export const CANONICAL_SITEMAP_INDEX = [
