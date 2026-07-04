@@ -37,12 +37,20 @@ if (!parsed) {
 }
 
 const initialPayload = await loadTopStocksPayload();
-const canonical = canonicalFor(pathname);
+
+// The default combo renders the same view as the /top-stocks hub, so point its
+// canonical at the hub to avoid a duplicate-content signal. All other combos
+// self-canonicalise.
+const isDefaultCombo =
+  filters.source === DEFAULT_TOP_STOCKS_FILTERS.source
+  && filters.cap === DEFAULT_TOP_STOCKS_FILTERS.cap
+  && filters.flow === DEFAULT_TOP_STOCKS_FILTERS.flow;
+const canonical = isDefaultCombo ? canonicalFor('/top-stocks') : canonicalFor(pathname);
 
 const sourceLabel = TOP_STOCKS_SOURCE_OPTIONS.find((o) => o.id === filters.source)?.label ?? filters.source;
 const capLabel = TOP_STOCKS_CAP_OPTIONS.find((o) => o.id === filters.cap)?.label ?? filters.cap;
 const flowLabel = filters.flow === 'accumulation' ? 'Accumulation' : 'Distribution';
-const pageTitle = `Top ${capLabel} Stocks — ${sourceLabel} ${flowLabel} | IPOFins`;
+const pageTitle = `Top ${capLabel} Stocks - ${sourceLabel} ${flowLabel} | IPOFins`;
 const pageDescription = `Top ${capLabel.toLowerCase()} stocks by net rupee ${filters.flow} from ${sourceLabel}. Ranked by institutional buying and selling from latest filings.`;
 
 const jsonLd = {
@@ -69,7 +77,7 @@ const jsonLd = {
     <PageHeader
       eyebrow="Market flows"
       title={`Top ${capLabel} Stocks`}
-      subtitle={`Net rupee ${filters.flow} from ${sourceLabel} — ${TOP_STOCKS_CAP_OPTIONS.find((o) => o.id === filters.cap)?.description ?? ''}`}
+      subtitle={`Net rupee ${filters.flow} from ${sourceLabel} - ${TOP_STOCKS_CAP_OPTIONS.find((o) => o.id === filters.cap)?.description ?? ''}`}
       freshness={initialPayload.hasData ? 'Latest filing period' : undefined}
       source="Holdings and shareholding filings"
     />

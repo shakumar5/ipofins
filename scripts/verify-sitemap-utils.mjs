@@ -60,8 +60,14 @@ test('classify mutual-funds routes', () => {
     classifySitemapBucket('/mutual-funds/smart-money/sector-intelligence/banks'),
     'sitemap-smart-money.xml',
   );
+  // Overlap hub page stays in the mutual-funds sitemap (indexable); only the
+  // "-vs-" comparison deep links go to the overlap bucket (excluded from the index).
   assert.equal(
     classifySitemapBucket('/mutual-funds/portfolio-overlap-checker'),
+    'sitemap-mutual-funds.xml',
+  );
+  assert.equal(
+    classifySitemapBucket('/mutual-funds/portfolio-overlap-checker/fund-a-vs-fund-b'),
     'sitemap-portfolio-overlap.xml',
   );
   assert.equal(

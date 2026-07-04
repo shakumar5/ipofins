@@ -70,7 +70,10 @@ function bucketUrls(allLocs) {
     if (path.startsWith('/1-percent-club/holder/')) continue;
     const bucket = classifySitemapBucket(path);
     if (!buckets.has(bucket)) buckets.set(bucket, []);
-    buckets.get(bucket).push(loc.startsWith('http') ? loc : `${SITE}${path}`);
+    // Always emit the normalized non-trailing-slash form (pathnameFromLoc strips it)
+    // so sitemap URLs match the pages' canonical tags. Astro's raw sitemap uses
+    // trailing slashes; mixing the two produced "Alternate/Duplicate canonical" in GSC.
+    buckets.get(bucket).push(`${SITE}${path}`);
   }
 
   return buckets;
@@ -106,17 +109,20 @@ function writePortfolioOverlapSitemap(overlapUrls) {
   return childNames;
 }
 
-/** Replace overlap placeholder with one or more urlset filenames (never a nested index). */
-function buildSitemapIndexEntries(overlapEntries) {
-  const entries = [];
-  for (const name of CANONICAL_SITEMAP_INDEX) {
-    if (name === 'sitemap-portfolio-overlap.xml') {
-      entries.push(...overlapEntries);
-      continue;
-    }
-    entries.push(name);
-  }
-  return entries;
+/**
+ * Build the sitemap-index child list.
+ *
+ * Portfolio overlap "-vs-" comparison sitemaps are intentionally EXCLUDED: every
+ * comparison URL serves the shared hub HTML whose <link rel="canonical"> points to
+ * the hub, so submitting tens of thousands of them made Google report
+ * "Duplicate, Google chose different canonical than user". Withdrawing them from the
+ * index is the recommended way to stop submitting those URLs. The hub page itself
+ * still ships in sitemap-mutual-funds.xml (see classifySitemapBucket), so it stays
+ * indexable. The urlset files are still generated (build verifier depends on them)
+ * but are no longer referenced by sitemap-index.xml.
+ */
+function buildSitemapIndexEntries() {
+  return CANONICAL_SITEMAP_INDEX.filter((name) => name !== 'sitemap-portfolio-overlap.xml');
 }
 
 function removeStaleOverlapSitemaps(activeNames) {
@@ -222,7 +228,7 @@ function main() {
 
   removeStaleOverlapSitemaps(overlapEntries);
 
-  const indexEntries = buildSitemapIndexEntries(overlapEntries);
+  const indexEntries = buildSitemapIndexEntries();
   writeSitemapIndexSync(writeFileSync, join(DIST, 'sitemap-index.xml'), indexEntries, LASTMOD);
   console.log(`  ✓ sitemap-index.xml (${indexEntries.length} child sitemaps, lastmod ${LASTMOD})`);
 
