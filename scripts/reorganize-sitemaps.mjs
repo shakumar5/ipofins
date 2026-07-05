@@ -27,6 +27,8 @@ import {
   writeUrlsetSync,
 } from './lib/sitemap-utils.mjs';
 
+import { removeNonIndexableSitemapFiles } from './lib/cleanup-non-indexable-sitemaps.mjs';
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 const LASTMOD = todayIso();
@@ -135,7 +137,7 @@ function writeBucketSitemaps(buckets) {
   return indexedUrlCount;
 }
 
-function removeNonIndexableSitemapFiles() {
+function removeNonIndexableSitemapFilesFromDist() {
   if (!existsSync(DIST)) return;
 
   for (const name of readdirSync(DIST)) {
@@ -145,15 +147,12 @@ function removeNonIndexableSitemapFiles() {
     }
     if (LEGACY_SITEMAPS.includes(name)) {
       unlinkSync(join(DIST, name));
-      continue;
     }
-    if (/^sitemap-overlap-staging-\d+\.xml$/.test(name)) {
-      unlinkSync(join(DIST, name));
-      continue;
-    }
-    if (/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name)) {
-      unlinkSync(join(DIST, name));
-    }
+  }
+
+  const removed = removeNonIndexableSitemapFiles(DIST);
+  if (removed) {
+    console.log(`  ✓ removed ${removed} non-indexable overlap sitemap file(s) from dist/`);
   }
 }
 
@@ -161,6 +160,11 @@ function main() {
   if (!existsSync(DIST)) {
     console.warn('  ⚠ reorganize-sitemaps: dist/ missing — skip');
     return;
+  }
+
+  const removedBefore = removeNonIndexableSitemapFiles(DIST);
+  if (removedBefore) {
+    console.log(`  ✓ removed ${removedBefore} non-indexable overlap sitemap file(s) from dist/`);
   }
 
   const astroUrls = collectAstroUrls();
@@ -174,6 +178,7 @@ function main() {
 
   if (!allLocs.length) {
     console.warn('  ⚠ reorganize-sitemaps: no URLs found — skip');
+    removeNonIndexableSitemapFilesFromDist();
     return;
   }
 
@@ -190,7 +195,7 @@ function main() {
     `  ✓ sitemap-index.xml (${indexEntries.length} child sitemaps, ${indexedUrlCount} indexable URLs, lastmod ${LASTMOD})`,
   );
 
-  removeNonIndexableSitemapFiles();
+  removeNonIndexableSitemapFilesFromDist();
 }
 
 main();

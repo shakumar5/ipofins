@@ -25,7 +25,8 @@ export default defineConfig({
         !page.includes('/dashboard')
         && !page.includes('/health')
         && !page.includes('/search')
-        && !page.includes('/1-percent-club/holder/'),
+        && !page.includes('/1-percent-club/holder/')
+        && !isPortfolioOverlapComparison(page),
       serialize(item) {
         // Assign realistic priority by page type
         const url = item.url;
