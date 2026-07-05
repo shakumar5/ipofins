@@ -79,21 +79,9 @@ export async function getAMCsWithHoldings(): Promise<AMCInfo[]> {
   }
 }
 
+/** All AMCs with active funds — prefers exported holdings index, then Neon. */
 export async function getAMCList(): Promise<AMCInfo[]> {
-  const sql = requireDb();
-  const rows = await sql`
-    SELECT a.name, a.slug, COUNT(f.id)::int AS fund_count
-    FROM amcs a
-    LEFT JOIN funds f ON f.amc_id = a.id AND f.is_active = true
-    GROUP BY a.id, a.name, a.slug
-    HAVING COUNT(f.id) > 0
-    ORDER BY a.name
-  `;
-  return (rows as Record<string, unknown>[]).map((r) => ({
-    name: String(r.name),
-    slug: String(r.slug),
-    fundCount: Number(r.fund_count),
-  }));
+  return getAMCsWithHoldings();
 }
 
 /** Recent months for static AMC×month pages (fewer pages = faster builds). */

@@ -50,13 +50,13 @@ export function getPortfolioOverlapPageMeta(
   }
 
   const label = names.join(' vs ');
-  const path = comparisonPathFromSlugs(slugs);
   const monthNote = month ? ` (${month} holdings)` : '';
 
   return {
     title: `${label} — Portfolio Overlap Comparison | IPOFins`,
     description: `Compare portfolio overlap between ${names.join(', ')}. See overlap percentage and shared stock holdings${monthNote}.`,
-    path,
+    // Canonical always points to the hub — comparison deep links are not submitted to GSC.
+    path: PORTFOLIO_OVERLAP_BASE,
     heading: defaultMeta.heading,
     subtitle: `Comparing ${label}`,
     breadcrumbLabel: 'Portfolio Overlap Checker',

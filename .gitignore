@@ -58,7 +58,7 @@ src/data/*.bak
 # Auto-generated files — regenerated at build time, not needed in git
 src/data/*.generated.json
 
-# Staging sitemaps — only final overlap sitemaps are committed
+# Staging sitemaps — regenerated during export, never committed or deployed
 public/sitemap-overlap-staging-*.xml
 
 # Market data — stored in Neon DB, never committed (CI exports to public/data)
@@ -107,9 +107,8 @@ SEO_STRATEGY.md
 public/data/**
 !public/data/.gitkeep
 
-# Sitemaps — staging regenerated during export; final overlap urlsets committed for CI
+# Sitemaps — generated at build; only sitemap-index + bucket urlsets ship in dist/
 public/sitemap*.xml
-!public/sitemap-portfolio-overlap*.xml
 public/sitemap-overlap-staging-*.xml
 
 # Test / coverage artifacts

@@ -72,12 +72,6 @@ if (shouldSkip()) {
   );
   if ((sast.status ?? 1) !== 0) process.exit(sast.status ?? 1);
 
-  const ensure = spawnSync(
-    process.execPath,
-    [...nodeExtraArgs(), join(ROOT, 'scripts', 'ensure-portfolio-overlap-sitemaps.mjs')],
-    { stdio: 'inherit', cwd: ROOT, env: process.env },
-  );
-  if ((ensure.status ?? 1) !== 0) process.exit(ensure.status ?? 1);
   runInsightsGenerate();
   process.exit(0);
   }

@@ -3,7 +3,7 @@
  * Fail the build if sitemap-index is incomplete or any urlset loc does not resolve
  * to a static HTML file in dist/ (portfolio overlap comparisons use hub rewrite).
  */
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -19,7 +19,6 @@ import {
   parseUrlsetLocs,
   pathnameFromLoc,
 } from './lib/sitemap-utils.mjs';
-import { findPrebuiltOverlapSitemaps, parseUrlsetLocCount } from './lib/portfolio-overlap-sitemap.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -42,13 +41,23 @@ function main() {
   };
 
   for (const name of childNames) {
+    if (/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name)) {
+      report(`sitemap-index must not reference portfolio overlap urlsets: ${name}`);
+    }
     const path = join(DIST, name);
     if (!existsSync(path)) {
       report(`sitemap-index references missing file: ${name}`);
-      continue;
     }
-    if (/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name) && parseUrlsetLocCount(path) === 0) {
-      report(`${name} is empty (0 URLs)`);
+  }
+
+  if (existsSync(DIST)) {
+    for (const name of readdirSync(DIST)) {
+      if (/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name)) {
+        report(`portfolio overlap sitemap must not ship in dist/: ${name}`);
+      }
+      if (/^sitemap-overlap-staging-\d+\.xml$/.test(name)) {
+        report(`overlap staging sitemap must not ship in dist/: ${name}`);
+      }
     }
   }
 
@@ -79,16 +88,19 @@ function main() {
     }
   }
 
+  if (!allPaths.has(PORTFOLIO_OVERLAP_HUB_PATH)) {
+    report(`Portfolio overlap hub missing from sitemaps: ${PORTFOLIO_OVERLAP_HUB_PATH}`);
+  }
+
   for (const path of allPaths) {
     if (SITEMAP_EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))) {
       report(`Excluded path must not be in sitemap: ${path}`);
     }
+    if (isPortfolioOverlapRewritePath(path)) {
+      report(`Portfolio overlap comparison URL must not be in GSC sitemap: ${path}`);
+    }
   }
 
-  // Hygiene guard: fail loudly if reorganize-sitemaps.mjs ever regresses and lets
-  // noindex fund alias redirects or the /top-stocks default combo (both
-  // canonicalize elsewhere) back into the sitemap. Skips the fund check when the
-  // holdings index is unavailable, mirroring the reorganizer's keep-all fallback.
   const canonicalFundPaths = loadCanonicalFundPaths([
     join(DIST, 'data'),
     join(ROOT, 'public', 'data'),
@@ -121,14 +133,13 @@ function main() {
   }
 
   const missingArtifacts = [];
-  let overlapRewriteCount = 0;
 
   for (const loc of allLocs) {
     const path = pathnameFromLoc(loc);
     if (!path || path === '/404') continue;
 
     if (isPortfolioOverlapRewritePath(path)) {
-      overlapRewriteCount += 1;
+      report(`Portfolio overlap comparison URL must not be in GSC sitemap: ${path}`);
       continue;
     }
 
@@ -148,28 +159,12 @@ function main() {
     }
   }
 
-  const overlapFiles = findPrebuiltOverlapSitemaps(DIST);
-  const overlapUrls = overlapFiles.reduce(
-    (sum, name) => sum + parseUrlsetLocCount(join(DIST, name)),
-    0,
-  );
-
-  if (overlapUrls < 1000) {
-    report(`portfolio overlap sitemaps have only ${overlapUrls} URLs (expected thousands)`);
-  } else {
-    console.log(`  ✓ portfolio overlap sitemaps: ${overlapFiles.length} file(s), ${overlapUrls} URLs`);
-  }
-
-  if (overlapRewriteCount > 0 && existsSync(hubHtml)) {
-    console.log(`  ✓ ${overlapRewriteCount} portfolio overlap comparison URL(s) → hub rewrite`);
-  }
-
   if (errors) {
-    console.error(`  ❌ sitemap verification failed (${errors} issue(s), ${allLocs.length} total URLs)`);
+    console.error(`  ❌ sitemap verification failed (${errors} issue(s), ${allLocs.length} GSC URLs)`);
     process.exit(1);
   }
 
-  console.log(`  ✓ sitemap-index.xml OK (${childNames.length} child sitemaps, ${allLocs.length} URLs, all resolve)`);
+  console.log(`  ✓ sitemap-index.xml OK (${childNames.length} child sitemaps, ${allLocs.length} GSC URLs, all resolve)`);
 }
 
 main();

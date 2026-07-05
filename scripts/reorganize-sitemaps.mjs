@@ -1,6 +1,9 @@
 /**
  * Post-build: replace Astro's default sitemap output with categorized child sitemaps
  * and a clean sitemap-index.xml (canonical buckets + lastmod).
+ *
+ * GSC submits only sitemap-index.xml (~15k indexable pages). Portfolio overlap
+ * comparison URLs (~143k) are never written to dist/.
  */
 import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -10,12 +13,11 @@ import { fileURLToPath } from 'url';
 import {
   CANONICAL_SITEMAP_INDEX,
   SITE,
-  SITEMAP_URL_LIMIT,
-  chunkUrls,
   classifySitemapBucket,
   collectSmartMoneySignalFilterSitemapUrls,
   collectTopStocksFilterSitemapUrls,
   isFundDetailPath,
+  isPortfolioOverlapRewritePath,
   loadCanonicalFundPaths,
   TOP_STOCKS_DEFAULT_COMBO_PATH,
   parseUrlsetLocs,
@@ -24,12 +26,6 @@ import {
   writeSitemapIndexSync,
   writeUrlsetSync,
 } from './lib/sitemap-utils.mjs';
-import {
-  buildOverlapUrls,
-  collectStagingUrlsFromDir,
-  findPrebuiltOverlapSitemaps,
-  loadFundsFromPortfolioJson,
-} from './lib/portfolio-overlap-sitemap.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -53,28 +49,22 @@ function collectAstroUrls() {
   return urls;
 }
 
-function collectOverlapStagingUrls() {
-  const fromDist = collectStagingUrlsFromDir(DIST);
-  const fromPublic = collectStagingUrlsFromDir(join(ROOT, 'public'));
-  return [...new Set([...fromDist, ...fromPublic])];
-}
-
-function collectOverlapUrlsFromJson() {
-  const funds = loadFundsFromPortfolioJson(ROOT);
-  return funds ? buildOverlapUrls(funds) : [];
-}
-
 /** Directories to search for the fund holdings index, most-specific first. */
 const FUND_INDEX_DATA_DIRS = [join(ROOT, 'public', 'data'), join(DIST, 'data')];
 
 function bucketUrls(allLocs, canonicalFundPaths) {
   const buckets = new Map(CANONICAL_SITEMAP_INDEX.map((name) => [name, []]));
   let droppedFundAliases = 0;
+  let droppedOverlapComparisons = 0;
 
   for (const loc of allLocs) {
     const path = pathnameFromLoc(loc);
     if (!path || path === '/404') continue;
     if (path.startsWith('/1-percent-club/holder/')) continue;
+    if (isPortfolioOverlapRewritePath(path)) {
+      droppedOverlapComparisons += 1;
+      continue;
+    }
     // Default Top Stocks combo canonicalizes to the /top-stocks hub — never list
     // it (hub is already in the sitemap) to avoid GSC "Duplicate canonical".
     if (path === TOP_STOCKS_DEFAULT_COMBO_PATH) continue;
@@ -96,63 +86,19 @@ function bucketUrls(allLocs, canonicalFundPaths) {
   if (droppedFundAliases) {
     console.log(`  ✓ dropped ${droppedFundAliases} noindex fund alias redirect URLs from sitemap`);
   }
+  if (droppedOverlapComparisons) {
+    console.log(`  ✓ dropped ${droppedOverlapComparisons} portfolio overlap comparison URL(s) from sitemap (hub only)`);
+  }
 
   return buckets;
 }
 
-function writePortfolioOverlapSitemap(overlapUrls) {
-  const chunks = chunkUrls(overlapUrls, SITEMAP_URL_LIMIT);
-
-  if (chunks.length === 1) {
-    const name = 'sitemap-portfolio-overlap.xml';
-    const count = writeUrlsetSync(writeFileSync, join(DIST, name), chunks[0], {
-      lastmod: LASTMOD,
-      changefreq: 'monthly',
-      priority: '0.6',
-    });
-    console.log(`  ✓ ${name} (${count} URLs)`);
-    return [name];
-  }
-
-  // Google allows only one index level: sitemap-index → urlset (no nested sitemapindex).
-  const childNames = [];
-  chunks.forEach((chunk, idx) => {
-    const name = `sitemap-portfolio-overlap-${idx}.xml`;
-    writeUrlsetSync(writeFileSync, join(DIST, name), chunk, {
-      lastmod: LASTMOD,
-      changefreq: 'monthly',
-      priority: '0.6',
-    });
-    childNames.push(name);
-    console.log(`  ✓ ${name} (${chunk.length} URLs)`);
-  });
-  console.log(`  ✓ portfolio overlap → ${childNames.length} urlsets (listed in sitemap-index.xml)`);
-  return childNames;
-}
-
 /**
  * Build the sitemap-index child list.
- *
- * Portfolio overlap "-vs-" comparison sitemaps are intentionally EXCLUDED: every
- * comparison URL serves the shared hub HTML whose <link rel="canonical"> points to
- * the hub, so submitting tens of thousands of them made Google report
- * "Duplicate, Google chose different canonical than user". Withdrawing them from the
- * index is the recommended way to stop submitting those URLs. The hub page itself
- * still ships in sitemap-mutual-funds.xml (see classifySitemapBucket), so it stays
- * indexable. The urlset files are still generated (build verifier depends on them)
- * but are no longer referenced by sitemap-index.xml.
+ * Portfolio overlap comparison urlsets are excluded — only the hub is indexable.
  */
 function buildSitemapIndexEntries() {
   return CANONICAL_SITEMAP_INDEX.filter((name) => name !== 'sitemap-portfolio-overlap.xml');
-}
-
-function removeStaleOverlapSitemaps(activeNames) {
-  if (!existsSync(DIST)) return;
-  const active = new Set(activeNames);
-  for (const name of readdirSync(DIST)) {
-    if (!/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name)) continue;
-    if (!active.has(name)) unlinkSync(join(DIST, name));
-  }
 }
 
 function writeBucketSitemaps(buckets) {
@@ -171,6 +117,8 @@ function writeBucketSitemaps(buckets) {
     'sitemap-learn.xml': 'monthly',
   };
 
+  let indexedUrlCount = 0;
+
   for (const name of CANONICAL_SITEMAP_INDEX) {
     if (name === 'sitemap-portfolio-overlap.xml') continue;
 
@@ -180,11 +128,14 @@ function writeBucketSitemaps(buckets) {
       changefreq: changefreqByBucket[name] || 'weekly',
       priority: name === 'sitemap-ipos.xml' ? '0.8' : '0.7',
     });
+    indexedUrlCount += count;
     console.log(`  ✓ ${name} (${count} URLs)`);
   }
+
+  return indexedUrlCount;
 }
 
-function removeLegacyFiles() {
+function removeNonIndexableSitemapFiles() {
   if (!existsSync(DIST)) return;
 
   for (const name of readdirSync(DIST)) {
@@ -198,6 +149,10 @@ function removeLegacyFiles() {
     }
     if (/^sitemap-overlap-staging-\d+\.xml$/.test(name)) {
       unlinkSync(join(DIST, name));
+      continue;
+    }
+    if (/^sitemap-portfolio-overlap(-\d+)?\.xml$/.test(name)) {
+      unlinkSync(join(DIST, name));
     }
   }
 }
@@ -209,11 +164,9 @@ function main() {
   }
 
   const astroUrls = collectAstroUrls();
-  const overlapStagingUrls = collectOverlapStagingUrls();
   const allLocs = [
     ...new Set([
       ...astroUrls,
-      ...overlapStagingUrls,
       ...collectTopStocksFilterSitemapUrls(),
       ...collectSmartMoneySignalFilterSitemapUrls(),
     ]),
@@ -229,35 +182,15 @@ function main() {
     console.warn('  ⚠ fund-holdings-index.json unavailable — keeping all fund URLs (alias redirects included)');
   }
   const buckets = bucketUrls(allLocs, canonicalFundPaths);
-  writeBucketSitemaps(buckets);
-
-  const prebuilt = findPrebuiltOverlapSitemaps(DIST);
-  let overlapEntries;
-  if (prebuilt.length) {
-    overlapEntries = prebuilt;
-    console.log(`  ✓ using ${prebuilt.length} prebuilt portfolio overlap sitemap(s) from public/`);
-  } else {
-    const overlapUrls = [
-      ...new Set([
-        ...(buckets.get('sitemap-portfolio-overlap.xml') || []),
-        ...collectOverlapStagingUrls(),
-        ...collectOverlapUrlsFromJson(),
-      ]),
-    ];
-    if (!overlapUrls.length) {
-      console.error('  ❌ No portfolio overlap URLs found (staging + JSON both empty)');
-      process.exit(1);
-    }
-    overlapEntries = writePortfolioOverlapSitemap(overlapUrls);
-  }
-
-  removeStaleOverlapSitemaps(overlapEntries);
+  const indexedUrlCount = writeBucketSitemaps(buckets);
 
   const indexEntries = buildSitemapIndexEntries();
   writeSitemapIndexSync(writeFileSync, join(DIST, 'sitemap-index.xml'), indexEntries, LASTMOD);
-  console.log(`  ✓ sitemap-index.xml (${indexEntries.length} child sitemaps, lastmod ${LASTMOD})`);
+  console.log(
+    `  ✓ sitemap-index.xml (${indexEntries.length} child sitemaps, ${indexedUrlCount} indexable URLs, lastmod ${LASTMOD})`,
+  );
 
-  removeLegacyFiles();
+  removeNonIndexableSitemapFiles();
 }
 
 main();

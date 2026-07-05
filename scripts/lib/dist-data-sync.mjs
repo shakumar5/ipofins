@@ -68,10 +68,18 @@ function distDataIncomplete(root) {
   return false;
 }
 
+export function resolveBuiltDataDir(root) {
+  const distData = distDataDir(root);
+  if (existsSync(distData)) return distData;
+  const vercelData = vercelStaticDataDir(root);
+  if (existsSync(vercelData)) return vercelData;
+  return distData;
+}
+
 /**
  * @returns {{ synced: string[] }} target labels that were synced
  */
-export function ensureDistDataSynced(root) {
+export function ensureDistDataSynced(root, { force = false } = {}) {
   const missing = publicDataMissingRequirements(root);
   if (missing.length) {
     throw new Error(`public/data incomplete — ${missing.join(', ')}`);
@@ -80,7 +88,7 @@ export function ensureDistDataSynced(root) {
   const publicData = publicDataDir(root);
   const synced = [];
 
-  if (existsSync(join(root, 'dist')) && distDataIncomplete(root)) {
+  if (existsSync(join(root, 'dist')) && (force || distDataIncomplete(root))) {
     const distData = distDataDir(root);
     mkdirSync(distData, { recursive: true });
     cpSync(publicData, distData, { recursive: true, force: true });

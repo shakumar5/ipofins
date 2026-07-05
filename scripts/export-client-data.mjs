@@ -40,7 +40,6 @@ import {
   loadFundHoldingsIndexFromDb,
   serializeHoldingsMetaForDisk,
 } from './lib/fund-holdings-export.mjs';
-import { buildOverlapUrls, writeOverlapStagingFiles } from './lib/portfolio-overlap-sitemap.mjs';
 import {
   EMPTY_TOP_STOCKS,
   exportTopStocksFromDb,
@@ -247,10 +246,6 @@ function buildPortfolioOverlapExport(holdings) {
 
   funds.sort((a, b) => a.name.localeCompare(b.name));
   return { month, funds, holdings: holdingsBySlug };
-}
-
-function writePortfolioOverlapSitemaps(funds) {
-  writeOverlapStagingFiles(buildOverlapUrls(funds), PUBLIC_DIR);
 }
 
 function loadHoldingsFromJson() {
@@ -656,7 +651,6 @@ async function main() {
   writeFundHoldingsBySlugExports(holdings);
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
-  writePortfolioOverlapSitemaps(portfolioOverlap.funds);
   // fund-overlap-index.json is written only with fund-overlaps-by-fund.json (DB step below).
   // Do not write it from holdings keys — parser slugs differ from funds.slug (-direct-plan).
   doneCompare(`${portfolioOverlap.funds.length} funds`);

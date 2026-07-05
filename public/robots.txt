@@ -24,4 +24,7 @@ Disallow: /mutual-funds/portfolio-overlap-checker/*-vs-
 # Staging sitemap files — should never be in production, belt-and-suspenders block
 Disallow: /sitemap-overlap-staging-*
 
+# Portfolio overlap comparison urlsets (~143k pairs) — not part of sitemap-index.xml
+Disallow: /sitemap-portfolio-overlap
+
 Sitemap: https://ipofins.com/sitemap-index.xml

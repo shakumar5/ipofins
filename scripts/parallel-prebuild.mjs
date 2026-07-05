@@ -28,7 +28,6 @@ function run(relPath) {
 }
 
 const parallel = [
-  'scripts/ensure-portfolio-overlap-sitemaps.mjs',
   'scripts/generate-og-images.mjs',
   'scripts/verify-top-stocks-export.mjs',
 ];
