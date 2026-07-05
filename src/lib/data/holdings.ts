@@ -596,6 +596,10 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
     };
   }
 
+  if (import.meta.env.PROD || process.env.CI === 'true') {
+    return { slugs: new Set(), stockCounts: {} };
+  }
+
   const sql = requireDb();
   const rows = await sql`
     WITH fund_latest AS (
@@ -721,6 +725,10 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
   const diskCount = readFundPortfolioStockCountFromDisk(fundSlug);
   if (diskCount != null) return diskCount;
 
+  if (import.meta.env.PROD || process.env.CI === 'true') {
+    return null;
+  }
+
   const sql = requireDb();
   const rows = await sql`
     WITH target AS (
@@ -780,6 +788,10 @@ export async function getFundHoldings(fundSlug: string): Promise<Record<string, 
     readFundHoldingsRowsFromDisk(fundSlug),
   ].filter((rows): rows is Record<string, unknown>[] => Boolean(rows?.length));
   const diskRows = diskCandidates.sort((a, b) => b.length - a.length)[0] ?? null;
+
+  if (import.meta.env.PROD || process.env.CI === 'true') {
+    return diskRows ?? [];
+  }
 
   const sql = requireDb();
   const rows = (await sql`
