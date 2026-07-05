@@ -2,7 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PageHeader from '../../../components/layout/PageHeader.astro';
 import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holdings';
-import { getAllFunds, fundHoldingsHref, getFundHoldingsLinkMeta } from '../../../lib/data/funds';
+import { fundHoldingsHref, getFundHoldingsLinkMeta } from '../../../lib/data/funds';
 import { resolveDetailSlug } from '../../../lib/fund-detail-slug';
 import { parsePgTextArray } from '../../../lib/holdings-utils';
 import {
@@ -20,12 +20,10 @@ const overlapBackVariants = Object.fromEntries(
 
 export async function getStaticPaths() {
   const funds = await getFundsWithOverlaps();
-  const allFunds = await getAllFunds();
-  const fundMap = new Map(allFunds.map((f) => [f.slug, f]));
 
   return funds.map((f) => ({
     params: { slug: f.slug },
-    props: { fundName: fundMap.get(f.slug)?.name || f.name },
+    props: { fundName: f.name },
   }));
 }
 

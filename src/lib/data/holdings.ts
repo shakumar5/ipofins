@@ -929,7 +929,7 @@ export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Rec
     return [];
   }
 
-  if (!import.meta.env.DEV) {
+  if (import.meta.env.PROD || process.env.CI === 'true') {
     return [];
   }
 
@@ -975,7 +975,7 @@ export async function getFundsWithOverlaps(): Promise<{ slug: string; name: stri
       .map((f) => ({ slug: f.slug, name: f.name }));
   }
 
-  if (!import.meta.env.DEV) {
+  if (import.meta.env.PROD || process.env.CI === 'true') {
     return [];
   }
 
