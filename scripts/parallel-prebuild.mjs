@@ -7,8 +7,10 @@
 import { spawn } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { removeNonIndexableSitemapFiles } from './lib/cleanup-non-indexable-sitemaps.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const PUBLIC = join(ROOT, 'public');
 const siteOnly = process.argv.includes('--site');
 
 function run(relPath) {
@@ -25,6 +27,11 @@ function run(relPath) {
       else reject(new Error(`${relPath} exited with code ${code}`));
     });
   });
+}
+
+const removed = removeNonIndexableSitemapFiles(PUBLIC);
+if (removed) {
+  console.log(`  ✓ removed ${removed} non-indexable overlap sitemap file(s) from public/`);
 }
 
 const parallel = [
