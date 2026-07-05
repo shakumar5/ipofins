@@ -16,6 +16,8 @@ import type { MfHubFundRow } from '../../lib/mf-hub-build';
 
 const FETCH_TIMEOUT_MS = 12000;
 
+import { withErrorBoundary } from '../withErrorBoundary';
+
 interface Props {
   table: 'best' | 'all';
   basePath: string;
@@ -32,7 +34,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-export default function FundTableLoader({ table, basePath, defaultCategory = 'All' }: Props) {
+function FundTableLoaderInner({ table, basePath, defaultCategory = 'All' }: Props) {
   const [meta, setMeta] = useState<MfHubMeta | null>(null);
   const [funds, setFunds] = useState<MfHubFundRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,3 +119,5 @@ export default function FundTableLoader({ table, basePath, defaultCategory = 'Al
     />
   );
 }
+
+export default withErrorBoundary(FundTableLoaderInner, 'Fund Table');

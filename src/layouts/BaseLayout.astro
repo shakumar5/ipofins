@@ -6,6 +6,9 @@ import SearchOverlay from '../components/SearchOverlay.astro';
 import DeferredAnalytics from '../components/DeferredAnalytics.astro';
 import { BRAND_NAME, BRAND_URL, BRAND_TWITTER_HANDLE, BRAND_TWITTER_URL } from '../lib/brand';
 import { OG_DEFAULT_IMAGE, resolveOgImageUrl } from '../lib/og-images';
+import { ADSENSE_CLIENT_ID, adsenseScriptUrl } from '../lib/adsense';
+
+const adsenseScriptSrc = adsenseScriptUrl();
 
 interface Props {
   title: string;
@@ -65,13 +68,19 @@ const organizationSchema = {
         'ad_personalization': 'denied',
         'wait_for_update':    500
       });
-      if (typeof localStorage !== 'undefined' && localStorage.getItem('cookie-consent') === 'accepted') {
-        gtag('consent', 'update', {
-          'ad_storage':         'granted',
-          'analytics_storage':  'granted',
-          'ad_user_data':       'granted',
-          'ad_personalization': 'granted'
-        });
+      if (typeof localStorage !== 'undefined') {
+        try {
+          var _c = localStorage.getItem('cookie-consent');
+          var _accepted = _c === 'accepted' || (_c && _c.indexOf('"accepted"') !== -1);
+          if (_accepted) {
+            gtag('consent', 'update', {
+              'ad_storage':         'granted',
+              'analytics_storage':  'granted',
+              'ad_user_data':       'granted',
+              'ad_personalization': 'granted'
+            });
+          }
+        } catch (e) {}
       }
     </script>
 
@@ -117,14 +126,7 @@ const organizationSchema = {
     <meta name="geo.placename" content="India" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <!-- Inter + JetBrains Mono
-         NOTE: Loaded from Google CDN. Self-hosting planned to remove IP-sharing
-         with Google pre-consent. See docs/09_IMPLEMENTATION_PLAN.md → Task 3.1
-    -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts: self-hosted via @fontsource-variable (imported in global.css, bundled by Vite) -->
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -141,10 +143,10 @@ const organizationSchema = {
     </script>
 
     <!-- Google AdSense account (ads load only after cookie consent) -->
-    <meta name="google-adsense-account" content="ca-pub-9843041963430696" />
+    <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
 
     <!-- Third-party scripts load only after explicit cookie consent (staggered — never all at once) -->
-    <script is:inline>
+    <script is:inline define:vars={{ adsenseScriptSrc }}>
       (function(){
         var analyticsStarted = false;
         var adsenseStarted = false;
@@ -215,7 +217,7 @@ const organizationSchema = {
             if (loaded) return;
             loaded = true;
             loadScript(
-              'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9843041963430696',
+              adsenseScriptSrc,
               { crossOrigin: 'anonymous' }
             ).then(function() {
               return delay(1000);
@@ -278,7 +280,19 @@ const organizationSchema = {
           }
         };
 
-        if (localStorage.getItem('cookie-consent') === 'accepted') {
+        function hasAcceptedConsent() {
+          try {
+            var raw = localStorage.getItem('cookie-consent');
+            if (!raw) return false;
+            if (raw === 'accepted') return true;
+            var parsed = JSON.parse(raw);
+            return parsed && parsed.status === 'accepted';
+          } catch (e) {
+            return false;
+          }
+        }
+
+        if (hasAcceptedConsent()) {
           window.scheduleThirdPartyAfterHydration();
         }
       })();
@@ -296,9 +310,6 @@ const organizationSchema = {
 
   </head>
   <body class="min-h-screen flex flex-col">
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:shadow-lg">
-      Skip to main content
-    </a>
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:shadow-lg">
       Skip to main content
     </a>
@@ -339,9 +350,31 @@ const organizationSchema = {
     <script is:inline>
       (function() {
         var CONSENT_KEY = 'cookie-consent';
+        var CONSENT_VERSION = '1';
         var el = document.getElementById('cookie-consent');
         var acceptBtn = document.getElementById('cookie-accept-btn');
         var dismissBtn = document.getElementById('cookie-dismiss-btn');
+
+        function readConsent() {
+          try {
+            var raw = localStorage.getItem(CONSENT_KEY);
+            if (!raw) return null;
+            if (raw === 'accepted' || raw === 'dismissed') {
+              return { status: raw, ts: null, v: CONSENT_VERSION };
+            }
+            return JSON.parse(raw);
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function saveConsent(status) {
+          localStorage.setItem(CONSENT_KEY, JSON.stringify({
+            status: status,
+            ts: new Date().toISOString(),
+            v: CONSENT_VERSION
+          }));
+        }
 
         function hideBanner() {
           if (!el) return;
@@ -363,7 +396,7 @@ const organizationSchema = {
 
         function acceptCookies() {
           try {
-            localStorage.setItem(CONSENT_KEY, 'accepted');
+            saveConsent('accepted');
             grantConsentSignals();
             hideBanner();
             window.dispatchEvent(new CustomEvent('cookie-consent-accepted'));
@@ -373,13 +406,13 @@ const organizationSchema = {
 
         function dismissCookies() {
           try {
-            localStorage.setItem(CONSENT_KEY, 'dismissed');
+            saveConsent('dismissed');
             hideBanner();
           } catch (e) {}
         }
 
         // Show banner on first visit
-        if (!localStorage.getItem(CONSENT_KEY) && el) {
+        if (!readConsent() && el) {
           el.removeAttribute('aria-hidden');
           var show = function() {
             requestAnimationFrame(function() { el.classList.remove('cookie-consent-banner--hidden'); });
@@ -402,6 +435,21 @@ const organizationSchema = {
             document.removeEventListener('keydown', onKey);
           }
         });
+      })();
+    </script>
+    <script is:inline>
+      (function() {
+        if (typeof localStorage === 'undefined') return;
+        var path = location.pathname;
+        if (!path || path === '/dashboard') return;
+        var key = 'ipofins-recents';
+        try {
+          var recents = JSON.parse(localStorage.getItem(key) || '[]');
+          var title = (document.title || '').split(' | ')[0];
+          var current = { url: path, title: title, ts: Date.now() };
+          recents = [current].concat(recents.filter(function(r) { return r.url !== path; })).slice(0, 10);
+          localStorage.setItem(key, JSON.stringify(recents));
+        } catch (e) {}
       })();
     </script>
     <DeferredAnalytics />

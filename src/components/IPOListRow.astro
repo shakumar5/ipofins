@@ -1,6 +1,7 @@
 ---
 import { ipoDetailHref, type IpoListFrom } from '../lib/list-back-nav';
 import { ipoRowMeta, ipoDisplayText, formatSubscriptionTimes, type IPOListItem } from '../lib/ipo-list-sections';
+import WatchlistButton from './dashboard/WatchlistButton';
 
 interface Props {
   ipo: IPOListItem;
@@ -35,6 +36,8 @@ const badgeLabel =
       : ipo.status;
 ---
 
+<div class="relative group">
+<WatchlistButton client:visible slug={ipo.slug} name={ipo.name} variant="compact" />
 <a
   href={ipoDetailHref(ipo.slug, listFrom)}
   class={`card-compact group block hover:shadow-md transition-shadow border-l-4 ${borderClass}`}
@@ -92,3 +95,4 @@ const badgeLabel =
     </div>
   </div>
 </a>
+</div>

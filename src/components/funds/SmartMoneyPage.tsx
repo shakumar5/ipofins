@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useTransition, useRef, lazy, Suspense } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 
 import SmartMoneyTracker from './SmartMoneyTracker';
 import SmartMoneyAppSkeleton from './SmartMoneyAppSkeleton';
@@ -70,7 +71,7 @@ const LEGACY_HASH_TAB: Record<string, Tab> = {
   '#sector-intelligence': 'sectors',
 };
 
-export default function SmartMoneyPage({
+function SmartMoneyPageInner({
   initialTracker = null,
   initialTab = null,
   initialTrackerIndex = null,
@@ -460,3 +461,5 @@ export default function SmartMoneyPage({
     </div>
   );
 }
+
+export default withErrorBoundary(SmartMoneyPageInner, 'Smart Money');

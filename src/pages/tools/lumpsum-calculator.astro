@@ -1,61 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import LumpsumCalculator from '../../components/calculators/LumpsumCalculator.tsx';
 
-const jsonLd = [
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "Lumpsum Calculator",
-    "description": "Calculate returns on one-time lumpsum investments in mutual funds or stocks. See how your investment grows with compound interest.",
-    "url": "https://ipofins.com/tools/lumpsum-calculator",
-    "applicationCategory": "FinanceApplication",
-    "operatingSystem": "Web",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-    "breadcrumb": {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-        { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-        { "@type": "ListItem", "position": 3, "name": "Lumpsum Calculator", "item": "https://ipofins.com/tools/lumpsum-calculator" }
-      ]
-    }
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to Calculate Lumpsum Investment Returns",
-    "description": "Calculate the future value of a one-time mutual fund or stock market investment using compound interest",
-    "totalTime": "PT2M",
-    "step": [
-      {
-        "@type": "HowToStep",
-        "position": 1,
-        "name": "Enter your investment amount",
-        "text": "Enter the total amount you want to invest as a lump sum (e.g., ₹1,00,000)"
-      },
-      {
-        "@type": "HowToStep",
-        "position": 2,
-        "name": "Set expected annual return rate",
-        "text": "Enter the expected CAGR (e.g., 12% for large-cap equity funds based on historical Nifty 50 performance)"
-      },
-      {
-        "@type": "HowToStep",
-        "position": 3,
-        "name": "Choose investment duration",
-        "text": "Enter the number of years you plan to hold the investment (minimum 5 years recommended for equity)"
-      },
-      {
-        "@type": "HowToStep",
-        "position": 4,
-        "name": "View projected corpus",
-        "text": "The calculator shows your final maturity value, total profit earned, and effective returns"
-      }
-    ]
-  }
-];
+const jsonLd = toolPageJsonLd({
+  name: "Lumpsum Calculator",
+  slug: "lumpsum-calculator",
+  description: "Calculate returns on one-time lumpsum investments in mutual funds or stocks. See how your investment grows with compound interest.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -118,6 +71,66 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
     <div class="card max-w-2xl mx-auto">
       <LumpsumCalculator client:idle />
     </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How to Use the Lumpsum Calculator</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        Enter a one-time investment amount, expected annual return (CAGR), and holding period. The calculator shows future value and profit — useful for comparing a windfall investment vs spreading via <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Lumpsum Return Formula</h2>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs space-y-2">
+        <p><strong>Future Value (A)</strong> = P × (1 + r)<sup>t</sup></p>
+        <p><strong>Profit</strong> = A − P</p>
+        <p class="text-surface-500 font-sans text-xs mt-2">P = principal, r = annual return (decimal), t = years</p>
+      </div>
+      <p class="text-surface-600 dark:text-surface-300 mt-4">
+        Example: ₹10,00,000 at 12% CAGR for 10 years → ≈ ₹31.1 lakh (profit ≈ ₹21.1 lakh).
+      </p>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Lumpsum Growth Examples</h2>
+    <div class="overflow-x-auto data-table-premium">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-surface-200 dark:border-surface-700">
+            <th class="text-left py-3 px-4 font-semibold">Investment</th>
+            <th class="text-right py-3 px-4 font-semibold">10 yr @ 12%</th>
+            <th class="text-right py-3 px-4 font-semibold">15 yr @ 12%</th>
+            <th class="text-right py-3 px-4 font-semibold">20 yr @ 12%</th>
+          </tr>
+        </thead>
+        <tbody class="text-surface-600 dark:text-surface-300">
+          <tr class="border-b border-surface-100 dark:border-surface-800">
+            <td class="py-3 px-4 font-medium">₹5,00,000</td>
+            <td class="py-3 px-4 text-right">₹15.5 L</td>
+            <td class="py-3 px-4 text-right">₹27.4 L</td>
+            <td class="py-3 px-4 text-right">₹48.2 L</td>
+          </tr>
+          <tr class="border-b border-surface-100 dark:border-surface-800">
+            <td class="py-3 px-4 font-medium">₹10,00,000</td>
+            <td class="py-3 px-4 text-right">₹31.1 L</td>
+            <td class="py-3 px-4 text-right">₹54.7 L</td>
+            <td class="py-3 px-4 text-right">₹96.5 L</td>
+          </tr>
+          <tr>
+            <td class="py-3 px-4 font-medium">₹25,00,000</td>
+            <td class="py-3 px-4 text-right">₹77.6 L</td>
+            <td class="py-3 px-4 text-right">₹1.37 Cr</td>
+            <td class="py-3 px-4 text-right">₹2.41 Cr</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-surface-500 mt-3">Illustrative equity CAGR. Actual mutual fund returns vary; LTCG tax may apply on redemption.</p>
   </section>
 
   <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">

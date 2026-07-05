@@ -126,5 +126,13 @@
     "icon": "🎯",
     "color": "primary",
     "category": "planning"
+  },
+  {
+    "title": "MF Portfolio X-Ray",
+    "slug": "mf-xray",
+    "description": "Analyze underlying stock and sector exposure across your mutual fund portfolio. See concentration risk and fund overlap.",
+    "icon": "🔬",
+    "color": "primary",
+    "category": "analysis"
   }
 ]

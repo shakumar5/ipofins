@@ -1,7 +1,9 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
+import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
+import sentry from '@sentry/astro';
 
 const PORTFOLIO_OVERLAP_BASE = '/mutual-funds/portfolio-overlap-checker';
 
@@ -21,6 +23,7 @@ export default defineConfig({
       changefreq: 'weekly',
       filter: (page) =>
         !page.includes('/dashboard')
+        && !page.includes('/health')
         && !page.includes('/search')
         && !page.includes('/1-percent-club/holder/'),
       serialize(item) {
@@ -46,8 +49,26 @@ export default defineConfig({
         };
       },
     }),
+    ...(process.env.SENTRY_DSN
+      ? [
+          sentry({
+            dsn: process.env.SENTRY_DSN,
+            tracesSampleRate: 0.1,
+            ...(process.env.SENTRY_AUTH_TOKEN
+              ? {
+                  sourceMapsUploadOptions: {
+                    project: process.env.SENTRY_PROJECT || 'ipofins',
+                    org: process.env.SENTRY_ORG,
+                    authToken: process.env.SENTRY_AUTH_TOKEN,
+                  },
+                }
+              : {}),
+          }),
+        ]
+      : []),
   ],
   output: 'static',
+  adapter: vercel(),
   build: {
     // ~17 KiB global CSS — inline to remove render-blocking link (saves ~170–340 ms LCP/FCP)
     inlineStylesheets: 'always',

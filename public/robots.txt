@@ -5,6 +5,7 @@ Allow: /
 Disallow: /api/
 Disallow: /dashboard
 Disallow: /dashboard/
+Disallow: /health
 Disallow: /admin
 Disallow: /search
 

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { fetchJsonCached } from '../../lib/client-data';
+import { withErrorBoundary } from '../withErrorBoundary';
 
 const FundOverlapTab = lazy(() => import('./FundOverlapTab'));
 
@@ -19,7 +20,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-export default function FundOverlapLoader() {
+function FundOverlapLoaderInner() {
   const [funds, setFunds] = useState<FundOverlapItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
@@ -72,3 +73,5 @@ export default function FundOverlapLoader() {
     </Suspense>
   );
 }
+
+export default withErrorBoundary(FundOverlapLoaderInner, 'Fund Overlap');

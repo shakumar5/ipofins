@@ -15,6 +15,69 @@
 
 ---
 
+## PHASE 1: SEO FOUNDATION — ✅ COMPLETED July 5, 2026
+
+| Task | Status | Notes |
+|---|---|---|
+| 1.1 Sitemap lastmod + priority | ✅ Done | `astro.config.mjs` |
+| 1.2 HowTo schema utility | ✅ Done | `src/lib/howto-schema.ts`, `src/lib/tool-schemas.ts` |
+| 1.3 og:image:secure_url | ✅ Done | Phase 0 |
+| 1.4 WebApplication schema all tools | ✅ Done | All 17 tool pages via `toolPageJsonLd()` |
+| 1.5 Calculator content (1,500 words) | ✅ Done | SIP/EMI/CAGR/Tax rich; FD/PPF/Lumpsum expanded with formula + examples |
+
+---
+
+## PHASE 2: IPO GMP + ALERTS — ✅ COMPLETED July 5, 2026
+
+| Task | Status | Notes |
+|---|---|---|
+| 2.1 GMP Today page | ✅ Done | `/ipo/gmp-today`, DB-backed GMP, FAQPage schema |
+| 2.2 GMP DB schema | ✅ Done | Migration 012, `sync-ipo-gmp.mjs` |
+| 2.3 IPO alert API | ✅ Done | `/api/ipo-alert`, unsubscribe, Vercel adapter |
+| 2.4 Resend email + cron | ✅ Done | `ipo-alert-email.ts`, daily cron in `vercel.json` |
+
+---
+
+## PHASE 3: PERFORMANCE — ✅ COMPLETED July 5, 2026
+
+| Task | Status | Notes |
+|---|---|---|
+| 3.1 Self-hosted fonts | ✅ Done | `@fontsource-variable` in `global.css` |
+| 3.2 nav-btn-group CLS | ✅ Done | Phase 0 |
+| 3.3 AdSense CLS | ✅ Done | `AdUnit.astro` min-width |
+| 3.4 Parallel build | ✅ Done | `parallel-prebuild.mjs`, `parallel-postbuild.mjs` |
+
+---
+
+## PHASE 4: PRODUCT FEATURES — ✅ COMPLETED July 5, 2026
+
+| Task | Status | Notes |
+|---|---|---|
+| 4.1 Dashboard MVP | ✅ Done | `LocalDashboard.tsx`, watchlist on all IPO cards, `CalculatorShareRow` on all 16 calcs |
+| 4.2 MF Portfolio X-Ray | ✅ Done | `/tools/mf-xray`, `MFXRay.tsx`, `mf-xray.ts` |
+
+---
+
+## PHASE 5: DATABASE UPGRADES — ✅ Migrations ready (apply on Neon)
+
+| Task | Status | Notes |
+|---|---|---|
+| 5.1 Constraints + indexes | ✅ SQL ready | `npm run db:migrate-011` |
+| 5.2 V4 additive tables | ✅ SQL ready | `ipo_alerts`, `ipo_fundamentals`, `mv_refresh_log` in 011; GMP in 012 |
+| 5.3 Pipeline names | ✅ SQL ready | `npm run db:migrate-013`; use `npm run db:migrate-all` for 011–013 |
+
+---
+
+## MONITORING — ✅ COMPLETED July 5, 2026
+
+| Task | Status | Notes |
+|---|---|---|
+| Sentry | ✅ Done | `@sentry/astro`, conditional on `SENTRY_DSN`; ErrorBoundary → `captureClientException` |
+| Pipeline health | ✅ Done | `/health`, loggers on daily/subscription/monthly/gmp/si/sast/**ipo-sync/ipo-performance** |
+| Discord webhook | ✅ Done | `webhook-notifier.mjs` wired in `pipeline-run-logger.endRun()` |
+
+---
+
 ## PHASE 0: CRITICAL FIXES (Days 1-3) — ✅ COMPLETED July 5, 2026
 
 All Phase 0 tasks have been executed. Summary of what was fixed:
@@ -27,7 +90,7 @@ All Phase 0 tasks have been executed. Summary of what was fixed:
 | 0.4 Gitignore backup/log files | ✅ Done | `.gitignore`, deleted 7 log files from repo root |
 | 0.5 Robots.txt updates | ✅ Done | `public/robots.txt` |
 | 0.6 Error Boundaries on React islands | ✅ Done | `src/components/ErrorBoundary.tsx` created |
-| 0.7 Remove Dashboard from nav | ✅ N/A — was never in nav |
+| 0.7 Dashboard in nav | ✅ Done | Added after dashboard MVP shipped (`Header.astro`) |
 | 0.8 Calculator validation utility | ✅ Done | `src/utils/calculator-validation.ts` created |
 | 0.9 New `IPOScoreBox` component | ✅ Done | `src/components/IPOScoreBox.astro` created |
 | 0.10 `og:image:secure_url` | ✅ Done | `BaseLayout.astro` |

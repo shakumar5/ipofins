@@ -1,61 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import PPFCalculator from '../../components/calculators/PPFCalculator.tsx';
 
-const jsonLd = [
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "PPF Calculator",
-    "description": "Calculate Public Provident Fund maturity value with current interest rate. Plan your 15-year PPF investment.",
-    "url": "https://ipofins.com/tools/ppf-calculator",
-    "applicationCategory": "FinanceApplication",
-    "operatingSystem": "Web",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-    "breadcrumb": {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-        { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-        { "@type": "ListItem", "position": 3, "name": "PPF Calculator", "item": "https://ipofins.com/tools/ppf-calculator" }
-      ]
-    }
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to Calculate PPF Maturity Amount",
-    "description": "Calculate how much your Public Provident Fund investment will grow over 15 years",
-    "totalTime": "PT2M",
-    "step": [
-      {
-        "@type": "HowToStep",
-        "position": 1,
-        "name": "Enter your yearly PPF investment",
-        "text": "Enter how much you invest in PPF each year (max ₹1,50,000 per year)"
-      },
-      {
-        "@type": "HowToStep",
-        "position": 2,
-        "name": "Set the PPF interest rate",
-        "text": "Enter the current PPF interest rate (7.1% as of 2026, updated quarterly by the government)"
-      },
-      {
-        "@type": "HowToStep",
-        "position": 3,
-        "name": "Choose tenure",
-        "text": "PPF has a mandatory 15-year lock-in. Enter 15 or any extension period (multiples of 5 years)"
-      },
-      {
-        "@type": "HowToStep",
-        "position": 4,
-        "name": "View maturity value",
-        "text": "The calculator shows total invested amount, interest earned, and tax-free maturity amount"
-      }
-    ]
-  }
-];
+const jsonLd = toolPageJsonLd({
+  name: "PPF Calculator",
+  slug: "ppf-calculator",
+  description: "Calculate Public Provident Fund maturity value with current interest rate. Plan your 15-year PPF investment.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -118,6 +71,70 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
     <div class="card max-w-2xl mx-auto">
       <PPFCalculator client:idle />
     </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How to Use the PPF Calculator</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        Enter your annual deposit (₹500–₹1,50,000), the current PPF interest rate, and tenure in years. The calculator projects maturity value and total interest — all computed locally in your browser.
+      </p>
+      <ol class="list-decimal list-inside text-surface-600 dark:text-surface-300 space-y-2 mt-3">
+        <li><strong>Annual deposit</strong> — total you contribute each financial year (lump sum or installments)</li>
+        <li><strong>Interest rate</strong> — government-set rate, reviewed quarterly (~7.1% in 2026)</li>
+        <li><strong>Tenure</strong> — minimum 15 years; extend in 5-year blocks after maturity</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">PPF Maturity Formula</h2>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs space-y-2">
+        <p><strong>Each year:</strong> Balance = (Previous balance + Deposit) × (1 + r)</p>
+        <p class="text-surface-500 font-sans text-xs mt-2">r = annual rate (decimal). Interest is compounded annually on the lowest balance between the 5th and last day of each month.</p>
+      </div>
+      <p class="text-surface-600 dark:text-surface-300 mt-4">
+        Example: ₹1,50,000/year at 7.1% for 15 years → maturity ≈ ₹40.7 lakh (interest ≈ ₹18.2 lakh, all tax-free under EEE).
+      </p>
+    </div>
+  </section>
+
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">PPF Maturity Examples (7.1% p.a.)</h2>
+    <div class="overflow-x-auto data-table-premium">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-surface-200 dark:border-surface-700">
+            <th class="text-left py-3 px-4 font-semibold">Annual deposit</th>
+            <th class="text-right py-3 px-4 font-semibold">15 years</th>
+            <th class="text-right py-3 px-4 font-semibold">20 years</th>
+            <th class="text-right py-3 px-4 font-semibold">25 years</th>
+          </tr>
+        </thead>
+        <tbody class="text-surface-600 dark:text-surface-300">
+          <tr class="border-b border-surface-100 dark:border-surface-800">
+            <td class="py-3 px-4 font-medium">₹50,000/yr</td>
+            <td class="py-3 px-4 text-right">₹13.6 L</td>
+            <td class="py-3 px-4 text-right">₹22.1 L</td>
+            <td class="py-3 px-4 text-right">₹34.2 L</td>
+          </tr>
+          <tr class="border-b border-surface-100 dark:border-surface-800">
+            <td class="py-3 px-4 font-medium">₹1,00,000/yr</td>
+            <td class="py-3 px-4 text-right">₹27.1 L</td>
+            <td class="py-3 px-4 text-right">₹44.2 L</td>
+            <td class="py-3 px-4 text-right">₹68.4 L</td>
+          </tr>
+          <tr>
+            <td class="py-3 px-4 font-medium">₹1,50,000/yr (max)</td>
+            <td class="py-3 px-4 text-right">₹40.7 L</td>
+            <td class="py-3 px-4 text-right">₹66.3 L</td>
+            <td class="py-3 px-4 text-right">₹1.03 Cr</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-surface-500 mt-3">Illustrative. Assumes full deposit at start of each year.</p>
   </section>
 
   <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="narrow">

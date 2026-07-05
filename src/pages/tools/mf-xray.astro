@@ -1,0 +1,61 @@
+---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import MFXRay from '../../components/tools/MFXRay.tsx';
+import AdUnit from '../../components/AdUnit.astro';
+
+const jsonLd = toolPageJsonLd({
+  name: 'MF Portfolio X-Ray — Underlying Stock Exposure',
+  slug: 'mf-xray',
+  description: "Analyze your mutual fund portfolio's underlying stock and sector exposure. Free client-side portfolio X-Ray for Indian investors.",
+});
+---
+
+<BaseLayout
+  title="MF Portfolio X-Ray — Stock & Sector Exposure Analyzer | IPOFins"
+  description="Free MF Portfolio X-Ray tool. See underlying stock exposure, sector allocation, and fund overlap across your mutual fund portfolio. Runs in browser — no login."
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/tools" class="hover:text-primary-600 transition-colors">Tools</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">MF Portfolio X-Ray</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <PageHeader
+      title="MF Portfolio X-Ray"
+      subtitle="Enter your mutual fund holdings to see underlying stock exposure, sector allocation, and overlap between funds."
+      freshness="Monthly MF disclosures"
+      source="Runs in browser — private"
+    />
+  </section>
+
+  <section class="container-wide py-6 max-w-4xl">
+    <MFXRay client:visible />
+  </section>
+
+  <section class="container-wide py-8 max-w-3xl text-sm text-surface-600 dark:text-surface-400 space-y-4">
+    <h2 class="text-base font-semibold text-surface-900 dark:text-white">How Portfolio X-Ray Works</h2>
+    <p>
+      Each mutual fund publishes its equity holdings monthly. This tool weights every stock in your selected funds by your investment amount, then aggregates exposure across the portfolio.
+    </p>
+    <ul class="list-disc pl-5 space-y-1">
+      <li><strong>Top stocks</strong> — which companies you effectively own the most of, across all funds.</li>
+      <li><strong>Sector exposure</strong> — how much of your portfolio is in banking, IT, pharma, etc.</li>
+      <li><strong>Fund overlap</strong> — how similar two funds are (high overlap = redundant diversification).</li>
+    </ul>
+    <p>
+      For pairwise fund comparison, also try the <a href="/mutual-funds/portfolio-overlap-checker" class="text-primary-600 hover:underline">Portfolio Overlap Checker</a>.
+    </p>
+  </section>
+
+  <div class="container-wide pb-10">
+    <AdUnit slot="1234567890" format="horizontal" />
+  </div>
+</BaseLayout>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import { holderMatchesSearchQuery } from '../../lib/holder-name-search';
 import type { HolderPosition } from '../../lib/one-percent-holder-positions';
 import HolderHoldingsTable from './HolderHoldingsTable';
@@ -33,7 +34,7 @@ type Result = {
   holder: HolderOption;
 };
 
-export default function CuratedInvestorSearch({
+function CuratedInvestorSearchInner({
   curated,
   holders,
   stockBase = '/1-percent-club',
@@ -199,3 +200,5 @@ export default function CuratedInvestorSearch({
     </div>
   );
 }
+
+export default withErrorBoundary(CuratedInvestorSearchInner, 'Super Investor Search');

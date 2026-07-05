@@ -1,35 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import SIPCalculator from '../../components/calculators/SIPCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "SIP Calculator - Calculate Mutual Fund Returns Online",
-  "description": "Free online SIP calculator to estimate mutual fund returns with compound interest.",
-  "url": "https://ipofins.com/tools/sip-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web Browser",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "INR"
-  },
-  "creator": {
-    "@type": "Organization",
-    "name": "IPOFins",
-    "url": "https://ipofins.com"
-  },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "SIP Calculator", "item": "https://ipofins.com/tools/sip-calculator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "SIP Calculator - Calculate Mutual Fund Returns Online",
+  slug: "sip-calculator",
+  description: "Free online SIP calculator to estimate mutual fund returns with compound interest.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",

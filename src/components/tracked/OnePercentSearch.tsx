@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import { filterHolderSearchQuery } from '../../lib/holder-name-search';
 import { filterStockSearchQuery, matchStockSearchQuery } from '../../lib/stock-search-match';
 import type { HolderPosition } from '../../lib/one-percent-holder-positions';
@@ -30,7 +31,7 @@ interface Props {
   stockBase: string;
 }
 
-export default function OnePercentSearch({
+function OnePercentSearchInner({
   stocks,
   mfStocks,
   holders,
@@ -267,3 +268,5 @@ export default function OnePercentSearch({
     </div>
   );
 }
+
+export default withErrorBoundary(OnePercentSearchInner, '1% Club Search');

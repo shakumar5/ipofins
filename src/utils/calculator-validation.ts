@@ -102,6 +102,43 @@ export function validateYears(
 }
 
 /**
+ * Formats currency for calculator displays — returns '—' for invalid numbers.
+ */
+export function formatCalculatorCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '−' : '';
+  if (abs >= 10_000_000) return `${sign}₹${(abs / 10_000_000).toFixed(2)} Cr`;
+  if (abs >= 100_000) return `${sign}₹${(abs / 100_000).toFixed(2)} L`;
+  return `${sign}₹${Math.round(abs).toLocaleString('en-IN')}`;
+}
+
+/**
+ * Validates a positive integer within a range (e.g. age, tenure in months).
+ */
+export function validateInteger(
+  value: number | string,
+  label: string,
+  min: number,
+  max: number,
+): ValidationResult {
+  const n = typeof value === 'string' ? parseInt(value, 10) : Math.floor(value);
+  if (value === '' || value === null || value === undefined) {
+    return { isValid: false, error: `${label} is required` };
+  }
+  if (!Number.isFinite(n) || n !== Math.floor(n)) {
+    return { isValid: false, error: `${label} must be a whole number` };
+  }
+  if (n < min) {
+    return { isValid: false, error: `${label} must be at least ${min}` };
+  }
+  if (n > max) {
+    return { isValid: false, error: `${label} cannot exceed ${max}` };
+  }
+  return { isValid: true };
+}
+
+/**
  * Validates a lot size / share count (positive integer).
  */
 export function validateLotSize(value: number | string): ValidationResult {

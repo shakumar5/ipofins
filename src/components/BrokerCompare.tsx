@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { withErrorBoundary } from './withErrorBoundary';
 
 interface Broker {
   name: string;
@@ -38,7 +39,7 @@ function buildInitialSelected(brokers: Broker[], focusBroker?: string): string[]
   ];
 }
 
-export default function BrokerCompare({ brokers, focusBroker }: Props) {
+function BrokerCompareInner({ brokers, focusBroker }: Props) {
   const [selected, setSelected] = useState<string[]>(() =>
     buildInitialSelected(brokers, focusBroker)
   );
@@ -265,3 +266,5 @@ export default function BrokerCompare({ brokers, focusBroker }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(BrokerCompareInner, 'Broker Compare');

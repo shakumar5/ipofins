@@ -1,26 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import EMICalculator from '../../components/calculators/EMICalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "EMI Calculator",
-  "description": "Calculate monthly EMI for home loan, car loan, or personal loan. Free online EMI calculator with amortization breakdown.",
-  "url": "https://ipofins.com/tools/emi-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "EMI Calculator", "item": "https://ipofins.com/tools/emi-calculator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "EMI Calculator",
+  slug: "emi-calculator",
+  description: "Calculate monthly EMI for home loan, car loan, or personal loan. Free online EMI calculator with amortization breakdown.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",

@@ -1,28 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import SWPCalculator from '../../components/calculators/SWPCalculator.tsx';
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'SWP Calculator - Systematic Withdrawal Plan for Mutual Funds',
-  description:
-    'Free online SWP calculator to estimate monthly mutual fund withdrawals, remaining corpus, and how long your retirement money lasts.',
-  url: 'https://ipofins.com/tools/swp-calculator',
-  applicationCategory: 'FinanceApplication',
-  operatingSystem: 'Web Browser',
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
-  creator: { '@type': 'Organization', name: 'IPOFins', url: 'https://ipofins.com' },
-  breadcrumb: {
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://ipofins.com/tools' },
-      { '@type': 'ListItem', position: 3, name: 'SWP Calculator', item: 'https://ipofins.com/tools/swp-calculator' },
-    ],
-  },
-};
+const jsonLd = toolPageJsonLd({
+  name: "SWP Calculator - Systematic Withdrawal Plan for Mutual Funds",
+  slug: "swp-calculator",
+  description: "Free online SWP calculator to estimate monthly mutual fund withdrawals, remaining corpus, and how long your retirement money lasts.",
+});
 
 const faqJsonLd = {
   '@context': 'https://schema.org',

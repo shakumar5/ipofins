@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import type { OnePercentRow, StockShareholdingDetail } from '../../lib/tracked-entities';
 import { curatedEntityUrl, hasCuratedSuperInvestorInterest, hasSmartMoneyRadarInterest, holderDetailUrl } from '../../lib/tracked-client';
 import { formatCr, formatPct } from '../../lib/tracked-display';
@@ -217,7 +218,7 @@ function sectionWeight(section: {
   return rowScore + pctScore;
 }
 
-export default function OnePercentStockDetail({ detail, mfStockSignalUrl = null }: Props) {
+function OnePercentStockDetailInner({ detail, mfStockSignalUrl = null }: Props) {
   const { summary, promoters, fii, mutualFunds, dii, superInvestors, onePercentClub } = detail;
   const onSmartMoneyRadar = hasSmartMoneyRadarInterest(detail);
   const hasCuratedSi = hasCuratedSuperInvestorInterest(detail);
@@ -365,3 +366,5 @@ export default function OnePercentStockDetail({ detail, mfStockSignalUrl = null 
     </div>
   );
 }
+
+export default withErrorBoundary(OnePercentStockDetailInner, '1% Club Stock Detail');

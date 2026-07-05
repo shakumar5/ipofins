@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import { formatPct } from '../../lib/tracked-display';
 import { fetchJsonCached } from '../../lib/client-data';
 import {
@@ -47,7 +48,7 @@ function pctDelta(pre: number | null, post: number | null) {
   return `${sign}${d.toFixed(2)} pp`;
 }
 
-export default function SastUpdatesFeed({
+function SastUpdatesFeedInner({
   superInvestorBase = '/super-investors',
   stockBase = '/1-percent-club',
   initialCurated = null,
@@ -323,3 +324,5 @@ export default function SastUpdatesFeed({
     </div>
   );
 }
+
+export default withErrorBoundary(SastUpdatesFeedInner, 'SAST Updates');

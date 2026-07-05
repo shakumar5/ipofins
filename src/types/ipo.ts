@@ -99,6 +99,8 @@ export interface IPORecord {
 
   /** Latest unofficial grey market premium (₹/share) when sourced — not exchange-verified */
   gmp?: number | null;
+  /** ISO timestamp of last GMP update when available */
+  gmpUpdatedAt?: string;
 
   // ── Listing (Zerodha + Groww fallback) ──────────────────────
   listingPrice?: number | null;

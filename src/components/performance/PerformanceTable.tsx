@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import {
   getIpoPerformancePageMeta,
@@ -33,7 +34,7 @@ function pctReturn(issue?: number | null, price?: number | null): number | null 
   return ((price - issue) / issue) * 100;
 }
 
-export default function PerformanceTable({ mainboardData, smeData, existingSlugs = [], year }: Props) {
+function PerformanceTableInner({ mainboardData, smeData, existingSlugs = [], year }: Props) {
   const [filter, setFilter] = useState<IpoPerformanceFilter>(() => {
     if (typeof window === 'undefined') return 'all';
     return ipoFilterFromSearch(window.location.search);
@@ -276,3 +277,5 @@ export default function PerformanceTable({ mainboardData, smeData, existingSlugs
     </div>
   );
 }
+
+export default withErrorBoundary(PerformanceTableInner, 'IPO Performance');

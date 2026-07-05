@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 
 import StockSignalView from './StockSignalView';
 
@@ -29,7 +30,7 @@ function scheduleAfterPaint(task: () => void): () => void {
   return () => window.clearTimeout(t);
 }
 
-export default function StockSignalPage({ initialStockSlug = null }: Props) {
+function StockSignalPageInner({ initialStockSlug = null }: Props) {
   const loadStarted = useRef(false);
   const [retry, setRetry] = useState(0);
   const [data, setData] = useState<StockSignalPageData | null>(null);
@@ -103,3 +104,5 @@ export default function StockSignalPage({ initialStockSlug = null }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(StockSignalPageInner, 'Stock Signal');

@@ -1,26 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import IPOProfitCalculator from '../../components/calculators/IPOProfitCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "IPO Profit Calculator",
-  "description": "Calculate potential profit or loss from IPO investments based on issue price, expected listing price, and lot size.",
-  "url": "https://ipofins.com/tools/ipo-profit-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "IPO Profit Calculator", "item": "https://ipofins.com/tools/ipo-profit-calculator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "IPO Profit Calculator",
+  slug: "ipo-profit-calculator",
+  description: "Calculate potential profit or loss from IPO investments based on issue price, expected listing price, and lot size.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",

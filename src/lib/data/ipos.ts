@@ -27,6 +27,19 @@ function formatDate(val: unknown): string | undefined {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function resolveGmp(row: IPORow): { gmp: number | null; gmpUpdatedAt?: string } {
+  const history = row.gmp_history != null ? Number(row.gmp_history) : null;
+  const community = row.gmp_community != null ? Number(row.gmp_community) : null;
+  const gmp = history ?? community;
+  if (gmp == null || !Number.isFinite(gmp)) return { gmp: null };
+  const historyAt = row.gmp_history_date ? String(row.gmp_history_date) : null;
+  const communityAt = row.gmp_community_at ? String(row.gmp_community_at) : null;
+  const gmpUpdatedAt = communityAt && historyAt
+    ? (new Date(communityAt) > new Date(historyAt) ? communityAt : historyAt)
+    : communityAt ?? historyAt ?? undefined;
+  return { gmp, gmpUpdatedAt };
+}
+
 function mapIPORow(row: IPORow): IPORecord {
   const sub: SubscriptionDetails = {
     retail: row.retail_times != null ? Number(row.retail_times) : null,
@@ -34,6 +47,8 @@ function mapIPORow(row: IPORow): IPORecord {
     qib: row.qib_times != null ? Number(row.qib_times) : null,
     employee: null,
   };
+
+  const { gmp, gmpUpdatedAt } = resolveGmp(row);
 
   return {
     name: String(row.name),
@@ -60,8 +75,8 @@ function mapIPORow(row: IPORow): IPORecord {
     drhpUrl: row.drhp_url ? String(row.drhp_url) : undefined,
     subscription: row.total_times != null ? Number(row.total_times) : null,
     subscriptionDetails: sub,
-    // GMP has been removed from the product (no authorized source); kept null for type compatibility.
-    gmp: null,
+    gmp,
+    gmpUpdatedAt,
     listingPrice: optNumber(row.listing_price),
     currentPrice: optNumber(row.current_price),
     price1w: optNumber(row.price_1w),
@@ -79,6 +94,7 @@ function mapIPORow(row: IPORow): IPORecord {
   };
 }
 
+
 async function queryIPOs(whereClause?: { slug: string }) {
   const sql = requireDb();
 
@@ -89,13 +105,24 @@ async function queryIPOs(whereClause?: { slug: string }) {
         s.total_times, s.retail_times, s.nii_times, s.qib_times,
         p.listing_price, p.listing_gain_pct, p.current_price,
         p.price_1w, p.price_1m, p.price_3m, p.price_6m, p.price_1y,
-        p.return_1m_pct, p.return_1y_pct
+        p.return_1m_pct, p.return_1y_pct,
+        gh.gmp AS gmp_history,
+        gh.gmp_date AS gmp_history_date,
+        NULL::numeric AS gmp_community,
+        NULL::timestamptz AS gmp_community_at
       FROM ipos i
       LEFT JOIN LATERAL (
         SELECT total_times, retail_times, nii_times, qib_times
         FROM ipo_subscriptions WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
       ) s ON true
       LEFT JOIN ipo_performance p ON p.ipo_id = i.id
+      LEFT JOIN LATERAL (
+        SELECT gmp, date AS gmp_date
+        FROM ipo_gmp_history
+        WHERE ipo_id = i.id
+        ORDER BY date DESC
+        LIMIT 1
+      ) gh ON true
       WHERE i.slug = ${whereClause.slug}
       LIMIT 1
     `;
@@ -108,13 +135,24 @@ async function queryIPOs(whereClause?: { slug: string }) {
       s.total_times, s.retail_times, s.nii_times, s.qib_times,
       p.listing_price, p.listing_gain_pct, p.current_price,
       p.price_1w, p.price_1m, p.price_3m, p.price_6m, p.price_1y,
-      p.return_1m_pct, p.return_1y_pct
+      p.return_1m_pct, p.return_1y_pct,
+      gh.gmp AS gmp_history,
+      gh.gmp_date AS gmp_history_date,
+      NULL::numeric AS gmp_community,
+      NULL::timestamptz AS gmp_community_at
     FROM ipos i
     LEFT JOIN LATERAL (
       SELECT total_times, retail_times, nii_times, qib_times
       FROM ipo_subscriptions WHERE ipo_id = i.id ORDER BY date DESC LIMIT 1
     ) s ON true
     LEFT JOIN ipo_performance p ON p.ipo_id = i.id
+    LEFT JOIN LATERAL (
+      SELECT gmp, date AS gmp_date
+      FROM ipo_gmp_history
+      WHERE ipo_id = i.id
+      ORDER BY date DESC
+      LIMIT 1
+    ) gh ON true
     ORDER BY
       CASE i.status
         WHEN 'live' THEN 1 WHEN 'open' THEN 2 WHEN 'upcoming' THEN 3

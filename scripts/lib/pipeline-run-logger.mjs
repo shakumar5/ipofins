@@ -12,6 +12,7 @@
  */
 
 import { sql } from './db.mjs';
+import { sendAlert } from './webhook-notifier.mjs';
 
 /**
  * Start a pipeline run — inserts a row into pipeline_runs with status='running'.
@@ -34,6 +35,7 @@ export async function startRun(pipeline, opts = {}) {
   return {
     runId: run.id,
     startedAt: new Date(run.started_at + 'Z'),
+    _pipeline: pipeline,
     log(msg) {
       const ts = new Date().toISOString().slice(11, 19);
       console.log(`    [${ts}] ${msg}`);
@@ -64,6 +66,16 @@ export async function endRun(ctx, opts) {
         counts_json   = ${opts.counts ? JSON.stringify(opts.counts) : null}
     WHERE id = ${ctx.runId}
   `;
+
+  const pipeline = ctx._pipeline ?? 'pipeline';
+  const severity = opts.status === 'success' ? 'info' : opts.status === 'aborted' ? 'warning' : 'error';
+  const emoji = opts.status === 'success' ? '✅' : opts.status === 'aborted' ? '⚠️' : '❌';
+  await sendAlert({
+    title: `${emoji} ${pipeline} — ${opts.status}`,
+    message: opts.message ?? `Rows upserted: ${opts.rows_upserted ?? 0}. Quality gate: ${opts.qualityGate ?? 'skipped'}.`,
+    severity,
+    source: pipeline,
+  });
 }
 
 /**

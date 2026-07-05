@@ -1,6 +1,7 @@
 import type { SmartMoneyMonthData } from '../../lib/data/holdings';
 import type { SectorIntelligenceData, SectorIntelligenceRow } from '../../lib/sector-intelligence';
 import { sectorIntelligencePath } from '../../lib/sector-intelligence-meta';
+import { withErrorBoundary } from '../withErrorBoundary';
 import SectorStockMovesPanel from './SectorStockMovesPanel';
 
 interface Props {
@@ -29,7 +30,7 @@ function trendColor(direction: string): string {
   return 'text-surface-500';
 }
 
-export default function SectorIntelligenceDetail({ row, data, monthMoves = null }: Props) {
+function SectorIntelligenceDetailInner({ row, data, monthMoves = null }: Props) {
   return (
     <div className="space-y-6">
       <div className="p-5 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-600 rounded-xl">
@@ -116,3 +117,5 @@ export default function SectorIntelligenceDetail({ row, data, monthMoves = null 
     </div>
   );
 }
+
+export default withErrorBoundary(SectorIntelligenceDetailInner, 'Sector Intelligence');

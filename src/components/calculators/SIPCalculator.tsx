@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { validateAmount, validateRate, validateYears } from '../../utils/calculator-validation';
+import { withErrorBoundary } from '../withErrorBoundary';
+import CalculatorShareRow from '../dashboard/CalculatorShareRow';
 
 function getUrlParams() {
   if (typeof window === 'undefined') return { sip: 5000, rate: 12, years: 10 };
@@ -11,14 +13,13 @@ function getUrlParams() {
   };
 }
 
-export default function SIPCalculator() {
+function SIPCalculatorInner() {
   const init = getUrlParams();
   const [monthlyInvestment, setMonthlyInvestment] = useState(Math.min(Math.max(init.sip, 500), 100000));
   const [expectedReturn, setExpectedReturn] = useState(Math.min(Math.max(init.rate, 1), 30));
   const [timePeriod, setTimePeriod] = useState(Math.min(Math.max(init.years, 1), 40));
 
   const [errors, setErrors] = useState<{ sip?: string; rate?: string; years?: string }>({});
-  const [copied, setCopied] = useState(false);
 
   // Sync URL params on change
   useEffect(() => {
@@ -69,17 +70,7 @@ export default function SIPCalculator() {
     if (v.isValid) setTimePeriod(val);
   }, []);
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareText = `My SIP Plan: ₹${monthlyInvestment.toLocaleString('en-IN')}/month for ${timePeriod} years at ${expectedReturn}% → ${formatCurrency(result.futureValue)} corpus. Calculate yours:`;
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { /* ignore */ }
-  };
 
   return (
     <div className="space-y-8">
@@ -217,33 +208,11 @@ export default function SIPCalculator() {
         </div>
       </div>
 
-      {/* Share Row */}
-      <div className="flex flex-wrap gap-2 pt-2 border-t border-surface-100 dark:border-surface-700">
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"
-          aria-label="Share SIP result on WhatsApp"
-        >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.116 1.528 5.845L0 24l6.335-1.507A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.011-1.371l-.36-.214-3.724.886.904-3.618-.234-.373A9.818 9.818 0 1112 21.818z"/>
-          </svg>
-          Share on WhatsApp
-        </a>
-        <button
-          type="button"
-          onClick={copyLink}
-          className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600 transition-colors"
-          aria-label="Copy link to this calculation"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          {copied ? 'Copied!' : 'Copy Link'}
-        </button>
-      </div>
+      <CalculatorShareRow
+        tool="SIP Calculator"
+        summary={`₹${monthlyInvestment.toLocaleString('en-IN')}/mo × ${timePeriod}yr @ ${expectedReturn}% → ${formatCurrency(result.futureValue)}`}
+        shareText={shareText}
+      />
 
       <p className="text-xs text-surface-400 dark:text-surface-500">
         Assumes fixed monthly investment and constant annual return rate. Actual mutual fund returns vary. Not investment advice.
@@ -251,3 +220,5 @@ export default function SIPCalculator() {
     </div>
   );
 }
+
+export default withErrorBoundary(SIPCalculatorInner, 'SIP Calculator');

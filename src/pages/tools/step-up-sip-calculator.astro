@@ -1,27 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import StepUpSIPCalculator from '../../components/calculators/StepUpSIPCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Step-Up SIP Calculator - Calculate Growing SIP Returns",
-  "description": "Free Step-Up SIP calculator. See how increasing your SIP by 10% every year creates significantly more wealth than a regular SIP.",
-  "url": "https://ipofins.com/tools/step-up-sip-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web Browser",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "creator": { "@type": "Organization", "name": "IPOFins", "url": "https://ipofins.com" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "Step-Up SIP Calculator", "item": "https://ipofins.com/tools/step-up-sip-calculator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "Step-Up SIP Calculator - Calculate Growing SIP Returns",
+  slug: "step-up-sip-calculator",
+  description: "Free Step-Up SIP calculator. See how increasing your SIP by 10% every year creates significantly more wealth than a regular SIP.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",

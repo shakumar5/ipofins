@@ -7,13 +7,14 @@ import {
 } from '../../lib/top-stocks-shared';
 import type { TopStocksFilters } from '../../lib/top-stocks-meta';
 import TopStocksBoard from './TopStocksBoard';
+import { withErrorBoundary } from '../withErrorBoundary';
 
 interface Props {
   initialPayload: TopStocksPayload;
   initialFilters?: TopStocksFilters;
 }
 
-export default function TopStocksLoader({ initialPayload, initialFilters }: Props) {
+function TopStocksLoaderInner({ initialPayload, initialFilters }: Props) {
   const [payload, setPayload] = useState<TopStocksPayload>(
     initialPayload.hasData ? initialPayload : emptyTopStocksPayload(),
   );
@@ -87,3 +88,5 @@ export default function TopStocksLoader({ initialPayload, initialFilters }: Prop
 
   return <TopStocksBoard payload={payload} initialFilters={initialFilters} />;
 }
+
+export default withErrorBoundary(TopStocksLoaderInner, 'Top Stocks');

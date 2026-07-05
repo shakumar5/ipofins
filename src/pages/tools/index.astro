@@ -91,6 +91,20 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
       </div>
     </div>
 
+    <!-- Portfolio Analysis -->
+    <div class="mb-8">
+      <h2 class="text-base font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">Portfolio Analysis</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {['mf-xray'].map(slug => {
+          const tool = toolsData.find(t => t.slug === slug);
+          if (!tool) return null;
+          return (
+            <ToolCard title={tool.title} description={tool.description} href={`/tools/${tool.slug}`} icon={tool.icon} color={tool.color} />
+          );
+        }).filter(Boolean)}
+      </div>
+    </div>
+
     <!-- IPO Tools -->
     <div class="mb-4">
       <h2 class="text-base font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">IPO Tools</h2>
@@ -107,7 +121,7 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
           !['sip-calculator','lumpsum-calculator','swp-calculator','cagr-calculator','return-simulator','step-up-sip-calculator',
             'emi-calculator','fd-calculator','ppf-calculator','nps-calculator',
             'tax-calculator','tax-saving-planner','goal-planner','retirement-calculator','rent-vs-buy-calculator',
-            'ipo-profit-calculator'].includes(t.slug)
+            'ipo-profit-calculator','mf-xray'].includes(t.slug)
         ).map(tool => (
           <ToolCard title={tool.title} description={tool.description} href={`/tools/${tool.slug}`} icon={tool.icon} color={tool.color} />
         ))}

@@ -1,26 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import NPSCalculator from '../../components/calculators/NPSCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "NPS Calculator",
-  "description": "Calculate your National Pension System corpus at retirement. Estimate monthly pension based on your contributions.",
-  "url": "https://ipofins.com/tools/nps-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "NPS Calculator", "item": "https://ipofins.com/tools/nps-calculator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "NPS Calculator",
+  slug: "nps-calculator",
+  description: "Calculate your National Pension System corpus at retirement. Estimate monthly pension based on your contributions.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",

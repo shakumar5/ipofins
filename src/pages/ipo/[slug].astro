@@ -5,6 +5,8 @@ import AdUnit from '../../components/AdUnit.astro';
 import IPOScoreBox from '../../components/IPOScoreBox.astro';
 import IpoRiskScore from '../../components/IpoRiskScore.astro';
 import IpoSubscriptionBars from '../../components/IpoSubscriptionBars.astro';
+import IPOAlertSignup from '../../components/ipo/IPOAlertSignup';
+import WatchlistButton from '../../components/dashboard/WatchlistButton';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { ZERODHA_OPEN_ACCOUNT_URL, ZERODHA_IPO_APPLY_URL, GROWW_IPO_APPLY_URL, GROWW_GENERAL_URL } from '../../lib/affiliate-links';
 import { withCorrectStatuses } from '../../utils/ipo-status';
@@ -79,6 +81,12 @@ const listingGainPct =
   ipo.listingPrice != null && issuePrice != null && issuePrice > 0
     ? ((ipo.listingPrice - issuePrice) / issuePrice) * 100
     : null;
+
+const gmpEstListing =
+  issuePrice != null && ipo.gmp != null ? issuePrice + ipo.gmp : null;
+const gmpEstGainPct =
+  issuePrice && issuePrice > 0 && ipo.gmp != null ? (ipo.gmp / issuePrice) * 100 : null;
+const showAlertSignup = !['listed', 'withdrawn', 'failed'].includes(ipo.status);
 
 const postListingRows = hasPostListing
   ? postListingPoints.map((point) => ({
@@ -189,7 +197,8 @@ const jsonLd = [financialProductLd, breadcrumbLd];
           {sector && <span class="text-xs text-surface-400">• {sector}</span>}
         </div>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 flex-wrap">
+        <WatchlistButton client:visible slug={ipo.slug} name={ipo.name} />
         {(ipo.ipoScore ?? ipo.aiScore) && (
           <div class="text-center">
             <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
@@ -403,6 +412,47 @@ const jsonLd = [financialProductLd, breadcrumbLd];
     </section>
   ) : null}
 
+  <!-- Grey Market Premium (unofficial) -->
+  {ipo.gmp != null && ipo.status !== 'listed' && (
+    <section class="container-wide py-4">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Grey Market Premium (GMP)</h2>
+      <div class="card border-warning-200 dark:border-warning-800/40">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          <div class="text-center">
+            <p class="text-xs text-surface-500">Issue Price</p>
+            <p class="text-base font-bold font-mono mt-1">{issuePrice ? `₹${issuePrice}` : '—'}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs text-surface-500">GMP</p>
+            <p class={`text-base font-bold font-mono mt-1 ${ipo.gmp >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+              {ipo.gmp >= 0 ? `+₹${ipo.gmp}` : `−₹${Math.abs(ipo.gmp)}`}
+            </p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs text-surface-500">Est. Listing</p>
+            <p class="text-base font-bold font-mono mt-1">{gmpEstListing ? `₹${gmpEstListing}` : '—'}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs text-surface-500">Est. Gain</p>
+            <p class={`text-base font-bold font-mono mt-1 ${(gmpEstGainPct ?? 0) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+              {gmpEstGainPct != null ? `${gmpEstGainPct >= 0 ? '+' : ''}${gmpEstGainPct.toFixed(1)}%` : '—'}
+            </p>
+          </div>
+        </div>
+        <p class="text-xs text-warning-700 dark:text-warning-300 bg-warning-50 dark:bg-warning-950/20 rounded-lg px-3 py-2">
+          GMP is unofficial grey market data — not regulated by SEBI. Use only as a sentiment indicator alongside subscription data.
+          <a href="/ipo/gmp-today" class="underline ml-1 hover:text-primary-600">View all IPO GMP →</a>
+        </p>
+      </div>
+    </section>
+  )}
+
+  {showAlertSignup && (
+    <section class="container-wide py-4">
+      <IPOAlertSignup client:visible ipoSlug={ipo.slug} ipoName={ipo.name} />
+    </section>
+  )}
+
   <!-- Investment Analysis (IPOFins Score) -->
   {(ipo.ipoScore ?? ipo.aiScore) && (
     <section class="container-wide py-4">
@@ -562,7 +612,8 @@ const jsonLd = [financialProductLd, breadcrumbLd];
     </section>
   )}
 
-  <!-- Apply / Trade CTA -->  <section class="container-wide py-4">
+  <!-- Apply / Trade CTA -->
+  <section class="container-wide py-4">
     <div class="card bg-gradient-to-r from-primary-50 to-surface-50 dark:from-primary-950/20 dark:to-surface-800 border-primary-200 dark:border-primary-800">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         {ipo.status === 'listed' ? (

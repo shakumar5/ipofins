@@ -1,0 +1,12 @@
+{
+  "_comment": "Manually curated unofficial GMP (₹/share). Synced to ipo_gmp_history via npm run pipeline:gmp",
+  "updatedAt": "2026-07-05",
+  "entries": [
+    { "slug": "susan-electricals-india", "gmp": 43 },
+    { "slug": "horizon-reclaim-india", "gmp": 55 },
+    { "slug": "liotech-industries", "gmp": 51 },
+    { "slug": "leapfrog-engineering-services", "gmp": 0 },
+    { "slug": "diksha-polymers", "gmp": 0 },
+    { "slug": "clay-craft-india", "gmp": 40 }
+  ]
+}

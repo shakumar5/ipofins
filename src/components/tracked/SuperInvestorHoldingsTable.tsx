@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import {
   formatCr,
   formatPct,
@@ -83,7 +84,7 @@ function sortHoldings(rows: EntityHoldingRow[], sortBy: SortKey, sortDir: 'asc' 
   });
 }
 
-export default function SuperInvestorHoldingsTable({ holdings }: Props) {
+function SuperInvestorHoldingsTableInner({ holdings }: Props) {
   const [sortBy, setSortBy] = useState<SortKey>('stake');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -232,3 +233,5 @@ export default function SuperInvestorHoldingsTable({ holdings }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(SuperInvestorHoldingsTableInner, 'Super Investor Holdings');

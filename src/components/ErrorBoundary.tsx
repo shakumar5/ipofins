@@ -1,4 +1,5 @@
 import React from 'react';
+import { captureClientException } from '../lib/sentry-client';
 
 interface Props {
   children: React.ReactNode;
@@ -35,8 +36,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    // Log to monitoring (Sentry will pick this up once integrated)
-    console.error(`[IPOFins ErrorBoundary${this.props.label ? ` — ${this.props.label}` : ''}]`, error, info);
+    captureClientException(error, {
+      componentStack: info.componentStack,
+      label: this.props.label,
+    });
   }
 
   handleRetry = () => {

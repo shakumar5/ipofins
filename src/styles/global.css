@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Self-hosted via @fontsource-variable (bundled by Vite — no Google Fonts CDN) */
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -40,8 +44,8 @@
   --color-warning-500: #f59e0b;
   --color-warning-600: #b45309;
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
   --animate-fade-in: fadeIn 0.4s ease-out;
   --animate-slide-up: slideUp 0.3s ease-out;

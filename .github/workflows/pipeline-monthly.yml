@@ -88,9 +88,13 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.skip_deploy != true
         run: |
           npm i -g vercel@latest
-          mkdir -p .vercel/output/static
-          cp -r dist/* .vercel/output/static/
-          node scripts/write-vercel-output-config.mjs
+          if [ -f .vercel/output/config.json ]; then
+            node scripts/write-vercel-output-config.mjs --merge
+          else
+            mkdir -p .vercel/output/static
+            cp -r dist/* .vercel/output/static/
+            node scripts/write-vercel-output-config.mjs
+          fi
           vercel deploy --prebuilt --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

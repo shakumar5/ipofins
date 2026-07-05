@@ -1,6 +1,7 @@
 ---
 import { ipoDetailHref } from '../lib/list-back-nav';
 import { formatSubscriptionTimes, subscriptionBarWidth } from '../lib/ipo-list-sections';
+import WatchlistButton from './dashboard/WatchlistButton';
 
 interface Props {
   name: string;
@@ -72,6 +73,8 @@ const detailHref = listFrom
   : `/ipo/${slug}`;
 ---
 
+<div class="relative group">
+<WatchlistButton client:visible slug={slug} name={name} variant="compact" />
 <a href={detailHref} class="card group block">
   <!-- Header -->
   <div class="flex items-start justify-between mb-4">
@@ -146,3 +149,4 @@ const detailHref = listFrom
     )}
   </div>
 </a>
+</div>
