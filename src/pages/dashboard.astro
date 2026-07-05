@@ -1,41 +1,258 @@
 ---
+/**
+ * Dashboard — localStorage-based personal dashboard.
+ * No login, no server. All data stored in your browser only.
+ * - Watchlist: IPO slugs saved from IPO detail pages
+ * - Recently viewed: last 10 pages visited
+ * - Saved calculations: calculator results
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/layout/PageHeader.astro';
-import PortfolioTracker from '../components/dashboard/PortfolioTracker.tsx';
-import Watchlist from '../components/dashboard/Watchlist.tsx';
+import { getAllIPOs } from '../lib/data/ipos';
+import { withCorrectStatuses } from '../utils/ipo-status';
+import AdUnit from '../components/AdUnit.astro';
 
-const today = new Date().toLocaleDateString('en-IN', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'Asia/Kolkata',
-});
+const iposData = withCorrectStatuses(await getAllIPOs());
+// Pass a lightweight serializable version to the client script
+const ipoMap = Object.fromEntries(
+  iposData.map(ipo => [ipo.slug, {
+    name: ipo.name,
+    status: ipo.status,
+    type: ipo.type,
+    priceRange: ipo.priceRange ?? '',
+    closeDate: ipo.closeDate ?? '',
+    subscription: ipo.subscription ?? null,
+    sector: ipo.sector ?? '',
+  }])
+);
 ---
 
-<BaseLayout title="Investment Dashboard - Portfolio & Watchlist | IPOFins" description="Preview dashboard with sample portfolio and watchlist data stored locally in your browser. Not connected to live brokerage accounts." robots="noindex, nofollow">
+<BaseLayout
+  title="My Dashboard — IPO Watchlist & Saved Calculations | IPOFins"
+  description="Your personal IPO watchlist, recently viewed pages, and saved calculator results — stored privately in your browser. No login required."
+  robots="noindex, nofollow"
+>
   <section class="container-wide py-8">
-    <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-      <strong>Preview only.</strong> This dashboard uses sample data and browser localStorage. It is not linked to your demat or mutual fund accounts. No login or paid plan is required.
+    <!-- Privacy notice -->
+    <div class="mb-6 rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-950/20 px-4 py-3 flex items-start gap-3">
+      <svg class="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+      <div>
+        <p class="text-sm font-semibold text-primary-800 dark:text-primary-200">100% Private — Your Browser Only</p>
+        <p class="text-xs text-primary-700 dark:text-primary-300 mt-0.5">All data is stored in your browser's localStorage. Nothing is sent to any server. Clearing browser data will reset your dashboard.</p>
+      </div>
     </div>
 
     <PageHeader
-      title="Dashboard"
-      subtitle={`Sample portfolio overview — ${today}`}
-      freshness="Preview data"
-      source="Browser localStorage only"
+      title="My Dashboard"
+      subtitle="Your personal watchlist, recently viewed pages, and saved calculations."
+      freshness="Browser localStorage"
+      source="No server — fully private"
       class="mb-8"
     />
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Dashboard Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Watchlist -->
       <div class="lg:col-span-2">
-        <h2 class="section-title mb-4">Portfolio Tracker</h2>
-        <PortfolioTracker client:idle />
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white">IPO Watchlist</h2>
+          <button
+            id="clear-watchlist"
+            type="button"
+            class="text-xs text-danger-600 dark:text-danger-400 hover:underline"
+          >
+            Clear all
+          </button>
+        </div>
+        <div id="watchlist-container" class="space-y-3">
+          <div class="card-compact text-center text-surface-500 dark:text-surface-400 text-sm py-8" id="watchlist-empty">
+            <p class="mb-2">No IPOs in your watchlist yet.</p>
+            <a href="/ipo" class="btn-primary px-4 py-2 text-sm">Browse IPOs →</a>
+          </div>
+        </div>
+        <p class="text-xs text-surface-400 dark:text-surface-500 mt-3">
+          Add IPOs to your watchlist from any <a href="/ipo" class="text-primary-600 hover:underline">IPO detail page</a>.
+        </p>
       </div>
-      <div>
-        <h2 class="section-title mb-4">Watchlist & Alerts</h2>
-        <Watchlist client:idle />
+
+      <!-- Recently Viewed + Saved Calcs -->
+      <div class="space-y-6">
+        <!-- Recently Viewed -->
+        <div>
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Recently Viewed</h2>
+          <div id="recents-container" class="space-y-2">
+            <p class="text-sm text-surface-500 dark:text-surface-400 text-center py-4" id="recents-empty">No recent pages yet.</p>
+          </div>
+        </div>
+
+        <!-- Saved Calculations -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-surface-900 dark:text-white">Saved Calculations</h2>
+            <button id="clear-calcs" type="button" class="text-xs text-danger-600 dark:text-danger-400 hover:underline">Clear</button>
+          </div>
+          <div id="calcs-container" class="space-y-2">
+            <p class="text-sm text-surface-500 dark:text-surface-400 text-center py-4" id="calcs-empty">No saved calculations yet.</p>
+          </div>
+          <p class="text-xs text-surface-400 dark:text-surface-500 mt-2">
+            Save results from any <a href="/tools" class="text-primary-600 hover:underline">calculator</a>.
+          </p>
+        </div>
       </div>
     </div>
+
+    <!-- Quick Links -->
+    <section class="mt-10 pt-8 border-t border-surface-200 dark:border-surface-700">
+      <h2 class="text-base font-semibold text-surface-900 dark:text-white mb-4">Quick Access</h2>
+      <div class="nav-btn-group">
+        <a href="/ipo" class="btn-secondary px-5 py-2.5 text-sm">Live IPOs</a>
+        <a href="/ipo/gmp-today" class="btn-secondary px-5 py-2.5 text-sm">GMP Today</a>
+        <a href="/mutual-funds/smart-money" class="btn-secondary px-5 py-2.5 text-sm">Smart Money</a>
+        <a href="/super-investors" class="btn-secondary px-5 py-2.5 text-sm">Super Investors</a>
+        <a href="/tools/sip-calculator" class="btn-secondary px-5 py-2.5 text-sm">SIP Calculator</a>
+        <a href="/mutual-funds/portfolio-overlap-checker" class="btn-secondary px-5 py-2.5 text-sm">Portfolio Overlap</a>
+      </div>
+    </section>
+
+    <div class="mt-8">
+      <AdUnit slot="1234567890" format="horizontal" />
+    </div>
   </section>
+
+  <!-- Dashboard JS — pure localStorage, no server calls -->
+  <script is:inline define:vars={{ ipoMap }}>
+  (function() {
+    var WATCHLIST_KEY = 'ipofins-watchlist';
+    var RECENTS_KEY = 'ipofins-recents';
+    var CALCS_KEY = 'ipofins-calculations';
+
+    function safeGet(key) {
+      try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; }
+    }
+    function safeSet(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+
+    // Record current page as a recent
+    (function trackRecent() {
+      var recents = safeGet(RECENTS_KEY) || [];
+      var current = { url: location.pathname, title: document.title.split(' | ')[0], ts: Date.now() };
+      recents = recents.filter(function(r) { return r.url !== current.url; });
+      recents.unshift(current);
+      safeSet(RECENTS_KEY, recents.slice(0, 10));
+    })();
+
+    // Status badge class
+    function statusClass(status) {
+      return status === 'live' ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300' :
+             status === 'upcoming' ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' :
+             status === 'allotment' ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' :
+             'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300';
+    }
+
+    // Render watchlist
+    function renderWatchlist() {
+      var slugs = safeGet(WATCHLIST_KEY) || [];
+      var container = document.getElementById('watchlist-container');
+      var empty = document.getElementById('watchlist-empty');
+      if (!container) return;
+
+      var active = slugs.filter(function(s) { return !!ipoMap[s]; });
+      if (active.length === 0) {
+        if (empty) empty.style.display = '';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+
+      container.innerHTML = active.map(function(slug) {
+        var ipo = ipoMap[slug];
+        var sub = ipo.subscription ? ipo.subscription.toFixed(1) + '×' : '—';
+        return '<a href="/ipo/' + slug + '" class="card-compact group block hover:shadow-md transition-shadow">' +
+          '<div class="flex items-center justify-between gap-3">' +
+            '<div class="min-w-0">' +
+              '<p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 truncate">' + ipo.name + '</p>' +
+              '<p class="text-xs text-surface-500 mt-0.5">' + ipo.type.toUpperCase() + (ipo.sector ? ' · ' + ipo.sector : '') + (ipo.closeDate ? ' · Closes ' + ipo.closeDate : '') + '</p>' +
+            '</div>' +
+            '<div class="flex items-center gap-2 flex-shrink-0">' +
+              (ipo.subscription ? '<span class="text-xs font-bold text-primary-600 font-mono">' + sub + '</span>' : '') +
+              '<span class="badge text-[10px] ' + statusClass(ipo.status) + '">' + ipo.status + '</span>' +
+              '<button class="remove-watchlist text-xs text-danger-500 hover:text-danger-700 ml-1" data-slug="' + slug + '" type="button" aria-label="Remove from watchlist">✕</button>' +
+            '</div>' +
+          '</div>' +
+        '</a>';
+      }).join('');
+
+      // Wire up remove buttons
+      container.querySelectorAll('.remove-watchlist').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var slug = btn.getAttribute('data-slug');
+          var list = safeGet(WATCHLIST_KEY) || [];
+          safeSet(WATCHLIST_KEY, list.filter(function(s) { return s !== slug; }));
+          renderWatchlist();
+        });
+      });
+    }
+
+    // Render recently viewed
+    function renderRecents() {
+      var recents = safeGet(RECENTS_KEY) || [];
+      var container = document.getElementById('recents-container');
+      var empty = document.getElementById('recents-empty');
+      if (!container) return;
+      var toShow = recents.filter(function(r) { return r.url !== '/dashboard'; }).slice(0, 8);
+      if (toShow.length === 0) { if (empty) empty.style.display = ''; return; }
+      if (empty) empty.style.display = 'none';
+      container.innerHTML = toShow.map(function(r) {
+        return '<a href="' + r.url + '" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors group">' +
+          '<svg class="w-3.5 h-3.5 text-surface-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+          '<span class="text-sm text-surface-700 dark:text-surface-300 group-hover:text-primary-600 truncate">' + r.title + '</span>' +
+        '</a>';
+      }).join('');
+    }
+
+    // Render saved calculations
+    function renderCalcs() {
+      var calcs = safeGet(CALCS_KEY) || [];
+      var container = document.getElementById('calcs-container');
+      var empty = document.getElementById('calcs-empty');
+      if (!container) return;
+      if (calcs.length === 0) { if (empty) empty.style.display = ''; return; }
+      if (empty) empty.style.display = 'none';
+      container.innerHTML = calcs.slice(0, 5).map(function(c) {
+        return '<div class="card-compact">' +
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div class="min-w-0">' +
+              '<p class="text-xs font-semibold text-surface-800 dark:text-surface-200">' + c.tool + '</p>' +
+              '<p class="text-xs text-surface-500 mt-0.5">' + c.summary + '</p>' +
+            '</div>' +
+            (c.url ? '<a href="' + c.url + '" class="text-xs text-primary-600 hover:underline flex-shrink-0">Open →</a>' : '') +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Clear buttons
+    var clearWatchlistBtn = document.getElementById('clear-watchlist');
+    if (clearWatchlistBtn) clearWatchlistBtn.addEventListener('click', function() {
+      safeSet(WATCHLIST_KEY, []);
+      renderWatchlist();
+    });
+
+    var clearCalcsBtn = document.getElementById('clear-calcs');
+    if (clearCalcsBtn) clearCalcsBtn.addEventListener('click', function() {
+      safeSet(CALCS_KEY, []);
+      renderCalcs();
+    });
+
+    // Initial render
+    renderWatchlist();
+    renderRecents();
+    renderCalcs();
+  })();
+  </script>
 </BaseLayout>

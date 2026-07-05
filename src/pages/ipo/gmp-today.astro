@@ -1,0 +1,327 @@
+---
+/**
+ * /ipo/gmp-today — IPO Grey Market Premium (GMP) page.
+ *
+ * GMP is UNOFFICIAL data sourced from grey market communities.
+ * It is NOT regulated by SEBI, NSE, or BSE.
+ * IPOFins clearly labels it as community-sourced sentiment data only.
+ *
+ * This page targets 200,000+ monthly searches in India for "IPO GMP today".
+ */
+import IPOLayout from '../../layouts/IPOLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import { getAllIPOs } from '../../lib/data/ipos';
+import { withCorrectStatuses } from '../../utils/ipo-status';
+import { ipoUpperPrice, formatSubscriptionTimes } from '../../lib/ipo-list-sections';
+import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
+import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
+import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+
+const allIPOs = withCorrectStatuses(await getAllIPOs());
+
+// Show live, open, upcoming, closed IPOs that have a GMP value
+const gmpIPOs = allIPOs
+  .filter(ipo =>
+    ['live', 'open', 'upcoming', 'closed', 'allotment'].includes(ipo.status) &&
+    ipo.gmp != null
+  )
+  .sort((a, b) => {
+    // Sort live/open first, then by GMP descending
+    const statusOrder: Record<string, number> = { live: 0, open: 1, upcoming: 2, closed: 3, allotment: 4 };
+    const aOrder = statusOrder[a.status] ?? 5;
+    const bOrder = statusOrder[b.status] ?? 5;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return (b.gmp ?? 0) - (a.gmp ?? 0);
+  });
+
+// Recent listed IPOs with listing performance (for context)
+const recentListed = allIPOs
+  .filter(ipo => ipo.status === 'listed' && ipo.listingPrice != null)
+  .sort((a, b) => {
+    if (!a.listingDate || !b.listingDate) return 0;
+    return new Date(b.listingDate).getTime() - new Date(a.listingDate).getTime();
+  })
+  .slice(0, 10);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "IPO GMP Today — Live IPO Grey Market Premium India 2026",
+  "description": "Track today's IPO Grey Market Premium (GMP) for all live and upcoming IPOs in India. Unofficial grey market data with official subscription status from IPOFins.",
+  "url": "https://ipofins.com/ipo/gmp-today",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+      { "@type": "ListItem", "position": 2, "name": "IPOs", "item": "https://ipofins.com/ipo" },
+      { "@type": "ListItem", "position": 3, "name": "IPO GMP Today", "item": "https://ipofins.com/ipo/gmp-today" }
+    ]
+  }
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is IPO GMP (Grey Market Premium)?",
+      "acceptedAnswer": { "@type": "Answer", "text": "IPO GMP (Grey Market Premium) is the unofficial price at which IPO shares trade in the grey market before the official listing. It reflects speculative demand and market sentiment but is NOT regulated by SEBI, NSE, or BSE. GMP is an indicator only — not a guarantee of listing price." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is IPO GMP reliable?",
+      "acceptedAnswer": { "@type": "Answer", "text": "GMP is unreliable as a listing price predictor. Research shows GMP-based predictions have only 40-60% accuracy. Large institutional subscription (QIB) and overall demand are better indicators. GMP can be manipulated and should be used only as one of many data points." }
+    },
+    {
+      "@type": "Question",
+      "name": "What does positive GMP mean?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Positive GMP means grey market traders expect the IPO to list above the issue price. For example, if an IPO is priced at ₹100 and GMP is ₹30, the expected listing price in the grey market is around ₹130. This indicates positive market sentiment but is not guaranteed." }
+    },
+    {
+      "@type": "Question",
+      "name": "What does negative GMP mean?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Negative GMP (also called kostak or subject-to) means grey market traders expect the IPO to list below the issue price. It signals weak demand or overvaluation concerns. A negative GMP is a warning signal to consider carefully before applying." }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I apply for an IPO based on GMP alone?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Never apply for an IPO based solely on GMP. Always check: company fundamentals from the DRHP, QIB subscription (institutional demand), issue size vs grey market demand, sector outlook, and valuation vs listed peers. GMP is one sentiment indicator among many." }
+    }
+  ]
+};
+---
+
+<IPOLayout
+  title="IPO GMP Today 2026 - Grey Market Premium Live Data | IPOFins"
+  description="Today's IPO Grey Market Premium (GMP) for all live and upcoming IPOs in India. Track GMP alongside official subscription data, issue price, and expected listing price. Community-sourced data — not SEBI regulated."
+  jsonLd={jsonLd}
+  activeTab="gmp"
+>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+
+  <!-- Disclaimer Banner — shown prominently per regulatory best practice -->
+  <div class="container-wide pt-6">
+    <div class="rounded-lg border border-warning-200 bg-warning-50 dark:border-warning-800/50 dark:bg-warning-950/20 px-4 py-3">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+        <div>
+          <p class="text-sm font-semibold text-warning-800 dark:text-warning-200">Grey Market Data — Unofficial & Unregulated</p>
+          <p class="text-xs text-warning-700 dark:text-warning-300 mt-1">
+            GMP data is sourced from grey market communities. It is <strong>NOT regulated by SEBI, NSE, or BSE</strong> and may be inaccurate or manipulated.
+            Use only as a sentiment indicator alongside official subscription data. Not investment advice.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="container-wide pt-6 pb-4">
+    <PageHeader
+      title="IPO GMP Today — Grey Market Premium"
+      subtitle="Community-sourced grey market premium for live and upcoming IPOs. Always cross-reference with official subscription data before applying."
+      freshness="Community sourced"
+      source="Grey market communities — unofficial"
+    />
+  </section>
+
+  <!-- GMP Table -->
+  {gmpIPOs.length > 0 ? (
+    <section class="container-wide py-4">
+      <div class="overflow-x-auto data-table-premium">
+        <table class="w-full text-sm" aria-label="IPO GMP data table">
+          <thead>
+            <tr>
+              <th class="text-left py-3 px-4">IPO Name</th>
+              <th class="text-center py-3 px-4">Status</th>
+              <th class="text-right py-3 px-4">Issue Price</th>
+              <th class="text-right py-3 px-4">GMP</th>
+              <th class="text-right py-3 px-4">Est. Listing</th>
+              <th class="text-right py-3 px-4">Est. Gain</th>
+              <th class="text-right py-3 px-4">Subscription</th>
+            </tr>
+          </thead>
+          <tbody>
+            {gmpIPOs.map(ipo => {
+              const issuePrice = ipoUpperPrice(ipo);
+              const gmp = ipo.gmp ?? 0;
+              const estListing = issuePrice ? issuePrice + gmp : null;
+              const estGainPct = issuePrice && issuePrice > 0 ? (gmp / issuePrice) * 100 : null;
+              const subLabel = formatSubscriptionTimes(ipo.subscription);
+              return (
+                <tr class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <a href={`/ipo/${ipo.slug}`} class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                      {ipo.name}
+                    </a>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{ipo.type?.toUpperCase()} · {ipo.sector}</p>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class={`badge text-xs ${
+                      ipo.status === 'live' ? 'badge-live' :
+                      ipo.status === 'open' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                      ipo.status === 'upcoming' ? 'badge-upcoming' :
+                      ipo.status === 'allotment' ? 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' :
+                      'badge-closed'
+                    }`}>{ipo.status}</span>
+                  </td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums text-surface-800 dark:text-surface-200">
+                    {issuePrice ? `₹${issuePrice}` : '—'}
+                  </td>
+                  <td class={`py-3 px-4 text-right font-mono font-bold tabular-nums ${gmp >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
+                    {gmp >= 0 ? `+₹${gmp}` : `−₹${Math.abs(gmp)}`}
+                  </td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums text-surface-800 dark:text-surface-200">
+                    {estListing ? `₹${estListing}` : '—'}
+                  </td>
+                  <td class={`py-3 px-4 text-right font-mono font-bold tabular-nums ${(estGainPct ?? 0) >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
+                    {estGainPct != null ? `${estGainPct >= 0 ? '+' : ''}${estGainPct.toFixed(1)}%` : '—'}
+                  </td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums text-primary-600 dark:text-primary-400">
+                    {subLabel ? `${subLabel}×` : '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-surface-400 dark:text-surface-500 mt-3 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-warning-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        GMP values are from grey market communities — unofficial, unverified, and NOT regulated by SEBI. Est. listing = issue price + GMP.
+      </p>
+    </section>
+  ) : (
+    <section class="container-wide py-10">
+      <div class="card text-center max-w-xl mx-auto">
+        <p class="text-surface-600 dark:text-surface-300 text-sm">No GMP data available for current IPOs.</p>
+        <p class="text-surface-500 dark:text-surface-400 text-xs mt-2">GMP data is community-sourced and updated manually. Check back when new IPOs open.</p>
+        <a href="/ipo" class="btn-primary mt-4 px-6 py-2 text-sm inline-block">View All IPOs →</a>
+      </div>
+    </section>
+  )}
+
+  <!-- Recent Listings Performance (for context / comparison) -->
+  {recentListed.length > 0 && (
+    <section class="container-wide py-8">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-2">Recent IPO Listing Performance</h2>
+      <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">Actual listing gains vs expected — helps evaluate how reliable grey market sentiment was.</p>
+      <div class="overflow-x-auto data-table-premium">
+        <table class="w-full text-sm" aria-label="Recent IPO listing performance">
+          <thead>
+            <tr>
+              <th class="text-left py-3 px-4">IPO Name</th>
+              <th class="text-right py-3 px-4">Issue Price</th>
+              <th class="text-right py-3 px-4">Listing Price</th>
+              <th class="text-right py-3 px-4">Listing Gain</th>
+              <th class="text-right py-3 px-4">Listing Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentListed.map(ipo => {
+              const issuePrice = ipoUpperPrice(ipo);
+              const listingGain = issuePrice && ipo.listingPrice && issuePrice > 0
+                ? ((ipo.listingPrice - issuePrice) / issuePrice * 100)
+                : null;
+              return (
+                <tr class="border-b border-surface-100 dark:border-surface-800">
+                  <td class="py-3 px-4">
+                    <a href={`/ipo/${ipo.slug}`} class="font-medium text-surface-900 dark:text-white hover:text-primary-600 transition-colors">
+                      {ipo.name}
+                    </a>
+                  </td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums">{issuePrice ? `₹${issuePrice}` : '—'}</td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums">{ipo.listingPrice ? `₹${ipo.listingPrice}` : '—'}</td>
+                  <td class={`py-3 px-4 text-right font-mono font-bold tabular-nums ${(listingGain ?? 0) >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
+                    {listingGain != null ? `${listingGain >= 0 ? '+' : ''}${listingGain.toFixed(1)}%` : '—'}
+                  </td>
+                  <td class="py-3 px-4 text-right text-surface-500 dark:text-surface-400">{ipo.listingDate ?? '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )}
+
+  <!-- What is GMP — SEO content -->
+  <section class="container-wide py-8">
+    <div class="max-w-3xl">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">What is IPO GMP (Grey Market Premium)?</h2>
+      <div class="space-y-4 text-sm text-surface-600 dark:text-surface-300 leading-relaxed">
+        <p>
+          IPO GMP (Grey Market Premium) is the difference between the unofficial grey market price and the IPO issue price, expressed in rupees per share.
+          Grey market refers to an <strong>informal, unregulated trading network</strong> where IPO shares and application forms are bought and sold before the official listing on NSE/BSE.
+        </p>
+        <p>
+          For example, if an IPO is priced at <span class="font-mono">₹500</span> and the GMP is <span class="font-mono">₹75</span>, the expected listing price based on grey market activity would be approximately <span class="font-mono">₹575</span> — a <span class="font-mono">15%</span> premium over the issue price.
+        </p>
+        <h3 class="text-base font-semibold text-surface-900 dark:text-white mt-5">How GMP Is Calculated</h3>
+        <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs">
+          <p><strong>Expected Listing Price</strong> = Issue Price + GMP</p>
+          <p class="mt-1"><strong>GMP %</strong> = (GMP ÷ Issue Price) × 100</p>
+          <p class="mt-1"><strong>Example:</strong> Issue ₹400 + GMP ₹60 → Expected ₹460 (+15%)</p>
+        </div>
+        <h3 class="text-base font-semibold text-surface-900 dark:text-white mt-5">Why GMP Is Unreliable</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>GMP can be artificially inflated by operators to create FOMO</li>
+          <li>Grey market prices often collapse on listing day due to profit booking</li>
+          <li>Research shows GMP has only 40-60% accuracy as a listing predictor</li>
+          <li>No regulatory oversight — no recourse if you are misled</li>
+          <li>Applying in grey market carries legal risk (SEBI prohibits grey market trading)</li>
+        </ul>
+        <p class="text-xs text-warning-700 dark:text-warning-300 bg-warning-50 dark:bg-warning-950/20 border border-warning-200 dark:border-warning-800/40 rounded-lg p-3">
+          <strong>Important:</strong> IPOFins displays GMP for informational purposes only. We do not participate in, recommend, or endorse grey market trading. Apply through your official broker (Zerodha, Groww, Upstox) using the ASBA/UPI process only.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <ContentGuideSection title="Frequently Asked Questions — IPO GMP" variant="faq" bordered container="wide">
+    <ContentGuideFaqList>
+      <ContentGuideFaqItem open>
+        <span slot="question">What is IPO GMP (Grey Market Premium)?</span>
+        <p>GMP is the unofficial price premium at which IPO shares trade in the grey market before listing. A GMP of ₹30 on a ₹100 IPO means the grey market expects listing at ~₹130. It is NOT regulated by SEBI and should be used only as a rough sentiment indicator.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is IPO GMP reliable for predicting listing price?</span>
+        <p>No — GMP has only about 40-60% accuracy. High QIB subscription (institutional demand), strong fundamentals, and sector tailwinds are better predictors. GMP can be manipulated. Never apply based on GMP alone.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">What does positive vs negative GMP mean?</span>
+        <p>Positive GMP = grey market expects listing above issue price. Negative GMP = expected listing below issue price. A high positive GMP (50%+) may indicate speculative bubble; a negative GMP is a warning sign of weak demand.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Where does IPOFins get GMP data?</span>
+        <p>GMP data on IPOFins is community-sourced and manually updated. It is clearly labeled as unofficial. We cross-reference multiple grey market sources but cannot guarantee accuracy. The official subscription data shown alongside GMP is from NSE/BSE filings.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Should I apply for an IPO based on GMP?</span>
+        <p>No. Use GMP as one sentiment indicator only. Always check: QIB subscription (most important), company financials in DRHP, valuation vs peers, sector outlook, and IPOFins score. Apply only through your official SEBI-registered broker via UPI/ASBA.</p>
+      </ContentGuideFaqItem>
+      <ContentGuideFaqItem>
+        <span slot="question">Is grey market trading legal in India?</span>
+        <p>Grey market trading in IPO shares/allotments is not explicitly prohibited but operates in a legal grey area. SEBI has warned investors against participating. There is no regulatory protection for grey market losses. Stick to official post-listing trading on NSE/BSE.</p>
+      </ContentGuideFaqItem>
+    </ContentGuideFaqList>
+  </ContentGuideSection>
+
+  <!-- Related Links -->
+  <section class="container-wide py-8">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
+    <div class="nav-btn-group">
+      <a href="/ipo" class="btn-secondary px-6 py-3">All IPOs</a>
+      <a href="/ipo/subscription-status" class="btn-secondary px-6 py-3">Subscription Status</a>
+      <a href="/ipo/allotment-status" class="btn-secondary px-6 py-3">Allotment Status</a>
+      <a href="/ipo/upcoming" class="btn-secondary px-6 py-3">Upcoming IPOs</a>
+      <a href="/ipo/performance/2026" class="btn-secondary px-6 py-3">IPO Performance 2026</a>
+      <a href="/tools/ipo-profit-calculator" class="btn-secondary px-6 py-3">IPO Profit Calculator</a>
+    </div>
+  </section>
+</IPOLayout>

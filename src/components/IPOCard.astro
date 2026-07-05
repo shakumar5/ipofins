@@ -13,6 +13,9 @@ interface Props {
   status: 'live' | 'open' | 'upcoming' | 'closed' | 'allotment' | 'listed' | 'drhp-filed' | 'sebi-approved' | 'failed' | 'withdrawn';
   type: 'mainboard' | 'sme';
   subscription?: number | null;
+  /** IPOFins quantitative score (1–10). Accepts ipoScore; aiScore still works. */
+  ipoScore?: number | null;
+  /** @deprecated use ipoScore */
   aiScore?: number | null;
   sector?: string;
   /** List page context for contextual back link on detail page */
@@ -32,12 +35,16 @@ const {
   status,
   type,
   subscription,
+  ipoScore,
   aiScore,
   sector,
   listFrom,
   sectorSlug,
   sectorLabel,
 } = Astro.props;
+
+// Canonical field takes priority; deprecated aiScore is fallback during migration
+const resolvedScore = ipoScore ?? aiScore ?? null;
 
 const statusConfig = {
   live: { label: 'Live', class: 'badge-live' },
@@ -116,6 +123,7 @@ const detailHref = listFrom
         role="progressbar"
         aria-valuenow={subscription}
         aria-valuemin={0}
+        aria-valuemax={100}
         aria-label={`Subscription ${formatSubscriptionTimes(subscription)} times`}
       >
         <div
@@ -128,11 +136,11 @@ const detailHref = listFrom
 
   <!-- Bottom Row -->
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
-    {aiScore !== undefined && aiScore !== null && (
+    {resolvedScore !== undefined && resolvedScore !== null && (
       <div class="flex items-center gap-1">
         <span class="text-xs text-surface-600 dark:text-surface-400" title="Quantitative score from subscription demand, disclosed risk, and listing data. Not investment advice.">IPOFins Score:</span>
-        <span class={`text-xs font-bold ${aiScore >= 7 ? 'text-success-500' : aiScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>
-          {aiScore}/10
+        <span class={`text-xs font-bold font-mono ${resolvedScore >= 7 ? 'text-success-500' : resolvedScore >= 4 ? 'text-warning-500' : 'text-danger-500'}`}>
+          {resolvedScore}/10
         </span>
       </div>
     )}

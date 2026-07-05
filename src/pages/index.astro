@@ -17,6 +17,20 @@ const trackedSnapshot = await getTrackedSnapshot();
 const onePercentStocks = await getOnePercentStockSlugs();
 const iposData = withCorrectStatuses(await getAllIPOs());
 const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
+// Next upcoming IPO — shown when no live IPOs exist
+const nextUpcomingIPO = liveIPOs.length === 0
+  ? iposData
+      .filter(ipo => ipo.status === 'upcoming' && ipo.openDate)
+      .sort((a, b) => new Date(a.openDate!).getTime() - new Date(b.openDate!).getTime())[0]
+  : null;
+
+const liveStatValue = liveIPOs.length > 0
+  ? liveIPOs.length
+  : nextUpcomingIPO?.openDate
+    ? `Opens ${new Date(nextUpcomingIPO.openDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+    : '0';
+const liveStatLabel = liveIPOs.length > 0 ? 'Live Now' : 'Next IPO';
+const liveStatVariant = liveIPOs.length > 0 ? 'live' : 'default';
 const featuredLiveIPOs = [...liveIPOs]
   .sort((a, b) => (a.type === 'mainboard' ? -1 : 1) - (b.type === 'mainboard' ? -1 : 1))
   .slice(0, 3);
@@ -173,7 +187,7 @@ const faqJsonLd = {
         </div>
         <div class="home-stat-bento">
           <StatCard href="/ipo" value={iposData.length} label="IPOs Tracked" />
-          <StatCard href="/ipo" value={liveIPOs.length} label="Live Now" variant="live" />
+          <StatCard href="/ipo" value={liveStatValue} label={liveStatLabel} variant={liveStatVariant} />
           <StatCard href="/mutual-funds/all" value={`${fundsCovered}+`} label="Funds with Holdings" />
           <StatCard href="/tools" value={toolsData.length} label="Finance Tools" />
           <StatCard href="/super-investors" value={trackedSnapshot.entityCount} label="Super Investors" />

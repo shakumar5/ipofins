@@ -132,6 +132,9 @@ export interface IPOListItem {
   closeDate?: string;
   listingDate?: string;
   subscription?: number | null;
+  /** IPOFins quantitative score (1–10). @deprecated aiScore still works during migration. */
+  ipoScore?: number | null;
+  /** @deprecated Use ipoScore */
   aiScore?: number | null;
 }
 

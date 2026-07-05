@@ -81,11 +81,11 @@ const badgeLabel =
           <span class="font-bold text-primary-700 dark:text-primary-400">{formatSubscriptionTimes(ipo.subscription)}x</span>
         </div>
       )}
-      {ipo.aiScore != null && ipo.aiScore > 0 && (
+      {(ipo.ipoScore ?? ipo.aiScore) != null && (ipo.ipoScore ?? ipo.aiScore)! > 0 && (
         <div>
           <span class="ipo-label">Score </span>
-          <span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>
-            {ipo.aiScore}/10
+          <span class={`font-bold font-mono ${(ipo.ipoScore ?? ipo.aiScore)! >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>
+            {ipo.ipoScore ?? ipo.aiScore}/10
           </span>
         </div>
       )}

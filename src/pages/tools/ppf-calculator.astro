@@ -3,24 +3,59 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import PPFCalculator from '../../components/calculators/PPFCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "PPF Calculator",
-  "description": "Calculate Public Provident Fund maturity value with current interest rate. Plan your 15-year PPF investment.",
-  "url": "https://ipofins.com/tools/ppf-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "PPF Calculator", "item": "https://ipofins.com/tools/ppf-calculator" }
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PPF Calculator",
+    "description": "Calculate Public Provident Fund maturity value with current interest rate. Plan your 15-year PPF investment.",
+    "url": "https://ipofins.com/tools/ppf-calculator",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+        { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+        { "@type": "ListItem", "position": 3, "name": "PPF Calculator", "item": "https://ipofins.com/tools/ppf-calculator" }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Calculate PPF Maturity Amount",
+    "description": "Calculate how much your Public Provident Fund investment will grow over 15 years",
+    "totalTime": "PT2M",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Enter your yearly PPF investment",
+        "text": "Enter how much you invest in PPF each year (max ₹1,50,000 per year)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Set the PPF interest rate",
+        "text": "Enter the current PPF interest rate (7.1% as of 2026, updated quarterly by the government)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Choose tenure",
+        "text": "PPF has a mandatory 15-year lock-in. Enter 15 or any extension period (multiples of 5 years)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 4,
+        "name": "View maturity value",
+        "text": "The calculator shows total invested amount, interest earned, and tax-free maturity amount"
+      }
     ]
   }
-};
+];
 
 const faqJsonLd = {
   "@context": "https://schema.org",

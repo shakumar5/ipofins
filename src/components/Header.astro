@@ -163,6 +163,8 @@ function isNavActive(href: string, activePrefix?: string): boolean {
     mobileMenuBtn && mobileMenuBtn.addEventListener('click', function() {
       var isOpen = mobileMenu && mobileMenu.classList.toggle('hidden') === false;
       mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
+      // Announce state change to screen readers via aria-label update
+      mobileMenuBtn.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open full menu');
     });
 
     var themeToggle = document.getElementById('theme-toggle');

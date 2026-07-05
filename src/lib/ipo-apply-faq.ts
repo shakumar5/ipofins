@@ -74,8 +74,12 @@ function formatGmpSentence(ipo: IPORecord, gmp: number): string {
 }
 
 function formatContextSentence(ipo: IPORecord, gmp?: number | null): string {
-  if (ipo.aiScore != null && ipo.aiSummary) {
-    return `IPOFins Score ${ipo.aiScore}/10: ${ipo.aiSummary}`;
+  // Use canonical fields; fall back to deprecated aliases for any legacy data
+  const score = ipo.ipoScore ?? ipo.aiScore;
+  const summary = ipo.ipoSummary ?? ipo.aiSummary;
+
+  if (score != null && summary) {
+    return `IPOFins Score ${score}/10: ${summary}`;
   }
 
   if (gmp != null && gmp > 0 && ipo.status !== 'listed') {

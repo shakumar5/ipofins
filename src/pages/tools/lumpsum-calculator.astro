@@ -3,24 +3,59 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import LumpsumCalculator from '../../components/calculators/LumpsumCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Lumpsum Calculator",
-  "description": "Calculate returns on one-time lumpsum investments in mutual funds or stocks. See how your investment grows with compound interest.",
-  "url": "https://ipofins.com/tools/lumpsum-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "Lumpsum Calculator", "item": "https://ipofins.com/tools/lumpsum-calculator" }
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Lumpsum Calculator",
+    "description": "Calculate returns on one-time lumpsum investments in mutual funds or stocks. See how your investment grows with compound interest.",
+    "url": "https://ipofins.com/tools/lumpsum-calculator",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+        { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+        { "@type": "ListItem", "position": 3, "name": "Lumpsum Calculator", "item": "https://ipofins.com/tools/lumpsum-calculator" }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Calculate Lumpsum Investment Returns",
+    "description": "Calculate the future value of a one-time mutual fund or stock market investment using compound interest",
+    "totalTime": "PT2M",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Enter your investment amount",
+        "text": "Enter the total amount you want to invest as a lump sum (e.g., ₹1,00,000)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Set expected annual return rate",
+        "text": "Enter the expected CAGR (e.g., 12% for large-cap equity funds based on historical Nifty 50 performance)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Choose investment duration",
+        "text": "Enter the number of years you plan to hold the investment (minimum 5 years recommended for equity)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 4,
+        "name": "View projected corpus",
+        "text": "The calculator shows your final maturity value, total profit earned, and effective returns"
+      }
     ]
   }
-};
+];
 
 const faqJsonLd = {
   "@context": "https://schema.org",

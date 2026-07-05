@@ -20,19 +20,18 @@ const {
 
 const CLIENT_ID = 'ca-pub-9843041963430696';
 
-const styleMap: Record<string, string> = {
-  auto: 'display:block',
-  horizontal: 'display:block; height:90px',
-  rectangle: 'display:inline-block; width:336px; height:280px',
-  vertical: 'display:block; height:600px',
+const heightMap: Record<string, string> = {
+  auto: '100px',
+  horizontal: '90px',
+  rectangle: '280px',
+  vertical: '600px',
 };
-
-const adStyle = styleMap[format] || styleMap.auto;
+const minHeight = heightMap[format] || heightMap.auto;
 ---
 
-<div class={`ad-container ${className}`}>
+<div class={`ad-container ${className}`} style={`min-height: ${minHeight};`} aria-label="Advertisement">
   <ins class="adsbygoogle"
-    style={adStyle}
+    style={format === 'rectangle' ? 'display:inline-block; width:336px; height:280px' : 'display:block'}
     data-ad-client={CLIENT_ID}
     data-ad-slot={slot}
     data-ad-format={format === 'auto' ? 'auto' : undefined}

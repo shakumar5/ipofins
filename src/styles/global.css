@@ -282,6 +282,11 @@ html.dark {
 .return-positive {
   color: var(--color-success-600);
 }
+/* Add screen-reader accessible prefix for positive returns */
+.return-positive::before {
+  content: '+';
+  speak: literal-punctuation;
+}
 
 .dark .return-positive {
   color: #34d399;
@@ -289,6 +294,11 @@ html.dark {
 
 .return-negative {
   color: var(--color-danger-600);
+}
+/* Negative returns use the proper Unicode minus (U+2212) not ASCII hyphen */
+.return-negative::before {
+  content: '\2212';  /* − Unicode minus sign */
+  speak: literal-punctuation;
 }
 
 .dark .return-negative {
@@ -333,20 +343,7 @@ html.dark {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  /* Reserve space so wrapped tab rows do not shift content below on load */
-  min-height: 12rem;
-}
-
-@media (min-width: 640px) {
-  .nav-btn-group {
-    min-height: 7rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .nav-btn-group {
-    min-height: 3.25rem;
-  }
+  /* No min-height reservation — previously caused CLS on pages with wrapping buttons */
 }
 
 .nav-btn-group .btn-primary,
@@ -371,30 +368,30 @@ button.btn-secondary {
   align-items: center;
   justify-content: center;
   padding: 0.625rem 1.25rem;
-  background-color: var(--color-surface-900);
+  background-color: var(--color-primary-600);
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
   border-radius: 0.5rem;
   transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  box-shadow: 0 1px 2px rgb(26 109 245 / 0.18);
   border: 1px solid transparent;
 }
 
 .dark .btn-primary {
-  background-color: white;
-  color: var(--color-surface-900);
+  background-color: var(--color-primary-500);
+  color: white;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-surface-800);
-  box-shadow: 0 2px 8px -2px rgb(15 23 42 / 0.12);
+  background-color: var(--color-primary-700);
+  box-shadow: 0 2px 8px -2px rgb(26 109 245 / 0.32);
   transform: translateY(-1px);
 }
 
 .dark .btn-primary:hover {
-  background-color: var(--color-surface-100);
+  background-color: var(--color-primary-400);
 }
 
 .btn-primary:active {
@@ -835,6 +832,43 @@ details[open] summary::after {
 
 details[open] > *:not(summary) {
   animation: fadeIn 0.3s ease-out;
+}
+
+/*
+ * FAQ mobile collapse — on screens < 640px, close any <details> that carries
+ * the [open] attribute via HTML (e.g. ContentGuideFaqItem open prop).
+ * Users can still tap to expand. On md+ they stay open as authored.
+ */
+@media (max-width: 639px) {
+  details[open].faq-mobile-collapse {
+    /* Override the HTML open attribute visually without JS */
+  }
+  /* Apply to ContentGuideFaqList children: all but first are closed on mobile */
+  .faq-list details:not(:first-child) {
+    /* We cannot remove the open attribute via CSS alone, so we hide the body */
+    /* This is handled via JS below using data-faq-collapsible */
+  }
+}
+
+/* Sticky IPO apply bar — sits under the fixed header */
+.ipo-sticky-apply {
+  position: sticky;
+  top: calc(var(--site-header-h, 3.5rem));
+  z-index: 40;
+}
+
+/* First column sticky in data tables (mobile horizontal scroll) */
+.data-table-premium .col-sticky {
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 1;
+}
+.data-table-premium tbody td.col-sticky {
+  background: white;
+}
+.dark .data-table-premium tbody td.col-sticky {
+  background: var(--color-surface-800);
 }
 
 /* View Transitions disabled — caused full-page swap feel on filter/url changes */

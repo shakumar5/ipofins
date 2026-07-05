@@ -3,9 +3,20 @@ import { fetchJsonCached } from '../../lib/client-data';
 
 const FundOverlapTab = lazy(() => import('./FundOverlapTab'));
 
+const FETCH_TIMEOUT_MS = 12000;
+
 interface FundOverlapItem {
   slug: string;
   name: string;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Data load timed out. Please refresh.')), ms),
+    ),
+  ]);
 }
 
 export default function FundOverlapLoader() {
@@ -17,7 +28,10 @@ export default function FundOverlapLoader() {
     let cancelled = false;
     setFunds(null);
     setError(null);
-    fetchJsonCached<FundOverlapItem[]>('/data/fund-overlap-index.json')
+    withTimeout(
+      fetchJsonCached<FundOverlapItem[]>('/data/fund-overlap-index.json'),
+      FETCH_TIMEOUT_MS,
+    )
       .then((data) => {
         if (!cancelled) setFunds(data);
       })

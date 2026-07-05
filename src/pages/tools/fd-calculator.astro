@@ -3,24 +3,59 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import FDCalculator from '../../components/calculators/FDCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "FD Calculator",
-  "description": "Calculate Fixed Deposit maturity amount and interest earned with quarterly or annual compounding.",
-  "url": "https://ipofins.com/tools/fd-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "FD Calculator", "item": "https://ipofins.com/tools/fd-calculator" }
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "FD Calculator",
+    "description": "Calculate Fixed Deposit maturity amount and interest earned with quarterly or annual compounding.",
+    "url": "https://ipofins.com/tools/fd-calculator",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
+        { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
+        { "@type": "ListItem", "position": 3, "name": "FD Calculator", "item": "https://ipofins.com/tools/fd-calculator" }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Calculate Fixed Deposit Maturity Amount",
+    "description": "Calculate how much a Fixed Deposit will grow based on principal, interest rate, and tenure",
+    "totalTime": "PT1M",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Enter your deposit amount",
+        "text": "Enter the principal amount you want to deposit (e.g., ₹1,00,000)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Enter the annual interest rate",
+        "text": "Enter the FD interest rate offered by your bank (typically 6.5% to 8% in 2026)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Set the tenure and compounding frequency",
+        "text": "Enter tenure in years and select compounding frequency (quarterly compounding gives more interest than annual)"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 4,
+        "name": "View maturity amount",
+        "text": "The calculator shows total maturity value and interest earned over the FD period"
+      }
     ]
   }
-};
+];
 
 const faqJsonLd = {
   "@context": "https://schema.org",

@@ -14,15 +14,19 @@
  * See /methodology for the public write-up.
  */
 
-import type { IPORecord } from '../types/ipo';
+import type { IPORecord, IPOVerdict } from '../types/ipo';
 import { ipoUpperPrice } from './ipo-list-sections';
 
-export type IpoVerdict = 'apply' | 'avoid' | 'neutral';
+/**
+ * @deprecated Use IPOVerdict from types/ipo.ts directly.
+ * Kept as an alias for backward compatibility — both resolve to the same type.
+ */
+export type IpoVerdict = IPOVerdict;
 
 export interface IpoScoreResult {
   score: number | null;
   summary: string | null;
-  verdict: IpoVerdict | null;
+  verdict: IPOVerdict;
 }
 
 /** True when we have enough signal to justify a score. */
@@ -35,7 +39,7 @@ interface ScoreContext {
   total: number | null;
   risk: number;
   listingGainPct: number | null;
-  verdict: IpoVerdict;
+  verdict: IPOVerdict;
 }
 
 function buildSummary(ipo: IPORecord, ctx: ScoreContext): string {
@@ -125,5 +129,14 @@ export function computeIpoScore(ipo: IPORecord): IpoScoreResult {
 /** Return a copy of the IPO with score/summary/verdict populated. */
 export function withIpoScore<T extends IPORecord>(ipo: T): T {
   const { score, summary, verdict } = computeIpoScore(ipo);
-  return { ...ipo, aiScore: score, aiSummary: summary, verdict };
+  return {
+    ...ipo,
+    // Canonical fields — always write to these
+    ipoScore: score,
+    ipoSummary: summary,
+    verdict,
+    // Deprecated aliases — keep populated so older code paths don't break during migration
+    aiScore: score,
+    aiSummary: summary,
+  };
 }
