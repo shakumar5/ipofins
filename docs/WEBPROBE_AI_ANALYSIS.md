@@ -1,8 +1,79 @@
 # 🔬 WebProbe AI — Full Analysis: IPOFins (Finverse)
 
 > Generated: July 4, 2026  
+> **Status audit:** July 5, 2026 — cross-checked against `design/premium-refresh`  
 > Analyst: WebProbe AI (Kiro)  
 > Scope: Full codebase, architecture, SEO, product, data pipeline, security, and roadmap
+
+---
+
+## ✅ Implementation Status (July 5, 2026)
+
+| # | Issue | Status | Notes |
+|---|--------|--------|-------|
+| 1 | Brand IPOFins/Finverse split | ⏭ Open | Folder `finverseui` / package `ipofins` — user-facing copy uses IPOFins |
+| 2 | Dashboard stub | ✅ Fixed | `LocalDashboard` + watchlist; no sample-data label |
+| 3 | No authentication | ⏭ By design | Optional sync is roadmap (Tier 2F) |
+| 4 | `aiScore` / AI naming | ✅ Mostly | `ipoScore`, `IPOScoreBox`; `aiScore` fallback for migration |
+| 5 | GTM before consent | ✅ Fixed | Consent Mode v2 — all storage `denied` until Accept |
+| 6 | Hardcoded AdSense | ✅ Fixed | `PUBLIC_ADSENSE_CLIENT_ID` in `src/lib/adsense.ts` |
+| 7 | `.env` backups in repo | ✅ Fixed | `.gitignore` covers `.env*` backups |
+| 8 | Staging sitemaps in `public/` | ✅ Fixed | Gitignored + `robots.txt` Disallow |
+| 9 | Calculator input validation | ✅ Fixed | `calculator-validation.ts` + `SliderField` |
+| 10 | Log files in repo root | ✅ Fixed | Gitignored |
+| 11 | No React error boundaries | ✅ Fixed | `withErrorBoundary` on calculators, Smart Money, dashboard |
+| 12 | Type drift `aiScore` | 🟡 Partial | Canonical `ipoScore`; deprecated field retained |
+| 13 | Static build = stale data | 🟡 Partial | Stale subscription chip, export stamp; ISR not shipped |
+| 14 | DB no retry at build | 🟡 Partial | `withDbRetry` in pipelines/export; not in `src/lib/db.ts` |
+| 15 | 25 min serial build | 🟡 Partial | `parallel-prebuild` / `parallel-postbuild`; not sub-8 min yet |
+| 16 | Smart Money not lazy | ✅ Fixed | `React.lazy()` tracker + signal/sector tables |
+| 17 | Duplicate SmartMoneySubNav | ⏭ Open | `.astro` + `.tsx` coexist |
+| 18 | `pages.cursorrules` route | ✅ Fixed | Moved to `.cursor/rules/` |
+| 19 | robots Disallow 1% holder | ✅ Fixed | `public/robots.txt` |
+| 20 | Conviction v1 vs v2 | 🟡 Partial | v2 in compute pipeline; v1 types remain |
+| 21 | `.bak` JSON in `src/data/` | ✅ Fixed | Gitignored; local copies removed |
+| 22 | No structured pipeline logs | ⏭ Open | Still `console.log` in scripts |
+| 23 | Missing `aria-valuemax` | ✅ Fixed | Subscription bars, sliders, IPO cards |
+| 24 | Cookie banner `onclick` | ✅ Fixed | `addEventListener` on button IDs |
+| 25 | OG PNG only | ✅ Fixed | PNG + WebP + `og:image:secure_url` |
+| 26 | Google Fonts CDN | ✅ Fixed | `@fontsource-variable` self-hosted |
+| 27 | No CSP | ✅ Fixed | `vercel.json` Content-Security-Policy |
+| 28 | `vercel.json` not reviewed | ✅ Fixed | Headers, CSP, cache in `vercel.json` |
+| 29 | Generated insights tracked | ⏭ By design | Build requires committed JSON for static deploy |
+| 30 | Analytics flush race | ✅ Fixed | `__analyticsReadyPending` / `__flushAnalyticsReady` |
+| 31 | Skeleton no timeout | ✅ Fixed | 10s timeout on Smart Money + FundTableLoader |
+| 32 | 1% Club name confusing | ✅ Fixed | FAQ + subtitle explain ≥1% SHP holders |
+| 33 | No calculator share | ✅ Fixed | `CalculatorShareRow` on all 16 calculators |
+| 34 | No PWA | ✅ Fixed | `public/manifest.json` linked in BaseLayout |
+| 35 | Staging sitemaps in index | ✅ Fixed | `reorganize-sitemaps.mjs` excludes staging |
+
+### Tier roadmap (A–U)
+
+| Tier | Item | Status |
+|------|------|--------|
+| **1A** | Edge-cached live subscription | ⏭ Not started |
+| **1B** | Email IPO alerts | ✅ `IPOAlertSignup` + `/api/ipo-alert` |
+| **1C** | IPO GMP page | ✅ `/ipo/gmp-today` + detail GMP blocks |
+| **1D** | Rename AI score | ✅ Done |
+| **1E** | Consent-gate tracking | ✅ Consent Mode v2 + timestamped consent JSON |
+| **2F** | Optional Google sync login | ⏭ Roadmap |
+| **2G** | 10-factor IPO score | ⏭ Roadmap |
+| **2H** | Compare super investors | ⏭ Roadmap |
+| **2I** | MF X-Ray | ✅ `/tools/mf-xray` |
+| **2J** | Sector rotation heatmap | ⏭ Roadmap |
+| **2K** | IPO Alpha vs index | ⏭ Roadmap |
+| **3L** | Public API product | ⏭ Roadmap |
+| **3M** | Hindi UI | ⏭ Roadmap |
+| **3N** | Social auto-post | ⏭ Partial (`insights-social-posts.json`) |
+| **3O** | IPO score backtester | ⏭ Roadmap |
+| **3P** | Affiliate funnel optimization | 🟡 `affiliate_click` GA4 events added |
+| **4Q** | ISR for IPO pages | ⏭ Roadmap |
+| **4R** | Parallel build &lt;8 min | 🟡 Partial |
+| **4S** | Sentry + error reporting | ✅ `@sentry/astro` in `astro.config.mjs` |
+| **4T** | TypeScript consolidation | 🟡 Partial |
+| **4U** | E2E smoke tests | ✅ Playwright `e2e/smoke.spec.ts` |
+
+**Remaining high-impact work (not in original critical list):** ISR/edge freshness for live IPOs, optional auth sync, sector heatmap, IPO alpha benchmarking, public API.
 
 ---
 
@@ -219,21 +290,23 @@ There are zero automated tests. Add Playwright smoke tests for the 5 critical pa
 
 ## Summary Scorecard
 
-| Dimension | Current State | Target |
+| Dimension | Current State (Jul 2026) | Target |
 |---|---|---|
-| Data freshness | Build-time static (hours stale) | Edge-cached, ISR (minutes) |
-| Personalization | Zero | Optional save/sync |
-| Alerts | None | Email/WhatsApp on IPO events |
-| Score quality | 5-factor formula | 10-factor transparent model |
-| Test coverage | 0% | Critical paths covered |
-| Revenue model | AdSense only | Ads + Affiliates + API |
-| Brand clarity | IPOFins/Finverse split | Single canonical identity |
-| Legal compliance | Partial consent | Full DPDP-compliant CMP |
-| Content depth | Thin tool pages | 1500-word SEO-ready pages |
-| Competitive moat | Good data pipeline | Sector heatmap + X-ray + backtester |
+| Data freshness | Build-time static + stale indicators; export stamp | Edge-cached, ISR (minutes) |
+| Personalization | localStorage dashboard + watchlist | Optional save/sync |
+| Alerts | Email via Resend (`/api/ipo-alert`) | Email/WhatsApp on IPO events |
+| Score quality | 5-factor `ipoScore` (transparent) | 10-factor transparent model |
+| Test coverage | Playwright smoke (7 paths) | Critical paths covered |
+| Revenue model | AdSense + affiliate GA4 events | Ads + Affiliates + API |
+| Brand clarity | IPOFins user-facing; Finverse folder only | Single canonical identity |
+| Legal compliance | Consent Mode v2 + timestamped consent | Full DPDP CMP |
+| Content depth | Calculator SEO guides + learn articles | 1500-word SEO-ready pages |
+| Competitive moat | Smart Money + MF X-Ray + GMP | Sector heatmap + backtester |
 
 ---
 
 ## Closing Note
 
-The data infrastructure here is genuinely strong — Neon + AMFI + SHP pipeline is real work that took months. The gap is on the product layer sitting above it. The move from "data dashboard" to "actionable intelligence platform" is closer than it looks. Fix the critical issues first (consent, naming, stale data), then ship the IPO alerts and MF X-Ray — those two features alone will define the product.
+The data infrastructure here is genuinely strong — Neon + AMFI + SHP pipeline is real work that took months. **As of July 5, 2026, the majority of critical and high-priority WebProbe findings are resolved** on branch `design/premium-refresh` (consent, naming, validation, error boundaries, GMP, alerts, MF X-Ray, PWA, E2E, CSP, self-hosted fonts, parallel build stages).
+
+The remaining gap is **live-data freshness during IPO windows** (ISR/edge) and **optional account sync** — those define the next product phase, not more checklist hygiene.

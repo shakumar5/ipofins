@@ -779,6 +779,7 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
 function mapFundHoldingRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
   return rows.map((r) => ({
     name: String(r.name || r.stock_name || ''),
+    stock_slug: r.stock_slug ? String(r.stock_slug) : undefined,
     pct: r.pct != null ? Number(r.pct) : 0,
     sector: String(r.sector || ''),
     month: r.month,
@@ -849,7 +850,7 @@ export async function getFundHoldings(fundSlug: string): Promise<Record<string, 
          LIMIT 1)
       ) AS id
     )
-    SELECT s.name, fh.pct_to_nav AS pct, sec.name AS sector, fh.month
+    SELECT s.name, s.slug AS stock_slug, fh.pct_to_nav AS pct, sec.name AS sector, fh.month
     FROM fund_holdings fh
     JOIN holder h ON fh.fund_id = h.id
     JOIN stocks s ON s.id = fh.stock_id

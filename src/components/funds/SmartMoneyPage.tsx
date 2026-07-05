@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useTransition, useRef, lazy, Suspense } from 'react';
 import { withErrorBoundary } from '../withErrorBoundary';
 
-import SmartMoneyTracker from './SmartMoneyTracker';
 import SmartMoneyAppSkeleton from './SmartMoneyAppSkeleton';
+const SmartMoneyTracker = lazy(() => import('./SmartMoneyTracker'));
 const SmartMoneySignalTable = lazy(() => import('./SmartMoneySignalTable'));
 const SectorIntelligenceTable = lazy(() => import('./SectorIntelligenceTable'));
 
@@ -44,6 +44,19 @@ import {
 
 const SECTOR_URL = '/data/sector-intelligence.json';
 const BASE_PATH = TRACKER_BASE_PATH;
+const FETCH_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(promise: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Data is temporarily unavailable. Try refreshing.')),
+        ms,
+      ),
+    ),
+  ]);
+}
 
 function loadSmartMoneyClient() {
   return import('../../lib/smart-money-client');
@@ -218,7 +231,7 @@ function SmartMoneyPageInner({
     try {
       const { loadTrackerMonth } = await loadSmartMoneyClient();
       const cachedIndex = resolveTrackerIndexBootstrap(initialTrackerIndex);
-      const chunk = await loadTrackerMonth(month, cachedIndex ?? undefined);
+      const chunk = await withTimeout(loadTrackerMonth(month, cachedIndex ?? undefined));
       startTransition(() => {
         setTrackerData((prev) => {
           if (!merge || !prev) return chunk;
@@ -245,7 +258,7 @@ function SmartMoneyPageInner({
         try {
           const { loadTrackerIndex, loadTrackerMonth } = await loadSmartMoneyClient();
           const cachedIndex = resolveTrackerIndexBootstrap(initialTrackerIndex);
-          const index = cachedIndex ?? await loadTrackerIndex();
+          const index = cachedIndex ?? await withTimeout(loadTrackerIndex());
           const deepMonth = initialTracker?.monthLabel;
           const bootstrapMonth = initialTrackerMonth;
           const firstMonth =
@@ -256,7 +269,7 @@ function SmartMoneyPageInner({
                 : index.months[0]?.label;
           if (!firstMonth) throw new Error('No tracker months available');
           if (cancelled) return;
-          const chunk = await loadTrackerMonth(firstMonth, index);
+          const chunk = await withTimeout(loadTrackerMonth(firstMonth, index));
           if (cancelled) return;
           startTransition(() => setTrackerData(chunk));
         } catch (err) {
@@ -277,7 +290,7 @@ function SmartMoneyPageInner({
     setSignalsError(null);
     try {
       const { loadSignalsMonth } = await loadSmartMoneyClient();
-      const data = await loadSignalsMonth(month, category);
+      const data = await withTimeout(loadSignalsMonth(month, category));
       startTransition(() => {
         setSignalsData(data);
         setSignalsMonth(month);
@@ -300,7 +313,7 @@ function SmartMoneyPageInner({
         setSignalsLoading(true);
         try {
           const { loadSignalsIndex, loadSignalsMonth } = await loadSmartMoneyClient();
-          const index = await loadSignalsIndex();
+          const index = await withTimeout(loadSignalsIndex());
           const urlFilters =
             typeof window !== 'undefined'
               ? parseSmartMoneySignalsListFiltersFromPathname(
@@ -329,7 +342,7 @@ function SmartMoneyPageInner({
           const category =
             initialSignalsFilters?.category || urlFilters.category || 'All';
           if (!month) throw new Error('No signal months available');
-          const data = await loadSignalsMonth(month, category);
+          const data = await withTimeout(loadSignalsMonth(month, category));
           if (cancelled) return;
           startTransition(() => {
             setSignalsData(data);
@@ -354,7 +367,7 @@ function SmartMoneyPageInner({
     setSectorLoading(true);
     const cancelSchedule = scheduleAfterPaint(() => {
       loadClientData()
-        .then(({ fetchJsonCached }) => fetchJsonCached<SectorIntelligenceData>(SECTOR_URL))
+        .then(({ fetchJsonCached }) => withTimeout(fetchJsonCached<SectorIntelligenceData>(SECTOR_URL)))
         .then(async (data) => {
           startTransition(() => setSectorData(data));
           if (data.currentMonth) {
@@ -412,17 +425,19 @@ function SmartMoneyPageInner({
         ) : trackerLoading && !trackerData ? (
           <SmartMoneyAppSkeleton />
         ) : trackerData ? (
-          <SmartMoneyTracker
-            data={trackerData}
-            loadingMonth={trackerLoading}
-            initialView={initialTracker?.view}
-            initialMonth={initialTracker?.monthLabel}
-            initialCategory={initialTrackerFilters?.category}
-            initialSector={initialTrackerFilters?.sector}
-            onMonthChange={(month) => {
-              if (!trackerData.byMonth[month]) loadTrackerForMonth(month);
-            }}
-          />
+          <Suspense fallback={<SmartMoneyAppSkeleton pulse={false} />}>
+            <SmartMoneyTracker
+              data={trackerData}
+              loadingMonth={trackerLoading}
+              initialView={initialTracker?.view}
+              initialMonth={initialTracker?.monthLabel}
+              initialCategory={initialTrackerFilters?.category}
+              initialSector={initialTrackerFilters?.sector}
+              onMonthChange={(month) => {
+                if (!trackerData.byMonth[month]) loadTrackerForMonth(month);
+              }}
+            />
+          </Suspense>
         ) : null
       )}
 

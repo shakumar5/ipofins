@@ -252,6 +252,16 @@ const organizationSchema = {
           if (typeof window.gtag === 'function') {
             window.gtag('config', 'G-VRXGEC8RTG');
           }
+          document.addEventListener('click', function(e) {
+            var el = e.target && e.target.closest ? e.target.closest('a[rel*="sponsored"]') : null;
+            if (el && typeof window.gtag === 'function') {
+              window.gtag('event', 'affiliate_click', {
+                event_category: 'revenue',
+                link_url: el.href || '',
+                link_text: (el.textContent || '').trim().slice(0, 80),
+              });
+            }
+          }, { capture: true });
           if (window.__markAnalyticsReady) window.__markAnalyticsReady();
           delay(1500)
             .then(function() {
@@ -459,14 +469,36 @@ const organizationSchema = {
          (FAQ items stay open on SSR, collapse after hydration on small screens). -->
     <script is:inline>
       (function() {
-        if (window.innerWidth >= 640) return;
-        // Target ContentGuideFaqList containers
-        var lists = document.querySelectorAll('.faq-list, [data-faq-list]');
-        lists.forEach(function(list) {
-          var items = list.querySelectorAll('details[open]');
-          items.forEach(function(item, idx) {
-            if (idx > 0) item.removeAttribute('open');
+        // FAQ: collapse extras on mobile
+        if (window.innerWidth < 640) {
+          var lists = document.querySelectorAll('.faq-list, [data-faq-list]');
+          lists.forEach(function(list) {
+            var items = list.querySelectorAll('details[open]');
+            items.forEach(function(item, idx) {
+              if (idx > 0) item.removeAttribute('open');
+            });
           });
+        }
+
+        // FAQ: "Show all N" for long lists (data-faq-initial)
+        document.querySelectorAll('[data-faq-list][data-faq-initial]').forEach(function(list) {
+          var initial = parseInt(list.getAttribute('data-faq-initial') || '0', 10);
+          if (!initial || initial < 1) return;
+          var items = Array.prototype.slice.call(list.querySelectorAll('details.content-guide__faq-item, details'));
+          if (items.length <= initial) return;
+          items.forEach(function(item, idx) {
+            if (idx >= initial) item.setAttribute('data-faq-hidden', '');
+          });
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'faq-show-all-btn';
+          btn.textContent = 'Show all ' + items.length + ' questions';
+          btn.addEventListener('click', function() {
+            list.setAttribute('data-faq-expanded', 'true');
+            items.forEach(function(item) { item.removeAttribute('data-faq-hidden'); });
+            btn.remove();
+          });
+          list.parentNode.insertBefore(btn, list.nextSibling);
         });
       })();
     </script>

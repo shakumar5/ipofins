@@ -320,3 +320,23 @@ This strips trailing slashes, which is correct. The `canonicalFor()` function in
 | IPO index | "All IPOs India 2026 - Mainboard & SME \| IPOFins" | ✅ Good — 58 chars |
 | MF index | "Mutual Funds India 2026 - Best & All Funds \| IPOFins" | ✅ Good |
 | Super investors | "Top Super Investors in India 2026 — Tracked Portfolios \| IPOFins" | ✅ Good — 67 chars, slightly over limit |
+
+---
+
+## IMPLEMENTATION STATUS (July 2026)
+
+| Item | Status |
+|---|---|
+| Consent Mode v2 | ✅ |
+| GMP page + IPO sector pages | ✅ |
+| Sitemap lastmod | ✅ |
+| HowTo + WebApplication tool schemas | ✅ |
+| IPO Event schema on detail pages | ✅ |
+| IPO index FAQ JSON-LD (top 5) | ✅ |
+| AMC profile pages | ✅ |
+| Best SIP funds 2026 landing | ✅ |
+| Calculator long-form content (15 tools) | ✅ |
+| Fund → Smart Money internal links | ✅ |
+| Learn articles (20+ generated) | ✅ via `generate-insights-articles.mjs` |
+| Site-wide title optimization | ✅ Key calculator + landing pages updated |
+| Portfolio overlap canonical | ✅ Existing meta/canonical on checker |

@@ -95,7 +95,7 @@ export default function SliderField({
         </div>
       )}
       {error && (
-        <p id={`${id}-error`} className="text-xs text-danger-600 dark:text-danger-400 mt-1" role="alert">
+        <p id={`${id}-error`} className="input-error-shake text-xs text-danger-600 dark:text-danger-400 mt-1" role="alert">
           {error}
         </p>
       )}

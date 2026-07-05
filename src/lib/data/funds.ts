@@ -292,6 +292,35 @@ export async function getFundsByCategory(category: string): Promise<FundRecord[]
   return funds.filter((f) => f.category.toLowerCase().includes(normalized));
 }
 
+export async function getFundsByAmc(amcSlug: string, limit = 60): Promise<FundRecord[]> {
+  try {
+    const sql = requireDb();
+    const rows = (await sql`
+      SELECT f.name, f.slug, f.category, f.nav, fr.returns_1y, fr.returns_3y, fr.returns_5y,
+             f.aum, f.risk_level, f.rating, f.scheme_code, fr.last_computed,
+             f.expense_ratio, ter_regular.expense_ratio AS expense_ratio_regular
+      FROM funds f
+      JOIN amcs a ON a.id = f.amc_id
+      LEFT JOIN LATERAL (
+        SELECT returns_1y, returns_3y, returns_5y, last_computed
+        FROM fund_returns fr2 WHERE fr2.fund_id = f.id
+        ORDER BY fr2.last_computed DESC NULLS LAST LIMIT 1
+      ) fr ON true
+      LEFT JOIN LATERAL (
+        SELECT f2.expense_ratio FROM funds f2
+        WHERE f2.slug = regexp_replace(f.slug, '-direct-plan$', '')
+          AND f2.id <> f.id AND f2.is_active = true LIMIT 1
+      ) ter_regular ON true
+      WHERE a.slug = ${amcSlug} AND f.is_active = true
+      ORDER BY fr.returns_3y DESC NULLS LAST, f.name
+      LIMIT ${limit}
+    `) as FundRow[];
+    return rows.map(mapFundRow);
+  } catch {
+    return [];
+  }
+}
+
 export async function getFundCategories(): Promise<string[]> {
   const funds = await getAllFunds();
   return [...new Set(funds.map((f) => f.category))].sort();

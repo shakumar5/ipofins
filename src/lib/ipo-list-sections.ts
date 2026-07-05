@@ -54,17 +54,30 @@ export function sanitizeIpoOptionalNumber(value: unknown): number | undefined {
  * then falls back to parsing every number out of `priceRange` (handles
  * "500-550", "500 – 550", "₹500 to ₹550") and taking the largest.
  */
+function parsePriceBandNums(priceRange?: string): number[] {
+  const nums = String(priceRange ?? '').match(/\d[\d,.]*/g);
+  if (!nums?.length) return [];
+  return nums
+    .map((n) => parseFloat(n.replace(/,/g, '')))
+    .filter((n) => Number.isFinite(n) && n > 0);
+}
+
 export function ipoUpperPrice(input: {
   priceMax?: number | null;
   priceRange?: string;
 }): number | null {
   if (input.priceMax != null && input.priceMax > 0) return input.priceMax;
-  const nums = String(input.priceRange ?? '').match(/\d[\d,.]*/g);
-  if (!nums?.length) return null;
-  const parsed = nums
-    .map((n) => parseFloat(n.replace(/,/g, '')))
-    .filter((n) => Number.isFinite(n) && n > 0);
+  const parsed = parsePriceBandNums(input.priceRange);
   return parsed.length ? Math.max(...parsed) : null;
+}
+
+export function ipoLowerPrice(input: {
+  priceMin?: number | null;
+  priceRange?: string;
+}): number | null {
+  if (input.priceMin != null && input.priceMin > 0) return input.priceMin;
+  const parsed = parsePriceBandNums(input.priceRange);
+  return parsed.length ? Math.min(...parsed) : null;
 }
 
 /** Minimum retail investment = upper band × lot size, or null when unknown. */
@@ -240,6 +253,8 @@ export function buildIPOStatusSections(
     type?: 'mainboard' | 'sme';
     statuses?: IPOStatus[];
     sections?: IPOStatusSectionConfig[];
+    /** Render section shell even when empty (e.g. live IPOs with 0 count). */
+    keepEmptyStatuses?: IPOStatus[];
   },
 ): Array<IPOStatusSectionConfig & { ipos: IPOListItem[] }> {
   let filtered = ipos;
@@ -261,7 +276,11 @@ export function buildIPOStatusSections(
         def.status,
       ),
     }))
-    .filter((s) => s.ipos.length > 0);
+    .filter(
+      (s) =>
+        s.ipos.length > 0 ||
+        (options?.keepEmptyStatuses?.includes(s.status) ?? false),
+    );
 }
 
 export function ipoRowMeta(ipo: IPOListItem): string {

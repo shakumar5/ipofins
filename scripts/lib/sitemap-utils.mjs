@@ -164,6 +164,7 @@ export function classifySitemapBucket(pathname) {
       : 'sitemap-mutual-funds.xml';
   }
   if (path.startsWith('/mutual-funds/fund/')) return 'sitemap-funds.xml';
+  if (/^\/mutual-funds\/amc\/[^/]+$/.test(path)) return 'sitemap-amcs.xml';
   if (/^\/mutual-funds\/mutual-fund-holdings-changes\/[^/]+/.test(path)) return 'sitemap-amcs.xml';
   if (path === '/mutual-funds' || path.startsWith('/mutual-funds/')) return 'sitemap-mutual-funds.xml';
   if (path.startsWith('/tools') || path.startsWith('/broker')) return 'sitemap-tools.xml';

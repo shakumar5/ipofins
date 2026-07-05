@@ -1,0 +1,20 @@
+{
+  "name": "IPOFins — IPO & Mutual Fund Intelligence",
+  "short_name": "IPOFins",
+  "description": "Track IPOs, mutual fund holdings, Smart Money signals, and free investment calculators for Indian investors.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1a6df5",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "categories": ["finance", "business"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+---
+/**
+ * Extended SEO guide blocks for calculator pages (target ≥1,500 words with FAQs).
+ */
+import type { CalculatorSeoSlug } from '../../lib/calculator-seo-content';
+import { getCalculatorSeoHtml } from '../../lib/calculator-seo-content';
+
+interface Props {
+  slug: CalculatorSeoSlug;
+}
+
+const { slug } = Astro.props;
+const html = getCalculatorSeoHtml(slug);
+---
+
+{html && (
+  <section class="container-narrow py-8" aria-label="Calculator guide">
+    <div class="prose dark:prose-invert max-w-none text-sm" set:html={html} />
+  </section>
+)}

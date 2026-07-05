@@ -291,3 +291,27 @@ A world-class finance platform has:
 7. **Revenue that aligns** — Earn from helping users make better decisions, not from trapping them
 
 IPOFins already has the data foundation. This checklist is the path from foundation to world class.
+
+---
+
+## IMPLEMENTATION STATUS (July 2026 — design/premium-refresh)
+
+| Area | Status |
+|---|---|
+| PWA manifest (`/manifest.json`) | ✅ Done |
+| AMC profile pages (`/mutual-funds/amc/{slug}`) | ✅ Done |
+| Best SIP landing (`/mutual-funds/best-sip-funds-2026`) | ✅ Done |
+| Team page (`/about/team`) | ✅ Done |
+| Calculator SEO guides (15 tools, ≥1,500 words w/ FAQs) | ✅ Done |
+| E2E smoke tests (Playwright) | ✅ Done — `npm run test:e2e` |
+| Smart Money tracker `React.lazy()` | ✅ Done |
+| OG WebP + content-hash cache | ✅ Done |
+| IPO Event schema + sector internal links | ✅ Done |
+| IPO index FAQ JSON-LD trimmed to 5 | ✅ Done |
+| Fund → Smart Money stock signal link | ✅ Done |
+| Data freshness stamp on MF hub | ✅ Done |
+| GA4 affiliate_click revenue events | ✅ Done |
+| MV refresh after Smart Money export | ✅ Done |
+| AdSense via `PUBLIC_ADSENSE_CLIENT_ID` env | ✅ Done (env override) |
+
+**Deferred (non-blocking):** Recharts on calculators, dark-mode OG variants, Lighthouse re-measure in CI, server-side 1% Club pagination.

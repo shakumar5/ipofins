@@ -1,0 +1,60 @@
+---
+/**
+ * Visual price band — floor, cap, and optional GMP marker.
+ */
+interface Props {
+  priceMin?: number | null;
+  priceMax?: number | null;
+  priceRange?: string;
+  gmp?: number | null;
+}
+
+const { priceMin, priceMax, priceRange, gmp } = Astro.props;
+
+function parseBandNums(range?: string): number[] {
+  const nums = String(range ?? '').match(/\d[\d,.]*/g);
+  if (!nums?.length) return [];
+  return nums
+    .map((n) => parseFloat(n.replace(/,/g, '')))
+    .filter((n) => Number.isFinite(n) && n > 0);
+}
+
+const bandNums = parseBandNums(priceRange);
+const min = priceMin != null && priceMin > 0 ? priceMin : bandNums.length ? Math.min(...bandNums) : null;
+const max = priceMax != null && priceMax > 0 ? priceMax : bandNums.length ? Math.max(...bandNums) : null;
+
+if (min == null || max == null || max <= min) {
+  return null;
+}
+
+const span = max - min;
+const gmpEst = gmp != null ? max + gmp : null;
+const gmpPct = gmpEst != null ? Math.min(100, Math.max(0, ((gmpEst - min) / span) * 100)) : null;
+const capPct = 100;
+const floorPct = 0;
+---
+
+<div class="ipo-price-band" aria-label={`Price band ₹${min} to ₹${max}${gmp != null ? `, GMP ${gmp >= 0 ? '+' : ''}₹${gmp}` : ''}`}>
+  <div class="ipo-price-band__track">
+    <div class="ipo-price-band__fill" style={`left: ${floorPct}%; width: ${capPct - floorPct}%`}></div>
+    {gmpPct != null && gmp != null && (
+      <div
+        class={`ipo-price-band__gmp ${gmp >= 0 ? 'ipo-price-band__gmp--up' : 'ipo-price-band__gmp--down'}`}
+        style={`left: ${gmpPct}%`}
+        title={`Est. listing ₹${gmpEst?.toLocaleString('en-IN')}`}
+      >
+        <span class="ipo-price-band__gmp-dot" aria-hidden="true"></span>
+      </div>
+    )}
+  </div>
+  <div class="ipo-price-band__labels">
+    <span class="font-mono text-xs text-surface-600 dark:text-surface-400">₹{min.toLocaleString('en-IN')}</span>
+    <span class="text-[10px] text-surface-500 uppercase tracking-wide">Price band</span>
+    <span class="font-mono text-xs text-surface-600 dark:text-surface-400">₹{max.toLocaleString('en-IN')}</span>
+  </div>
+  {gmp != null && gmpEst != null && (
+    <p class="text-[10px] text-center text-surface-500 mt-1.5">
+      GMP {gmp >= 0 ? '+' : '−'}₹{Math.abs(gmp).toLocaleString('en-IN')} → est. ₹{gmpEst.toLocaleString('en-IN')}
+    </p>
+  )}
+</div>

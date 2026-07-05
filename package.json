@@ -99,7 +99,9 @@
     "export:client-data": "node scripts/node-with-ca.mjs scripts/export-client-data.mjs",
     "test:holdings-compare": "node scripts/test-holdings-compare.mjs",
     "refresh:mutual-funds-json": "node scripts/node-with-ca.mjs scripts/refresh-mutual-funds-json.mjs",
-    "og:generate": "node scripts/generate-og-images.mjs"
+    "og:generate": "node scripts/generate-og-images.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
@@ -123,6 +125,7 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "puppeteer-core": "^25.1.0",
+    "@playwright/test": "^1.51.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.9.3",

@@ -85,7 +85,13 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
           const tool = toolsData.find(t => t.slug === slug);
           if (!tool) return null;
           return (
-            <ToolCard title={tool.title} description={tool.description} href={`/tools/${tool.slug}`} icon={tool.icon} color={tool.color} />
+            <ToolCard
+              title={tool.title}
+              description={slug === 'tax-calculator' ? `${tool.description} · FY 2025-26 slabs` : tool.description}
+              href={`/tools/${tool.slug}`}
+              icon={tool.icon}
+              color={tool.color}
+            />
           );
         }).filter(Boolean)}
       </div>

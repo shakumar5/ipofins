@@ -23,6 +23,7 @@ const faqJsonLd = {
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import CalculatorSeoGuide from '../../components/tools/CalculatorSeoGuide.astro';
 ---
 
 <BaseLayout title="Return Simulator 2026 - Investment Scenarios | IPOFins" description="Free investment return simulator. Compare how your lumpsum grows across conservative (8%), moderate (12%), and aggressive (18%) scenarios over 1-30 years." jsonLd={jsonLd}>
@@ -92,6 +93,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   </section>
 
   <section class="container-narrow py-8">
+  <CalculatorSeoGuide slug="return-simulator" />
+
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
     <div class="nav-btn-group">
       <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>

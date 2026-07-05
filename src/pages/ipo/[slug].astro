@@ -3,6 +3,7 @@ import IPOLayout from '../../layouts/IPOLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import IPOScoreBox from '../../components/IPOScoreBox.astro';
+import IPOPriceBand from '../../components/IPOPriceBand.astro';
 import IpoRiskScore from '../../components/IpoRiskScore.astro';
 import IpoSubscriptionBars from '../../components/IpoSubscriptionBars.astro';
 import IPOAlertSignup from '../../components/ipo/IPOAlertSignup';
@@ -15,8 +16,10 @@ import {
   ipoDisplayText,
   ipoMetaLine,
   ipoUpperPrice,
+  ipoLowerPrice,
   ipoMinInvestment,
   formatSubscriptionTimes,
+  ipoSectorSlug,
 } from '../../lib/ipo-list-sections';
 import { defaultIpoListBack, IPO_LIST_BACK } from '../../lib/list-back-nav';
 import ListBackLink from '../../components/ListBackLink.astro';
@@ -100,6 +103,12 @@ const lastUpdated = ipo.lastUpdated ? new Date(ipo.lastUpdated) : null;
 const lastUpdatedLabel = lastUpdated && !Number.isNaN(lastUpdated.getTime())
   ? lastUpdated.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
   : null;
+const subUpdatedAt = ipo.subscriptionUpdatedAt ? new Date(ipo.subscriptionUpdatedAt) : null;
+const subAgeHours =
+  subUpdatedAt && !Number.isNaN(subUpdatedAt.getTime())
+    ? (Date.now() - subUpdatedAt.getTime()) / 3_600_000
+    : null;
+const subscriptionStale = subAgeHours != null && subAgeHours > 4;
 const defaultBack = defaultIpoListBack(ipo.type);
 const ipoBackVariants = Object.fromEntries(
   Object.entries(IPO_LIST_BACK).filter(([key]) => key !== 'sector'),
@@ -139,7 +148,32 @@ const financialProductLd = {
     : {}),
 };
 
-const jsonLd = [financialProductLd, breadcrumbLd];
+const sectorSlug = ipo.sector ? ipoSectorSlug(ipo.sector) : '';
+const eventLd =
+  ipo.openDate || ipo.listingDate
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": `${ipo.name} IPO`,
+        "description": `${ipo.name} initial public offering on BSE/NSE India.`,
+        "startDate": ipo.openDate || ipo.listingDate,
+        "endDate": ipo.closeDate || ipo.listingDate || ipo.openDate,
+        "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
+        "eventStatus":
+          ipo.status === 'listed'
+            ? "https://schema.org/EventScheduled"
+            : ipo.status === 'withdrawn' || ipo.status === 'failed'
+              ? "https://schema.org/EventCancelled"
+              : "https://schema.org/EventScheduled",
+        "location": {
+          "@type": "VirtualLocation",
+          "url": `https://ipofins.com/ipo/${ipo.slug}`,
+        },
+        "organizer": { "@type": "Organization", "name": ipo.name },
+      }
+    : null;
+
+const jsonLd = [financialProductLd, breadcrumbLd, ...(eventLd ? [eventLd] : [])];
 ---
 
 <IPOLayout
@@ -194,7 +228,13 @@ const jsonLd = [financialProductLd, breadcrumbLd];
         <div class="flex items-center gap-2 mb-2">
           <span class={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
           <span class="text-xs text-surface-500 uppercase">{ipo.type}</span>
-          {sector && <span class="text-xs text-surface-400">• {sector}</span>}
+          {sector && (
+            sectorSlug ? (
+              <a href={`/ipo/sector/${sectorSlug}`} class="text-xs text-primary-600 hover:underline">{sector}</a>
+            ) : (
+              <span class="text-xs text-surface-400">{sector}</span>
+            )
+          )}
         </div>
       </div>
       <div class="flex items-center gap-4 flex-wrap">
@@ -219,7 +259,7 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       {priceRange && (
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Price Band</p>
-        <p class="text-base font-bold text-surface-900 dark:text-white mt-1">₹{priceRange}</p>
+        <p class="text-base font-bold font-mono text-surface-900 dark:text-white mt-1">₹{priceRange}</p>
       </div>
       )}
       {ipo.lotSize > 0 && (
@@ -249,12 +289,22 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       <div class="card-compact text-center">
         <p class="text-xs text-surface-500">Subscription</p>
         {subscriptionLabel ? (
-          <p class="text-base font-bold mt-1 text-primary-600">{subscriptionLabel}x</p>
+          <p class="text-base font-bold font-mono mt-1 text-primary-600">{subscriptionLabel}×</p>
         ) : (
           <p class="text-base font-bold mt-1 text-surface-400">—</p>
         )}
       </div>
     </div>
+    {priceRange && (
+      <div class="mt-4 max-w-lg mx-auto">
+        <IPOPriceBand
+          priceMin={ipoLowerPrice(ipo)}
+          priceMax={ipo.priceMax ?? ipoUpperPrice(ipo)}
+          priceRange={priceRange}
+          gmp={ipo.gmp}
+        />
+      </div>
+    )}
   </section>
 
   <!-- IPO Schedule -->
@@ -378,9 +428,10 @@ const jsonLd = [financialProductLd, breadcrumbLd];
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-lg font-bold text-surface-900 dark:text-white">Subscription Status</h2>
         {ipo.subscriptionUpdatedAt && (
-          <span class="data-freshness-chip text-xs">
-            <span class="data-freshness-chip__dot" aria-hidden="true"></span>
+          <span class={`data-freshness-chip text-xs ${subscriptionStale ? 'data-freshness-chip--stale' : ''}`}>
+            <span class={`data-freshness-chip__dot ${subscriptionStale ? 'data-freshness-chip__dot--stale' : ''}`} aria-hidden="true"></span>
             As of {new Date(ipo.subscriptionUpdatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} IST
+            {subscriptionStale && <span class="text-warning-600 dark:text-warning-400 font-medium"> · may be delayed</span>}
           </span>
         )}
       </div>

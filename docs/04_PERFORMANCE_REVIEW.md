@@ -336,3 +336,23 @@ build: {
 | CLS | 0.18 | 0.08 | 0.04 |
 | INP | 180ms | 150ms | 100ms |
 | Build time | ~25 min | ~20 min | ~12 min |
+
+---
+
+## IMPLEMENTATION STATUS (July 2026)
+
+| Item | Status |
+|---|---|
+| nav-btn-group CLS fix | ✅ |
+| AdSense min-height | ✅ |
+| Consent Mode v2 | ✅ |
+| Self-hosted fonts (@fontsource) | ✅ |
+| Parallel build / concurrency 8 | ✅ |
+| Duplicate build step removed | ✅ |
+| Smart Money fetch timeout | ✅ |
+| `React.lazy()` SmartMoneyTracker | ✅ |
+| OG WebP + hash cache | ✅ |
+| Export parallel fund-overlap queries | ✅ |
+| No raw `<img>` without dimensions in src/ | ✅ N/A (no img tags) |
+| Font preload | ⏭ Skipped — Vite bundles @fontsource in CSS |
+| Lighthouse ≥90 | ⏭ Re-measure post-deploy |

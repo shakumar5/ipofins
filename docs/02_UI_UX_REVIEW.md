@@ -1,7 +1,23 @@
 # 02 — UI/UX Review: IPOFins
 
+> **Status: ✅ Addressed July 5, 2026** — Critical/high items implemented; deferred items noted below.
+
 > Benchmarked against: Stripe · Apple · Linear · Notion · Vercel · Bloomberg Terminal · TradingView · Tickertape · Screener · Trendlyne · Moneycontrol  
 > Reviewed by: Senior UI/UX Designer (Apple) + Principal Frontend Engineer (Vercel)
+
+### Implementation summary
+
+| Area | Status |
+|------|--------|
+| IPO detail (score rename, sticky CTA, price band, subscription total/freshness) | ✅ |
+| Calculators (validation, share, shake on error) | ✅ |
+| Dashboard localStorage MVP | ✅ |
+| Smart Money (view counts, 10s timeout, sticky col, error retry) | ✅ |
+| MF hub (friendly category names, compact highlights, tied ranks) | ✅ |
+| IPO hub (empty live state, FAQ show-all) | ✅ |
+| Search overlay (aria-modal + focus trap) | ✅ Already in `SearchOverlay.astro` |
+| Design system (btn-primary blue, font-mono prices, stale amber) | ✅ |
+| **Deferred** | Chart library on calcs; dark-mode OG images; 1% Club server-side search pagination |
 
 ---
 
