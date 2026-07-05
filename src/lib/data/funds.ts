@@ -191,6 +191,31 @@ export async function getRelatedFunds(
   excludeSlug: string,
   limit = 5
 ): Promise<FundRecord[]> {
+  if (import.meta.env.PROD || process.env.CI === 'true') {
+    const disk = readFundHoldingsIndexFromDisk();
+    if (!disk?.length) return [];
+    return disk
+      .filter((f) => f.category === category && f.slug !== excludeSlug)
+      .sort((a, b) => (b.returns3y ?? -Infinity) - (a.returns3y ?? -Infinity) || a.name.localeCompare(b.name))
+      .slice(0, limit)
+      .map((f) => ({
+        name: f.name,
+        slug: f.slug,
+        category: f.category,
+        nav: f.nav,
+        returns1y: f.returns1y,
+        returns3y: f.returns3y,
+        returns5y: f.returns5y,
+        aum: f.aum,
+        riskLevel: f.riskLevel,
+        rating: f.rating,
+        schemeCode: f.schemeCode,
+        lastUpdated: f.lastUpdated,
+        expenseRatio: f.expenseRatio,
+        expenseRatioRegular: f.expenseRatioRegular,
+      }));
+  }
+
   const sql = requireDb();
   const rows = await sql`
     SELECT
