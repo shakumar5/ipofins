@@ -7,23 +7,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import { BRAND_NAME } from '../../lib/brand';
+import { BROKER_COMPARISON_PAIRS } from '../../lib/broker-comparison-pairs';
 import brokersData from '../../data/brokers.json';
 
-const COMPARISON_PAIRS = [
-  ['zerodha', 'groww'],
-  ['zerodha', 'upstox'],
-  ['zerodha', 'angel-one'],
-  ['groww', 'upstox'],
-  ['zerodha', 'dhan'],
-  ['groww', 'angel-one'],
-  ['zerodha', 'icici-direct'],
-  ['upstox', 'angel-one'],
-  ['zerodha', '5paisa'],
-  ['groww', 'dhan'],
-];
-
 export function getStaticPaths() {
-  return COMPARISON_PAIRS.map(([a, b]) => ({
+  return BROKER_COMPARISON_PAIRS.map(([a, b]) => ({
     params: { a, b },
     props: { slugA: a, slugB: b },
   }));
@@ -285,7 +273,7 @@ const faqJsonLd = {
   <section class="container-wide py-8 border-t border-surface-200 dark:border-surface-700">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">More Broker Comparisons</h2>
     <div class="nav-btn-group">
-      {COMPARISON_PAIRS
+      {BROKER_COMPARISON_PAIRS
         .filter(([a, b]) => !(a === slugA && b === slugB))
         .slice(0, 6)
         .map(([a, b]) => {
