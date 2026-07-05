@@ -17,7 +17,8 @@ if (!existsSync(join(ROOT, 'dist'))) {
 }
 
 try {
-  const { synced } = ensureDistDataSynced(ROOT);
+  const force = process.env.FORCE_DIST_DATA_SYNC === '1';
+  const { synced } = ensureDistDataSynced(ROOT, { force });
   if (synced.length) {
     console.log(`  ✓ Synced public/data → ${synced.join(', ')}`);
   } else {

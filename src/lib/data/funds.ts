@@ -292,7 +292,49 @@ export async function getFundsByCategory(category: string): Promise<FundRecord[]
   return funds.filter((f) => f.category.toLowerCase().includes(normalized));
 }
 
+function readFundsByAmcFromDisk(amcSlug: string, limit: number): FundRecord[] {
+  const holdingsIndex = readHoldingsCompareIndexFromDisk();
+  const amc = holdingsIndex?.amcs.find((a) => a.slug === amcSlug);
+  if (!amc) return [];
+
+  const overlap = readPortfolioOverlapFromDisk();
+  const fundRows = readFundHoldingsIndexFromDisk();
+  if (!overlap?.funds?.length || !fundRows?.length) return [];
+
+  const overlapSlugs = new Set(
+    overlap.funds.filter((f) => f.amc === amc.name).map((f) => f.slug),
+  );
+  if (!overlapSlugs.size) return [];
+
+  return fundRows
+    .filter((f) => {
+      const base = f.slug.replace(/-direct-plan$/, '');
+      return overlapSlugs.has(base) || overlapSlugs.has(f.slug);
+    })
+    .sort((a, b) => (b.returns3y ?? -Infinity) - (a.returns3y ?? -Infinity) || a.name.localeCompare(b.name))
+    .slice(0, limit)
+    .map((f) => ({
+      name: f.name,
+      slug: f.slug,
+      category: f.category,
+      nav: f.nav ?? null,
+      returns1y: f.returns1y ?? null,
+      returns3y: f.returns3y ?? null,
+      returns5y: f.returns5y ?? null,
+      aum: f.aum ?? null,
+      riskLevel: f.riskLevel || 'moderate',
+      rating: f.rating ?? null,
+      schemeCode: f.schemeCode || '',
+      lastUpdated: f.lastUpdated ?? null,
+      expenseRatio: f.expenseRatio ?? null,
+      expenseRatioRegular: f.expenseRatioRegular ?? null,
+    }));
+}
+
 export async function getFundsByAmc(amcSlug: string, limit = 60): Promise<FundRecord[]> {
+  const fromDisk = readFundsByAmcFromDisk(amcSlug, limit);
+  if (fromDisk.length) return fromDisk;
+
   try {
     const sql = requireDb();
     const rows = (await sql`

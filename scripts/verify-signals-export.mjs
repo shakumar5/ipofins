@@ -8,7 +8,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { assertSlimListRow } from './lib/signal-export-utils.mjs';
-import { publicDataMissingRequirements } from './lib/dist-data-sync.mjs';
+import { publicDataMissingRequirements, resolveBuiltDataDir } from './lib/dist-data-sync.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_DATA_DIR = join(ROOT, 'public', 'data');
@@ -17,7 +17,7 @@ const INDEX_PATH = join(PUBLIC_DATA_DIR, 'smart-money-signals-index.json');
 const SECTOR_PATH = join(PUBLIC_DATA_DIR, 'sector-intelligence.json');
 const TRACKER_INDEX_PATH = join(PUBLIC_DATA_DIR, 'smart-money-tracker-index.json');
 const DIST_DIR = join(ROOT, 'dist');
-const DIST_DATA_DIR = join(DIST_DIR, 'data');
+const DIST_DATA_DIR = resolveBuiltDataDir(ROOT);
 
 const MAX_LIST_FILE_KB = 350;
 const FORBIDDEN_HTML = ['smart-money-signals-data-bootstrap', 'data-json="{"months"'];
@@ -67,7 +67,7 @@ if (existsSync(DATA_DIR)) {
   }
 }
 
-if (existsSync(DIST_DIR)) {
+if (existsSync(DIST_DIR) || existsSync(DIST_DATA_DIR)) {
   const distRequired = [
     'smart-money-signals-index.json',
     'sector-intelligence.json',
