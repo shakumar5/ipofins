@@ -1,148 +1,137 @@
 -- ═══════════════════════════════════════════════════════════════
 -- Finverse — Migration 011: Constraints, Indexes & Extensions
--- Zero-downtime: all operations are CONCURRENT or constraint ADDs
--- that don't require table rewrites on Neon/PostgreSQL 16.
--- Run: psql $DATABASE_URL -f db/migrations/011_constraints_and_indexes.sql
+-- Idempotent via DO blocks + CREATE IF NOT EXISTS (pg driver transaction-safe).
+-- Run: npm run db:migrate-011
 -- ═══════════════════════════════════════════════════════════════
 
 -- ─────────────────────────────────────────────────────────────
 -- SECTION 1: ENUM CHECK CONSTRAINTS
--- Prevents invalid status/type values from being inserted by
--- pipeline bugs. These catch data quality issues at the DB level
--- rather than relying on application-layer validation alone.
 -- ─────────────────────────────────────────────────────────────
 
--- ipos.status — valid pipeline states
-ALTER TABLE ipos
-  ADD CONSTRAINT IF NOT EXISTS ipos_status_check
+DO $$ BEGIN
+  ALTER TABLE ipos ADD CONSTRAINT ipos_status_check
   CHECK (status IN (
     'drhp-filed', 'sebi-approved', 'upcoming', 'open', 'live',
     'closed', 'allotment', 'listing', 'listed', 'failed', 'withdrawn'
   ));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- ipos.type — mainboard or SME only
-ALTER TABLE ipos
-  ADD CONSTRAINT IF NOT EXISTS ipos_type_check
+DO $$ BEGIN
+  ALTER TABLE ipos ADD CONSTRAINT ipos_type_check
   CHECK (type IN ('mainboard', 'sme'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- ipos price band integrity
-ALTER TABLE ipos
-  ADD CONSTRAINT IF NOT EXISTS ipos_price_band_check
+DO $$ BEGIN
+  ALTER TABLE ipos ADD CONSTRAINT ipos_price_band_check
   CHECK (price_min IS NULL OR price_max IS NULL OR price_min <= price_max);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- tracked_entities.type — drives route membership
-ALTER TABLE tracked_entities
-  ADD CONSTRAINT IF NOT EXISTS te_type_check
+DO $$ BEGIN
+  ALTER TABLE tracked_entities ADD CONSTRAINT te_type_check
   CHECK (type IN ('individual', 'family_office', 'fii', 'dii', 'pms', 'aif', 'sif'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- holdings_changes.change_type — known change categories
-ALTER TABLE holdings_changes
-  ADD CONSTRAINT IF NOT EXISTS hc_change_type_check
+DO $$ BEGIN
+  ALTER TABLE holdings_changes ADD CONSTRAINT hc_change_type_check
   CHECK (change_type IN (
     'fresh_entry', 'complete_exit', 'increased', 'decreased', 'unchanged'
   ));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- entity_changes.change_type — mirrors holdings_changes
-ALTER TABLE entity_changes
-  ADD CONSTRAINT IF NOT EXISTS ec_change_type_check
+DO $$ BEGIN
+  ALTER TABLE entity_changes ADD CONSTRAINT ec_change_type_check
   CHECK (change_type IN (
     'fresh_entry', 'complete_exit', 'increased', 'decreased', 'unchanged', 'partial_exit'
   ));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- shareholding_pattern_holders.pct_of_company — catches the XBRL 1.0 misparse bug
--- (pct values mistakenly stored as 100 instead of 1.0) at DB insert time.
-ALTER TABLE shareholding_pattern_holders
-  ADD CONSTRAINT IF NOT EXISTS sph_pct_range_check
+DO $$ BEGIN
+  ALTER TABLE shareholding_pattern_holders ADD CONSTRAINT sph_pct_range_check
   CHECK (pct_of_company >= 0 AND pct_of_company <= 100);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- fund_returns — guard against extreme pipeline errors
-ALTER TABLE fund_returns
-  ADD CONSTRAINT IF NOT EXISTS fund_returns_range_check
+DO $$ BEGIN
+  ALTER TABLE fund_returns ADD CONSTRAINT fund_returns_range_check
   CHECK (
     (returns_1y IS NULL OR returns_1y BETWEEN -100 AND 10000) AND
     (returns_3y IS NULL OR returns_3y BETWEEN -100 AND 10000) AND
     (returns_5y IS NULL OR returns_5y BETWEEN -100 AND 10000)
   );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- pipeline_runs.status — known pipeline states
-ALTER TABLE pipeline_runs
-  ADD CONSTRAINT IF NOT EXISTS pr_status_check
+DO $$ BEGIN
+  ALTER TABLE pipeline_runs ADD CONSTRAINT pr_status_check
   CHECK (status IN ('success', 'aborted', 'failed', 'running'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- pipeline_runs.pipeline — known pipeline names (extend as needed)
-ALTER TABLE pipeline_runs
-  ADD CONSTRAINT IF NOT EXISTS pr_pipeline_check
+DO $$ BEGIN
+  ALTER TABLE pipeline_runs ADD CONSTRAINT pr_pipeline_check
   CHECK (pipeline IN (
     'superinvestor', '1pc-club', 'pms', 'altfunds', 'sast-sweep',
     'mf-holdings', 'nav-daily', 'ipo-sync', 'ipo-subscription',
     'ipo-performance', 'quarterly-si'
   ));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 
 -- ─────────────────────────────────────────────────────────────
 -- SECTION 2: FULL-TEXT SEARCH INDEXES (pg_trgm)
--- Enables fast fuzzy name matching for:
---   - Stock search in Smart Money Tracker + 1% Club
---   - Fund name search in Portfolio Overlap Checker
---   - Entity name matching for SHP name resolution
--- CREATE INDEX CONCURRENTLY acquires no table lock.
 -- ─────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stocks_name_trgm
+CREATE INDEX IF NOT EXISTS idx_stocks_name_trgm
   ON stocks USING GIN(name gin_trgm_ops);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_funds_name_trgm
+CREATE INDEX IF NOT EXISTS idx_funds_name_trgm
   ON funds USING GIN(name gin_trgm_ops);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_te_name_trgm
+CREATE INDEX IF NOT EXISTS idx_te_name_trgm
   ON tracked_entities USING GIN(name gin_trgm_ops);
 
--- GIN index on aliases array for fast variant matching during SHP ingestion
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_te_aliases
+CREATE INDEX IF NOT EXISTS idx_te_aliases
   ON tracked_entities USING GIN(aliases);
 
--- Full-text vector index on stocks for higher-quality name search
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stocks_name_fts
+CREATE INDEX IF NOT EXISTS idx_stocks_name_fts
   ON stocks USING GIN(to_tsvector('english', name));
+
 
 -- ─────────────────────────────────────────────────────────────
 -- SECTION 3: MISSING PERFORMANCE INDEXES
--- Identified from query analysis — these eliminate sequential
--- scans on hot paths used by the IPO status queries and
--- fund NAV lookups.
 -- ─────────────────────────────────────────────────────────────
 
--- Live IPO query: WHERE status IN ('upcoming','live') AND open_date <= NOW() AND close_date >= NOW()
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ipos_open_close_status
+CREATE INDEX IF NOT EXISTS idx_ipos_open_close_status
   ON ipos(open_date, close_date) WHERE status IN ('upcoming', 'live', 'open');
 
--- "Latest NAV for a fund" covering index — eliminates heap fetch
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_navs_fund_latest_covering
+CREATE INDEX IF NOT EXISTS idx_navs_fund_latest_covering
   ON fund_navs(fund_id, date DESC) INCLUDE (nav);
 
--- entity_holdings: confirmed (non-preliminary) holdings by entity+quarter
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_eh_confirmed
+CREATE INDEX IF NOT EXISTS idx_eh_confirmed
   ON entity_holdings(entity_id, quarter DESC)
   WHERE is_preliminary = FALSE;
 
--- shareholding_pattern_holders: unmatched holders (for 1% Club discovery view)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sph_unmatched
+CREATE INDEX IF NOT EXISTS idx_sph_unmatched
   ON shareholding_pattern_holders(quarter DESC, pct_of_company DESC)
   WHERE entity_id IS NULL AND is_promoter = FALSE;
 
--- sast_filings: preliminary filings pending quarterly confirmation
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sast_preliminary
+CREATE INDEX IF NOT EXISTS idx_sast_preliminary
   ON sast_filings(filing_date DESC)
   WHERE is_preliminary = TRUE;
 
 
 -- ─────────────────────────────────────────────────────────────
 -- SECTION 4: MATERIALIZED VIEW REFRESH LOG
--- Enables the UI to show "Smart money data last updated: X ago"
--- and automated alerting when views become stale.
 -- ─────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS mv_refresh_log (
@@ -150,16 +139,16 @@ CREATE TABLE IF NOT EXISTS mv_refresh_log (
   refreshed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   duration_ms  INT,
   rows_count   BIGINT,
-  triggered_by TEXT DEFAULT 'manual',  -- manual / pipeline / cron
+  triggered_by TEXT DEFAULT 'manual',
   PRIMARY KEY (view_name, refreshed_at)
 );
 
 CREATE INDEX IF NOT EXISTS idx_mv_refresh_log_view
   ON mv_refresh_log(view_name, refreshed_at DESC);
 
+
 -- ─────────────────────────────────────────────────────────────
--- SECTION 5: IPO ALERTS TABLE (no-login email notifications)
--- UUID-keyed so no user account needed. Unsubscribe via token.
+-- SECTION 5: IPO ALERTS TABLE
 -- ─────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS ipo_alerts (
@@ -171,7 +160,6 @@ CREATE TABLE IF NOT EXISTS ipo_alerts (
   unsubscribe_token UUID DEFAULT gen_random_uuid() UNIQUE,
   is_active        BOOLEAN DEFAULT TRUE,
   last_sent_at     TIMESTAMPTZ,
-  -- Simple deduplication — one alert subscription per email+ipo combination
   UNIQUE(email, ipo_id)
 );
 
@@ -181,10 +169,9 @@ CREATE INDEX IF NOT EXISTS idx_ipo_alerts_ipo_active
 CREATE INDEX IF NOT EXISTS idx_ipo_alerts_email_active
   ON ipo_alerts(email) WHERE is_active = TRUE;
 
+
 -- ─────────────────────────────────────────────────────────────
--- SECTION 6: IPO FUNDAMENTALS TABLE (for richer IPO scoring)
--- Populated by LLM extraction from DRHP PDFs (future pipeline step)
--- or manual data entry. Additive — does not touch existing tables.
+-- SECTION 6: IPO FUNDAMENTALS TABLE
 -- ─────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS ipo_fundamentals (
@@ -200,7 +187,7 @@ CREATE TABLE IF NOT EXISTS ipo_fundamentals (
   sector_pe_ratio   NUMERIC(8,2),
   roce_pct          NUMERIC(6,2),
   roe_pct           NUMERIC(6,2),
-  data_source       TEXT DEFAULT 'manual',  -- manual / drhp_llm / scrape
+  data_source       TEXT DEFAULT 'manual',
   data_notes        TEXT,
   last_updated      TIMESTAMPTZ DEFAULT NOW()
 );
