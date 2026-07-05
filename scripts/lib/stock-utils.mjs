@@ -80,7 +80,8 @@ export function isValidEquitySector(sector) {
   if (NON_EQUITY_SECTOR_LABELS.has(upper)) return false;
 
   if (/^[\d.]+\s*%?$/.test(s)) return false;
-  if (/^\[?(CRISIL|ICRA|FITCH|CARE|BWR|IND|Brickwork)/i.test(s)) return false;
+  if (/^\[?(CRISIL|ICRA|FITCH|CARE|BWR|Brickwork)/i.test(s)) return false;
+  if (/^IND\s/i.test(s)) return false;
   if (
     /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Commercial Paper|Corporate Bond|Government|G\.?\s*Sec|Call|Term|Cash|Debt|Bond|Mutual Fund|Foreign|Overseas|Stock Future|Index Future|Exchange Traded|Derivative|Option|Future|Preference|Unlisted)/i.test(
       s,
@@ -91,6 +92,21 @@ export function isValidEquitySector(sector) {
   if (!/[a-zA-Z]/.test(s)) return false;
 
   return true;
+}
+
+/** Normalize sector for display — hides numeric junk and non-equity labels. */
+export function formatStockSector(sector) {
+  const s = String(sector ?? '').trim();
+  if (!s || s === 'Unknown') return '';
+  return isValidEquitySector(s) ? s : '';
+}
+
+/** Strip junk before persisting sector names from AMC disclosures. */
+export function sanitizeSectorName(sectorName) {
+  const sector = String(sectorName || '').trim();
+  if (!sector) return '';
+  if (!isValidEquitySector(sector)) return '';
+  return sector;
 }
 
 export function filterTrackerSectorOptions(sectors) {

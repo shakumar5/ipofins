@@ -2,6 +2,7 @@
  * Smart Money Signal export tiers — list JSON must stay small (table/search).
  * Full breakdown + fund names live in per-category detail files only.
  */
+import { formatStockSector } from './stock-utils.mjs';
 
 export function categoryFileSlug(category) {
   return String(category)
@@ -31,7 +32,7 @@ export function slimSignalRow(row) {
   return {
     stockName: row.stockName,
     stockSlug: row.stockSlug,
-    sector: row.sector,
+    sector: formatStockSector(row.sector),
     convictionScore: row.convictionScore,
     signal: row.signal,
     signalEmoji: row.signalEmoji,
@@ -76,7 +77,7 @@ export function searchIndexEntry(row, envelope = {}) {
   return {
     stockSlug: row.stockSlug,
     stockName: row.stockName,
-    sector: row.sector,
+    sector: formatStockSector(row.sector),
     category,
     convictionScore: row.convictionScore,
     signal: row.signal,

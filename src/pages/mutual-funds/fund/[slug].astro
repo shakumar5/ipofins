@@ -8,7 +8,7 @@ import { buildFundOverlapPageSlugResolver } from '../../../lib/fund-overlap-slug
 import { readFundHoldingsAliasesFromDisk } from '../../../lib/holdings-compare-server';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 import { catToSlug } from '../../../lib/fund-category-slug';
-import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref } from '../../../lib/list-back-nav';
+import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref, MF_LIST_BACK } from '../../../lib/list-back-nav';
 import ListBackLink from '../../../components/ListBackLink.astro';
 import FundHoldingsTable from '../../../components/funds/FundHoldingsTable.tsx';
 
@@ -45,7 +45,10 @@ if (!fund) {
 }
 const categorySlug = catToSlug(fund.category);
 const defaultBack = fundListBackNav('all', fund.category);
-const backVariants = fundListBackVariants(fund.category);
+const backVariants = {
+  ...fundListBackVariants(fund.category),
+  'fund-overlap': MF_LIST_BACK['fund-overlap'],
+};
 const categoryListHref = `/mutual-funds/all/${categorySlug}`;
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);

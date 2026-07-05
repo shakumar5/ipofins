@@ -2,11 +2,12 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PageHeader from '../../../components/layout/PageHeader.astro';
 import { getFundsWithOverlaps, getFundOverlaps } from '../../../lib/data/holdings';
-import { fundHoldingsHref, getFundHoldingsLinkMeta } from '../../../lib/data/funds';
+import { getFundHoldingsLinkMeta } from '../../../lib/data/funds';
 import { resolveDetailSlug } from '../../../lib/fund-detail-slug';
 import { parsePgTextArray } from '../../../lib/holdings-utils';
 import {
   defaultFundOverlapBack,
+  fundHoldingsDetailHref,
   fundOverlapDetailHref,
   MF_LIST_BACK,
 } from '../../../lib/list-back-nav';
@@ -109,6 +110,12 @@ const jsonLd = {
                 holdingsMeta.stockCounts,
               );
               const hasDetailPage = Boolean(detailSlug);
+              const holdingsHref = hasDetailPage && detailSlug
+                ? fundHoldingsDetailHref(detailSlug, 'fund-overlap', {
+                    fundSlug: slug!,
+                    fundName,
+                  })
+                : null;
               const canExpand = row.stockNames.length > 0;
               return (
               <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30 align-top">
@@ -118,11 +125,16 @@ const jsonLd = {
                   ) : (
                     <span class="font-medium text-surface-900 dark:text-white">{row.name}</span>
                   )}
-                  {hasDetailPage && detailSlug && (
-                    <span class="text-xs text-surface-400 block">
-                      <a href={fundHoldingsHref(detailSlug)} class="hover:underline">View holdings →</a>
-                    </span>
-                  )}
+                  {holdingsHref ? (
+                    <a
+                      href={holdingsHref}
+                      class="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
+                      aria-label={`View holdings for ${row.name}`}
+                    >
+                      View holdings
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  ) : null}
                 </td>
                 <td class="px-4 py-3 text-right font-bold whitespace-nowrap">
                   {row.overlapPct != null ? `${row.overlapPct.toFixed(1)}%` : '—'}

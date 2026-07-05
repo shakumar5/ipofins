@@ -1,5 +1,7 @@
 /** Smart Money Signal — six-factor percentile scoring within stock market-cap bucket. */
 
+import { formatStockSector } from './holdings-utils';
+
 export type SmartMoneySignalType =
   | 'Aggressive Accumulation'
   | 'Strong Accumulation'
@@ -652,7 +654,7 @@ export function buildSignalRowFromMetrics(
   return {
     stockName: raw.stockName,
     stockSlug: raw.stockSlug,
-    sector: raw.sector,
+    sector: formatStockSector(raw.sector),
     category: raw.category,
     month: raw.month,
     convictionScore,
@@ -700,7 +702,9 @@ export function dedupeSignalsByStock(rows: SmartMoneySignalRow[]): SmartMoneySig
 
 export function stockSignalMetaLine(row: SmartMoneySignalRow): string {
   const cap = stockCapDisplayLabel(row.category);
-  const parts = [row.sector];
+  const parts: string[] = [];
+  const sector = formatStockSector(row.sector);
+  if (sector) parts.push(sector);
   if (cap) parts.push(cap);
   parts.push(row.month);
   return parts.join(' · ');

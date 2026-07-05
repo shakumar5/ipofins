@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pre-deploy data refresh — one run covers NAV, IPO listings, and IPO subscription.
+ * Pre-deploy data refresh — NAV, IPO listings, subscription, and GMP.
  *
  * Usage:
  *   npm run pipeline:predeploy
@@ -34,20 +34,20 @@ function runScript(scriptName, extraArgs = []) {
 }
 
 async function syncNav() {
-  console.log('\n  [1/4] NAV sync (AMFI)...');
+  console.log('\n  [1/5] NAV sync (AMFI)...');
   const navStart = Date.now();
   const amfiFunds = await fetchAMFINAVs();
   await upsertFundsFromAMFI(amfiFunds);
   await computeFundReturnsFromNavs();
-  console.log(`  [1/4] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
+  console.log(`  [1/5] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
 }
 
 async function main() {
   const totalStart = Date.now();
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('  Pre-deploy pipeline — NAV + IPO + Subscription');
-  console.log('  Sources: AMFI | Zerodha | Groww');
+  console.log('  Pre-deploy pipeline — NAV + IPO + Subscription + GMP');
+  console.log('  Sources: AMFI | Zerodha | Groww | InvestorGain GMP (unofficial)');
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`  📅 ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
 
@@ -58,19 +58,26 @@ async function main() {
   console.log('\n  [2/4] IPO sync (incremental, quick)...');
   const ipoStart = Date.now();
   await runScript('00-ipo-broker-sync.mjs', ['--no-clean', '--quick']);
-  console.log(`  [2/4] IPO done in ${((Date.now() - ipoStart) / 1000).toFixed(1)}s`);
+  console.log(`  [2/5] IPO done in ${((Date.now() - ipoStart) / 1000).toFixed(1)}s`);
 
-  console.log('\n  [3/4] IPO subscription refresh...');
+  console.log('\n  [3/5] IPO subscription refresh...');
   const subStart = Date.now();
   await runScript('02-ipo-subscription.mjs');
-  console.log(`  [3/4] Subscription done in ${((Date.now() - subStart) / 1000).toFixed(1)}s`);
+  console.log(`  [3/5] Subscription done in ${((Date.now() - subStart) / 1000).toFixed(1)}s`);
 
-  console.log('\n  [4/4] IPO post-listing prices...');
+  console.log('\n  [4/5] IPO post-listing prices...');
   const perfStart = Date.now();
   await runScript('05-ipo-post-listing-prices.mjs').catch((err) =>
     console.warn(`  ⚠️  Post-listing prices step failed (non-fatal): ${err.message}`),
   );
-  console.log(`  [4/4] Post-listing prices done in ${((Date.now() - perfStart) / 1000).toFixed(1)}s`);
+  console.log(`  [4/5] Post-listing prices done in ${((Date.now() - perfStart) / 1000).toFixed(1)}s`);
+
+  console.log('\n  [5/5] IPO GMP scrape...');
+  const gmpStart = Date.now();
+  await runScript('sync-ipo-gmp.mjs').catch((err) =>
+    console.warn(`  ⚠️  GMP scrape failed (non-fatal): ${err.message}`),
+  );
+  console.log(`  [5/5] GMP done in ${((Date.now() - gmpStart) / 1000).toFixed(1)}s`);
 
   console.log('\n  🔍 Verifying Neon schema...');
   await runScript('verify-schema.mjs');

@@ -20,6 +20,7 @@ import {
   isDebtInstrument,
   isMutualFundSchemeHolding,
   isValidEquityIsin,
+  sanitizeSectorName,
 } from '../../scripts/lib/stock-utils.mjs';
 import { unpackMonthHoldings } from '../../scripts/lib/holdings-month.mjs';
 import { buildCuratedParserSlugSet } from '../../scripts/lib/canonical-fund-filter.mjs';
@@ -66,13 +67,6 @@ function monthLabelFromIso(iso) {
   const [y, m] = iso.split('-');
   const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   return `${names[Number(m) - 1]} ${y}`;
-}
-
-function sanitizeSectorName(sectorName) {
-  let sector = String(sectorName || '').trim();
-  if (!sector || /^\d+$/.test(sector)) return '';
-  if (/^\[?(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)/i.test(sector)) return '';
-  return sector;
 }
 
 function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs, resolveListing) {

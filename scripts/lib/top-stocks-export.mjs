@@ -5,6 +5,7 @@ import {
   stockListingKeySql,
   holderFilingKeySql,
 } from './stock-listing-key.mjs';
+import { formatStockSector } from './stock-utils.mjs';
 
 const STOCK_LISTING_KEY = stockListingKeySql('s');
 const HOLDER_FILING_KEY = holderFilingKeySql('sph.holder_name');
@@ -51,7 +52,7 @@ function mapRawRow(r) {
   return {
     stockSlug: String(r.stock_slug),
     stockName: String(r.stock_name),
-    sector: r.sector ? String(r.sector) : '',
+    sector: formatStockSector(r.sector),
     boughtCr,
     soldCr,
     netCr: Math.round((boughtCr - soldCr) * 100) / 100,

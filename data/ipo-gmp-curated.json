@@ -1,5 +1,5 @@
 {
-  "_comment": "Manually curated unofficial GMP (₹/share). Synced to ipo_gmp_history via npm run pipeline:gmp",
+  "_comment": "Manual GMP overrides (₹/share). Scraped daily from InvestorGain; entries here override scrape for matching slugs.",
   "updatedAt": "2026-07-05",
   "entries": [
     { "slug": "susan-electricals-india", "gmp": 43 },

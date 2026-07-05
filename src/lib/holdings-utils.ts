@@ -148,8 +148,9 @@ export function isValidEquitySector(sector: string): boolean {
   // Portfolio weights / numeric codes mis-filed as sector (0.1413, 12.5%, etc.)
   if (/^[\d.]+\s*%?$/.test(s)) return false;
 
-  // Credit rating agency prefixes
-  if (/^\[?(CRISIL|ICRA|FITCH|CARE|BWR|IND|Brickwork)/i.test(s)) return false;
+  // Credit rating agency prefixes (IND only when followed by space — not "Industrial …")
+  if (/^\[?(CRISIL|ICRA|FITCH|CARE|BWR|Brickwork)/i.test(s)) return false;
+  if (/^IND\s/i.test(s)) return false;
 
   // Debt / money-market / offshore instrument buckets from AMC filings
   if (
@@ -164,6 +165,13 @@ export function isValidEquitySector(sector: string): boolean {
   if (!/[a-zA-Z]/.test(s)) return false;
 
   return true;
+}
+
+/** Normalize sector for display — hides numeric junk and non-equity labels. */
+export function formatStockSector(sector: string | null | undefined): string {
+  const s = String(sector ?? '').trim();
+  if (!s || s === 'Unknown') return '';
+  return isValidEquitySector(s) ? s : '';
 }
 
 /** Sector filter dropdown options — excludes internal AMC classification codes. */

@@ -14,9 +14,10 @@ import {
   SAST_UPDATES_HUB,
 } from '../../lib/tracked-entities';
 import type { SastUpdatesPayload } from '../../lib/sast-updates';
+import { SAST_ALL_BOOTSTRAP_ID } from '../../lib/sast-updates-bootstrap';
 
-function loadCuratedFeed(): SastUpdatesPayload | null {
-  const path = join(process.cwd(), 'public/data/sast-updates-curated.json');
+function loadSastFeed(filename: string): SastUpdatesPayload | null {
+  const path = join(process.cwd(), 'public/data', filename);
   if (!existsSync(path)) return null;
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as SastUpdatesPayload;
@@ -25,7 +26,9 @@ function loadCuratedFeed(): SastUpdatesPayload | null {
   }
 }
 
-const initialCurated = loadCuratedFeed();
+const initialCurated = loadSastFeed('sast-updates-curated.json');
+const initialAll = loadSastFeed('sast-updates.json');
+const allFeedJson = initialAll ? JSON.stringify(initialAll).replace(/</g, '\\u003c') : null;
 const sastInsight = getInsightCallout('sast');
 
 const path = SAST_UPDATES_HUB;
@@ -83,9 +86,13 @@ const jsonLd = {
     </div>
 
     <div class="mt-8">
+      {allFeedJson && (
+        <script type="application/json" id={SAST_ALL_BOOTSTRAP_ID} set:html={allFeedJson} />
+      )}
       <SastUpdatesFeed
-        client:visible
+        client:load
         initialCurated={initialCurated}
+        initialAll={initialAll}
         superInvestorBase={SUPER_INVESTORS_HUB}
         stockBase={ONE_PERCENT_CLUB_HUB}
       />

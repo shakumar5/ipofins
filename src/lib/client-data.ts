@@ -23,7 +23,7 @@ export function yieldToMain(): Promise<void> {
   });
 }
 
-async function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
+async function fetchTextWithTimeout(url: string, signal?: AbortSignal): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -32,7 +32,8 @@ async function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Resp
 
   try {
     const res = await fetch(url, { signal: controller.signal });
-    return res;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
   } catch (err) {
     if ((err as Error).name === 'AbortError') {
       throw new Error(`Request timed out loading ${url}`);
@@ -49,9 +50,7 @@ export async function fetchJsonCached<T>(url: string, signal?: AbortSignal): Pro
   const cached = jsonCache.get(url);
   if (cached) return cached as T;
 
-  const res = await fetchWithTimeout(url, signal);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
+  const text = await fetchTextWithTimeout(url, signal);
   if (signal?.aborted) throw new Error('Request cancelled');
 
   await yieldToMain();

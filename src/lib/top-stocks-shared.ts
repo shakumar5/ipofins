@@ -3,6 +3,7 @@ import {
   MARKET_CAP_BUCKET_ORDER,
   type MarketCapBucketId,
 } from './market-cap-buckets';
+import { formatStockSector } from './holdings-utils';
 
 export type TopStocksSource =
   | 'mutual_funds'
@@ -73,7 +74,7 @@ function mapRawRow(r: RawFlowRow): Omit<TopStockRow, 'netCr'> & { cap: TopStocks
   return {
     stockSlug: String(r.stock_slug),
     stockName: String(r.stock_name),
-    sector: r.sector ? String(r.sector) : '',
+    sector: formatStockSector(r.sector),
     boughtCr,
     soldCr,
     netCr: Math.round((boughtCr - soldCr) * 100) / 100,

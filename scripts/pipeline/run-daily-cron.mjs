@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Daily cron — NAV + IPO (status, details, performance) + subscription.
+ * Daily cron — NAV + IPO (status, details, performance) + subscription + GMP.
  * Weekdays 9 AM IST via GitHub Actions (pipeline-daily.yml).
  */
 import { spawn } from 'child_process';
@@ -32,31 +32,35 @@ function runScript(scriptName, extraArgs = []) {
 }
 
 async function syncNav() {
-  console.log('\n  [1/4] NAV sync (AMFI)...');
+  console.log('\n  [1/5] NAV sync (AMFI)...');
   const navStart = Date.now();
   const amfiFunds = await fetchAMFINAVs();
   await upsertFundsFromAMFI(amfiFunds);
   await computeFundReturnsFromNavs();
-  console.log(`  [1/4] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
+  console.log(`  [1/5] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
 }
 
 async function main() {
   const totalStart = Date.now();
   console.log('');
-  console.log('  Daily cron — NAV + IPO + Subscription');
+  console.log('  Daily cron — NAV + IPO + Subscription + GMP');
   console.log(`  IPO mode: ${QUICK ? 'quick' : 'full (statuses + performance)'}`);
   console.log(`  ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
   requireDb();
   await syncNav();
   const ipoArgs = ['--no-clean'];
   if (QUICK) ipoArgs.push('--quick');
-  console.log('\n  [2/4] IPO sync...');
+  console.log('\n  [2/5] IPO sync...');
   await runScript('00-ipo-broker-sync.mjs', ipoArgs);
-  console.log('\n  [3/4] Subscription...');
+  console.log('\n  [3/5] Subscription...');
   await runScript('02-ipo-subscription.mjs');
-  console.log('\n  [4/4] Post-listing prices...');
+  console.log('\n  [4/5] Post-listing prices...');
   await runScript('05-ipo-post-listing-prices.mjs').catch((err) =>
     console.warn(`  ⚠️  Post-listing prices step failed (non-fatal): ${err.message}`),
+  );
+  console.log('\n  [5/5] IPO GMP scrape...');
+  await runScript('sync-ipo-gmp.mjs').catch((err) =>
+    console.warn(`  ⚠️  GMP scrape failed (non-fatal): ${err.message}`),
   );
   await runScript('verify-schema.mjs');
   console.log(`\n  Daily cron complete in ${((Date.now() - totalStart) / 1000).toFixed(1)}s\n`);

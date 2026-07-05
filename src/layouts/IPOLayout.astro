@@ -51,22 +51,25 @@ const tabs = [
     </ol>
   </nav>
 
-  <!-- Persistent Tab Navigation -->
-  <div class="container-wide pt-6 pb-2 sticky top-[var(--site-header-h,4rem)] z-40 bg-white/98 dark:bg-surface-900/98">
-    <div class="overflow-x-auto -mx-4 px-4">
-      <div class="flex gap-1 min-w-max border-b border-surface-200 dark:border-surface-700 pb-0">
-        {tabs.map(tab => (
-          <a
-            href={tab.href}
-            class={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-              activeTab === tab.key
-                ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400'
-                : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 hover:border-surface-300'
-            }`}
-          >
-            {tab.label}
-          </a>
-        ))}
+  <!-- Live IPO CTA (detail pages) + persistent tab navigation -->
+  <div class="sticky top-[var(--site-header-h,4rem)] z-40">
+    <slot name="cta" />
+    <div class="container-wide pt-6 pb-2 bg-white/98 dark:bg-surface-900/98">
+      <div class="overflow-x-auto -mx-4 px-4">
+        <div class="flex gap-1 min-w-max border-b border-surface-200 dark:border-surface-700 pb-0">
+          {tabs.map(tab => (
+            <a
+              href={tab.href}
+              class={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400'
+                  : 'border-transparent text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 hover:border-surface-300'
+              }`}
+            >
+              {tab.label}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   </div>

@@ -59,7 +59,18 @@ export function fundListBackVariants(category: string): Record<FundTableKind, { 
 }
 
 export function fundDetailHref(detailSlug: string, table: FundTableKind): string {
-  return appendFromParam(`/mutual-funds/fund/${detailSlug}-holdings`, table);
+  const base = detailSlug.replace(/-holdings$/, '');
+  return appendFromParam(`/mutual-funds/fund/${base}-holdings`, table);
+}
+
+/** Holdings page link with list-context query params for ListBackLink. */
+export function fundHoldingsDetailHref(
+  detailSlug: string,
+  from: MfListFrom,
+  extra?: Record<string, string>,
+): string {
+  const base = detailSlug.replace(/-holdings$/, '');
+  return appendFromParam(`/mutual-funds/fund/${base}-holdings`, from, extra);
 }
 
 export const IPO_LIST_BACK: Record<IpoListFrom, { href: string; label: string }> = {
