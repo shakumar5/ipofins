@@ -5,7 +5,7 @@
  * GSC submits only sitemap-index.xml (~15k indexable pages). Portfolio overlap
  * comparison URLs (~143k) are never written to dist/.
  */
-import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
+import { existsSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -14,13 +14,15 @@ import {
   CANONICAL_SITEMAP_INDEX,
   SITE,
   classifySitemapBucket,
-  collectSmartMoneySignalFilterSitemapUrls,
-  collectTopStocksFilterSitemapUrls,
+  collectAstroSitemapLocs,
+  collectBuiltPageLocs,
   isFundDetailPath,
   isPortfolioOverlapRewritePath,
   loadCanonicalFundPaths,
+  minIndexableSitemapUrls,
+  resolvePageArtifactRoot,
+  SITEMAP_EXCLUDED_PATH_PREFIXES,
   TOP_STOCKS_DEFAULT_COMBO_PATH,
-  parseUrlsetLocs,
   pathnameFromLoc,
   todayIso,
   writeSitemapIndexSync,
@@ -39,16 +41,31 @@ const LEGACY_SITEMAPS = [
   'sitemap-portfolio-overlap-index.xml',
 ];
 
-function collectAstroUrls() {
-  const urls = [];
-  if (!existsSync(DIST)) return urls;
+function collectIndexableLocs() {
+  const pageRoot = resolvePageArtifactRoot(ROOT);
+  const astroLocs = collectAstroSitemapLocs(ROOT);
+  const builtLocs = collectBuiltPageLocs(pageRoot);
+  const minUrls = minIndexableSitemapUrls();
 
-  for (const name of readdirSync(DIST)) {
-    if (!ASTRO_SITEMAP_RE.test(name)) continue;
-    const xml = readFileSync(join(DIST, name), 'utf8');
-    urls.push(...parseUrlsetLocs(xml));
+  if (astroLocs.length >= minUrls) {
+    console.log(`  ✓ Astro sitemap urlsets (${astroLocs.length} URLs)`);
+    return astroLocs;
   }
-  return urls;
+
+  if (builtLocs.length >= minUrls) {
+    console.warn(
+      `  ⚠ Astro sitemap urlsets missing/thin (${astroLocs.length}) — using ${builtLocs.length} HTML paths from ${pageRoot.replace(ROOT, '')}`,
+    );
+    return builtLocs;
+  }
+
+  const merged = [...new Set([...astroLocs, ...builtLocs])];
+  if (merged.length) {
+    console.warn(
+      `  ⚠ Thin build output: ${astroLocs.length} Astro urlset URL(s), ${builtLocs.length} HTML path(s) under ${pageRoot.replace(ROOT, '')}`,
+    );
+  }
+  return merged;
 }
 
 /** Directories to search for the fund holdings index, most-specific first. */
@@ -62,6 +79,7 @@ function bucketUrls(allLocs, canonicalFundPaths) {
   for (const loc of allLocs) {
     const path = pathnameFromLoc(loc);
     if (!path || path === '/404') continue;
+    if (SITEMAP_EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))) continue;
     if (path.startsWith('/1-percent-club/holder/')) continue;
     if (isPortfolioOverlapRewritePath(path)) {
       droppedOverlapComparisons += 1;
@@ -167,19 +185,21 @@ function main() {
     console.log(`  ✓ removed ${removedBefore} non-indexable overlap sitemap file(s) from dist/`);
   }
 
-  const astroUrls = collectAstroUrls();
-  const allLocs = [
-    ...new Set([
-      ...astroUrls,
-      ...collectTopStocksFilterSitemapUrls(),
-      ...collectSmartMoneySignalFilterSitemapUrls(),
-    ]),
-  ];
+  const allLocs = collectIndexableLocs();
 
   if (!allLocs.length) {
-    console.warn('  ⚠ reorganize-sitemaps: no URLs found — skip');
-    removeNonIndexableSitemapFilesFromDist();
-    return;
+    console.error('  ❌ reorganize-sitemaps: no indexable URLs found in Astro sitemaps or dist/ HTML');
+    console.error('  Astro build likely failed or dist/ is empty — check the build log above.');
+    process.exit(1);
+  }
+
+  const minUrls = minIndexableSitemapUrls();
+  if (allLocs.length < minUrls) {
+    console.error(
+      `  ❌ reorganize-sitemaps: only ${allLocs.length} indexable URL(s) (expected >= ${minUrls} on CI)`,
+    );
+    console.error('  Incomplete Astro prerender — refusing to write a misleading GSC sitemap.');
+    process.exit(1);
   }
 
   const canonicalFundPaths = loadCanonicalFundPaths(FUND_INDEX_DATA_DIRS);

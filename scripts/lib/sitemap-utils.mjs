@@ -1,7 +1,11 @@
 /** Shared helpers for sitemap XML generation. */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
+
+const ASTRO_SITEMAP_URLSET_RE = /^sitemap-\d+\.xml$/;
+const SKIP_HTML_WALK_DIRS = new Set(['data', '_astro', 'fonts', 'images', 'og']);
+const MIN_CI_INDEXABLE_URLS = 1000;
 
 export const SITE = 'https://ipofins.com';
 export const SITEMAP_URL_LIMIT = 45_000;
@@ -293,11 +297,159 @@ export function isPortfolioOverlapRewritePath(pathname) {
   );
 }
 
-/** Map a site path to the expected Astro static HTML file in dist/. */
-export function locToDistHtml(distRoot, pathname) {
+/** Map a site path to the expected Astro static HTML file under a page artifact root. */
+export function locToDistHtml(pageRoot, pathname) {
   const path = (pathname || '/').replace(/\/$/, '') || '/';
-  if (path === '/') return join(distRoot, 'index.html');
-  return join(distRoot, ...path.slice(1).split('/'), 'index.html');
+  if (path === '/') return join(pageRoot, 'index.html');
+  return join(pageRoot, ...path.slice(1).split('/'), 'index.html');
+}
+
+/** dist/ root — sitemaps and deploy artifacts live here. */
+export function distRoot(projectRoot) {
+  return join(projectRoot, 'dist');
+}
+
+/**
+ * Directory whose paths match public URLs (dist/, or dist/client/ before normalize).
+ * Prefer dist/ when index.html is at the site root, not under /client/.
+ */
+export function resolvePageArtifactRoot(projectRoot) {
+  const dist = distRoot(projectRoot);
+  const nested = join(dist, 'client');
+  const vercelStatic = join(projectRoot, '.vercel', 'output', 'static');
+
+  if (existsSync(join(dist, 'index.html'))) return dist;
+  if (existsSync(join(nested, 'index.html'))) return nested;
+  if (existsSync(join(vercelStatic, 'index.html'))) return vercelStatic;
+  return dist;
+}
+
+/** @deprecated Use resolvePageArtifactRoot — kept for callers that counted pages loosely. */
+export function resolveArtifactRoot(projectRoot) {
+  return resolvePageArtifactRoot(projectRoot);
+}
+
+/** Roots to scan for @astrojs/sitemap urlsets (always dist/, never bucket sitemap-index). */
+export function astroSitemapRoots(projectRoot) {
+  return [distRoot(projectRoot)];
+}
+
+/** Count index.html files under a build output root (shallow-biased walk). */
+export function countBuiltHtmlPages(artifactRoot, { max = 20_000 } = {}) {
+  if (!existsSync(artifactRoot)) return 0;
+  let count = 0;
+
+  function walk(dir, depth = 0) {
+    if (count >= max || depth > 12) return;
+    if (existsSync(join(dir, 'index.html'))) count += 1;
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      if (SKIP_HTML_WALK_DIRS.has(name)) continue;
+      if (name.includes('.')) continue;
+      const child = join(dir, name);
+      try {
+        if (statSync(child).isDirectory()) walk(child, depth + 1);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  walk(artifactRoot);
+  return count;
+}
+
+/** Minimum indexable URLs required before writing GSC sitemaps (CI only). */
+export function minIndexableSitemapUrls() {
+  return process.env.CI === 'true' ? MIN_CI_INDEXABLE_URLS : 50;
+}
+
+/** Minimum prerendered HTML pages required after Astro build (CI only). */
+export function minBuiltHtmlPages() {
+  return process.env.CI === 'true' ? MIN_CI_INDEXABLE_URLS : 1;
+}
+
+/** Collect locs from Astro's numbered sitemap urlsets (sitemap-0.xml, …) in dist/. */
+export function collectAstroSitemapLocs(projectRoot, site = SITE) {
+  const locs = [];
+  const seenFiles = new Set();
+
+  for (const root of astroSitemapRoots(projectRoot)) {
+    if (!existsSync(root)) continue;
+
+    for (const name of readdirSync(root)) {
+      if (!ASTRO_SITEMAP_URLSET_RE.test(name)) continue;
+      const filePath = join(root, name);
+      if (seenFiles.has(filePath)) continue;
+      seenFiles.add(filePath);
+      locs.push(...parseUrlsetLocs(readFileSync(filePath, 'utf8')));
+    }
+  }
+
+  return locs.map((loc) => {
+    const path = pathnameFromLoc(loc);
+    return path ? `${site}${path}` : loc;
+  });
+}
+
+/** Collect locs from prerendered index.html files (fallback when Astro urlsets are missing). */
+export function collectBuiltPageLocs(artifactRoot, site = SITE) {
+  if (!existsSync(artifactRoot)) return [];
+  const locs = [];
+
+  function walk(dir, segments = []) {
+    const indexHtml = join(dir, 'index.html');
+    if (existsSync(indexHtml)) {
+      const path = segments.length ? `/${segments.join('/')}` : '/';
+      if (path !== '/404') locs.push(`${site}${path}`);
+    }
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      if (SKIP_HTML_WALK_DIRS.has(name)) continue;
+      if (name.includes('.')) continue;
+      const child = join(dir, name);
+      try {
+        if (statSync(child).isDirectory()) walk(child, [...segments, name]);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  walk(artifactRoot);
+  return locs;
+}
+
+/** Resolve the first existing built HTML file for a site path. */
+export function findBuiltHtml(projectRoot, pathname) {
+  const pageRoot = resolvePageArtifactRoot(projectRoot);
+  const html = locToDistHtml(pageRoot, pathname);
+  if (existsSync(html)) return html;
+  const dist = distRoot(projectRoot);
+  if (pageRoot !== dist) {
+    const fallback = locToDistHtml(dist, pathname);
+    if (existsSync(fallback)) return fallback;
+  }
+  return html;
+}
+
+/** @deprecated Prefer resolvePageArtifactRoot + locToDistHtml. */
+export function filterLocsWithBuiltHtml(projectRoot, locs) {
+  return locs.filter((loc) => {
+    const path = pathnameFromLoc(loc);
+    if (!path) return false;
+    return existsSync(findBuiltHtml(projectRoot, path));
+  });
 }
 
 export function parseSitemapIndexChildNames(indexXml) {
