@@ -9,6 +9,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { nodeExtraArgs } from './lib/node-runner.mjs';
+import { publicDataMissingRequirements } from './lib/dist-data-sync.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STAMP = join(ROOT, 'public', 'data', '.export-stamp.json');
@@ -46,6 +47,10 @@ function shouldSkip() {
 }
 
 if (shouldSkip()) {
+  const cacheGaps = publicDataMissingRequirements(ROOT);
+  if (cacheGaps.length) {
+    console.warn(`  ⚠ Export cache incomplete (${cacheGaps.join(', ')}) — running full export`);
+  } else {
   const finalize = spawnSync(
     process.execPath,
     [...nodeExtraArgs(), join(ROOT, 'scripts', 'finalize-signals-on-disk.mjs')],
@@ -75,6 +80,7 @@ if (shouldSkip()) {
   if ((ensure.status ?? 1) !== 0) process.exit(ensure.status ?? 1);
   runInsightsGenerate();
   process.exit(0);
+  }
 }
 
 const result = spawnSync(

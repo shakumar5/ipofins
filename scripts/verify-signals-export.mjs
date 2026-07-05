@@ -8,12 +8,14 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { assertSlimListRow } from './lib/signal-export-utils.mjs';
+import { publicDataMissingRequirements } from './lib/dist-data-sync.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const DATA_DIR = join(ROOT, 'public', 'data', 'smart-money-signals');
-const INDEX_PATH = join(ROOT, 'public', 'data', 'smart-money-signals-index.json');
-const SECTOR_PATH = join(ROOT, 'public', 'data', 'sector-intelligence.json');
-const TRACKER_INDEX_PATH = join(ROOT, 'public', 'data', 'smart-money-tracker-index.json');
+const PUBLIC_DATA_DIR = join(ROOT, 'public', 'data');
+const DATA_DIR = join(PUBLIC_DATA_DIR, 'smart-money-signals');
+const INDEX_PATH = join(PUBLIC_DATA_DIR, 'smart-money-signals-index.json');
+const SECTOR_PATH = join(PUBLIC_DATA_DIR, 'sector-intelligence.json');
+const TRACKER_INDEX_PATH = join(PUBLIC_DATA_DIR, 'smart-money-tracker-index.json');
 const DIST_DIR = join(ROOT, 'dist');
 const DIST_DATA_DIR = join(DIST_DIR, 'data');
 
@@ -26,26 +28,22 @@ function fail(msg) {
   errors.push(msg);
 }
 
-if (!existsSync(INDEX_PATH)) {
-  fail('Missing smart-money-signals-index.json — run export:client-data');
-} else {
+for (const req of publicDataMissingRequirements(ROOT)) {
+  fail(`Missing ${req} — run export:client-data or restore CI cache`);
+}
+
+if (existsSync(INDEX_PATH)) {
   const index = JSON.parse(readFileSync(INDEX_PATH, 'utf8'));
   if (index.dataTier !== 'list+detail+search') {
     fail(`Index dataTier must be "list+detail+search" (got ${index.dataTier ?? 'missing'})`);
   }
 }
 
-if (!existsSync(SECTOR_PATH)) {
-  fail('Missing sector-intelligence.json — run export:client-data');
-} else {
+if (existsSync(SECTOR_PATH)) {
   const sector = JSON.parse(readFileSync(SECTOR_PATH, 'utf8'));
   if (!Array.isArray(sector.rows) || sector.rows.length === 0) {
     fail('sector-intelligence.json has no rows');
   }
-}
-
-if (!existsSync(TRACKER_INDEX_PATH)) {
-  fail('Missing smart-money-tracker-index.json — run export:client-data');
 }
 
 if (existsSync(DATA_DIR)) {

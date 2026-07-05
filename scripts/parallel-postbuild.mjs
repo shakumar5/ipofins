@@ -30,6 +30,8 @@ const parallel = [
   'scripts/verify-signals-export.mjs',
 ];
 
+await run('scripts/ensure-dist-data.mjs');
+
 console.log(`  parallel-postbuild: ${parallel.length} verification(s) in parallel`);
 await Promise.all(parallel.map(run));
 
