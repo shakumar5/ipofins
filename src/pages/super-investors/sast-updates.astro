@@ -83,6 +83,7 @@ const jsonLd = {
     </div>
 
     <div class="mt-8">
+      <link slot="head" rel="preload" href="/data/sast-updates.json" as="fetch" crossorigin />
       <SastUpdatesFeed
         client:visible
         initialCurated={initialCurated}

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { withErrorBoundary } from '../withErrorBoundary';
 import { formatPct } from '../../lib/tracked-display';
-import { fetchJsonCached } from '../../lib/client-data';
+import { fetchJsonCached, seedJsonCache } from '../../lib/client-data';
 import {
   SAST_UPDATES_CURATED_URL,
   SAST_UPDATES_DATA_URL,
@@ -61,6 +61,38 @@ function SastUpdatesFeedInner({
   const [filter, setFilter] = useState<FilterMode>('curated');
   const [stockQuery, setStockQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const allFeedLoadRef = useRef<Promise<void> | null>(null);
+
+  useEffect(() => {
+    if (initialCurated) {
+      seedJsonCache(SAST_UPDATES_CURATED_URL, initialCurated);
+    }
+  }, [initialCurated]);
+
+  const loadAllFeed = useCallback(async () => {
+    if (allPayload) return;
+    if (allFeedLoadRef.current) {
+      await allFeedLoadRef.current;
+      return;
+    }
+
+    const task = (async () => {
+      setLoadingAll(true);
+      try {
+        const data = await fetchJsonCached<SastUpdatesPayload>(SAST_UPDATES_DATA_URL);
+        setAllPayload(data);
+        seedJsonCache(SAST_UPDATES_DATA_URL, data);
+      } catch (e) {
+        allFeedLoadRef.current = null;
+        setError(e instanceof Error ? e.message : 'Failed to load full SAST feed');
+      } finally {
+        setLoadingAll(false);
+      }
+    })();
+
+    allFeedLoadRef.current = task;
+    await task;
+  }, [allPayload]);
 
   useEffect(() => {
     if (initialCurated) return;
@@ -80,24 +112,15 @@ function SastUpdatesFeedInner({
     };
   }, [initialCurated]);
 
+  // Prefetch full feed once curated data is ready (also loads on demand when tab opens).
   useEffect(() => {
-    if (filter !== 'all' || allPayload || loadingAll) return;
-    let cancelled = false;
-    setLoadingAll(true);
-    (async () => {
-      try {
-        const data = await fetchJsonCached<SastUpdatesPayload>(SAST_UPDATES_DATA_URL);
-        if (!cancelled) setAllPayload(data);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load full SAST feed');
-      } finally {
-        if (!cancelled) setLoadingAll(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [filter, allPayload, loadingAll]);
+    if (!curatedPayload) return;
+    void loadAllFeed();
+  }, [curatedPayload, loadAllFeed]);
+
+  useEffect(() => {
+    if (filter === 'all') void loadAllFeed();
+  }, [filter, loadAllFeed]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
@@ -206,7 +229,7 @@ function SastUpdatesFeedInner({
         </p>
       )}
 
-      {filter === 'all' && loadingAll && (
+      {filter === 'all' && loadingAll && !allPayload && (
         <p className="text-sm text-surface-500 dark:text-surface-400">Loading full exchange feed...</p>
       )}
 

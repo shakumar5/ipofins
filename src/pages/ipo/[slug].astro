@@ -10,7 +10,7 @@ import IPOAlertSignup from '../../components/ipo/IPOAlertSignup';
 import WatchlistButton from '../../components/dashboard/WatchlistButton';
 import { getAllIPOs } from '../../lib/data/ipos';
 import { ZERODHA_OPEN_ACCOUNT_URL, ZERODHA_IPO_APPLY_URL, GROWW_IPO_APPLY_URL, GROWW_GENERAL_URL } from '../../lib/affiliate-links';
-import { withCorrectStatuses } from '../../utils/ipo-status';
+import { withCorrectStatuses, computeIPOStatus } from '../../utils/ipo-status';
 import { buildShouldApplyFaqAnswer } from '../../lib/ipo-apply-faq';
 import {
   ipoDisplayText,
@@ -34,7 +34,7 @@ export async function getStaticPaths() {
 }
 
 const { ipo: rawIpo } = Astro.props;
-const ipo = rawIpo as unknown as IPORecord;
+const ipo = { ...(rawIpo as unknown as IPORecord), status: computeIPOStatus(rawIpo as IPORecord) };
 
 const statusConfig = {
   live: { label: 'Live', class: 'badge-live' },
@@ -182,16 +182,39 @@ const jsonLd = [financialProductLd, breadcrumbLd, ...(eventLd ? [eventLd] : [])]
   description={`${ipo.name} IPO${priceRange ? `: Price ₹${priceRange}` : ''}${ipo.lotSize ? `, lot size ${ipo.lotSize}` : ''}${issueSize ? `, issue size ${issueSize}` : ''}. ${ipo.description?.slice(0, 100) || ''}`}
   jsonLd={jsonLd}
 >
-  {/* ── Sticky Apply CTA — shown only for live/open IPOs, above all content ── */}
-  {(ipo.status === 'live' || ipo.status === 'open') && (
-    <div class="sticky top-14 sm:top-16 z-40 bg-success-600 text-white shadow-md">
+  {/* ── Sticky Apply CTA — live/open IPOs, pinned with tab nav below site header ── */}
+  {ipo.status === 'live' && (
+    <div slot="cta" class="bg-success-600 text-white shadow-md">
       <div class="container-wide flex items-center justify-between gap-3 py-2.5">
         <div class="flex items-center gap-3 min-w-0">
           <span class="w-2 h-2 bg-white rounded-full animate-pulse-subtle flex-shrink-0" aria-hidden="true"></span>
           <div class="min-w-0">
-            <span class="font-semibold text-sm truncate">{ipo.name} IPO is Open</span>
+            <span class="font-semibold text-sm truncate">{ipo.name} IPO is Live</span>
             {priceRange && <span class="text-xs text-success-100 ml-2">₹{priceRange}</span>}
             {closeDate && <span class="text-xs text-success-100 ml-2">· Closes {closeDate}</span>}
+          </div>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+          <a
+            href={ZERODHA_IPO_APPLY_URL}
+            target="_blank"
+            rel="noopener noreferrer nofollow sponsored"
+            class="px-4 py-1.5 bg-white text-success-700 hover:text-success-700 text-sm font-semibold rounded-lg hover:bg-success-50 transition-colors"
+          >
+            Apply Now →
+          </a>
+        </div>
+      </div>
+    </div>
+  )}
+  {ipo.status === 'open' && (
+    <div slot="cta" class="bg-warning-500 text-white shadow-md">
+      <div class="container-wide flex items-center justify-between gap-3 py-2.5">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="min-w-0">
+            <span class="font-semibold text-sm truncate">{ipo.name} IPO opens soon</span>
+            {ipo.openDate && <span class="text-xs text-white/85 ml-2">· Opens {ipo.openDate}</span>}
+            {priceRange && <span class="text-xs text-white/85 ml-2">· ₹{priceRange}</span>}
           </div>
         </div>
         <div class="flex gap-2 flex-shrink-0">
@@ -199,9 +222,9 @@ const jsonLd = [financialProductLd, breadcrumbLd, ...(eventLd ? [eventLd] : [])]
             href={ZERODHA_OPEN_ACCOUNT_URL}
             target="_blank"
             rel="noopener noreferrer nofollow sponsored"
-            class="px-4 py-1.5 bg-white text-success-700 text-sm font-semibold rounded-lg hover:bg-success-50 transition-colors"
+            class="px-4 py-1.5 bg-white text-surface-900 hover:text-surface-900 text-sm font-semibold rounded-lg hover:bg-surface-50 transition-colors"
           >
-            Apply Now →
+            Open Demat Account →
           </a>
         </div>
       </div>

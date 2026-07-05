@@ -798,11 +798,13 @@ function parseHoldingsFromSheet(data) {
     // Get sector — skip industry codes (numeric) and credit ratings
     let sector = colSector >= 0 ? String(row[colSector] || '').trim() : '';
     if (sector && /^\d+$/.test(sector)) sector = '';
-    if (sector && /^\[?(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)/i.test(sector)) continue;
+    if (sector && /^[\d.]+\s*%?$/.test(sector)) sector = '';
+    if (sector && /^\[?(CRISIL|ICRA|FITCH|CARE|BWR|Brickwork)/i.test(sector)) continue;
 
     // Skip debt/money market instruments — detected by credit rating in sector column
     // or by instrument name patterns (e.g., "7.35% Bharti Telecom Limited (15/10/2027)")
-    if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR|Brickwork)\s/i.test(sector)) continue;
+    if (sector && /^(CRISIL|ICRA|FITCH|CARE|BWR|Brickwork)\s/i.test(sector)) continue;
+    if (sector && /^IND\s/i.test(sector)) continue;
     if (sector && /^(Sovereign|Floating|Fixed|Treasury|Money Market|Certificate|Mutual Fund)/i.test(sector)) continue;
     if (isMutualFundSchemeHolding(stockName, sector)) continue;
     if (/^\d+\.?\d*\s*%\s/.test(stockName)) continue; // Names starting with coupon rate like "7.35% ..." or "7.35 % ..."

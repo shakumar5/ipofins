@@ -37,7 +37,8 @@ export function basesMatch(a: string, b: string): boolean {
 }
 
 export function fundHoldingsPath(detailSlug: string): string {
-  return `/mutual-funds/fund/${detailSlug}-holdings`;
+  const base = String(detailSlug).replace(/-holdings$/, '');
+  return `/mutual-funds/fund/${base}-holdings`;
 }
 
 /** Map listable / AMFI slug → canonical static holdings page slug when aliases exist. */

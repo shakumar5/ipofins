@@ -59,6 +59,17 @@ const variantsJson = JSON.stringify(variants);
       }
     }
 
+    if (from === 'fund-overlap') {
+      const fundSlug = params.get('fundSlug');
+      if (fundSlug) {
+        const fundName = params.get('fundName');
+        return {
+          href: `/mutual-funds/fund-overlap/${fundSlug}`,
+          label: fundName ? `Back to ${fundName} overlap` : 'Back to Fund Overlap',
+        };
+      }
+    }
+
     if (from === 'tracker-view') {
       const viewPath = params.get('viewPath');
       if (viewPath && viewPath.startsWith('/mutual-funds/smart-money/')) {

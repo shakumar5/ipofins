@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useDeferredValue } from 'rea
 
 import type { SmartMoneySignalRow } from '../../lib/smart-money-signals';
 import { buildInterpretation, stockSignalMetaLine } from '../../lib/smart-money-signals';
+import { formatStockSector } from '../../lib/holdings-utils';
 import { loadSignalRowWithDetail } from '../../lib/smart-money-client';
 import type { SignalSearchEntry } from '../../lib/smart-money-signals-meta';
 import { stockMatchesSearchQuery } from '../../lib/stock-search-match';
@@ -257,7 +258,7 @@ export default function StockSignalView({
                     className="w-full text-left px-3 py-2.5 hover:bg-surface-50 dark:hover:bg-surface-800/60"
                   >
                     <span className="text-sm font-medium text-surface-900 dark:text-white">{entry.stockName}</span>
-                    <span className="text-xs text-surface-500 ml-2">{entry.sector}</span>
+                    <span className="text-xs text-surface-500 ml-2">{formatStockSector(entry.sector)}</span>
                     <span className="float-right text-sm font-semibold text-primary-600 tabular-nums">{entry.convictionScore}</span>
                   </button>
                 </li>
