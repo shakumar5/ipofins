@@ -8,6 +8,7 @@ import {
   type SastUpdateItem,
   type SastUpdatesPayload,
 } from '../../lib/sast-updates';
+import { resolveSastAllBootstrap } from '../../lib/sast-updates-bootstrap';
 
 type FilterMode = 'all' | 'curated';
 
@@ -17,6 +18,7 @@ interface Props {
   superInvestorBase?: string;
   stockBase?: string;
   initialCurated?: SastUpdatesPayload | null;
+  initialAll?: SastUpdatesPayload | null;
 }
 
 function norm(s: string) {
@@ -52,10 +54,14 @@ function SastUpdatesFeedInner({
   superInvestorBase = '/super-investors',
   stockBase = '/1-percent-club',
   initialCurated = null,
+  initialAll = null,
 }: Props) {
   const [curatedPayload, setCuratedPayload] = useState<SastUpdatesPayload | null>(initialCurated);
-  const [allPayload, setAllPayload] = useState<SastUpdatesPayload | null>(null);
+  const [allPayload, setAllPayload] = useState<SastUpdatesPayload | null>(() =>
+    resolveSastAllBootstrap(initialAll),
+  );
   const [error, setError] = useState<string | null>(null);
+  const [allError, setAllError] = useState<string | null>(null);
   const [loadingCurated, setLoadingCurated] = useState(!initialCurated);
   const [loadingAll, setLoadingAll] = useState(false);
   const [filter, setFilter] = useState<FilterMode>('curated');
@@ -69,6 +75,13 @@ function SastUpdatesFeedInner({
     }
   }, [initialCurated]);
 
+  useEffect(() => {
+    const boot = resolveSastAllBootstrap(initialAll);
+    if (!boot) return;
+    setAllPayload(boot);
+    seedJsonCache(SAST_UPDATES_DATA_URL, boot);
+  }, [initialAll]);
+
   const loadAllFeed = useCallback(async () => {
     if (allPayload) return;
     if (allFeedLoadRef.current) {
@@ -78,13 +91,15 @@ function SastUpdatesFeedInner({
 
     const task = (async () => {
       setLoadingAll(true);
+      setAllError(null);
       try {
         const data = await fetchJsonCached<SastUpdatesPayload>(SAST_UPDATES_DATA_URL);
         setAllPayload(data);
         seedJsonCache(SAST_UPDATES_DATA_URL, data);
       } catch (e) {
         allFeedLoadRef.current = null;
-        setError(e instanceof Error ? e.message : 'Failed to load full SAST feed');
+        const message = e instanceof Error ? e.message : 'Failed to load full SAST feed';
+        setAllError(message);
       } finally {
         setLoadingAll(false);
       }
@@ -233,7 +248,14 @@ function SastUpdatesFeedInner({
         <p className="text-sm text-surface-500 dark:text-surface-400">Loading full exchange feed...</p>
       )}
 
-      {items.length === 0 && !(filter === 'all' && loadingAll) ? (
+      {filter === 'all' && allError && !allPayload && !loadingAll && (
+        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-6">
+          <p className="font-medium text-amber-900 dark:text-amber-200">Full exchange feed unavailable</p>
+          <p className="mt-2 text-sm text-amber-800 dark:text-amber-300">{allError}</p>
+        </div>
+      )}
+
+      {items.length === 0 && !(filter === 'all' && (loadingAll || (allError && !allPayload))) ? (
         <div className="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 p-8 text-center">
           <p className="text-surface-700 dark:text-surface-200 font-medium">No filings match your filters</p>
           <p className="mt-2 text-sm text-surface-500">
