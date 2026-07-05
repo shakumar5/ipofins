@@ -1,0 +1,315 @@
+---
+/**
+ * Broker vs Broker comparison pages
+ * Generates: /broker/zerodha-vs-groww, /broker/zerodha-vs-upstox, etc.
+ * Targets 40K+ monthly searches each for these head-to-head comparisons.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import { BRAND_NAME } from '../../lib/brand';
+import brokersData from '../../data/brokers.json';
+
+const COMPARISON_PAIRS = [
+  ['zerodha', 'groww'],
+  ['zerodha', 'upstox'],
+  ['zerodha', 'angel-one'],
+  ['groww', 'upstox'],
+  ['zerodha', 'dhan'],
+  ['groww', 'angel-one'],
+  ['zerodha', 'icici-direct'],
+  ['upstox', 'angel-one'],
+  ['zerodha', '5paisa'],
+  ['groww', 'dhan'],
+];
+
+export function getStaticPaths() {
+  return COMPARISON_PAIRS.map(([a, b]) => ({
+    params: { a, b },
+    props: { slugA: a, slugB: b },
+  }));
+}
+
+const { slugA, slugB } = Astro.props;
+const brokerA = brokersData.find(br => br.slug === slugA);
+const brokerB = brokersData.find(br => br.slug === slugB);
+
+if (!brokerA || !brokerB) return Astro.redirect('/broker');
+
+const comparisonFields = [
+  { label: 'Trading Fee', keyA: brokerA.tradingFee, keyB: brokerB.tradingFee },
+  { label: 'Account Opening', keyA: brokerA.accountOpening, keyB: brokerB.accountOpening },
+  { label: 'Annual AMC', keyA: brokerA.amc, keyB: brokerB.amc },
+  { label: 'Broker Type', keyA: brokerA.type, keyB: brokerB.type },
+  { label: 'IPOFins Rating', keyA: `★ ${brokerA.rating}/5`, keyB: `★ ${brokerB.rating}/5` },
+];
+
+const winner = brokerA.rating >= brokerB.rating ? brokerA : brokerB;
+const loser = winner.slug === brokerA.slug ? brokerB : brokerA;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: `${brokerA.name} vs ${brokerB.name} — Which is Better? (2026)`,
+  description: `Compare ${brokerA.name} and ${brokerB.name} — fees, platforms, pros and cons. Find the best broker for your trading style.`,
+  url: `https://ipofins.com/broker/${slugA}-vs-${slugB}`,
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
+      { '@type': 'ListItem', position: 2, name: 'Brokers', item: 'https://ipofins.com/broker' },
+      { '@type': 'ListItem', position: 3, name: `${brokerA.name} vs ${brokerB.name}`, item: `https://ipofins.com/broker/${slugA}-vs-${slugB}` },
+    ],
+  },
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: `Which is better: ${brokerA.name} or ${brokerB.name}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `${winner.name} edges ahead overall with a ${winner.rating}/5 rating vs ${loser.name}'s ${loser.rating}/5. ${winner.name} is better for most investors based on platform quality, fees, and reliability. However, ${loser.name} has its own strengths — see the full comparison above.`,
+      },
+    },
+    {
+      '@type': 'Question',
+      name: `What is the brokerage fee for ${brokerA.name} vs ${brokerB.name}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `${brokerA.name} charges ${brokerA.tradingFee} per trade. ${brokerB.name} charges ${brokerB.tradingFee} per trade. Both charge zero brokerage on equity delivery trades.`,
+      },
+    },
+    {
+      '@type': 'Question',
+      name: `Is ${brokerA.name} or ${brokerB.name} better for beginners?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `For beginners, ${brokerA.name} and ${brokerB.name} are both good choices. ${brokerA.name} is better for ${brokerA.pros[0].toLowerCase()}. ${brokerB.name} stands out for ${brokerB.pros[0].toLowerCase()}. Choose based on whether you prioritize platform quality or ease of use.`,
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${brokerA.name} vs ${brokerB.name} 2026 — Fees, Features & Verdict | IPOFins`}
+  description={`${brokerA.name} vs ${brokerB.name}: Compare brokerage fees (${brokerA.tradingFee} vs ${brokerB.tradingFee}), platforms, pros, cons & ratings. Which is better for Indian investors in 2026?`}
+  jsonLd={jsonLd}
+>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/broker" class="hover:text-primary-600 transition-colors">Brokers</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{brokerA.name} vs {brokerB.name}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <PageHeader
+      title={`${brokerA.name} vs ${brokerB.name} — Which is Better?`}
+      subtitle={`Side-by-side comparison of ${brokerA.name} and ${brokerB.name} — fees, platforms, pros and cons. Updated for 2026.`}
+    />
+  </section>
+
+  <!-- Head-to-head score cards -->
+  <section class="container-wide py-4">
+    <div class="grid grid-cols-2 gap-4 max-w-xl">
+      <a href={`/broker/${brokerA.slug}`} class="card text-center group hover:border-primary-300 transition-colors">
+        <div class="w-16 h-16 mx-auto bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mb-3">
+          <span class="text-white font-bold text-2xl">{brokerA.logo}</span>
+        </div>
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{brokerA.name}</h2>
+        <div class="text-warning-500 text-xl mt-1">{'★'.repeat(Math.round(brokerA.rating))}</div>
+        <p class="text-sm font-semibold text-surface-600 dark:text-surface-300 mt-1 font-mono">{brokerA.rating}/5</p>
+        <span class="mt-2 inline-block px-2 py-0.5 text-xs font-medium bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded capitalize">{brokerA.type}</span>
+      </a>
+      <a href={`/broker/${brokerB.slug}`} class="card text-center group hover:border-primary-300 transition-colors">
+        <div class="w-16 h-16 mx-auto bg-gradient-to-br from-surface-500 to-surface-700 rounded-2xl flex items-center justify-center mb-3">
+          <span class="text-white font-bold text-2xl">{brokerB.logo}</span>
+        </div>
+        <h2 class="text-lg font-bold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{brokerB.name}</h2>
+        <div class="text-warning-500 text-xl mt-1">{'★'.repeat(Math.round(brokerB.rating))}</div>
+        <p class="text-sm font-semibold text-surface-600 dark:text-surface-300 mt-1 font-mono">{brokerB.rating}/5</p>
+        <span class="mt-2 inline-block px-2 py-0.5 text-xs font-medium bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded capitalize">{brokerB.type}</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Feature comparison table -->
+  <section class="container-wide py-6">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">{brokerA.name} vs {brokerB.name} — Feature Comparison</h2>
+    <div class="overflow-x-auto data-table-premium">
+      <table class="w-full text-sm" aria-label={`${brokerA.name} vs ${brokerB.name} feature comparison`}>
+        <thead>
+          <tr>
+            <th class="text-left py-3 px-4 w-1/3">Feature</th>
+            <th class="text-center py-3 px-4">{brokerA.name}</th>
+            <th class="text-center py-3 px-4">{brokerB.name}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {comparisonFields.map(({ label, keyA, keyB }) => (
+            <tr class="border-b border-surface-100 dark:border-surface-800">
+              <td class="py-3 px-4 font-medium text-surface-700 dark:text-surface-300">{label}</td>
+              <td class="py-3 px-4 text-center font-mono text-surface-900 dark:text-white">{keyA}</td>
+              <td class="py-3 px-4 text-center font-mono text-surface-900 dark:text-white">{keyB}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Pros/Cons side by side -->
+  <section class="container-wide py-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h3 class="text-lg font-bold text-surface-900 dark:text-white mb-3">{brokerA.name} — Pros & Cons</h3>
+        <div class="card space-y-4">
+          <div>
+            <p class="text-xs font-semibold text-success-600 uppercase tracking-wider mb-2">Pros</p>
+            <ul class="space-y-1">
+              {brokerA.pros.map(p => (
+                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
+                  <span class="text-success-500 mt-0.5 flex-shrink-0">✓</span>{p}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div class="pt-3 border-t border-surface-100 dark:border-surface-700">
+            <p class="text-xs font-semibold text-danger-600 uppercase tracking-wider mb-2">Cons</p>
+            <ul class="space-y-1">
+              {brokerA.cons.map(c => (
+                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
+                  <span class="text-danger-500 mt-0.5 flex-shrink-0">✗</span>{c}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-surface-900 dark:text-white mb-3">{brokerB.name} — Pros & Cons</h3>
+        <div class="card space-y-4">
+          <div>
+            <p class="text-xs font-semibold text-success-600 uppercase tracking-wider mb-2">Pros</p>
+            <ul class="space-y-1">
+              {brokerB.pros.map(p => (
+                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
+                  <span class="text-success-500 mt-0.5 flex-shrink-0">✓</span>{p}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div class="pt-3 border-t border-surface-100 dark:border-surface-700">
+            <p class="text-xs font-semibold text-danger-600 uppercase tracking-wider mb-2">Cons</p>
+            <ul class="space-y-1">
+              {brokerB.cons.map(c => (
+                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
+                  <span class="text-danger-500 mt-0.5 flex-shrink-0">✗</span>{c}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Verdict -->
+  <section class="container-wide py-6">
+    <div class="card bg-gradient-to-r from-primary-50 to-surface-50 dark:from-primary-950/20 dark:to-surface-800 border-primary-200 dark:border-primary-800">
+      <h3 class="text-lg font-bold text-surface-900 dark:text-white mb-3">Our Verdict — {brokerA.name} vs {brokerB.name}</h3>
+      <p class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed">
+        <strong class="text-primary-700 dark:text-primary-300">{winner.name}</strong> edges ahead overall with a higher rating ({winner.rating}/5 vs {loser.rating}/5 for {loser.name}).
+        If you need <strong>{winner.pros[0].toLowerCase()}</strong>, {winner.name} is the clear winner.
+        However, if you prioritize <strong>{loser.pros[0].toLowerCase()}</strong>, {loser.name} could be the better fit.
+        Both are SEBI-registered discount brokers offering flat ₹20/trade brokerage and zero delivery charges.
+      </p>
+      <p class="text-xs text-surface-500 dark:text-surface-400 mt-3">
+        This comparison is based on publicly available data and our editorial assessment. Not investment advice. Verify all charges on broker's official website before opening an account.
+      </p>
+    </div>
+  </section>
+
+  <!-- Open Account CTAs -->
+  <section class="container-wide py-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+      <a
+        href={`/broker/${brokerA.slug}`}
+        class="btn-primary text-center py-3"
+      >
+        Open {brokerA.name} Account →
+      </a>
+      <a
+        href={`/broker/${brokerB.slug}`}
+        class="btn-secondary text-center py-3"
+      >
+        Open {brokerB.name} Account →
+      </a>
+    </div>
+    <p class="text-xs text-surface-400 dark:text-surface-500 mt-2">Affiliate links — we may earn a commission at no extra cost to you.</p>
+  </section>
+
+  <!-- Platforms comparison -->
+  <section class="container-wide py-6">
+    <h3 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Trading Platforms</h3>
+    <div class="grid grid-cols-2 gap-4 max-w-lg">
+      <div>
+        <p class="text-sm font-semibold text-surface-700 dark:text-surface-200 mb-2">{brokerA.name}</p>
+        <div class="flex flex-wrap gap-2">
+          {brokerA.platforms.map(p => (
+            <span class="px-2 py-1 text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">{p}</span>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-surface-700 dark:text-surface-200 mb-2">{brokerB.name}</p>
+        <div class="flex flex-wrap gap-2">
+          {brokerB.platforms.map(p => (
+            <span class="px-2 py-1 text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-300 rounded">{p}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Other Comparisons -->
+  <section class="container-wide py-8 border-t border-surface-200 dark:border-surface-700">
+    <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">More Broker Comparisons</h2>
+    <div class="nav-btn-group">
+      {COMPARISON_PAIRS
+        .filter(([a, b]) => !(a === slugA && b === slugB))
+        .slice(0, 6)
+        .map(([a, b]) => {
+          const bA = brokersData.find(br => br.slug === a);
+          const bB = brokersData.find(br => br.slug === b);
+          if (!bA || !bB) return null;
+          return (
+            <a href={`/broker/${a}-vs-${b}`} class="btn-secondary px-4 py-2 text-sm">
+              {bA.name} vs {bB.name}
+            </a>
+          );
+        })
+        .filter(Boolean)}
+      <a href="/broker/compare" class="btn-primary px-4 py-2 text-sm">Compare All Brokers</a>
+    </div>
+  </section>
+
+  <!-- Related links -->
+  <section class="container-wide py-6 border-t border-surface-200 dark:border-surface-700">
+    <div class="nav-btn-group">
+      <a href="/broker" class="btn-secondary px-6 py-3">All Broker Reviews</a>
+      <a href="/ipo" class="btn-secondary px-6 py-3">Live IPOs</a>
+      <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>
+      <a href="/mutual-funds" class="btn-secondary px-6 py-3">Mutual Funds</a>
+    </div>
+  </section>
+</BaseLayout>

@@ -17,6 +17,15 @@ export type IPOStatus =
 
 export type IPOType = 'mainboard' | 'sme';
 
+/**
+ * Canonical IPO verdict type. Always use this — do NOT use `IpoVerdict`
+ * from lib/ipo-score.ts (which is the deprecated alias, kept for build compat).
+ *
+ * 'apply'   → Score ≥ 7, signals are constructive
+ * 'avoid'   → Score ≤ 4, signals are weak
+ * 'neutral' → Score 5–6, mixed signals
+ * null      → No score signal available yet (pre-subscription)
+ */
 export type IPOVerdict = 'apply' | 'avoid' | 'neutral' | null;
 
 export interface SubscriptionDetails {
@@ -90,6 +99,8 @@ export interface IPORecord {
 
   /** Latest unofficial grey market premium (₹/share) when sourced — not exchange-verified */
   gmp?: number | null;
+  /** ISO timestamp of last GMP update when available */
+  gmpUpdatedAt?: string;
 
   // ── Listing (Zerodha + Groww fallback) ──────────────────────
   listingPrice?: number | null;
@@ -109,9 +120,14 @@ export interface IPORecord {
   kpis?: IPOKPIs;
 
   // ── IPOFins Score (computed in lib/ipo-score.ts at build time) ─
-  aiScore?: number | null;
-  aiSummary?: string | null;
+  ipoScore?: number | null;
+  ipoSummary?: string | null;
   verdict?: IPOVerdict;
+
+  /** @deprecated Use ipoScore instead — renamed for clarity (was never AI-generated) */
+  aiScore?: number | null;
+  /** @deprecated Use ipoSummary instead */
+  aiSummary?: string | null;
 
   // ── Risk ────────────────────────────────────────────────────
   riskScore: number;

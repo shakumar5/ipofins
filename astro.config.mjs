@@ -1,7 +1,9 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
+import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
+import sentry from '@sentry/astro';
 
 const PORTFOLIO_OVERLAP_BASE = '/mutual-funds/portfolio-overlap-checker';
 
@@ -21,16 +23,58 @@ export default defineConfig({
       changefreq: 'weekly',
       filter: (page) =>
         !page.includes('/dashboard')
+        && !page.includes('/health')
         && !page.includes('/search')
         && !page.includes('/1-percent-club/holder/'),
+      serialize(item) {
+        // Assign realistic priority by page type
+        const url = item.url;
+        const priority =
+          url === 'https://ipofins.com/' ? 1.0
+          : url.match(/\/ipo\/(?!performance|sector|allotment|subscription|upcoming|mainboard|sme)[^/]+$/) ? 0.9
+          : url.match(/\/ipo(\/|$)/) ? 0.9
+          : url.match(/\/mutual-funds\/smart-money/) ? 0.9
+          : url.match(/\/mutual-funds/) ? 0.85
+          : url.match(/\/super-investors\/[^/]+$/) ? 0.85
+          : url.match(/\/super-investors/) ? 0.9
+          : url.match(/\/tools\//) ? 0.8
+          : url.match(/\/1-percent-club/) ? 0.8
+          : url.match(/\/learn\//) ? 0.7
+          : url.match(/\/broker\//) ? 0.7
+          : 0.6;
+        return {
+          ...item,
+          lastmod: new Date().toISOString(),
+          priority,
+        };
+      },
     }),
+    ...(process.env.SENTRY_DSN
+      ? [
+          sentry({
+            dsn: process.env.SENTRY_DSN,
+            tracesSampleRate: 0.1,
+            ...(process.env.SENTRY_AUTH_TOKEN
+              ? {
+                  sourceMapsUploadOptions: {
+                    project: process.env.SENTRY_PROJECT || 'ipofins',
+                    org: process.env.SENTRY_ORG,
+                    authToken: process.env.SENTRY_AUTH_TOKEN,
+                  },
+                }
+              : {}),
+          }),
+        ]
+      : []),
   ],
   output: 'static',
+  adapter: vercel(),
   build: {
     // ~17 KiB global CSS — inline to remove render-blocking link (saves ~170–340 ms LCP/FCP)
     inlineStylesheets: 'always',
-    // Parallel page generation after holder data is loaded from export JSON (not per-page Neon queries).
-    concurrency: 2,
+    // Increased from 2 → 8: pages are fully static (all data pre-exported to public/data/).
+    // No per-page Neon queries, so more parallelism is safe. Saves ~3-5 min on build.
+    concurrency: 8,
   },
   vite: {
     plugins: [

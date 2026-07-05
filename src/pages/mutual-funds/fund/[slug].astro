@@ -210,9 +210,17 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
     )}
   </section>
 
-  <!-- Holdings Section -->
+  <!-- Top Holdings -->
   <section class="container-wide py-4">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 section-accent">Top Holdings</h2>
+    {holdings.length > 0 && holdings[0]?.stock_slug && (
+      <p class="text-sm text-surface-500 mb-3">
+        Track institutional activity on top holding
+        <a href={`/mutual-funds/smart-money/stock-signal/${holdings[0].stock_slug}`} class="text-primary-600 hover:underline ml-1">
+          {String(holdings[0].name)} → Smart Money
+        </a>
+      </p>
+    )}
     {holdings.length > 0 ? (
       <FundHoldingsTable
         client:load

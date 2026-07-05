@@ -1,15 +1,27 @@
 User-agent: *
 Allow: /
 
-# Block crawlers from non-content pages
+# Non-content / non-indexable pages
 Disallow: /api/
+Disallow: /dashboard
 Disallow: /dashboard/
+Disallow: /health
 Disallow: /admin
+Disallow: /search
+
+# 1% Club holder detail pages — excluded from sitemap, block crawl budget drain
+Disallow: /1-percent-club/holder/
+
+# Cursor IDE rules file — accidentally was in src/pages/ (now moved, belt-and-suspenders)
+Disallow: /pages.cursorrules
 
 # Portfolio-overlap fund comparison deep links (/portfolio-overlap-checker/<a>-vs-<b>)
-# are client-rendered duplicates that all canonicalize to the hub tool. Google had
-# discovered ~136k of them (crawl-budget drain). Block to stop crawling; the hub page
-# itself (/mutual-funds/portfolio-overlap-checker) stays indexable.
+# are client-rendered duplicates that all canonicalise to the hub tool.
+# Google had discovered ~136k of them (crawl-budget drain).
+# Block to stop crawling; the hub page itself stays indexable.
 Disallow: /mutual-funds/portfolio-overlap-checker/*-vs-
+
+# Staging sitemap files — should never be in production, belt-and-suspenders block
+Disallow: /sitemap-overlap-staging-*
 
 Sitemap: https://ipofins.com/sitemap-index.xml

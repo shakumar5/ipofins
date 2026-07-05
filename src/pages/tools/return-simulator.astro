@@ -1,26 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import ReturnSimulator from '../../components/calculators/ReturnSimulator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Investment Return Simulator",
-  "description": "Simulate and compare investment returns across conservative, moderate, and aggressive scenarios over different time horizons.",
-  "url": "https://ipofins.com/tools/return-simulator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "Return Simulator", "item": "https://ipofins.com/tools/return-simulator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "Investment Return Simulator",
+  slug: "return-simulator",
+  description: "Simulate and compare investment returns across conservative, moderate, and aggressive scenarios over different time horizons.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -35,6 +23,7 @@ const faqJsonLd = {
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import CalculatorSeoGuide from '../../components/tools/CalculatorSeoGuide.astro';
 ---
 
 <BaseLayout title="Return Simulator 2026 - Investment Scenarios | IPOFins" description="Free investment return simulator. Compare how your lumpsum grows across conservative (8%), moderate (12%), and aggressive (18%) scenarios over 1-30 years." jsonLd={jsonLd}>
@@ -104,6 +93,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   </section>
 
   <section class="container-narrow py-8">
+  <CalculatorSeoGuide slug="return-simulator" />
+
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
     <div class="nav-btn-group">
       <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>

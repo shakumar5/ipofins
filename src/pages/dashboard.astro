@@ -1,41 +1,76 @@
 ---
+/**
+ * Dashboard — localStorage-based personal dashboard.
+ * No login, no server. All data stored in your browser only.
+ * - Watchlist: IPO slugs saved from IPO detail pages
+ * - Recently viewed: last 10 pages visited
+ * - Saved calculations: calculator results
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/layout/PageHeader.astro';
-import PortfolioTracker from '../components/dashboard/PortfolioTracker.tsx';
-import Watchlist from '../components/dashboard/Watchlist.tsx';
+import LocalDashboard from '../components/dashboard/LocalDashboard';
+import { getAllIPOs } from '../lib/data/ipos';
+import { withCorrectStatuses } from '../utils/ipo-status';
+import AdUnit from '../components/AdUnit.astro';
 
-const today = new Date().toLocaleDateString('en-IN', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'Asia/Kolkata',
-});
+const iposData = withCorrectStatuses(await getAllIPOs());
+// Pass a lightweight serializable version to the client script
+const ipoMap = Object.fromEntries(
+  iposData.map(ipo => [ipo.slug, {
+    name: ipo.name,
+    status: ipo.status,
+    type: ipo.type,
+    priceRange: ipo.priceRange ?? '',
+    closeDate: ipo.closeDate ?? '',
+    subscription: ipo.subscription ?? null,
+    sector: ipo.sector ?? '',
+  }])
+);
 ---
 
-<BaseLayout title="Investment Dashboard - Portfolio & Watchlist | IPOFins" description="Preview dashboard with sample portfolio and watchlist data stored locally in your browser. Not connected to live brokerage accounts." robots="noindex, nofollow">
+<BaseLayout
+  title="My Dashboard — IPO Watchlist & Saved Calculations | IPOFins"
+  description="Your personal IPO watchlist, recently viewed pages, and saved calculator results — stored privately in your browser. No login required."
+  robots="noindex, nofollow"
+>
   <section class="container-wide py-8">
-    <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-      <strong>Preview only.</strong> This dashboard uses sample data and browser localStorage. It is not linked to your demat or mutual fund accounts. No login or paid plan is required.
+    <!-- Privacy notice -->
+    <div class="mb-6 rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-950/20 px-4 py-3 flex items-start gap-3">
+      <svg class="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+      <div>
+        <p class="text-sm font-semibold text-primary-800 dark:text-primary-200">100% Private — Your Browser Only</p>
+        <p class="text-xs text-primary-700 dark:text-primary-300 mt-0.5">All data is stored in your browser's localStorage. Nothing is sent to any server. Clearing browser data will reset your dashboard.</p>
+      </div>
     </div>
 
     <PageHeader
-      title="Dashboard"
-      subtitle={`Sample portfolio overview — ${today}`}
-      freshness="Preview data"
-      source="Browser localStorage only"
+      title="My Dashboard"
+      subtitle="Your personal watchlist, recently viewed pages, and saved calculations."
+      freshness="Browser localStorage"
+      source="No server — fully private"
       class="mb-8"
     />
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2">
-        <h2 class="section-title mb-4">Portfolio Tracker</h2>
-        <PortfolioTracker client:idle />
+    <!-- Dashboard Grid -->
+    <LocalDashboard client:visible ipoMap={ipoMap} />
+
+    <!-- Quick Links -->
+    <section class="mt-10 pt-8 border-t border-surface-200 dark:border-surface-700">
+      <h2 class="text-base font-semibold text-surface-900 dark:text-white mb-4">Quick Access</h2>
+      <div class="nav-btn-group">
+        <a href="/ipo" class="btn-secondary px-5 py-2.5 text-sm">Live IPOs</a>
+        <a href="/ipo/gmp-today" class="btn-secondary px-5 py-2.5 text-sm">GMP Today</a>
+        <a href="/mutual-funds/smart-money" class="btn-secondary px-5 py-2.5 text-sm">Smart Money</a>
+        <a href="/super-investors" class="btn-secondary px-5 py-2.5 text-sm">Super Investors</a>
+        <a href="/tools/sip-calculator" class="btn-secondary px-5 py-2.5 text-sm">SIP Calculator</a>
+        <a href="/mutual-funds/portfolio-overlap-checker" class="btn-secondary px-5 py-2.5 text-sm">Portfolio Overlap</a>
       </div>
-      <div>
-        <h2 class="section-title mb-4">Watchlist & Alerts</h2>
-        <Watchlist client:idle />
-      </div>
+    </section>
+
+    <div class="mt-8">
+      <AdUnit slot="1234567890" format="horizontal" />
     </div>
   </section>
 </BaseLayout>

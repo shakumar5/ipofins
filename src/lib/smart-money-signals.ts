@@ -261,9 +261,6 @@ export function scoreToSignal(score: number): { signal: SmartMoneySignalType; em
   return { signal: 'Strong Distribution', emoji: '🔴' };
 }
 
-/** @deprecated Alias — use scoreToSignal. */
-export const scoreToStockSignal = scoreToSignal;
-
 export type SignalDirection = 'accumulation' | 'distribution' | 'neutral';
 
 export function signalDirection(

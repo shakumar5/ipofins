@@ -1,28 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import SWPCalculator from '../../components/calculators/SWPCalculator.tsx';
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'SWP Calculator - Systematic Withdrawal Plan for Mutual Funds',
-  description:
-    'Free online SWP calculator to estimate monthly mutual fund withdrawals, remaining corpus, and how long your retirement money lasts.',
-  url: 'https://ipofins.com/tools/swp-calculator',
-  applicationCategory: 'FinanceApplication',
-  operatingSystem: 'Web Browser',
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
-  creator: { '@type': 'Organization', name: 'IPOFins', url: 'https://ipofins.com' },
-  breadcrumb: {
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ipofins.com' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://ipofins.com/tools' },
-      { '@type': 'ListItem', position: 3, name: 'SWP Calculator', item: 'https://ipofins.com/tools/swp-calculator' },
-    ],
-  },
-};
+const jsonLd = toolPageJsonLd({
+  name: "SWP Calculator - Systematic Withdrawal Plan for Mutual Funds",
+  slug: "swp-calculator",
+  description: "Free online SWP calculator to estimate monthly mutual fund withdrawals, remaining corpus, and how long your retirement money lasts.",
+});
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -81,6 +67,7 @@ const faqJsonLd = {
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import CalculatorSeoGuide from '../../components/tools/CalculatorSeoGuide.astro';
 ---
 
 <BaseLayout
@@ -186,6 +173,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   </section>
 
   <section class="container-narrow py-8">
+  <CalculatorSeoGuide slug="swp-calculator" />
+
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <a href="/tools/sip-calculator" class="card-compact text-center group hover:shadow-md transition-shadow">

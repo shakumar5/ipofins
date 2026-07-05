@@ -1,0 +1,106 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/layout/PageHeader.astro';
+import FundCard from '../../../components/FundCard.astro';
+import { getAMCList } from '../../../lib/data/holdings';
+import { getFundsByAmc } from '../../../lib/data/funds';
+import { holdingsChangesDetailHref } from '../../../lib/list-back-nav';
+import { loadHoldingsPageBootstrap } from '../../../lib/holdings-page-static';
+import { monthSlug } from '../../../utils/month-slug';
+import { BRAND_URL } from '../../../lib/brand';
+
+export async function getStaticPaths() {
+  const amcs = await getAMCList();
+  return amcs.map((amc) => ({
+    params: { slug: amc.slug },
+    props: { amc },
+  }));
+}
+
+const { amc } = Astro.props;
+const funds = await getFundsByAmc(amc.slug);
+const bootstrap = loadHoldingsPageBootstrap();
+const latestMonth = bootstrap?.monthsNewestFirst?.[0];
+const latestMonthSlug = latestMonth ? monthSlug(latestMonth) : '';
+const holdingsChangesHref = latestMonthSlug
+  ? holdingsChangesDetailHref(amc.slug, latestMonthSlug)
+  : '/mutual-funds/mutual-fund-holdings-changes';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${amc.name} Mutual Funds India`,
+  description: `All ${amc.name} mutual fund schemes — NAV, returns, holdings, and portfolio changes.`,
+  url: `${BRAND_URL}/mutual-funds/amc/${amc.slug}`,
+};
+---
+
+<BaseLayout
+  title={`${amc.name} Mutual Funds 2026 — Schemes, NAV & Returns | IPOFins`}
+  description={`Browse ${amc.fundCount}+ ${amc.name} mutual fund schemes. Compare NAV, 1Y/3Y/5Y returns, top holdings, and monthly portfolio changes.`}
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 flex-wrap">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">{amc.name}</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <PageHeader
+      title={`${amc.name} Mutual Funds`}
+      subtitle={`${amc.fundCount} equity schemes tracked on IPOFins — NAV updated daily, holdings updated monthly from AMC disclosures.`}
+      freshness="NAV daily · Holdings monthly"
+      source="AMFI & SEBI AMC filings"
+    />
+  </section>
+
+  <section class="container-wide py-4">
+    <div class="flex flex-wrap gap-3 mb-6">
+      <a href={holdingsChangesHref} class="btn-secondary text-sm">Latest Holdings Changes →</a>
+      <a href="/mutual-funds/best" class="btn-secondary text-sm">Best Funds</a>
+      <a href="/mutual-funds/smart-money" class="btn-secondary text-sm">Smart Money Tracker</a>
+    </div>
+
+    {funds.length > 0 ? (
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {funds.map((fund) => (
+          <FundCard
+            name={fund.name}
+            slug={fund.slug}
+            category={fund.category}
+            returns1y={fund.returns1y ?? undefined}
+            returns3y={fund.returns3y ?? undefined}
+            returns5y={fund.returns5y ?? undefined}
+            nav={fund.nav}
+            rating={fund.rating ?? undefined}
+            aum={fund.aum ?? undefined}
+            riskLevel={fund.riskLevel as 'low' | 'moderate' | 'high' | 'very-high'}
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="text-sm text-surface-500">No active funds found for this AMC.</p>
+    )}
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">About {amc.name}</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        {amc.name} is a SEBI-registered Asset Management Company (AMC) offering mutual fund schemes across equity, debt, and hybrid categories.
+        On IPOFins you can compare {amc.name} fund returns, inspect monthly portfolio holdings, and track
+        <a href="/mutual-funds/smart-money" class="text-primary-600 hover:underline">Smart Money</a> signals when multiple AMCs buy the same stocks.
+      </p>
+      <p class="text-surface-600 dark:text-surface-300 mt-3">
+        Prefer Direct-Growth plans for lower expense ratios. Use our
+        <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP calculator</a> to project long-term returns before investing.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

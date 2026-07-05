@@ -26,9 +26,6 @@ const faqJsonLd = {
     { "@type": "Question", "name": "What is IPO subscription status?", "acceptedAnswer": { "@type": "Answer", "text": "IPO subscription shows how many times an issue was oversubscribed across retail, NII, and QIB categories. Higher subscription often indicates stronger demand during the bidding period." } },
     { "@type": "Question", "name": "What is the minimum amount to invest in IPO?", "acceptedAnswer": { "@type": "Answer", "text": "Minimum is 1 lot × upper price band. For example, if lot size is 30 shares at ₹500, minimum investment = ₹15,000. The maximum for retail investors is ₹2,00,000." } },
     { "@type": "Question", "name": "How to check IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Check on the registrar's website (KFin Technologies or Link Intime/MUFG) using your PAN number or application number. Allotment is typically announced 6 days after the IPO closes." } },
-    { "@type": "Question", "name": "How to buy pre-IPO shares?", "acceptedAnswer": { "@type": "Answer", "text": "Pre-IPO shares can be bought through unlisted share dealers or platforms like Tata Capital Unlisted, Stockify, or UnlistedZone. These are private transactions outside stock exchanges. Risks include low liquidity, no SEBI regulation, price manipulation, and lock-in periods post-listing. Always verify the seller's credibility and understand that pre-IPO investing carries significantly higher risk than applying through the normal IPO process." } },
-    { "@type": "Question", "name": "What is SME IPO?", "acceptedAnswer": { "@type": "Answer", "text": "SME IPO (Small and Medium Enterprise IPO) is an initial public offering by smaller companies listed on BSE SME or NSE Emerge platforms. SME IPOs have lower issue sizes (typically ₹5-50 Cr), smaller lot sizes, and relaxed SEBI listing requirements compared to mainboard IPOs. They often show higher listing gains but carry more risk due to lower liquidity, limited institutional coverage, and smaller company size." } },
-    { "@type": "Question", "name": "How to check NSDL IPO allotment status?", "acceptedAnswer": { "@type": "Answer", "text": "Visit the NSDL allotment status page at https://www.kfintech.com/ipostatus or the specific registrar's portal. Select the IPO name, enter your PAN number or application number, and click submit. NSDL depository participants can also check via their demat account statement once allotment is credited. Allotment typically reflects within 6 working days after the IPO closes." } }
   ]
 };
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
@@ -51,8 +48,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
 
   <!-- FAQ Section -->
   <ContentGuideSection title="Frequently Asked Questions" variant="faq" bordered container="wide">
-    <ContentGuideFaqList>
-      <ContentGuideFaqItem open>
+    <ContentGuideFaqList initialVisible={5}>
+      <ContentGuideFaqItem>
         <span slot="question">What is an IPO?</span>
         <p>IPO (Initial Public Offering) is when a private company sells its shares to the public for the first time on a stock exchange (BSE/NSE). After the IPO, anyone can buy and sell the company's shares on the market.</p>
       </ContentGuideFaqItem>
@@ -113,6 +110,7 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   <section class="container-wide py-8">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related on IPOFins</h2>
     <div class="nav-btn-group">
+      <a href="/ipo/gmp-today" class="btn-secondary px-6 py-3">IPO GMP Today</a>
       <a href="/tools/ipo-profit-calculator" class="btn-secondary px-6 py-3">IPO Profit Calculator</a>
       <a href="/mutual-funds" class="btn-secondary px-6 py-3">Mutual Funds</a>
       <a href="/broker" class="btn-secondary px-6 py-3">Best Brokers for IPO</a>

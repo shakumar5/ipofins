@@ -9,10 +9,12 @@
  */
 
 import { requireDb, updateIPOPostListingPerformance } from '../lib/db-writers.mjs';
+import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
 async function main() {
+  const ctx = await startRun('ipo-performance');
   console.log('');
   console.log('===========================================================');
   console.log('  IPO Post-Listing Prices -> Neon');
@@ -20,14 +22,26 @@ async function main() {
   console.log(`  Date: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
   if (DRY_RUN) console.log('  Dry run - no database writes');
 
-  requireDb();
+  try {
+    requireDb();
 
-  const t0 = Date.now();
-  const result = await updateIPOPostListingPerformance({ dryRun: DRY_RUN });
-  console.log(
-    `\n  Done in ${((Date.now() - t0) / 1000).toFixed(1)}s - ` +
-      `${result.updated}/${result.total} listed IPOs priced\n`,
-  );
+    const t0 = Date.now();
+    const result = await updateIPOPostListingPerformance({ dryRun: DRY_RUN });
+    console.log(
+      `\n  Done in ${((Date.now() - t0) / 1000).toFixed(1)}s - ` +
+        `${result.updated}/${result.total} listed IPOs priced\n`,
+    );
+
+    await endRun(ctx, {
+      status: 'success',
+      qualityGate: DRY_RUN ? 'skipped' : 'passed',
+      rowsUpserted: result.updated,
+      message: `${result.updated}/${result.total} listed IPOs priced`,
+    });
+  } catch (err) {
+    await endRun(ctx, { status: 'failed', qualityGate: 'skipped', message: err.message });
+    throw err;
+  }
 }
 
 main().catch((err) => {

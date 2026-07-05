@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import { BRAND_NAME, BRAND_URL } from '../../lib/brand';
+
+const team = [
+  {
+    name: 'Shailesh Kumar',
+    role: 'Founder & Product',
+    bio: 'Technology leader with 16+ years across DP World, Myntra, Intuit, Paytm, and SAP Ariba. Builds IPOFins data pipelines, IPO analytics, and mutual fund intelligence tools.',
+    linkedin: 'https://www.linkedin.com/in/shailesh-kumar-222a1018/',
+  },
+  {
+    name: 'IPOFins Research',
+    role: 'Data & Editorial',
+    bio: 'Automated insights from SEBI filings, AMFI NAV data, and AMC monthly portfolio disclosures. Human-reviewed methodology on scoring and fund curation.',
+    linkedin: null,
+  },
+  {
+    name: 'IPOFins Engineering',
+    role: 'Platform',
+    bio: 'Maintains Astro static site, Neon PostgreSQL pipelines, Smart Money signal computation, and client-side calculators — optimized for speed and privacy.',
+    linkedin: null,
+  },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: `Team — ${BRAND_NAME}`,
+  url: `${BRAND_URL}/about/team`,
+};
+---
+
+<BaseLayout
+  title={`Our Team — ${BRAND_NAME}`}
+  description={`Meet the team behind ${BRAND_NAME} — financial data engineering, IPO research, and mutual fund analytics for Indian investors.`}
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/about" class="hover:text-primary-600 transition-colors">About</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Team</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <PageHeader
+      title="Our Team"
+      subtitle={`${BRAND_NAME} combines financial data engineering with investor-first tooling — transparent methodology, no paid rankings.`}
+    />
+  </section>
+
+  <section class="container-wide py-6">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {team.map((member) => (
+        <article class="card">
+          <h2 class="text-lg font-bold text-surface-900 dark:text-white">{member.name}</h2>
+          <p class="text-sm text-primary-600 font-medium mt-1">{member.role}</p>
+          <p class="text-sm text-surface-600 dark:text-surface-300 mt-3">{member.bio}</p>
+          {member.linkedin && (
+            <a
+              href={member.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-block mt-4 text-sm text-primary-600 hover:underline"
+            >
+              LinkedIn →
+            </a>
+          )}
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="container-narrow py-8 text-center">
+    <a href="/about" class="btn-secondary">← Back to About</a>
+  </section>
+</BaseLayout>

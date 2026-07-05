@@ -61,20 +61,20 @@ const risk = riskConfig[riskLevel];
   <div class="grid grid-cols-3 gap-3 mb-4">
     <div class="text-center p-2 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
       <p class="text-xs text-surface-500 dark:text-surface-400">1Y</p>
-      <p class={`text-sm font-bold ${returns1y && returns1y >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-        {returns1y !== undefined ? `${returns1y > 0 ? '+' : ''}${returns1y}%` : '--'}
+      <p class={`text-sm font-bold font-mono ${returns1y && returns1y >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+        {returns1y !== undefined ? `${returns1y > 0 ? '+' : '−'}${Math.abs(returns1y)}%` : '—'}
       </p>
     </div>
     <div class="text-center p-2 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
       <p class="text-xs text-surface-500 dark:text-surface-400">3Y</p>
-      <p class={`text-sm font-bold ${returns3y && returns3y >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-        {returns3y !== undefined ? `${returns3y > 0 ? '+' : ''}${returns3y}%` : '--'}
+      <p class={`text-sm font-bold font-mono ${returns3y && returns3y >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+        {returns3y !== undefined ? `${returns3y > 0 ? '+' : '−'}${Math.abs(returns3y)}%` : '—'}
       </p>
     </div>
     <div class="text-center p-2 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
       <p class="text-xs text-surface-500 dark:text-surface-400">5Y</p>
-      <p class={`text-sm font-bold ${returns5y && returns5y >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-        {returns5y !== undefined ? `${returns5y > 0 ? '+' : ''}${returns5y}%` : '--'}
+      <p class={`text-sm font-bold font-mono ${returns5y && returns5y >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+        {returns5y !== undefined ? `${returns5y > 0 ? '+' : '−'}${Math.abs(returns5y)}%` : '—'}
       </p>
     </div>
   </div>
@@ -83,7 +83,7 @@ const risk = riskConfig[riskLevel];
   <div class="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
     <div>
       <p class="text-xs text-surface-500 dark:text-surface-400">NAV</p>
-      <p class="text-sm font-semibold text-surface-800 dark:text-surface-200">{nav != null ? `₹${nav.toFixed(2)}` : '—'}</p>
+      <p class="text-sm font-semibold font-mono text-surface-800 dark:text-surface-200">{nav != null ? `₹${nav.toFixed(2)}` : '—'}</p>
     </div>
     {aum && (
       <div class="text-right">

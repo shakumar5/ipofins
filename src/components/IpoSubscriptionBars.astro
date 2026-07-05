@@ -41,6 +41,7 @@ const rows = [
         role="progressbar"
         aria-valuenow={row.valueNow}
         aria-valuemin={0}
+        aria-valuemax={100}
         aria-label={row.ariaLabel}
       >
         <div class={`${row.bar} ${barHeight} rounded-full transition-all duration-500`} style={`width: ${row.width}%`}></div>

@@ -1,8 +1,5 @@
 ---
-/**
- * AdUnit Component — Google AdSense Ad Placement
- * Ads initialize only after cookie consent via window.__initAdsenseSlots()
- */
+import { ADSENSE_CLIENT_ID } from '../lib/adsense';
 
 interface Props {
   slot: string;
@@ -18,21 +15,20 @@ const {
   className = '',
 } = Astro.props;
 
-const CLIENT_ID = 'ca-pub-9843041963430696';
+const CLIENT_ID = ADSENSE_CLIENT_ID;
 
-const styleMap: Record<string, string> = {
-  auto: 'display:block',
-  horizontal: 'display:block; height:90px',
-  rectangle: 'display:inline-block; width:336px; height:280px',
-  vertical: 'display:block; height:600px',
+const heightMap: Record<string, string> = {
+  auto: '100px',
+  horizontal: '90px',
+  rectangle: '280px',
+  vertical: '600px',
 };
-
-const adStyle = styleMap[format] || styleMap.auto;
+const minHeight = heightMap[format] || heightMap.auto;
 ---
 
-<div class={`ad-container ${className}`}>
+<div class={`ad-container ${className}`} style={`min-height: ${minHeight};${format === 'rectangle' ? ' min-width: 250px;' : ''}`} aria-label="Advertisement">
   <ins class="adsbygoogle"
-    style={adStyle}
+    style={format === 'rectangle' ? 'display:inline-block; width:336px; height:280px' : 'display:block'}
     data-ad-client={CLIENT_ID}
     data-ad-slot={slot}
     data-ad-format={format === 'auto' ? 'auto' : undefined}

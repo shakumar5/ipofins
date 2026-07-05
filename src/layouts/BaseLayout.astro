@@ -6,6 +6,9 @@ import SearchOverlay from '../components/SearchOverlay.astro';
 import DeferredAnalytics from '../components/DeferredAnalytics.astro';
 import { BRAND_NAME, BRAND_URL, BRAND_TWITTER_HANDLE, BRAND_TWITTER_URL } from '../lib/brand';
 import { OG_DEFAULT_IMAGE, resolveOgImageUrl } from '../lib/og-images';
+import { ADSENSE_CLIENT_ID, adsenseScriptUrl } from '../lib/adsense';
+
+const adsenseScriptSrc = adsenseScriptUrl();
 
 interface Props {
   title: string;
@@ -50,11 +53,40 @@ const organizationSchema = {
 <!doctype html>
 <html lang="en-IN">
   <head>
-    <!-- Google tag (gtag.js) — single install per Google / AdSense guidance -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18230401074"></script>
+    <!--
+      CONSENT MODE v2 — fires BEFORE any gtag() config call.
+      Sets all storage to 'denied' by default. Updated to 'granted'
+      only when user clicks Accept. Required by DPDP Act 2023 + Google policy.
+    -->
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'ad_storage':         'denied',
+        'analytics_storage':  'denied',
+        'ad_user_data':       'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update':    500
+      });
+      if (typeof localStorage !== 'undefined') {
+        try {
+          var _c = localStorage.getItem('cookie-consent');
+          var _accepted = _c === 'accepted' || (_c && _c.indexOf('"accepted"') !== -1);
+          if (_accepted) {
+            gtag('consent', 'update', {
+              'ad_storage':         'granted',
+              'analytics_storage':  'granted',
+              'ad_user_data':       'granted',
+              'ad_personalization': 'granted'
+            });
+          }
+        } catch (e) {}
+      }
+    </script>
+
+    <!-- Google tag (gtag.js) — loads AFTER consent defaults are set above -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=AW-18230401074"></script>
+    <script is:inline>
       gtag('js', new Date());
       gtag('config', 'AW-18230401074');
     </script>
@@ -73,6 +105,7 @@ const organizationSchema = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={`${siteUrl}${socialImage}`} />
+    <meta property="og:image:secure_url" content={`${siteUrl}${socialImage}`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={`${BRAND_NAME} — IPO analytics and mutual fund intelligence for Indian investors`} />
@@ -93,13 +126,11 @@ const organizationSchema = {
     <meta name="geo.placename" content="India" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <!-- Inter + JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts: self-hosted via @fontsource-variable (imported in global.css, bundled by Vite) -->
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- Theme: prevent flash of wrong theme -->
     <script is:inline>
@@ -112,10 +143,10 @@ const organizationSchema = {
     </script>
 
     <!-- Google AdSense account (ads load only after cookie consent) -->
-    <meta name="google-adsense-account" content="ca-pub-9843041963430696" />
+    <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
 
     <!-- Third-party scripts load only after explicit cookie consent (staggered — never all at once) -->
-    <script is:inline>
+    <script is:inline define:vars={{ adsenseScriptSrc }}>
       (function(){
         var analyticsStarted = false;
         var adsenseStarted = false;
@@ -186,7 +217,7 @@ const organizationSchema = {
             if (loaded) return;
             loaded = true;
             loadScript(
-              'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9843041963430696',
+              adsenseScriptSrc,
               { crossOrigin: 'anonymous' }
             ).then(function() {
               return delay(1000);
@@ -221,6 +252,16 @@ const organizationSchema = {
           if (typeof window.gtag === 'function') {
             window.gtag('config', 'G-VRXGEC8RTG');
           }
+          document.addEventListener('click', function(e) {
+            var el = e.target && e.target.closest ? e.target.closest('a[rel*="sponsored"]') : null;
+            if (el && typeof window.gtag === 'function') {
+              window.gtag('event', 'affiliate_click', {
+                event_category: 'revenue',
+                link_url: el.href || '',
+                link_text: (el.textContent || '').trim().slice(0, 80),
+              });
+            }
+          }, { capture: true });
           if (window.__markAnalyticsReady) window.__markAnalyticsReady();
           delay(1500)
             .then(function() {
@@ -249,7 +290,19 @@ const organizationSchema = {
           }
         };
 
-        if (localStorage.getItem('cookie-consent') === 'accepted') {
+        function hasAcceptedConsent() {
+          try {
+            var raw = localStorage.getItem('cookie-consent');
+            if (!raw) return false;
+            if (raw === 'accepted') return true;
+            var parsed = JSON.parse(raw);
+            return parsed && parsed.status === 'accepted';
+          } catch (e) {
+            return false;
+          }
+        }
+
+        if (hasAcceptedConsent()) {
           window.scheduleThirdPartyAfterHydration();
         }
       })();
@@ -279,58 +332,175 @@ const organizationSchema = {
     <!-- Search Overlay -->
     <SearchOverlay />
 
-    <!-- Cookie Consent (for AdSense compliance) -->
-    <div id="cookie-consent" class="cookie-consent-banner fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl cookie-consent-banner--hidden" aria-hidden="true">
+    <!-- Cookie Consent Banner
+         - No global onclick handlers (uses addEventListener)
+         - Escape key dismisses
+         - Accept fires Consent Mode v2 'update' to grant all signals
+         - Dismiss records decision without granting tracking
+    -->
+    <div
+      id="cookie-consent"
+      role="dialog"
+      aria-modal="false"
+      aria-label="Cookie consent"
+      class="cookie-consent-banner fixed bottom-0 left-0 right-0 z-[90] p-4 bg-surface-900 text-white shadow-2xl cookie-consent-banner--hidden"
+      aria-hidden="true"
+    >
       <div class="container-wide flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-sm text-surface-300">We use cookies for analytics and ads. By continuing, you agree to our <a href="/privacy" class="text-primary-300 underline hover:text-primary-200">Privacy Policy</a>.</p>
-        <div class="flex gap-2">
-          <button onclick="acceptCookies()" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 transition-colors">Accept</button>
-          <button onclick="dismissCookies()" class="px-4 py-2 bg-surface-700 text-surface-300 text-sm font-medium rounded-lg hover:bg-surface-600 transition-colors">Dismiss</button>
+        <p class="text-sm text-surface-300">
+          We use cookies for anonymous analytics and optional ads.
+          No personal data stored. <a href="/privacy" class="text-primary-300 underline hover:text-primary-200">Privacy Policy</a>.
+        </p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button id="cookie-accept-btn" type="button" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 transition-colors">Accept</button>
+          <button id="cookie-dismiss-btn" type="button" class="px-4 py-2 bg-surface-700 text-surface-300 text-sm font-medium rounded-lg hover:bg-surface-600 transition-colors">Dismiss</button>
         </div>
       </div>
     </div>
     <script is:inline>
       (function() {
-        if (!localStorage.getItem('cookie-consent')) {
-          var el = document.getElementById('cookie-consent');
-          if (el) {
-            el.removeAttribute('aria-hidden');
-            var showBanner = function() {
-              requestAnimationFrame(function() {
-                el.classList.remove('cookie-consent-banner--hidden');
-              });
-            };
-            if (document.readyState === 'complete') {
-              setTimeout(showBanner, 4000);
-            } else {
-              window.addEventListener('load', function() { setTimeout(showBanner, 4000); }, { once: true });
+        var CONSENT_KEY = 'cookie-consent';
+        var CONSENT_VERSION = '1';
+        var el = document.getElementById('cookie-consent');
+        var acceptBtn = document.getElementById('cookie-accept-btn');
+        var dismissBtn = document.getElementById('cookie-dismiss-btn');
+
+        function readConsent() {
+          try {
+            var raw = localStorage.getItem(CONSENT_KEY);
+            if (!raw) return null;
+            if (raw === 'accepted' || raw === 'dismissed') {
+              return { status: raw, ts: null, v: CONSENT_VERSION };
             }
+            return JSON.parse(raw);
+          } catch (e) {
+            return null;
           }
         }
-      })();
-      function acceptCookies() {
-        try {
-          localStorage.setItem('cookie-consent', 'accepted');
-          var el = document.getElementById('cookie-consent');
-          if (el) {
-            el.classList.add('cookie-consent-banner--hidden');
-            el.setAttribute('aria-hidden', 'true');
-            setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
-          }
-          window.dispatchEvent(new CustomEvent('cookie-consent-accepted'));
-          if (window.scheduleThirdPartyAfterHydration) window.scheduleThirdPartyAfterHydration();
-        } catch (e) {}
-      }
-      function dismissCookies() {
-        localStorage.setItem('cookie-consent', 'dismissed');
-        var el = document.getElementById('cookie-consent');
-        if (el) {
+
+        function saveConsent(status) {
+          localStorage.setItem(CONSENT_KEY, JSON.stringify({
+            status: status,
+            ts: new Date().toISOString(),
+            v: CONSENT_VERSION
+          }));
+        }
+
+        function hideBanner() {
+          if (!el) return;
           el.classList.add('cookie-consent-banner--hidden');
           el.setAttribute('aria-hidden', 'true');
-          setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+          setTimeout(function() { if (el && el.parentNode) el.parentNode.removeChild(el); }, 400);
         }
-      }
+
+        function grantConsentSignals() {
+          if (typeof window.gtag === 'function') {
+            window.gtag('consent', 'update', {
+              'ad_storage':         'granted',
+              'analytics_storage':  'granted',
+              'ad_user_data':       'granted',
+              'ad_personalization': 'granted'
+            });
+          }
+        }
+
+        function acceptCookies() {
+          try {
+            saveConsent('accepted');
+            grantConsentSignals();
+            hideBanner();
+            window.dispatchEvent(new CustomEvent('cookie-consent-accepted'));
+            if (window.scheduleThirdPartyAfterHydration) window.scheduleThirdPartyAfterHydration();
+          } catch (e) {}
+        }
+
+        function dismissCookies() {
+          try {
+            saveConsent('dismissed');
+            hideBanner();
+          } catch (e) {}
+        }
+
+        // Show banner on first visit
+        if (!readConsent() && el) {
+          el.removeAttribute('aria-hidden');
+          var show = function() {
+            requestAnimationFrame(function() { el.classList.remove('cookie-consent-banner--hidden'); });
+          };
+          if (document.readyState === 'complete') {
+            setTimeout(show, 4000);
+          } else {
+            window.addEventListener('load', function() { setTimeout(show, 4000); }, { once: true });
+          }
+        }
+
+        // Buttons wired with addEventListener — no global window namespace pollution
+        if (acceptBtn) acceptBtn.addEventListener('click', acceptCookies);
+        if (dismissBtn) dismissBtn.addEventListener('click', dismissCookies);
+
+        // Escape key dismisses banner (accessibility)
+        document.addEventListener('keydown', function onKey(e) {
+          if (e.key === 'Escape' && el && !el.classList.contains('cookie-consent-banner--hidden')) {
+            dismissCookies();
+            document.removeEventListener('keydown', onKey);
+          }
+        });
+      })();
+    </script>
+    <script is:inline>
+      (function() {
+        if (typeof localStorage === 'undefined') return;
+        var path = location.pathname;
+        if (!path || path === '/dashboard') return;
+        var key = 'ipofins-recents';
+        try {
+          var recents = JSON.parse(localStorage.getItem(key) || '[]');
+          var title = (document.title || '').split(' | ')[0];
+          var current = { url: path, title: title, ts: Date.now() };
+          recents = [current].concat(recents.filter(function(r) { return r.url !== path; })).slice(0, 10);
+          localStorage.setItem(key, JSON.stringify(recents));
+        } catch (e) {}
+      })();
     </script>
     <DeferredAnalytics />
+
+    <!-- FAQ mobile collapse: close all but first FAQ item on mobile screens.
+         Uses [open] attribute removal — no layout shift, works without JS too
+         (FAQ items stay open on SSR, collapse after hydration on small screens). -->
+    <script is:inline>
+      (function() {
+        // FAQ: collapse extras on mobile
+        if (window.innerWidth < 640) {
+          var lists = document.querySelectorAll('.faq-list, [data-faq-list]');
+          lists.forEach(function(list) {
+            var items = list.querySelectorAll('details[open]');
+            items.forEach(function(item, idx) {
+              if (idx > 0) item.removeAttribute('open');
+            });
+          });
+        }
+
+        // FAQ: "Show all N" for long lists (data-faq-initial)
+        document.querySelectorAll('[data-faq-list][data-faq-initial]').forEach(function(list) {
+          var initial = parseInt(list.getAttribute('data-faq-initial') || '0', 10);
+          if (!initial || initial < 1) return;
+          var items = Array.prototype.slice.call(list.querySelectorAll('details.content-guide__faq-item, details'));
+          if (items.length <= initial) return;
+          items.forEach(function(item, idx) {
+            if (idx >= initial) item.setAttribute('data-faq-hidden', '');
+          });
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'faq-show-all-btn';
+          btn.textContent = 'Show all ' + items.length + ' questions';
+          btn.addEventListener('click', function() {
+            list.setAttribute('data-faq-expanded', 'true');
+            items.forEach(function(item) { item.removeAttribute('data-faq-hidden'); });
+            btn.remove();
+          });
+          list.parentNode.insertBefore(btn, list.nextSibling);
+        });
+      })();
+    </script>
   </body>
 </html>

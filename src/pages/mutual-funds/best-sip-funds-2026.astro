@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import FundTableLoader from '../../components/funds/FundTableLoader.tsx';
+import { BRAND_URL } from '../../lib/brand';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Best SIP Mutual Funds 2026 India',
+  description: 'Top large-cap and flexi-cap mutual funds for SIP in 2026 — ranked by 3-year returns on IPOFins.',
+  url: `${BRAND_URL}/mutual-funds/best-sip-funds-2026`,
+};
+---
+
+<BaseLayout
+  title="Best SIP Mutual Funds 2026 India — Top Funds for Monthly SIP | IPOFins"
+  description="Discover the best mutual funds for SIP in 2026. Ranked by 3-year returns, expense ratio, and risk. Start a SIP from ₹500/month with Direct-Growth plans."
+  ogImage="/og-fund.png"
+  jsonLd={jsonLd}
+>
+  <nav class="container-wide pt-6" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li><a href="/mutual-funds" class="hover:text-primary-600 transition-colors">Mutual Funds</a></li>
+      <li><span class="mx-1">/</span></li>
+      <li class="text-surface-900 dark:text-white font-medium">Best SIP Funds 2026</li>
+    </ol>
+  </nav>
+
+  <section class="container-wide pt-8 pb-6">
+    <PageHeader
+      title="Best SIP Mutual Funds 2026"
+      subtitle="Top-rated equity funds for long-term SIP — ranked by consistent 3-year returns. Prefer Direct-Growth plans for lowest expense ratio."
+      freshness="NAV updated daily"
+      source="AMFI India"
+    />
+  </section>
+
+  <section class="container-wide py-4">
+    <FundTableLoader client:visible table="best" basePath="/mutual-funds/best-sip-funds-2026" defaultCategory="Large Cap" />
+  </section>
+
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3">How to pick a SIP fund in 2026</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        For 10+ year goals, Large Cap and Flexi Cap funds offer a balance of growth and stability. Mid Cap funds suit aggressive investors.
+        Always choose Direct-Growth plans. Use our <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP calculator</a> to project corpus and
+        <a href="/tools/step-up-sip-calculator" class="text-primary-600 hover:underline">step-up SIP calculator</a> to align with salary growth.
+      </p>
+      <p class="text-surface-600 dark:text-surface-300 mt-3">
+        Review portfolio overlap before adding a new fund — <a href="/mutual-funds/portfolio-overlap-checker" class="text-primary-600 hover:underline">check overlap</a>.
+        Track institutional buying via <a href="/mutual-funds/smart-money" class="text-primary-600 hover:underline">Smart Money signals</a>.
+        Browse all <a href="/mutual-funds/best" class="text-primary-600 hover:underline">best mutual funds</a> by category.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

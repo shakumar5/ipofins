@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BRAND_NAME, withBrandSuffix } from '../../lib/brand';
 import { getAllFunds, getHoldingsStats, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug } from '../../lib/data/funds';
 import { loadSmartMoneyTrackerLinks } from '../../lib/smart-money-tracker-links';
+import { catToSlug, categoryDisplayName } from '../../lib/fund-category-slug';
 import { topStocksPath } from '../../lib/top-stocks-meta';
 import SmartMoneyInternalLinks from '../../components/funds/SmartMoneyInternalLinks.astro';
 import MfSectionTabs from '../../components/funds/MfSectionTabs.astro';
@@ -10,6 +11,7 @@ import PageHeader from '../../components/layout/PageHeader.astro';
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import { formatExportStampLabel, readExportStamp } from '../../lib/export-stamp';
 const fundsData = await getAllFunds();
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const fundHref = (fund: { slug: string; schemeCode: string }) =>
@@ -18,6 +20,20 @@ const sm = loadSmartMoneyTrackerLinks();
 const categories = [...new Set(fundsData.map((f) => f.category))].sort((a, b) => a.localeCompare(b));
 const totalFunds = fundsData.length;
 const { amcCount } = await getHoldingsStats();
+
+const exportLabel = formatExportStampLabel(readExportStamp());
+
+const topFundsRanked = (() => {
+  const sorted = [...fundsData].sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5);
+  let rank = 0;
+  let prev: number | null = null;
+  return sorted.map((fund, i) => {
+    const r = fund.returns3y ?? 0;
+    if (prev !== r) rank = i + 1;
+    prev = r;
+    return { fund, rank };
+  });
+})();
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -60,7 +76,7 @@ const faqJsonLd = {
     <PageHeader
       title="Mutual Funds India 2026"
       subtitle={`${totalFunds} funds tracked across ${categories.length} categories. NAVs from AMFI India.`}
-      freshness="Daily NAV"
+      freshness={exportLabel ? `Data as of ${exportLabel}` : 'Daily NAV'}
       source="AMFI India"
     >
       <p class="mt-2 text-xs text-surface-500 dark:text-surface-400">All returns shown are for Direct-Growth plans. Mutual fund investments are subject to market risks.</p>
@@ -68,8 +84,10 @@ const faqJsonLd = {
     </PageHeader>
   </section>
 
-  <!-- Holdings Changes Feature Highlight -->
+  <!-- Feature highlights — compact grid on tablet+ -->
   <section class="container-wide py-4">
+    <div class="hub-highlights-grid">
+  <!-- Holdings Changes Feature Highlight -->
     <div class="card min-h-[7.75rem] hub-highlight-card">
       <a href="/mutual-funds/mutual-fund-holdings-changes" class="flex items-center gap-4 p-5 pb-3 group">
         <div class="w-12 h-12 shrink-0 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center" aria-hidden="true">
@@ -91,10 +109,8 @@ const faqJsonLd = {
         stocks.
       </p>
     </div>
-  </section>
 
   <!-- Smart Money Tracker Highlight -->
-  <section class="container-wide py-4">
     <div class="card min-h-[11.5rem] hub-highlight-card">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -107,10 +123,8 @@ const faqJsonLd = {
         <SmartMoneyInternalLinks showHub={false} monthNote={false} />
       </div>
     </div>
-  </section>
 
   <!-- Sector Intelligence Highlight -->
-  <section class="container-wide py-4">
     <a href={sm.sectorIntelligence} class="block card min-h-[6.5rem] hub-highlight-card hover:border-surface-300 dark:hover:border-surface-600 group">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 shrink-0 bg-violet-100 dark:bg-violet-900/40 rounded-xl flex items-center justify-center" aria-hidden="true">
@@ -123,6 +137,7 @@ const faqJsonLd = {
         <svg class="w-5 h-5 text-violet-500 flex-shrink-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </div>
     </a>
+    </div>
   </section>
 
   <!-- Category Cards -->
@@ -132,10 +147,11 @@ const faqJsonLd = {
       {categories.map(cat => {
         const count = fundsData.filter(f => f.category === cat).length;
         const topFund = fundsData.filter(f => f.category === cat).sort((a, b) => (b.returns1y || 0) - (a.returns1y || 0))[0];
-        const catSlug = cat.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-mutual-funds';
+        const catSlug = catToSlug(cat);
+        const displayName = categoryDisplayName(cat);
         return (
-          <a href={`/mutual-funds/all/${catSlug}`} class="card-compact text-center group hover:shadow-md transition-shadow">
-            <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{cat}</p>
+          <a href={`/mutual-funds/all/${catSlug}`} class="card-compact text-center group hover:shadow-md transition-shadow" title={cat}>
+            <p class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors line-clamp-2">{displayName}</p>
             <p class="text-xs text-surface-600 dark:text-surface-400 mt-0.5">{count} funds</p>
             {topFund && <p class={`text-xs font-bold mt-1 ${(topFund.returns1y || 0) >= 0 ? 'return-positive' : 'return-negative'}`}>Best 1Y: {(topFund.returns1y || 0) >= 0 ? '+' : ''}{topFund.returns1y}%</p>}
           </a>
@@ -146,17 +162,18 @@ const faqJsonLd = {
 
   <!-- Quick Preview -->
   <section class="container-wide py-6">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">Top Funds by 3Y Returns</h2>
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-1">Top Funds by 3Y Returns</h2>
+    <p class="text-xs text-surface-500 dark:text-surface-400 mb-4">Direct-Growth plans · data from AMFI NAV history</p>
     <div class="space-y-2">
-      {fundsData.sort((a, b) => (b.returns3y || 0) - (a.returns3y || 0)).slice(0, 5).map((fund, i) => (
+      {topFundsRanked.map(({ fund, rank }) => (
         <a href={fundHref(fund)} class="card-compact group block hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{i+1}. {fund.name}</h3>
-              <p class="text-xs text-surface-600 dark:text-surface-400">{fund.category} • {fund.aum} • NAV ₹{fund.nav?.toFixed(2) || '--'}</p>
+              <h3 class="text-sm font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 transition-colors">{rank}. {fund.name}</h3>
+              <p class="text-xs text-surface-600 dark:text-surface-400">{categoryDisplayName(fund.category)} • {fund.aum} • NAV <span class="font-mono">₹{fund.nav?.toFixed(2) || '—'}</span></p>
             </div>
             <div class="text-right">
-              <p class={`text-sm font-bold ${(fund.returns3y || 0) >= 0 ? 'return-positive' : 'return-negative'}`}>{(fund.returns3y || 0) >= 0 ? '+' : ''}{fund.returns3y}%</p>
+              <p class={`text-sm font-bold font-mono ${(fund.returns3y || 0) >= 0 ? 'return-positive' : 'return-negative'}`}>{(fund.returns3y || 0) >= 0 ? '+' : '−'}{Math.abs(fund.returns3y || 0)}%</p>
               <p class="text-xs text-surface-600 dark:text-surface-400">3Y return</p>
             </div>
           </div>

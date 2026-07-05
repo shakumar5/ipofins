@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useTransition, useDeferredValue, useCallback } from 'react';
+import { withErrorBoundary } from '../withErrorBoundary';
 import {
   loadHoldingsCompareAmc,
   loadHoldingsCompareIndex,
@@ -61,7 +62,7 @@ function defaultMonths(index: HoldingsCompareIndex, initialMonth1?: string, init
   };
 }
 
-export default function HoldingsCompare({
+function HoldingsCompareInner({
   initialAmc = '',
   initialMonth1,
   initialMonth2,
@@ -609,3 +610,5 @@ export default function HoldingsCompare({
     </div>
   );
 }
+
+export default withErrorBoundary(HoldingsCompareInner, 'Holdings Compare');

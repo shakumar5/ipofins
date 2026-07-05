@@ -6,14 +6,31 @@ import { loadSmartMoneyTrackerLinks } from '../lib/smart-money-tracker-links';
 
 const sm = loadSmartMoneyTrackerLinks();
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'AboutPage',
-  name: `About ${BRAND_NAME}`,
-  description:
-    `${BRAND_NAME} is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors.`,
-  url: `${BRAND_URL}/about`,
-};
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: `About ${BRAND_NAME}`,
+    description:
+      `${BRAND_NAME} is a financial intelligence platform focused on IPO analytics, mutual fund portfolio tracking, investment tools, and market insights for Indian investors.`,
+    url: `${BRAND_URL}/about`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: 'Shailesh Kumar',
+    jobTitle: 'Founder, IPOFins',
+    description: 'Technology leader with 16 years of experience across DP World, Myntra, Intuit, Paytm, and SAP Ariba. Founder of IPOFins financial intelligence platform.',
+    url: `${BRAND_URL}/about`,
+    sameAs: ['https://www.linkedin.com/in/shailesh-kumar-222a1018/'],
+    worksFor: {
+      '@type': 'Organization',
+      name: BRAND_NAME,
+      url: BRAND_URL
+    },
+    knowsAbout: ['IPO investing', 'Mutual fund analysis', 'Financial data analytics', 'Stock market research', 'Indian capital markets']
+  }
+];
 ---
 
 <BaseLayout
@@ -40,6 +57,9 @@ const jsonLd = {
         <p>
           To build a trusted financial intelligence platform that empowers retail investors with
           easy access to investment research, market analytics, and educational resources.
+        </p>
+        <p class="pt-2">
+          <a href="/about/team" class="text-primary-600 hover:underline">Meet our team →</a>
         </p>
 
         <h2 class="text-xl font-bold text-surface-900 dark:text-white pt-6">What We Offer</h2>

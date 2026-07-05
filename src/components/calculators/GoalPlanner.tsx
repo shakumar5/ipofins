@@ -1,35 +1,43 @@
 import { useState, useMemo } from 'react';
+import { formatCalculatorCurrency } from '../../utils/calculator-validation';
+import { withErrorBoundary } from '../withErrorBoundary';
+import SliderField from './SliderField';
+import CalculatorShareRow from '../dashboard/CalculatorShareRow';
+import { useFieldErrors } from './useFieldErrors';
 
-export default function GoalPlanner() {
-  const [goalAmount, setGoalAmount] = useState(5000000);
+function GoalPlannerInner() {
+  const [goalAmount, setGoalAmount] = useState(5_000_000);
   const [timeHorizon, setTimeHorizon] = useState(12);
   const [inflation, setInflation] = useState(6);
   const [expectedReturn, setExpectedReturn] = useState(12);
   const [existingSavings, setExistingSavings] = useState(0);
+  const { errors, setError } = useFieldErrors();
 
   const result = useMemo(() => {
-    // Inflation-adjusted goal
+    if (goalAmount <= 0 || timeHorizon <= 0) return null;
+
     const inflationAdjustedGoal = goalAmount * Math.pow(1 + inflation / 100, timeHorizon);
-
-    // Value of existing savings at end
     const existingGrowth = existingSavings * Math.pow(1 + expectedReturn / 100, timeHorizon);
-
-    // Remaining amount to accumulate
     const remainingGoal = Math.max(0, inflationAdjustedGoal - existingGrowth);
 
-    // Monthly SIP needed
     const monthlyRate = expectedReturn / 12 / 100;
     const totalMonths = timeHorizon * 12;
-    const monthlySIP = remainingGoal / (((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) * (1 + monthlyRate));
+    let monthlySIP = 0;
+    if (monthlyRate === 0) {
+      monthlySIP = totalMonths > 0 ? remainingGoal / totalMonths : 0;
+    } else {
+      const factor =
+        ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) * (1 + monthlyRate);
+      monthlySIP = factor > 0 ? remainingGoal / factor : 0;
+    }
 
-    // Lumpsum needed
-    const lumpsumNeeded = remainingGoal / Math.pow(1 + expectedReturn / 100, timeHorizon);
+    const lumpsumNeeded =
+      expectedReturn > 0
+        ? remainingGoal / Math.pow(1 + expectedReturn / 100, timeHorizon)
+        : remainingGoal;
 
-    // Total invested via SIP
-    const totalInvested = monthlySIP * totalMonths;
-    const wealthGained = remainingGoal - totalInvested;
+    if (!Number.isFinite(monthlySIP)) return null;
 
-    // Recommended fund categories based on time horizon
     let recommendation = '';
     if (timeHorizon >= 10) recommendation = 'Flexi Cap, Mid Cap, or Small Cap Funds (aggressive growth)';
     else if (timeHorizon >= 5) recommendation = 'Large & Mid Cap or Flexi Cap Funds (balanced growth)';
@@ -42,107 +50,74 @@ export default function GoalPlanner() {
       remainingGoal: Math.round(remainingGoal),
       monthlySIP: Math.round(monthlySIP),
       lumpsumNeeded: Math.round(lumpsumNeeded),
-      totalInvested: Math.round(totalInvested),
-      wealthGained: Math.round(wealthGained),
+      totalInvested: Math.round(monthlySIP * totalMonths),
+      wealthGained: Math.round(remainingGoal - monthlySIP * totalMonths),
       recommendation,
     };
   }, [goalAmount, timeHorizon, inflation, expectedReturn, existingSavings]);
 
-  const formatCurrency = (value: number) => {
-    if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
-    if (value >= 100000) return `₹${(value / 100000).toFixed(2)} L`;
-    return `₹${value.toLocaleString('en-IN')}`;
-  };
-
   return (
     <div className="space-y-8">
       <div className="space-y-6">
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Goal Amount (Today's Value)</label>
-            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(goalAmount)}</span>
-          </div>
-          <input type="range" min="100000" max="50000000" step="100000" value={goalAmount}
-            onChange={(e) => setGoalAmount(Number(e.target.value))}
-            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
-          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹1L</span><span>₹5Cr</span></div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Time Horizon</label>
-            <span className="text-sm font-bold text-surface-900 dark:text-white">{timeHorizon} years</span>
-          </div>
-          <input type="range" min="1" max="30" step="1" value={timeHorizon}
-            onChange={(e) => setTimeHorizon(Number(e.target.value))}
-            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
-          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>1 year</span><span>30 years</span></div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Expected Inflation</label>
-            <span className="text-sm font-bold text-surface-900 dark:text-white">{inflation}%</span>
-          </div>
-          <input type="range" min="3" max="10" step="0.5" value={inflation}
-            onChange={(e) => setInflation(Number(e.target.value))}
-            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
-          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>3%</span><span>10%</span></div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Expected Investment Return</label>
-            <span className="text-sm font-bold text-surface-900 dark:text-white">{expectedReturn}%</span>
-          </div>
-          <input type="range" min="6" max="20" step="0.5" value={expectedReturn}
-            onChange={(e) => setExpectedReturn(Number(e.target.value))}
-            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
-          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>6%</span><span>20%</span></div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Existing Savings (for this goal)</label>
-            <span className="text-sm font-bold text-surface-900 dark:text-white">{formatCurrency(existingSavings)}</span>
-          </div>
-          <input type="range" min="0" max="10000000" step="50000" value={existingSavings}
-            onChange={(e) => setExistingSavings(Number(e.target.value))}
-            className="w-full h-2 bg-surface-200 dark:bg-surface-700 rounded-lg appearance-none cursor-pointer accent-primary-600" />
-          <div className="flex justify-between text-xs text-surface-500 mt-1"><span>₹0</span><span>₹1Cr</span></div>
-        </div>
+        <SliderField id="goal-amount" label="Goal Amount (Today's Value)" value={goalAmount}
+          min={100_000} max={50_000_000} step={100_000} display={formatCalculatorCurrency(goalAmount)}
+          minLabel="₹1L" maxLabel="₹5Cr"
+          validation={{ type: 'amount', label: 'Goal amount', min: 100_000, max: 50_000_000 }}
+          error={errors.goal} onValidChange={setGoalAmount} onError={setError('goal')} />
+        <SliderField id="goal-horizon" label="Time Horizon" value={timeHorizon}
+          min={1} max={30} step={1} display={`${timeHorizon} years`} minLabel="1 year" maxLabel="30 years"
+          validation={{ type: 'years', min: 1, max: 30 }}
+          error={errors.horizon} onValidChange={setTimeHorizon} onError={setError('horizon')} />
+        <SliderField id="goal-inflation" label="Expected Inflation" value={inflation}
+          min={3} max={10} step={0.5} display={`${inflation}%`} minLabel="3%" maxLabel="10%"
+          validation={{ type: 'rate', label: 'Inflation rate', min: 3, max: 10 }}
+          error={errors.inflation} onValidChange={setInflation} onError={setError('inflation')} />
+        <SliderField id="goal-return" label="Expected Investment Return" value={expectedReturn}
+          min={6} max={20} step={0.5} display={`${expectedReturn}%`} minLabel="6%" maxLabel="20%"
+          validation={{ type: 'rate', label: 'Expected return', min: 6, max: 20 }}
+          error={errors.return} onValidChange={setExpectedReturn} onError={setError('return')} />
+        <SliderField id="goal-savings" label="Existing Savings (for this goal)" value={existingSavings}
+          min={0} max={10_000_000} step={50_000} display={formatCalculatorCurrency(existingSavings)}
+          minLabel="₹0" maxLabel="₹1Cr"
+          validation={{ type: 'amount', label: 'Existing savings', min: 0, max: 10_000_000 }}
+          error={errors.savings} onValidChange={setExistingSavings} onError={setError('savings')} />
       </div>
 
-      {/* Results */}
-      <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4">
-        <div className="text-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20">
-          <p className="text-xs text-surface-500 dark:text-surface-400">Inflation-Adjusted Goal (in {timeHorizon} years)</p>
-          <p className="text-2xl font-extrabold text-orange-600 dark:text-orange-400 mt-1">{formatCurrency(result.inflationAdjustedGoal)}</p>
-          <p className="text-xs text-surface-500 mt-1">₹{goalAmount.toLocaleString('en-IN')} today = {formatCurrency(result.inflationAdjustedGoal)} after {inflation}% inflation</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
-          <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-xs text-surface-500 dark:text-surface-400">Monthly SIP Required</p>
-            <p className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">{formatCurrency(result.monthlySIP)}</p>
+      {result && (
+        <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4" aria-live="polite">
+          <div className="text-center p-4 rounded-lg bg-warning-50 dark:bg-warning-900/20">
+            <p className="text-xs text-surface-500">Inflation-Adjusted Goal (in {timeHorizon} years)</p>
+            <p className="text-2xl font-extrabold font-mono text-warning-600 mt-1">{formatCalculatorCurrency(result.inflationAdjustedGoal)}</p>
           </div>
-          <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <p className="text-xs text-surface-500 dark:text-surface-400">OR Lumpsum Required</p>
-            <p className="text-xl font-extrabold text-green-600 dark:text-green-400 mt-1">{formatCurrency(result.lumpsumNeeded)}</p>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+            <div className="text-center p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+              <p className="text-xs text-surface-500">Monthly SIP Required</p>
+              <p className="text-xl font-extrabold font-mono text-primary-600 mt-1">{formatCalculatorCurrency(result.monthlySIP)}</p>
+            </div>
+            <div className="text-center p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+              <p className="text-xs text-surface-500">OR Lumpsum Required</p>
+              <p className="text-xl font-extrabold font-mono text-success-600 mt-1">{formatCalculatorCurrency(result.lumpsumNeeded)}</p>
+            </div>
           </div>
-        </div>
-
-        {existingSavings > 0 && (
-          <div className="text-center text-xs text-surface-500 dark:text-surface-400">
-            Your existing ₹{existingSavings.toLocaleString('en-IN')} will grow to {formatCurrency(result.existingGrowth)} — reducing your target by that amount.
+          {existingSavings > 0 && (
+            <p className="text-center text-xs text-surface-500">
+              Your existing {formatCalculatorCurrency(existingSavings)} will grow to{' '}
+              {formatCalculatorCurrency(result.existingGrowth)} — reducing your target by that amount.
+            </p>
+          )}
+          <div className="pt-4 border-t border-surface-200 dark:border-surface-700">
+            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Suggested Fund Category</p>
+            <p className="text-sm text-primary-600 font-medium">{result.recommendation}</p>
           </div>
-        )}
-
-        <div className="pt-4 border-t border-surface-200 dark:border-surface-700">
-          <p className="text-xs font-semibold text-surface-700 dark:text-surface-300 mb-1">Suggested Fund Category</p>
-          <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{result.recommendation}</p>
+          <CalculatorShareRow
+            tool="Goal Planner"
+            summary={`Goal ${formatCalculatorCurrency(result.inflationAdjustedGoal)} · SIP ${formatCalculatorCurrency(result.monthlySIP)}/mo`}
+            shareText={`Financial goal in ${timeHorizon} years: ${formatCalculatorCurrency(result.inflationAdjustedGoal)}; SIP ${formatCalculatorCurrency(result.monthlySIP)}/month.`}
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 }
+
+export default withErrorBoundary(GoalPlannerInner, 'Goal Planner');

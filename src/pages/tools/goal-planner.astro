@@ -1,27 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import GoalPlanner from '../../components/calculators/GoalPlanner.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Goal-Based Investment Planner - Plan Any Financial Goal",
-  "description": "Free goal-based investment planner. Enter your goal amount, timeline, and inflation — get the exact monthly SIP or lumpsum needed with fund category suggestions.",
-  "url": "https://ipofins.com/tools/goal-planner",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web Browser",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "creator": { "@type": "Organization", "name": "IPOFins", "url": "https://ipofins.com" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "Goal Planner", "item": "https://ipofins.com/tools/goal-planner" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "Goal-Based Investment Planner - Plan Any Financial Goal",
+  slug: "goal-planner",
+  description: "Free goal-based investment planner. Enter your goal amount, timeline, and inflation — get the exact monthly SIP or lumpsum needed with fund category suggestions.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -38,6 +25,7 @@ const faqJsonLd = {
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import CalculatorSeoGuide from '../../components/tools/CalculatorSeoGuide.astro';
 ---
 
 <BaseLayout
@@ -137,6 +125,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
       </ContentGuideFaqItem>
     </ContentGuideFaqList>
   </ContentGuideSection>
+
+  <CalculatorSeoGuide slug="goal-planner" />
 
   <!-- Related Calculators -->
   <section class="container-narrow py-8">

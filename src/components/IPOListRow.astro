@@ -1,6 +1,7 @@
 ---
 import { ipoDetailHref, type IpoListFrom } from '../lib/list-back-nav';
 import { ipoRowMeta, ipoDisplayText, formatSubscriptionTimes, type IPOListItem } from '../lib/ipo-list-sections';
+import WatchlistButton from './dashboard/WatchlistButton';
 
 interface Props {
   ipo: IPOListItem;
@@ -35,6 +36,8 @@ const badgeLabel =
       : ipo.status;
 ---
 
+<div class="relative group">
+<WatchlistButton client:visible slug={ipo.slug} name={ipo.name} variant="compact" />
 <a
   href={ipoDetailHref(ipo.slug, listFrom)}
   class={`card-compact group block hover:shadow-md transition-shadow border-l-4 ${borderClass}`}
@@ -66,7 +69,7 @@ const badgeLabel =
       {priceRange && (
       <div>
         <span class="ipo-label">Price </span>
-        <span class="font-semibold text-surface-800 dark:text-surface-200">₹{priceRange}</span>
+        <span class="font-semibold text-surface-800 dark:text-surface-200 font-mono">₹{priceRange}</span>
       </div>
       )}
       {(ipo.lotSize ?? 0) > 0 && (
@@ -81,14 +84,15 @@ const badgeLabel =
           <span class="font-bold text-primary-700 dark:text-primary-400">{formatSubscriptionTimes(ipo.subscription)}x</span>
         </div>
       )}
-      {ipo.aiScore != null && ipo.aiScore > 0 && (
+      {(ipo.ipoScore ?? ipo.aiScore) != null && (ipo.ipoScore ?? ipo.aiScore)! > 0 && (
         <div>
           <span class="ipo-label">Score </span>
-          <span class={`font-bold ${ipo.aiScore >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>
-            {ipo.aiScore}/10
+          <span class={`font-bold font-mono ${(ipo.ipoScore ?? ipo.aiScore)! >= 7 ? 'text-success-600 dark:text-success-500' : 'text-warning-600 dark:text-warning-500'}`}>
+            {ipo.ipoScore ?? ipo.aiScore}/10
           </span>
         </div>
       )}
     </div>
   </div>
 </a>
+</div>

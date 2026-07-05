@@ -13,6 +13,11 @@ export function getStaticPaths() {
 
 const { broker } = Astro.props;
 
+// UTM-tracked affiliate URL for this broker's detail page
+const affiliateUrl = broker.affiliateUrl
+  ? `${broker.affiliateUrl}${broker.affiliateUrl.includes('?') ? '&' : '?'}utm_source=ipofins&utm_medium=affiliate&utm_campaign=broker-detail&utm_content=broker-page`
+  : null;
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Review",
@@ -204,9 +209,15 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
         {broker.accountOpening} account opening • {broker.tradingFee} per trade
       </p>
       <div class="flex flex-wrap items-center justify-center gap-3">
-        <a href={broker.affiliateUrl} class="btn-primary px-8 py-3" rel="nofollow sponsored">
-          Open Account →
-        </a>
+        {affiliateUrl ? (
+          <a href={affiliateUrl} class="btn-primary px-8 py-3" rel="nofollow sponsored" target="_blank">
+            Open Account →
+          </a>
+        ) : (
+          <a href={`https://www.google.com/search?q=${encodeURIComponent(broker.name + ' open demat account')}`} class="btn-primary px-8 py-3" target="_blank" rel="noopener noreferrer">
+            Open Account →
+          </a>
+        )}
         <a href={`/broker/compare?broker=${broker.slug}`} class="btn-secondary px-8 py-3">
           Compare Broker
         </a>

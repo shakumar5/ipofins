@@ -664,14 +664,10 @@ async function main() {
   const doneFundOverlap = logStep('Fund overlap pages (DB)');
   if (isDbConfigured()) {
     try {
-      const overlapFunds = await withDbRetry(
-        () => loadFundsWithOverlapsFromDb(sql),
-        { label: 'Fund overlap index' },
-      );
-      const bySlug = await withDbRetry(
-        () => loadAllFundOverlapsFromDb(sql),
-        { label: 'Fund overlap pairs' },
-      );
+      const [overlapFunds, bySlug] = await Promise.all([
+        withDbRetry(() => loadFundsWithOverlapsFromDb(sql), { label: 'Fund overlap index' }),
+        withDbRetry(() => loadAllFundOverlapsFromDb(sql), { label: 'Fund overlap pairs' }),
+      ]);
       if (overlapFunds.length) {
         writeJson('fund-overlap-index.json', overlapFunds);
         writeJson('fund-overlaps-by-fund.json', {
@@ -812,6 +808,14 @@ async function main() {
       doneSmDb(
         `tracker ${tracker.months.length}mo · signals ${signals.months?.length || 0}mo · sectors ${sectors.rows?.length || 0} rows (${smSec}s)`,
       );
+      try {
+        await withDbRetry(() => sql`SELECT refresh_super_investor_views()`, {
+          label: 'Refresh super-investor materialized views',
+        });
+        console.log('    ✓ Super-investor materialized views refreshed');
+      } catch (refreshErr) {
+        console.warn('  ⚠ MV refresh skipped:', refreshErr.message);
+      }
     } catch (e) {
       if (hasExistingSmartMoneyExports()) {
         console.warn(`  ⚠ Smart Money DB export failed — using existing public/data files: ${e.message}`);

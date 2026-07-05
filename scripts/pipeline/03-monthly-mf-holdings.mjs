@@ -11,6 +11,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { requireDb, syncExpenseRatiosFromAMFI } from '../lib/db-writers.mjs';
 import { nodeExecCmd } from '../lib/node-runner.mjs';
+import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -24,6 +25,7 @@ function run(cmd, label) {
 }
 
 async function main() {
+  const ctx = await startRun('mf-holdings');
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
   console.log('  Pipeline 3 — Monthly MF Holdings + Expense Ratio');
@@ -31,7 +33,8 @@ async function main() {
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`  📅 ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
 
-  requireDb();
+  try {
+    requireDb();
 
   const parseFlags = fullReload ? '' : ' --incremental';
   run(`node scripts/parse-holdings.mjs${parseFlags}`, 'Parse Excel → fund-holdings.json');
@@ -82,6 +85,16 @@ async function main() {
 
   console.log('\n  ✅ Pipeline 3 complete');
   console.log('  ℹ️  Full reload: npm run pipeline:monthly -- --full\n');
+
+    await endRun(ctx, {
+      status: 'success',
+      qualityGate: 'passed',
+      message: fullReload ? 'Full holdings reload' : 'Incremental holdings sync',
+    });
+  } catch (err) {
+    await endRun(ctx, { status: 'failed', qualityGate: 'skipped', message: err.message });
+    throw err;
+  }
 }
 
 main().catch((err) => {

@@ -6,6 +6,7 @@ import {
   type PortfolioOverlapData,
 } from '../../lib/portfolio-overlap';
 import { fetchJsonCached } from '../../lib/client-data';
+import { withErrorBoundary } from '../withErrorBoundary';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import {
   comparisonPathFromSlugs,
@@ -131,7 +132,7 @@ interface Props {
   initialSlugs?: string[];
 }
 
-export default function PortfolioOverlapChecker({ initialSlugs = [] }: Props) {
+function PortfolioOverlapCheckerInner({ initialSlugs = [] }: Props) {
   const [data, setData] = useState<PortfolioOverlapData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -422,3 +423,5 @@ export default function PortfolioOverlapChecker({ initialSlugs = [] }: Props) {
     </div>
   );
 }
+
+export default withErrorBoundary(PortfolioOverlapCheckerInner, 'Portfolio Overlap');

@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/layout/PageHeader.astro';
+---
+
+<BaseLayout
+  title="Pipeline Health — Internal Status | IPOFins"
+  description="Internal pipeline health dashboard for IPOFins data pipelines."
+  robots="noindex, nofollow"
+>
+  <section class="container-wide py-8 max-w-4xl">
+    <PageHeader
+      title="Pipeline Health"
+      subtitle="Latest status of scheduled data pipelines. Requires CRON_SECRET when configured."
+      freshness="Live from Neon"
+      source="pipeline_runs table"
+    />
+
+    <div id="health-status" class="mb-4 text-sm text-surface-500">Loading pipeline status…</div>
+    <div id="health-grid" class="space-y-3"></div>
+  </section>
+
+  <script is:inline>
+    (function() {
+      var statusEl = document.getElementById('health-status');
+      var gridEl = document.getElementById('health-grid');
+      if (!statusEl || !gridEl) return;
+
+      var headers = {};
+      try {
+        var secret = localStorage.getItem('ipofins-health-secret');
+        if (secret) headers['Authorization'] = 'Bearer ' + secret;
+      } catch (e) {}
+
+      fetch('/api/health/pipelines', { headers: headers })
+        .then(function(res) {
+          if (res.status === 401) {
+            statusEl.innerHTML = 'Unauthorized — set <code class="text-xs">localStorage.setItem(\'ipofins-health-secret\', CRON_SECRET)</code> in dev tools, or call API with Bearer token.';
+            return null;
+          }
+          return res.json();
+        })
+        .then(function(data) {
+          if (!data) return;
+          if (data.error) {
+            statusEl.textContent = 'Error: ' + data.error;
+            return;
+          }
+          statusEl.innerHTML = data.healthy
+            ? '<span class="text-success-600 font-semibold">All pipelines healthy</span> · checked ' + new Date(data.checkedAt).toLocaleString('en-IN')
+            : '<span class="text-warning-600 font-semibold">Some pipelines need attention</span> · checked ' + new Date(data.checkedAt).toLocaleString('en-IN');
+
+          gridEl.innerHTML = (data.pipelines || []).map(function(p) {
+            var badge = p.status === 'success' && !p.stale ? 'badge-live'
+              : p.status === 'running' ? 'badge-upcoming'
+              : p.stale ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+              : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+            var label = p.stale && p.status === 'success' ? 'stale' : (p.status || 'unknown');
+            var finished = p.finishedAt ? new Date(p.finishedAt).toLocaleString('en-IN') : '—';
+            return '<div class="card-compact flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">' +
+              '<div><p class="text-sm font-semibold text-surface-900 dark:text-white">' + p.pipeline + '</p>' +
+              '<p class="text-xs text-surface-500 mt-0.5">Last run: ' + finished + (p.rowsUpserted != null ? ' · ' + p.rowsUpserted + ' rows' : '') + '</p>' +
+              (p.message ? '<p class="text-xs text-surface-400 mt-0.5">' + p.message + '</p>' : '') +
+              '</div><span class="badge text-xs ' + badge + '">' + label + '</span></div>';
+          }).join('');
+        })
+        .catch(function(err) {
+          statusEl.textContent = 'Failed to load: ' + err.message;
+        });
+    })();
+  </script>
+</BaseLayout>

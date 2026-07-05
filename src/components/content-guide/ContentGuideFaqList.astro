@@ -1,6 +1,16 @@
 ---
+interface Props {
+  /** Show only first N FAQs until user clicks "Show all". */
+  initialVisible?: number;
+}
+
+const { initialVisible } = Astro.props;
 ---
 
-<div class="content-guide__faq-list">
+<div
+  class="content-guide__faq-list faq-list"
+  data-faq-list
+  data-faq-initial={initialVisible}
+>
   <slot />
 </div>

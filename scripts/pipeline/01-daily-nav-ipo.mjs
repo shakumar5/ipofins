@@ -19,6 +19,7 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { nodeExtraArgs } from '../lib/node-runner.mjs';
+import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FULL_IPO = process.argv.includes('--full-ipo');
@@ -38,6 +39,7 @@ function runIPOSync() {
 }
 
 async function main() {
+  const ctx = await startRun('daily-nav-ipo');
   const totalStart = Date.now();
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
@@ -47,23 +49,36 @@ async function main() {
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`  📅 ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
 
-  requireDb();
+  try {
+    requireDb();
 
-  console.log('\n  [1/2] NAV sync (bulk)...');
-  const navStart = Date.now();
-  const amfiFunds = await fetchAMFINAVs();
-  await upsertFundsFromAMFI(amfiFunds);
-  await computeFundReturnsFromNavs();
-  console.log(`  [1/2] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
+    console.log('\n  [1/2] NAV sync (bulk)...');
+    const navStart = Date.now();
+    const amfiFunds = await fetchAMFINAVs();
+    await upsertFundsFromAMFI(amfiFunds);
+    await computeFundReturnsFromNavs();
+    console.log(`  [1/2] NAV done in ${((Date.now() - navStart) / 1000).toFixed(1)}s`);
 
-  console.log('\n  [2/2] IPO sync...');
-  const ipoStart = Date.now();
-  await runIPOSync();
-  console.log(`  [2/2] IPO done in ${((Date.now() - ipoStart) / 1000).toFixed(1)}s`);
+    console.log('\n  [2/2] IPO sync...');
+    const ipoStart = Date.now();
+    await runIPOSync();
+    console.log(`  [2/2] IPO done in ${((Date.now() - ipoStart) / 1000).toFixed(1)}s`);
 
-  const totalSec = ((Date.now() - totalStart) / 1000).toFixed(1);
-  console.log(`\n  ✅ Pipeline 1 complete in ${totalSec}s — data written to Neon`);
-  console.log('  ℹ️  Run `npm run build` to regenerate static pages\n');
+    const totalSec = ((Date.now() - totalStart) / 1000).toFixed(1);
+    console.log(`\n  ✅ Pipeline 1 complete in ${totalSec}s — data written to Neon`);
+    console.log('  ℹ️  Run `npm run build` to regenerate static pages\n');
+
+    await endRun(ctx, {
+      status: 'success',
+      qualityGate: 'passed',
+      rowsUpserted: amfiFunds.length,
+      message: `NAV + IPO sync in ${totalSec}s`,
+      counts: { navFunds: amfiFunds.length },
+    });
+  } catch (err) {
+    await endRun(ctx, { status: 'failed', qualityGate: 'skipped', message: err.message });
+    throw err;
+  }
 }
 
 main().catch((err) => {

@@ -216,6 +216,24 @@ export default function SmartMoneyTracker({
 
   const sectorOptions = useMemo(() => filterTrackerSectorOptions(data.sectors), [data.sectors]);
 
+  const viewCounts = useMemo(() => {
+    const monthData = data.byMonth[deferredMonth];
+    if (!monthData) return {} as Partial<Record<ViewType, number>>;
+    const counts: Partial<Record<ViewType, number>> = {};
+    for (const opt of TRACKER_VIEW_OPTIONS) {
+      const source =
+        opt.id === 'most_bought'
+          ? monthData.increased
+          : opt.id === 'most_sold'
+            ? monthData.decreased
+            : opt.id === 'fresh_entries'
+              ? monthData.fresh_entry
+              : monthData.complete_exit;
+      counts[opt.id] = filterStockRows(source, deferredCategory, deferredSector, opt.id).length;
+    }
+    return counts;
+  }, [data.byMonth, deferredMonth, deferredCategory, deferredSector]);
+
   useEffect(() => {
     if (sector !== 'All' && !sectorOptions.includes(sector)) setSector('All');
   }, [sector, sectorOptions]);
@@ -328,7 +346,9 @@ export default function SmartMoneyTracker({
             onChange={(e) => applyView(e.target.value as ViewType)}
           >
             {TRACKER_VIEW_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>{o.label}</option>
+              <option key={o.id} value={o.id}>
+                {o.label}{viewCounts[o.id] != null ? ` (${viewCounts[o.id]})` : ''}
+              </option>
             ))}
           </FilterSelect>
 
@@ -512,7 +532,7 @@ export default function SmartMoneyTracker({
               <tr>
                 <th className="px-4 py-3 w-12">Rank</th>
                 <th
-                  className="px-4 py-3 cursor-pointer hover:text-primary-600 select-none"
+                  className="px-4 py-3 cursor-pointer hover:text-primary-600 select-none col-sticky"
                   onClick={() => toggleSort('stockName')}
                 >
                   Stock{sortIndicator('stockName')}
@@ -555,7 +575,7 @@ export default function SmartMoneyTracker({
                       onClick={() => setExpanded(isOpen ? null : rowKey)}
                     >
                       <td className="px-4 py-3 text-surface-500">{idx + 1}</td>
-                      <td className="px-4 py-3 font-medium text-surface-900 dark:text-white">
+                      <td className="px-4 py-3 font-medium text-surface-900 dark:text-white col-sticky">
                         <span className="inline-flex items-center gap-1.5">
                           <svg
                             className={`w-3.5 h-3.5 text-surface-500 dark:text-surface-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}

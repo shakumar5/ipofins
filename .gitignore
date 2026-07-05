@@ -36,18 +36,32 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Market data — stored in Neon DB, never committed (CI exports to public/data)
+# Committed log files — clean up
+build-log.txt
+check-output.txt
+compute-si-prod.log
+compute-si-values-v2.log
+compute-si-values.log
+pipeline-si-prod.log
+si-repair.log
+scripts/output/
 src/data/ipos.json
 src/data/mutual-funds.json
 src/data/fund-holdings.json
 src/data/upcoming-ipos.json
-src/data/ipo-performance.json
-src/data/ipos_pretty.json
-src/data/*.bak
+# Backup files — never commit data backups
 *.bak
+src/data/*.bak
+.env.prod-backup
+.env.staging-backup
 
-# Pipeline working dirs (AMFI Excel, temp parses — local only)
-data/
+# Auto-generated files — regenerated at build time, not needed in git
+src/data/*.generated.json
+
+# Staging sitemaps — only final overlap sitemaps are committed
+public/sitemap-overlap-staging-*.xml
+
+# Market data — stored in Neon DB, never committed (CI exports to public/data)
 
 # Deprecated fetch backups
 scripts/ipos_*.json

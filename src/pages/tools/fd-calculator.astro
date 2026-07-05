@@ -1,26 +1,14 @@
 ﻿---
+import { toolPageJsonLd } from '../../lib/tool-schemas';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/layout/PageHeader.astro';
 import FDCalculator from '../../components/calculators/FDCalculator.tsx';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "FD Calculator",
-  "description": "Calculate Fixed Deposit maturity amount and interest earned with quarterly or annual compounding.",
-  "url": "https://ipofins.com/tools/fd-calculator",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Web",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://ipofins.com" },
-      { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://ipofins.com/tools" },
-      { "@type": "ListItem", "position": 3, "name": "FD Calculator", "item": "https://ipofins.com/tools/fd-calculator" }
-    ]
-  }
-};
+const jsonLd = toolPageJsonLd({
+  name: "FD Calculator",
+  slug: "fd-calculator",
+  description: "Calculate Fixed Deposit maturity amount and interest earned with quarterly or annual compounding.",
+});
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -51,6 +39,7 @@ const faqJsonLd = {
 import ContentGuideSection from '../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqItem.astro';
+import CalculatorSeoGuide from '../../components/tools/CalculatorSeoGuide.astro';
 ---
 
 <BaseLayout
@@ -82,6 +71,89 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   <section class="container-narrow py-6">
     <div class="card max-w-2xl mx-auto">
       <FDCalculator client:idle />
+    </div>
+  </section>
+
+  <!-- How to Use (before FAQs) -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">How to Use the FD Calculator</h2>
+      <p class="text-surface-600 dark:text-surface-300">
+        Enter your deposit amount, the annual interest rate offered by your bank or NBFC, tenure in years, and compounding frequency. The calculator instantly shows maturity value and total interest earned — all in your browser, with no data stored.
+      </p>
+      <ol class="list-decimal list-inside text-surface-600 dark:text-surface-300 space-y-2 mt-3">
+        <li><strong>Principal amount</strong> — lump sum you deposit (₹1,000 to ₹1 crore)</li>
+        <li><strong>Annual interest rate</strong> — FD rate from your bank (typically 6.5%–8.5% in 2026)</li>
+        <li><strong>Tenure</strong> — lock-in period in years (7 days to 10 years for regular FDs)</li>
+        <li><strong>Compounding</strong> — quarterly compounding usually beats annual for the same rate</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Formula -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">FD Interest Formula Explained</h2>
+      <div class="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 font-mono text-xs space-y-2">
+        <p><strong>Maturity Amount (A)</strong> = P × (1 + r/n)<sup>nt</sup></p>
+        <p><strong>Interest Earned</strong> = A − P</p>
+        <p class="text-surface-500 font-sans text-xs mt-2">P = principal, r = annual rate (decimal), n = compounding per year, t = years</p>
+      </div>
+      <p class="text-surface-600 dark:text-surface-300 mt-4">
+        Example: ₹5,00,000 at 7.5% for 3 years with quarterly compounding → maturity ≈ ₹6,24,000 (interest ≈ ₹1,24,000).
+      </p>
+    </div>
+  </section>
+
+  <!-- Worked Examples -->
+  <section class="container-narrow py-8">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">FD Maturity Examples (7.5% p.a., Quarterly Compounding)</h2>
+    <div class="overflow-x-auto data-table-premium">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-surface-200 dark:border-surface-700">
+            <th class="text-left py-3 px-4 font-semibold">Deposit</th>
+            <th class="text-right py-3 px-4 font-semibold">1 Year</th>
+            <th class="text-right py-3 px-4 font-semibold">3 Years</th>
+            <th class="text-right py-3 px-4 font-semibold">5 Years</th>
+          </tr>
+        </thead>
+        <tbody class="text-surface-600 dark:text-surface-300">
+          <tr class="border-b border-surface-100 dark:border-surface-800">
+            <td class="py-3 px-4 font-medium">₹1,00,000</td>
+            <td class="py-3 px-4 text-right">₹1.08 L</td>
+            <td class="py-3 px-4 text-right">₹1.25 L</td>
+            <td class="py-3 px-4 text-right">₹1.45 L</td>
+          </tr>
+          <tr class="border-b border-surface-100 dark:border-surface-800">
+            <td class="py-3 px-4 font-medium">₹5,00,000</td>
+            <td class="py-3 px-4 text-right">₹5.39 L</td>
+            <td class="py-3 px-4 text-right">₹6.24 L</td>
+            <td class="py-3 px-4 text-right">₹7.23 L</td>
+          </tr>
+          <tr>
+            <td class="py-3 px-4 font-medium">₹10,00,000</td>
+            <td class="py-3 px-4 text-right">₹10.77 L</td>
+            <td class="py-3 px-4 text-right">₹12.48 L</td>
+            <td class="py-3 px-4 text-right">₹14.46 L</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-surface-500 mt-3">Illustrative only. Actual bank rates and TDS may differ.</p>
+  </section>
+
+  <!-- Tips -->
+  <section class="container-narrow py-8">
+    <div class="prose dark:prose-invert max-w-none text-sm">
+      <h2 class="text-xl font-bold text-surface-900 dark:text-white mb-4">FD Tips for Indian Investors</h2>
+      <ul class="list-disc list-inside text-surface-600 dark:text-surface-300 space-y-2">
+        <li>Compare rates across SBI, HDFC, ICICI, and small finance banks — spreads can be 0.5–1% for the same tenure.</li>
+        <li>Senior citizens typically earn 0.25–0.50% extra; always declare age for the correct rate.</li>
+        <li>Tax-saving FD (5-year lock-in) qualifies under Section 80C but interest is still taxable.</li>
+        <li>Ladder FDs across maturities (1yr, 2yr, 3yr) to balance liquidity and rate lock-in.</li>
+        <li>For inflation-beating returns over 7+ years, consider <a href="/tools/sip-calculator" class="text-primary-600 hover:underline">SIP in equity mutual funds</a> alongside FDs for stability.</li>
+      </ul>
     </div>
   </section>
 
@@ -124,6 +196,8 @@ import ContentGuideFaqItem from '../../components/content-guide/ContentGuideFaqI
   </section>
 
   <section class="container-narrow py-8">
+  <CalculatorSeoGuide slug="fd-calculator" />
+
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-4">Related Calculators</h2>
     <div class="nav-btn-group">
       <a href="/tools/sip-calculator" class="btn-secondary px-6 py-3">SIP Calculator</a>

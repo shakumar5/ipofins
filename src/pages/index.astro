@@ -17,6 +17,20 @@ const trackedSnapshot = await getTrackedSnapshot();
 const onePercentStocks = await getOnePercentStockSlugs();
 const iposData = withCorrectStatuses(await getAllIPOs());
 const liveIPOs = iposData.filter(ipo => ipo.status === 'live');
+// Next upcoming IPO — shown when no live IPOs exist
+const nextUpcomingIPO = liveIPOs.length === 0
+  ? iposData
+      .filter(ipo => ipo.status === 'upcoming' && ipo.openDate)
+      .sort((a, b) => new Date(a.openDate!).getTime() - new Date(b.openDate!).getTime())[0]
+  : null;
+
+const liveStatValue = liveIPOs.length > 0
+  ? liveIPOs.length
+  : nextUpcomingIPO?.openDate
+    ? `Opens ${new Date(nextUpcomingIPO.openDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+    : '0';
+const liveStatLabel = liveIPOs.length > 0 ? 'Live Now' : 'Next IPO';
+const liveStatVariant = liveIPOs.length > 0 ? 'live' : 'default';
 const featuredLiveIPOs = [...liveIPOs]
   .sort((a, b) => (a.type === 'mainboard' ? -1 : 1) - (b.type === 'mainboard' ? -1 : 1))
   .slice(0, 3);
@@ -142,7 +156,7 @@ const faqJsonLd = {
             <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse-subtle"></span>
             <span class="text-xs font-medium text-surface-600 dark:text-surface-300">Free · No login · Official data</span>
           </div>
-          <h1 class="text-4xl lg:text-[2.75rem] font-bold text-surface-900 dark:text-white tracking-tight leading-[1.12]">
+          <h1 class="hero-title font-bold text-surface-900 dark:text-white tracking-tight leading-[1.12]">
             Track what funds<br />
             <span class="text-surface-700 dark:text-surface-200">and super investors buy.</span>
           </h1>
@@ -173,7 +187,7 @@ const faqJsonLd = {
         </div>
         <div class="home-stat-bento">
           <StatCard href="/ipo" value={iposData.length} label="IPOs Tracked" />
-          <StatCard href="/ipo" value={liveIPOs.length} label="Live Now" variant="live" />
+          <StatCard href="/ipo" value={liveStatValue} label={liveStatLabel} variant={liveStatVariant} />
           <StatCard href="/mutual-funds/all" value={`${fundsCovered}+`} label="Funds with Holdings" />
           <StatCard href="/tools" value={toolsData.length} label="Finance Tools" />
           <StatCard href="/super-investors" value={trackedSnapshot.entityCount} label="Super Investors" />
@@ -287,7 +301,8 @@ const faqJsonLd = {
 
   <!-- IPO quick links — SEO internal linking -->
   <section class="container-wide py-6">
-    <h2 class="text-sm font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">IPO Hub</h2>
+    <h2 class="text-sm font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-1">IPO Hub</h2>
+    <p class="text-xs text-surface-500 dark:text-surface-400 mb-4">Quick access to live IPOs, GMP, allotment status, and calculators.</p>
     <div class="nav-btn-group">
       {ipoQuickLinks.map(link => (
         <a href={link.href} class="btn-secondary px-6 py-3">{link.label}</a>
