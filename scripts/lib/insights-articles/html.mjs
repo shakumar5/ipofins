@@ -30,9 +30,9 @@ export function sectorHref(sectorSlug) {
   return `/mutual-funds/smart-money/sector-intelligence/${sectorSlug}`;
 }
 
-export function overlapHref(slugA, slugB) {
-  const pair = [slugA, slugB].sort().join('--');
-  return `/mutual-funds/portfolio-overlap-checker/${pair}`;
+/** Link to the indexable hub only — pairwise URLs are not submitted to GSC. */
+export function overlapHref(_slugA, _slugB) {
+  return '/mutual-funds/portfolio-overlap-checker';
 }
 
 export function holdingsChangesHref(amcSlug, monthSlugValue) {
