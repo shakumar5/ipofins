@@ -16,4 +16,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log('  ✓ Export cache complete (smart-money signals + indexes on disk)');
+console.log('  ✓ Export cache complete (smart-money signals + fund overlap + indexes on disk)');

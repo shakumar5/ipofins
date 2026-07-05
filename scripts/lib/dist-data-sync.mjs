@@ -10,6 +10,8 @@ export const REQUIRED_ROOT_FILES = [
   'smart-money-signals-index.json',
   'sector-intelligence.json',
   'smart-money-tracker-index.json',
+  'fund-overlap-index.json',
+  'fund-overlaps-by-fund.json',
 ];
 
 export function publicDataDir(root) {
