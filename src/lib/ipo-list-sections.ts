@@ -107,6 +107,7 @@ export function ipoUpperPrice(input: {
 
 export function ipoLowerPrice(input: {
   priceMin?: number | null;
+  priceMax?: number | null;
   priceRange?: string;
   type?: string;
 }): number | null {

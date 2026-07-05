@@ -87,7 +87,7 @@ const jsonLd = {
 
     <div class="mt-8">
       {allFeedJson && (
-        <script type="application/json" id={SAST_ALL_BOOTSTRAP_ID} set:html={allFeedJson} />
+        <script is:inline type="application/json" id={SAST_ALL_BOOTSTRAP_ID} set:html={allFeedJson} />
       )}
       <SastUpdatesFeed
         client:load
