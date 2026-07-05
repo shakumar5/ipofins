@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import FilterSelect from './FilterSelect';
+import StockSignalLink from './StockSignalLink';
 import type { ConvictionScoreRow } from '../../lib/data/holdings';
 
 interface ConvictionData {
@@ -140,7 +141,11 @@ export default function ConvictionScoreTable({ data }: Props) {
               {rows.slice(0, 100).map((row, idx) => (
                 <tr key={row.stockSlug} className="hover:bg-surface-50 dark:hover:bg-surface-800/30">
                   <td className="px-4 py-3 text-surface-500">{idx + 1}</td>
-                  <td className="px-4 py-3 font-medium text-surface-900 dark:text-white">{row.stockName}</td>
+                  <td className="px-4 py-3 font-medium">
+                    <StockSignalLink stockSlug={row.stockSlug} className="font-medium">
+                      {row.stockName}
+                    </StockSignalLink>
+                  </td>
                   <td className="px-4 py-3 text-surface-500 hidden sm:table-cell">{row.sector}</td>
                   <td className="px-4 py-3 text-right font-bold text-primary-600">{row.convictionScore.toFixed(1)}</td>
                   <td className="px-4 py-3 text-right">{row.freshEntries}</td>

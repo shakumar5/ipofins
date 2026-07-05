@@ -4,6 +4,7 @@ export interface FundHoldingRow {
   name: string;
   sector: string;
   pct: number | string;
+  stockSlug?: string;
 }
 
 export async function fetchFundHoldingsBySlug(fundSlug: string): Promise<FundHoldingRow[]> {
@@ -14,5 +15,6 @@ export async function fetchFundHoldingsBySlug(fundSlug: string): Promise<FundHol
     name: String(h.name || ''),
     sector: String(h.sector || ''),
     pct: h.pct != null ? Number(h.pct) : 0,
+    stockSlug: h.stockSlug ? String(h.stockSlug) : undefined,
   }));
 }

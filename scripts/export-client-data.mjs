@@ -153,6 +153,7 @@ function writeFundHoldingsBySlugExports(holdings) {
         month,
         stocks: stocks.map((h) => ({
           name: h.name,
+          stockSlug: h.stockSlug || '',
           sector: h.sector || '',
           pct: h.pct ?? 0,
         })),
@@ -173,6 +174,7 @@ async function loadHoldingsFromDb() {
       a.slug AS amc_slug,
       TRIM(TO_CHAR(fh.month, 'FMMonth YYYY')) AS month_label,
       s.name AS stock_name,
+      s.slug AS stock_slug,
       COALESCE(s.isin, '') AS isin,
       COALESCE(sec.name, '') AS sector,
       fh.pct_to_nav AS pct
@@ -206,6 +208,7 @@ async function loadHoldingsFromDb() {
     if (!holdings[slug][month]) holdings[slug][month] = [];
     holdings[slug][month].push({
       name: String(r.stock_name),
+      stockSlug: String(r.stock_slug),
       isin: String(r.isin),
       sector: String(r.sector),
       pct: r.pct != null ? Number(r.pct) : 0,

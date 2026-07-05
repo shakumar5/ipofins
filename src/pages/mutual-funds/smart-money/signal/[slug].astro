@@ -1,135 +1,22 @@
 ---
-import BaseLayout from '../../../../layouts/BaseLayout.astro';
-import PageHeader from '../../../../components/layout/PageHeader.astro';
-import SmartMoneySignalDetailPage from '../../../../components/funds/SmartMoneySignalDetailPage.tsx';
-import SmartMoneyInternalLinks from '../../../../components/funds/SmartMoneyInternalLinks.astro';
-import SmartMoneySubNav from '../../../../components/funds/SmartMoneySubNav.astro';
-import { BRAND_URL } from '../../../../lib/brand';
-import { loadSmartMoneyTrackerLinks } from '../../../../lib/smart-money-tracker-links';
+import { stockSignalPath } from '../../../../lib/stock-signal-meta';
 import { loadSmartMoneyStockSlugs } from '../../../../lib/smart-money-stock-slugs';
-import { getSignalDetailPageMeta, signalDetailPath } from '../../../../lib/signal-detail-meta';
-import { smartMoneyTabPath } from '../../../../lib/smart-money-meta';
-import {
-  defaultSignalDetailBack,
-  SMART_MONEY_LIST_BACK,
-} from '../../../../lib/list-back-nav';
-import ListBackLink from '../../../../components/ListBackLink.astro';
-
-const defaultBack = defaultSignalDetailBack();
-const smBackVariants = Object.fromEntries(
-  Object.entries(SMART_MONEY_LIST_BACK).filter(([key]) => key !== 'signals'),
-);
-const signalsListHref = smartMoneyTabPath('signals');
 
 export function getStaticPaths() {
   const stocks = loadSmartMoneyStockSlugs();
   if (!stocks.length) {
-    return [{ params: { slug: '_placeholder' }, props: { stockSlug: '_placeholder', stockName: 'Stock' } }];
+    return [{ params: { slug: '_placeholder' } }];
   }
-  return stocks.map(({ slug, stockName }) => ({
+  return stocks.map(({ slug }) => ({
     params: { slug },
-    props: { stockSlug: slug, stockName },
   }));
 }
 
-const sm = loadSmartMoneyTrackerLinks();
+const { slug } = Astro.params;
+if (slug && slug !== '_placeholder') {
+  const qs = Astro.url.search;
+  return Astro.redirect(`${stockSignalPath(slug)}${qs}`, 301);
+}
 
-const { stockSlug, stockName } = Astro.props;
-const isPlaceholder = stockSlug === '_placeholder';
-const initialMonth = Astro.url.searchParams.get('month') ?? undefined;
-const initialCategory = Astro.url.searchParams.get('category') ?? undefined;
-const pageMeta = isPlaceholder
-  ? { title: 'Smart Money Signal | IPOFins', description: 'Institutional conviction score breakdown.', path: signalDetailPath('_placeholder') }
-  : getSignalDetailPageMeta(stockName, stockSlug);
-
-const jsonLd = isPlaceholder
-  ? undefined
-  : {
-      '@context': 'https://schema.org',
-      '@type': 'WebPage',
-      name: pageMeta.heading,
-      description: pageMeta.description,
-      url: `${BRAND_URL}${pageMeta.path}`,
-    };
+return Astro.redirect(stockSignalPath(), 302);
 ---
-
-<BaseLayout
-  title={pageMeta.title}
-  description={pageMeta.description}
-  canonicalUrl={`${BRAND_URL}${pageMeta.path}`}
-  ogImage="/og-fund.png"
-  jsonLd={jsonLd}
->
-  <nav class="container-wide pt-6" aria-label="Breadcrumb">
-    <ol class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
-      <li><a href="/" class="hover:text-primary-600 transition-colors">Home</a></li>
-      <li><span class="mx-1">/</span></li>
-      <li><a href={sm.hub} class="hover:text-primary-600 transition-colors">Smart Money</a></li>
-      <li><span class="mx-1">/</span></li>
-      <li><a href={signalsListHref} class="hover:text-primary-600 transition-colors">Smart Money Signal</a></li>
-      {!isPlaceholder && (
-        <>
-          <li><span class="mx-1">/</span></li>
-          <li class="text-surface-900 dark:text-white font-medium">{stockName}</li>
-        </>
-      )}
-      <li><span class="mx-1">/</span></li>
-      <li class="text-surface-900 dark:text-white font-medium">Score Breakdown</li>
-    </ol>
-  </nav>
-
-  <section class="container-wide pt-8 pb-4">
-    {!isPlaceholder && (
-      <ListBackLink
-        id="signal-detail-back"
-        defaultHref={defaultBack.href}
-        defaultLabel={defaultBack.label}
-        variants={smBackVariants}
-        class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
-      />
-    )}
-    <PageHeader
-      title={isPlaceholder ? 'Smart Money Signal' : (pageMeta.heading || stockName)}
-      subtitle={isPlaceholder ? 'Conviction score breakdown' : pageMeta.subtitle}
-      freshness="Updated monthly"
-      source="AMC portfolio disclosures"
-    >
-      {!isPlaceholder && (
-        <div class="mt-4">
-          <SmartMoneySubNav active="signals" />
-        </div>
-      )}
-    </PageHeader>
-  </section>
-
-  <section class="container-wide py-4 pb-12">
-    {isPlaceholder ? (
-      <div class="text-center py-12 text-surface-500 text-sm">
-        <p>Run <code class="text-xs bg-surface-100 dark:bg-surface-800 px-1 rounded">npm run export:client-data</code> to generate signal pages.</p>
-        <ListBackLink
-          id="signal-detail-back-placeholder"
-          defaultHref={defaultBack.href}
-          defaultLabel={defaultBack.label}
-          variants={smBackVariants}
-          class="text-primary-600 mt-2 inline-flex"
-        />
-      </div>
-    ) : (
-      <SmartMoneySignalDetailPage
-        client:only="react"
-        stockSlug={stockSlug}
-        initialMonth={initialMonth}
-        initialCategory={initialCategory}
-      >
-        <div slot="fallback" class="py-12 text-center text-sm text-surface-500">Loading…</div>
-      </SmartMoneySignalDetailPage>
-    )}
-  </section>
-
-  {!isPlaceholder && (
-    <section class="container-wide pb-12">
-      <h2 class="text-sm font-bold text-surface-900 dark:text-white mb-3">More Smart Money</h2>
-      <SmartMoneyInternalLinks variant="inline" showHub={false} showTabs={false} monthNote={false} />
-    </section>
-  )}
-</BaseLayout>
