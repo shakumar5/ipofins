@@ -85,8 +85,10 @@ let fundOverlapsByFundCache: FundOverlapsByFundDisk | null | undefined;
 
 function dataFilePath(name: string): string | null {
   for (const root of projectRoots()) {
-    const path = join(root, 'public', 'data', name);
-    if (existsSync(path)) return path;
+    for (const sub of ['public/data', 'dist/data']) {
+      const path = join(root, sub, name);
+      if (existsSync(path)) return path;
+    }
   }
   return null;
 }

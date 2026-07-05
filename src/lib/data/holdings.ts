@@ -926,6 +926,11 @@ export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Rec
         });
       }
     }
+    return [];
+  }
+
+  if (import.meta.env.PROD || process.env.CI === 'true') {
+    return [];
   }
 
   const sql = requireDb();
@@ -963,8 +968,15 @@ export async function getFundOverlaps(fundSlug: string, limit = 10): Promise<Rec
 
 export async function getFundsWithOverlaps(): Promise<{ slug: string; name: string }[]> {
   const disk = readFundOverlapIndexFromDisk();
-  if (disk?.length) {
-    return disk.map((f) => ({ slug: f.slug, name: f.name }));
+  const byFund = readFundOverlapsByFundFromDisk();
+  if (disk?.length && byFund?.bySlug) {
+    return disk
+      .filter((f) => fundSlugCandidates(f.slug).some((slug) => byFund.bySlug[slug]?.length))
+      .map((f) => ({ slug: f.slug, name: f.name }));
+  }
+
+  if (import.meta.env.PROD || process.env.CI === 'true') {
+    return [];
   }
 
   const sql = requireDb();
