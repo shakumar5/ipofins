@@ -11,10 +11,10 @@ import {
   SITEMAP_EXCLUDED_PATH_PREFIXES,
   PORTFOLIO_OVERLAP_HUB_PATH,
   collectAllSitemapPaths,
+  findBuiltHtml,
   findForbiddenSitemapPaths,
   isPortfolioOverlapRewritePath,
   loadCanonicalFundPaths,
-  locToDistHtml,
   parseSitemapIndexChildNames,
   parseUrlsetLocs,
   pathnameFromLoc,
@@ -127,7 +127,7 @@ function main() {
     console.log(`  ✓ sitemap hygiene: no alias/default-combo leaks (${canonicalFundPaths.size} canonical fund pages)`);
   }
 
-  const hubHtml = locToDistHtml(DIST, PORTFOLIO_OVERLAP_HUB_PATH);
+  const hubHtml = findBuiltHtml(ROOT, PORTFOLIO_OVERLAP_HUB_PATH);
   if (!existsSync(hubHtml)) {
     report(`Portfolio overlap hub HTML missing: ${hubHtml.replace(ROOT, '')}`);
   }
@@ -143,7 +143,7 @@ function main() {
       continue;
     }
 
-    const html = locToDistHtml(DIST, path);
+    const html = findBuiltHtml(ROOT, path);
     if (!existsSync(html)) {
       missingArtifacts.push({ path, html: html.replace(ROOT, '') });
     }

@@ -1,7 +1,11 @@
 /** Shared helpers for sitemap XML generation. */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
+
+const ASTRO_SITEMAP_URLSET_RE = /^sitemap-\d+\.xml$/;
+const SKIP_HTML_WALK_DIRS = new Set(['data', '_astro', 'fonts', 'images', 'og']);
+const MIN_CI_INDEXABLE_URLS = 1000;
 
 export const SITE = 'https://ipofins.com';
 export const SITEMAP_URL_LIMIT = 45_000;
@@ -298,6 +302,153 @@ export function locToDistHtml(distRoot, pathname) {
   const path = (pathname || '/').replace(/\/$/, '') || '/';
   if (path === '/') return join(distRoot, 'index.html');
   return join(distRoot, ...path.slice(1).split('/'), 'index.html');
+}
+
+/** Candidate static output roots (dist first, then Vercel prebuilt static). */
+export function projectArtifactRoots(projectRoot) {
+  return [
+    join(projectRoot, 'dist'),
+    join(projectRoot, '.vercel', 'output', 'static'),
+  ];
+}
+
+/** Pick the artifact root with the most prerendered index.html files. */
+export function resolveArtifactRoot(projectRoot) {
+  let best = join(projectRoot, 'dist');
+  let bestCount = 0;
+  for (const root of projectArtifactRoots(projectRoot)) {
+    const count = countBuiltHtmlPages(root);
+    if (count > bestCount) {
+      bestCount = count;
+      best = root;
+    }
+  }
+  return best;
+}
+
+/** Count index.html files under a build output root (shallow-biased walk). */
+export function countBuiltHtmlPages(artifactRoot, { max = 20_000 } = {}) {
+  if (!existsSync(artifactRoot)) return 0;
+  let count = 0;
+
+  function walk(dir, depth = 0) {
+    if (count >= max || depth > 12) return;
+    if (existsSync(join(dir, 'index.html'))) count += 1;
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      if (SKIP_HTML_WALK_DIRS.has(name)) continue;
+      if (name.includes('.')) continue;
+      const child = join(dir, name);
+      try {
+        if (statSync(child).isDirectory()) walk(child, depth + 1);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  walk(artifactRoot);
+  return count;
+}
+
+/** Minimum indexable URLs required before writing GSC sitemaps (CI only). */
+export function minIndexableSitemapUrls() {
+  return process.env.CI === 'true' ? MIN_CI_INDEXABLE_URLS : 50;
+}
+
+/** Minimum prerendered HTML pages required after Astro build (CI only). */
+export function minBuiltHtmlPages() {
+  return process.env.CI === 'true' ? MIN_CI_INDEXABLE_URLS : 1;
+}
+
+/** Collect locs from Astro's numbered sitemap urlsets in build output. */
+export function collectAstroSitemapLocs(artifactRoots, site = SITE) {
+  const locs = [];
+  const seenFiles = new Set();
+
+  for (const root of artifactRoots) {
+    if (!existsSync(root)) continue;
+
+    for (const name of readdirSync(root)) {
+      if (!ASTRO_SITEMAP_URLSET_RE.test(name)) continue;
+      const filePath = join(root, name);
+      if (seenFiles.has(filePath)) continue;
+      seenFiles.add(filePath);
+      locs.push(...parseUrlsetLocs(readFileSync(filePath, 'utf8')));
+    }
+
+    const astroIndex = join(root, 'sitemap-index.xml');
+    if (!existsSync(astroIndex)) continue;
+    const childNames = parseSitemapIndexChildNames(readFileSync(astroIndex, 'utf8'));
+    for (const name of childNames) {
+      if (!ASTRO_SITEMAP_URLSET_RE.test(name)) continue;
+      const filePath = join(root, name);
+      if (!existsSync(filePath) || seenFiles.has(filePath)) continue;
+      seenFiles.add(filePath);
+      locs.push(...parseUrlsetLocs(readFileSync(filePath, 'utf8')));
+    }
+  }
+
+  return locs.map((loc) => {
+    const path = pathnameFromLoc(loc);
+    return path ? `${site}${path}` : loc;
+  });
+}
+
+/** Collect locs from prerendered index.html files (fallback when Astro urlsets are missing). */
+export function collectBuiltPageLocs(artifactRoot, site = SITE) {
+  if (!existsSync(artifactRoot)) return [];
+  const locs = [];
+
+  function walk(dir, segments = []) {
+    const indexHtml = join(dir, 'index.html');
+    if (existsSync(indexHtml)) {
+      const path = segments.length ? `/${segments.join('/')}` : '/';
+      if (path !== '/404') locs.push(`${site}${path}`);
+    }
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      if (SKIP_HTML_WALK_DIRS.has(name)) continue;
+      if (name.includes('.')) continue;
+      const child = join(dir, name);
+      try {
+        if (statSync(child).isDirectory()) walk(child, [...segments, name]);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  walk(artifactRoot);
+  return locs;
+}
+
+/** Resolve the first existing built HTML file for a site path. */
+export function findBuiltHtml(projectRoot, pathname) {
+  for (const root of projectArtifactRoots(projectRoot)) {
+    const html = locToDistHtml(root, pathname);
+    if (existsSync(html)) return html;
+  }
+  return locToDistHtml(join(projectRoot, 'dist'), pathname);
+}
+
+/** Keep supplemental sitemap locs only when a matching HTML artifact exists. */
+export function filterLocsWithBuiltHtml(projectRoot, locs) {
+  return locs.filter((loc) => {
+    const path = pathnameFromLoc(loc);
+    if (!path) return false;
+    return existsSync(findBuiltHtml(projectRoot, path));
+  });
 }
 
 export function parseSitemapIndexChildNames(indexXml) {

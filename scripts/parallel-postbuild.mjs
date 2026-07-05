@@ -32,6 +32,7 @@ const parallel = [
 ];
 
 await run('scripts/ensure-dist-data.mjs');
+await run('scripts/verify-dist-build.mjs');
 
 console.log(`  parallel-postbuild: ${parallel.length} verification(s) in parallel`);
 await Promise.all(parallel.map(run));
