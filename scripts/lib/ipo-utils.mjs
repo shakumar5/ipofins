@@ -151,6 +151,77 @@ export function parsePriceRange(priceRange) {
   return { min: single || null, max: single || null };
 }
 
+/** Reject date fragments and other scrape junk masquerading as IPO prices. */
+export function isPlausibleIpoPriceBand(min, max, type = 'mainboard') {
+  const hi = max != null ? Number(max) : min != null ? Number(min) : null;
+  const lo = min != null ? Number(min) : null;
+  const floor = type === 'sme' ? 12 : 30;
+  if (hi == null || !Number.isFinite(hi) || hi < floor) return false;
+  if (lo != null && Number.isFinite(lo) && lo > hi) return false;
+  if (lo != null && Number.isFinite(lo) && lo < Math.max(5, floor * 0.25)) return false;
+  return true;
+}
+
+/** Lot sizes below 15 are usually day-of-month parse errors (e.g. "10 Jul"). */
+export function isPlausibleIpoLotSize(lot, type = 'mainboard') {
+  const n = Number(lot);
+  if (!Number.isFinite(n) || n < 15) return false;
+  if (type === 'sme' && n > 2500) return false;
+  if (type === 'mainboard' && n > 1200) return false;
+  return true;
+}
+
+export function parseLotSizeFromHtmlValue(raw) {
+  const text = String(raw || '')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+  const shareMatch = text.match(/(\d[\d,]*)\s*shares?\b/i);
+  if (shareMatch) {
+    const n = parseInt(shareMatch[1].replace(/,/g, ''), 10);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (/^\d[\d,]*$/.test(text)) {
+    const n = parseInt(text.replace(/,/g, ''), 10);
+    return n >= 15 ? n : null;
+  }
+  return null;
+}
+
+export function resolveIpoPriceFields(ipo, existing = null) {
+  const type = ipo.type || existing?.type || 'mainboard';
+  const incoming = {
+    min: ipo.priceMin ?? parsePriceRange(ipo.priceRange).min,
+    max: ipo.priceMax ?? parsePriceRange(ipo.priceRange).max,
+    range: ipo.priceRange || null,
+  };
+  const current = existing
+    ? {
+        min: existing.price_min != null ? Number(existing.price_min) : null,
+        max: existing.price_max != null ? Number(existing.price_max) : null,
+        range: existing.price_range || null,
+      }
+    : { min: null, max: null, range: null };
+
+  const incomingOk = isPlausibleIpoPriceBand(incoming.min, incoming.max, type);
+  const currentOk = isPlausibleIpoPriceBand(current.min, current.max, type);
+  const pick = incomingOk ? incoming : currentOk ? current : incoming.range || current.range ? incoming : current;
+
+  let range = pick.range;
+  if (!range && pick.min != null && pick.max != null) {
+    range = pick.min === pick.max ? String(pick.max) : `${pick.min}-${pick.max}`;
+  }
+
+  return { min: pick.min, max: pick.max, range: range || null };
+}
+
+export function resolveIpoLotSize(incomingLot, existingLot, type = 'mainboard') {
+  const inOk = isPlausibleIpoLotSize(incomingLot, type);
+  const curOk = isPlausibleIpoLotSize(existingLot, type);
+  if (inOk) return Number(incomingLot);
+  if (curOk) return Number(existingLot);
+  return inOk ? Number(incomingLot) : curOk ? Number(existingLot) : incomingLot ?? existingLot ?? null;
+}
+
 export function pickPreferredSlug(a, b) {
   const slugs = [a, b].filter(Boolean);
   if (slugs.length <= 1) return slugs[0] ?? a;

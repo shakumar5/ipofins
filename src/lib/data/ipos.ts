@@ -5,7 +5,7 @@
 import { requireDb } from '../db';
 import type { IPORecord, IPOStatus, IPOType, SubscriptionDetails } from '../../types/ipo';
 import { ipoCanonicalKey, pickPreferredIPO } from '../ipo-canonical';
-import { sanitizeIpoOptionalNumber, sanitizeIpoStringField } from '../ipo-list-sections';
+import { sanitizeIpoOptionalNumber, sanitizeIpoStringField, sanitizeIpoPriceRange } from '../ipo-list-sections';
 import { withIpoScore } from '../ipo-score';
 import { computeIpoRiskScore } from '../ipo-risk-factors';
 
@@ -55,9 +55,21 @@ function mapIPORow(row: IPORow): IPORecord {
     slug: String(row.slug),
     type: (row.type as IPOType) || 'mainboard',
     status: (row.status as IPOStatus) || 'upcoming',
-    priceRange: sanitizeIpoStringField(row.price_range) ?? '',
-    priceMax: row.price_max != null ? Number(row.price_max) : undefined,
-    lotSize: sanitizeIpoOptionalNumber(row.lot_size) ?? 0,
+    priceRange: sanitizeIpoPriceRange(row.price_range, String(row.type || 'mainboard'), row.price_max != null ? Number(row.price_max) : null) ?? '',
+    priceMax: (() => {
+      const n = row.price_max != null ? Number(row.price_max) : undefined;
+      const type = String(row.type || 'mainboard');
+      const range = sanitizeIpoPriceRange(row.price_range, type, n);
+      if (!range || n == null || !Number.isFinite(n)) return undefined;
+      return sanitizeIpoOptionalNumber(n);
+    })(),
+    lotSize: (() => {
+      const n = sanitizeIpoOptionalNumber(row.lot_size);
+      if (n == null) return 0;
+      const type = String(row.type || 'mainboard');
+      const floor = type === 'sme' ? 12 : 15;
+      return n >= floor ? n : 0;
+    })(),
     issueSize: sanitizeIpoStringField(row.issue_size) ?? '',
     sector: sanitizeIpoStringField(row.sector) ?? '',
     openDate: sanitizeIpoStringField(formatDate(row.open_date)),

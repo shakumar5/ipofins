@@ -3,7 +3,17 @@
  * Missing fields on either side are filled from the other source.
  */
 
-import { fuzzyMatch, strictMatch, slugify, coalesce, parseDateToISO, ipoCanonicalKey, isIpoPlaceholder } from './ipo-utils.mjs';
+import {
+  fuzzyMatch,
+  strictMatch,
+  slugify,
+  coalesce,
+  parseDateToISO,
+  ipoCanonicalKey,
+  isIpoPlaceholder,
+  isPlausibleIpoPriceBand,
+  isPlausibleIpoLotSize,
+} from './ipo-utils.mjs';
 import { mergeGrowwDetailInto } from './groww-sources.mjs';
 
 const STATUS_RANK = { live: 5, open: 4, upcoming: 3, closed: 2, allotment: 2, listed: 1, 'drhp-filed': 0 };
@@ -74,6 +84,34 @@ function mergeField(target, source, field) {
   if (s === undefined || s === null || s === '') return;
   if (typeof s === 'string' && isIpoPlaceholder(s)) return;
   if (Array.isArray(s) && s.length === 0) return;
+
+  if (field === 'priceRange' || field === 'priceMin' || field === 'priceMax') {
+    const type = source.type || target.type || 'mainboard';
+    const srcOk = isPlausibleIpoPriceBand(
+      field === 'priceMin' ? s : source.priceMin ?? target.priceMin,
+      field === 'priceMax' ? s : source.priceMax ?? target.priceMax,
+      type,
+    );
+    const tgtOk = isPlausibleIpoPriceBand(target.priceMin, target.priceMax, type);
+    if (srcOk && !tgtOk) {
+      target.priceRange = source.priceRange || target.priceRange;
+      target.priceMin = source.priceMin ?? target.priceMin;
+      target.priceMax = source.priceMax ?? target.priceMax;
+      return;
+    }
+    if (!srcOk) return;
+  }
+
+  if (field === 'lotSize') {
+    const type = source.type || target.type || 'mainboard';
+    const srcOk = isPlausibleIpoLotSize(s, type);
+    const tgtOk = isPlausibleIpoLotSize(t, type);
+    if (srcOk && !tgtOk) {
+      target.lotSize = s;
+      return;
+    }
+    if (!srcOk) return;
+  }
 
   if (Array.isArray(s)) {
     if (!t || t.length === 0) target[field] = s;
