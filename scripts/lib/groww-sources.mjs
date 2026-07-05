@@ -9,6 +9,8 @@ import {
   tsToISO,
   formatIssueSizeCr,
   sleep,
+  isPlausibleIpoPriceBand,
+  isPlausibleIpoLotSize,
 } from './ipo-utils.mjs';
 
 function parseNextData(html) {
@@ -266,11 +268,20 @@ export function mergeGrowwDetailInto(target, detail) {
   ) {
     target.description = detail.description;
   }
-  if (detail.lotSize && (!target.lotSize || target.lotSize < 50)) target.lotSize = detail.lotSize;
-  if (detail.priceRange && (!target.priceRange || Number(target.priceMax) < 50)) {
-    target.priceRange = detail.priceRange;
-    target.priceMin = detail.priceMin;
-    target.priceMax = detail.priceMax;
+  if (detail.lotSize && isPlausibleIpoLotSize(detail.lotSize, target.type || 'mainboard')) {
+    if (!isPlausibleIpoLotSize(target.lotSize, target.type || 'mainboard')) {
+      target.lotSize = detail.lotSize;
+    }
+  }
+  if (
+    detail.priceRange &&
+    isPlausibleIpoPriceBand(detail.priceMin, detail.priceMax, target.type || 'mainboard')
+  ) {
+    if (!isPlausibleIpoPriceBand(target.priceMin, target.priceMax, target.type || 'mainboard')) {
+      target.priceRange = detail.priceRange;
+      target.priceMin = detail.priceMin;
+      target.priceMax = detail.priceMax;
+    }
   }
   if (detail.issueSize && !target.issueSize) target.issueSize = detail.issueSize;
   if (detail.openDate && !target.openDate) target.openDate = detail.openDate;

@@ -5,6 +5,7 @@ import type { SmartMoneySignalRow, SmartMoneySignalsData, SmartMoneySignalType }
 import { SIGNAL_OPTIONS, stockCapDisplayLabel } from '../../lib/smart-money-signals';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import { signalDetailHref } from '../../lib/list-back-nav';
+import StockSignalLink from './StockSignalLink';
 import {
   DEFAULT_SIGNALS_LIST_FILTERS,
   getSmartMoneySignalsListPageMeta,
@@ -351,7 +352,9 @@ function SignalCard({
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
           <p className="text-xs text-surface-600 dark:text-surface-400 tabular-nums">#{rank}</p>
-          <p className="text-sm font-semibold text-surface-900 dark:text-white">{row.stockName}</p>
+          <StockSignalLink stockSlug={row.stockSlug} className="text-sm font-semibold">
+            {row.stockName}
+          </StockSignalLink>
           <p className="text-xs text-surface-500 mt-0.5">
             {row.sector}
             {stockCapDisplayLabel(row.category) ? ` · ${stockCapDisplayLabel(row.category)}` : ''}
@@ -408,7 +411,9 @@ function SignalRow({
       <td className="px-4 py-3 text-surface-500">{rank}</td>
 
       <td className="px-4 py-3 font-medium text-surface-900 dark:text-white">
-        {row.stockName}
+        <StockSignalLink stockSlug={row.stockSlug} className="font-medium">
+          {row.stockName}
+        </StockSignalLink>
         <span className="block text-xs font-normal text-surface-500 dark:text-surface-400 mt-0.5">
           {row.sector}
           {stockCapDisplayLabel(row.category) ? ` · ${stockCapDisplayLabel(row.category)}` : ''}

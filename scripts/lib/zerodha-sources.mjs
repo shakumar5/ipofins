@@ -3,7 +3,7 @@
  * https://zerodha.com/ipo/
  */
 
-import { fetchHTML, slugify, sleep, sanitizeIpoText } from './ipo-utils.mjs';
+import { fetchHTML, slugify, sleep, sanitizeIpoText, parseLotSizeFromHtmlValue, isPlausibleIpoLotSize, isPlausibleIpoPriceBand } from './ipo-utils.mjs';
 
 function extractSection(html, startId, endId) {
   const startIdx = html.indexOf(`id="${startId}"`);
@@ -150,29 +150,39 @@ export async function fetchZerodhaIPODetail(ipo) {
     }
 
     const priceMatch = clean.match(/Price range[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
-    if (priceMatch && (!ipo.priceRange || Number(ipo.priceMax) < 50)) {
+    if (priceMatch) {
       const priceStr = priceMatch[1].replace(/<[^>]+>/g, '').trim();
       const prices = [...priceStr.matchAll(/₹?(\d[\d,]*)/g)];
+      let nextMin = null;
+      let nextMax = null;
       if (prices.length >= 2) {
-        ipo.priceMin = parseInt(prices[0][1].replace(/,/g, ''), 10);
-        ipo.priceMax = parseInt(prices[1][1].replace(/,/g, ''), 10);
-        ipo.priceRange = `${ipo.priceMin}-${ipo.priceMax}`;
+        nextMin = parseInt(prices[0][1].replace(/,/g, ''), 10);
+        nextMax = parseInt(prices[1][1].replace(/,/g, ''), 10);
       } else if (prices.length === 1) {
-        ipo.priceMin = ipo.priceMax = parseInt(prices[0][1].replace(/,/g, ''), 10);
-        ipo.priceRange = String(ipo.priceMin);
+        nextMin = nextMax = parseInt(prices[0][1].replace(/,/g, ''), 10);
+      }
+      if (isPlausibleIpoPriceBand(nextMin, nextMax, ipo.type)) {
+        ipo.priceMin = nextMin;
+        ipo.priceMax = nextMax;
+        ipo.priceRange =
+          nextMin != null && nextMax != null && nextMax > nextMin
+            ? `${nextMin}-${nextMax}`
+            : String(nextMax ?? nextMin);
       }
     }
 
     const lotMatch = clean.match(/Lot size[\s\S]*?<div class="value">([\s\S]*?)<\/div>/i);
-    if (lotMatch && !ipo.lotSize) {
-      const lotNum = lotMatch[1].match(/(\d[\d,]*)/);
-      if (lotNum) ipo.lotSize = parseInt(lotNum[1].replace(/,/g, ''), 10);
+    if (lotMatch) {
+      const parsedLot = parseLotSizeFromHtmlValue(lotMatch[1]);
+      if (parsedLot && isPlausibleIpoLotSize(parsedLot, ipo.type)) {
+        ipo.lotSize = parsedLot;
+      }
     }
     if (!ipo.lotSize) {
-      const inlineLot = clean.match(/Lot size[^0-9]*(\d[\d,]*)/i);
+      const inlineLot = clean.match(/Lot size[^0-9]*(\d[\d,]*)\s*shares?\b/i);
       if (inlineLot) {
         const lotVal = parseInt(inlineLot[1].replace(/,/g, ''), 10);
-        if (lotVal >= 50 && lotVal <= 10000) ipo.lotSize = lotVal;
+        if (isPlausibleIpoLotSize(lotVal, ipo.type)) ipo.lotSize = lotVal;
       }
     }
 

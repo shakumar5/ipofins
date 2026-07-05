@@ -4,7 +4,7 @@
  */
 
 import { sql, isDbConfigured } from './db.mjs';
-import { slugify, ipoCanonicalKey, pickPreferredSlug } from './ipo-utils.mjs';
+import { slugify, ipoCanonicalKey, pickPreferredSlug, resolveIpoPriceFields, resolveIpoLotSize } from './ipo-utils.mjs';
 import { buildListingLookup, normalizeStockName } from './stock-utils.mjs';
 import {
   yahooSymbol,
@@ -255,7 +255,8 @@ export async function upsertIPOs(ipoList) {
   requireDb();
   await dedupeIPODuplicatesInDb();
 
-  const existingRows = await sql`SELECT slug, name FROM ipos`;
+  const existingRows = await sql`SELECT slug, name, type, price_range, price_min, price_max, lot_size FROM ipos`;
+  const existingBySlug = new Map(existingRows.map((r) => [r.slug, r]));
   const canonicalSlugFor = (name, fallbackSlug) => {
     const key = ipoCanonicalKey(name);
     const match = existingRows.find((r) => ipoCanonicalKey(r.name) === key);
@@ -267,8 +268,9 @@ export async function upsertIPOs(ipoList) {
   for (const ipo of ipoList) {
     if (!ipo.name || !ipo.slug) continue;
     ipo.slug = canonicalSlugFor(ipo.name, ipo.slug);
-    const priceMin = ipo.priceMin ?? parsePriceRange(ipo.priceRange).min;
-    const priceMax = ipo.priceMax ?? parsePriceRange(ipo.priceRange).max;
+    const existing = existingBySlug.get(ipo.slug) ?? null;
+    const { min: priceMin, max: priceMax, range: priceRange } = resolveIpoPriceFields(ipo, existing);
+    const lotSize = resolveIpoLotSize(ipo.lotSize, existing?.lot_size, ipo.type || existing?.type || 'mainboard');
     const drhpUrl =
       ipo.drhpUrl && !String(ipo.drhpUrl).includes('zerodha.com') ? ipo.drhpUrl : null;
 
@@ -281,8 +283,8 @@ export async function upsertIPOs(ipoList) {
           drhp_url, description, purpose, highlights, risks, risk_score, last_updated
         ) VALUES (
           ${ipo.slug}, ${ipo.name}, ${ipo.type || 'mainboard'}, ${ipo.status || 'upcoming'},
-          ${ipo.priceRange || null}, ${priceMin}, ${priceMax},
-          ${ipo.lotSize ?? null}, ${ipo.issueSize ?? null},
+          ${priceRange}, ${priceMin}, ${priceMax},
+          ${lotSize}, ${ipo.issueSize ?? null},
           ${ipo.openDate || null}, ${ipo.closeDate || null},
           ${ipo.allotmentDate || null}, ${ipo.listingDate || null},
           ${ipo.sector || null}, ${ipo.registrar || null},
@@ -295,10 +297,10 @@ export async function upsertIPOs(ipoList) {
           name = EXCLUDED.name,
           type = EXCLUDED.type,
           status = EXCLUDED.status,
-          price_range = COALESCE(EXCLUDED.price_range, ipos.price_range),
-          price_min = COALESCE(EXCLUDED.price_min, ipos.price_min),
-          price_max = COALESCE(EXCLUDED.price_max, ipos.price_max),
-          lot_size = COALESCE(EXCLUDED.lot_size, ipos.lot_size),
+          price_range = EXCLUDED.price_range,
+          price_min = EXCLUDED.price_min,
+          price_max = EXCLUDED.price_max,
+          lot_size = EXCLUDED.lot_size,
           issue_size = COALESCE(EXCLUDED.issue_size, ipos.issue_size),
           open_date = COALESCE(EXCLUDED.open_date, ipos.open_date),
           close_date = COALESCE(EXCLUDED.close_date, ipos.close_date),

@@ -10,7 +10,6 @@ import {
   parseStockSignalSlugFromPathname,
   stockSignalPath,
 } from '../../lib/stock-signal-meta';
-import { signalDetailHref } from '../../lib/list-back-nav';
 
 import ConvictionScoreBreakdown from './ConvictionScoreBreakdown';
 
@@ -33,11 +32,7 @@ function Stars({ count }: { count: number }) {
   );
 }
 
-function StockDetail({ row, detailLoading, stockSlug }: { row: SmartMoneySignalRow; detailLoading?: boolean; stockSlug?: string | null }) {
-  const detailUrl = signalDetailHref(row.stockSlug, 'stock-signal', row.month, row.category, {
-    ...(stockSlug ? { stockSlug } : {}),
-  });
-
+function StockDetail({ row, detailLoading }: { row: SmartMoneySignalRow; detailLoading?: boolean }) {
   return (
     <div className="card p-5 md:p-6">
       <div className="mb-6">
@@ -108,13 +103,6 @@ function StockDetail({ row, detailLoading, stockSlug }: { row: SmartMoneySignalR
       ) : (
         <ConvictionScoreBreakdown row={row} />
       )}
-
-      <a
-        href={detailUrl}
-        className="inline-flex mt-4 text-sm font-medium text-primary-600 hover:underline"
-      >
-        Open full signal page →
-      </a>
     </div>
   );
 }
@@ -303,7 +291,7 @@ export default function StockSignalView({
         </div>
       )}
 
-      {selectedRow && <StockDetail row={selectedRow} detailLoading={detailLoading} stockSlug={activeSlug} />}
+      {selectedRow && <StockDetail row={selectedRow} detailLoading={detailLoading} />}
     </div>
   );
 }

@@ -232,6 +232,7 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
           name: String(h.name || ''),
           sector: String(h.sector || ''),
           pct: h.pct != null ? Number(h.pct) : 0,
+          stockSlug: h.stock_slug ? String(h.stock_slug) : undefined,
         }))}
         latestMonth={latestMonth}
         portfolioStockCount={portfolioStockCount}

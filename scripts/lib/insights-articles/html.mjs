@@ -23,7 +23,7 @@ export function stockSignalHref(slug) {
 }
 
 export function signalDetailHref(slug) {
-  return `/mutual-funds/smart-money/signal/${slug}`;
+  return `/mutual-funds/smart-money/stock-signal/${slug}`;
 }
 
 export function sectorHref(sectorSlug) {

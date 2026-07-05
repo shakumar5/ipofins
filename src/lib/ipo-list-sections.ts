@@ -42,6 +42,23 @@ export function sanitizeIpoStringField(value: unknown): string | undefined {
   return text || undefined;
 }
 
+/** Hide scrape junk like "10-10" (close-date fragments) from price band display. */
+export function sanitizeIpoPriceRange(
+  priceRange: unknown,
+  type?: string,
+  priceMax?: number | null,
+): string | undefined {
+  const text = sanitizeIpoStringField(priceRange);
+  if (!text) return undefined;
+  const nums = text.match(/\d[\d,.]*/g)?.map((n) => parseFloat(n.replace(/,/g, ''))) ?? [];
+  if (!nums.length) return undefined;
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  const hi = priceMax != null && priceMax > 0 ? priceMax : max;
+  if (!isPlausibleIpoPriceBand(min, hi, type || 'mainboard')) return undefined;
+  return text;
+}
+
 export function sanitizeIpoOptionalNumber(value: unknown): number | undefined {
   if (value === null || value === undefined) return undefined;
   const n = Number(value);
@@ -62,22 +79,45 @@ function parsePriceBandNums(priceRange?: string): number[] {
     .filter((n) => Number.isFinite(n) && n > 0);
 }
 
+function isPlausibleIpoPriceBand(
+  min?: number | null,
+  max?: number | null,
+  type: string = 'mainboard',
+): boolean {
+  const hi = max != null ? max : min;
+  const lo = min != null ? min : null;
+  const floor = type === 'sme' ? 12 : 30;
+  if (hi == null || !Number.isFinite(hi) || hi < floor) return false;
+  if (lo != null && Number.isFinite(lo) && lo > hi) return false;
+  return true;
+}
+
 export function ipoUpperPrice(input: {
   priceMax?: number | null;
   priceRange?: string;
+  type?: string;
 }): number | null {
-  if (input.priceMax != null && input.priceMax > 0) return input.priceMax;
+  if (input.priceMax != null && input.priceMax > 0 && isPlausibleIpoPriceBand(null, input.priceMax, input.type)) {
+    return input.priceMax;
+  }
   const parsed = parsePriceBandNums(input.priceRange);
-  return parsed.length ? Math.max(...parsed) : null;
+  const max = parsed.length ? Math.max(...parsed) : null;
+  return max != null && isPlausibleIpoPriceBand(null, max, input.type) ? max : null;
 }
 
 export function ipoLowerPrice(input: {
   priceMin?: number | null;
   priceRange?: string;
+  type?: string;
 }): number | null {
-  if (input.priceMin != null && input.priceMin > 0) return input.priceMin;
+  if (input.priceMin != null && input.priceMin > 0 && isPlausibleIpoPriceBand(input.priceMin, input.priceMax ?? input.priceMin, input.type)) {
+    return input.priceMin;
+  }
   const parsed = parsePriceBandNums(input.priceRange);
-  return parsed.length ? Math.min(...parsed) : null;
+  if (!parsed.length) return null;
+  const min = Math.min(...parsed);
+  const max = Math.max(...parsed);
+  return isPlausibleIpoPriceBand(min, max, input.type) ? min : null;
 }
 
 /** Minimum retail investment = upper band × lot size, or null when unknown. */

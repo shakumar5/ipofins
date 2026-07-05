@@ -22,6 +22,7 @@ import {
   type TrackerListFilters,
 } from '../../lib/smart-money-tracker-filters-meta';
 import FilterSelect from './FilterSelect';
+import StockSignalLink from './StockSignalLink';
 
 type ViewType = TrackerViewType;
 type SortKey = 'fundCount' | 'weightAvg' | 'weightTotal' | 'stockName';
@@ -478,7 +479,13 @@ export default function SmartMoneyTracker({
                     <div className="flex justify-between items-start gap-3">
                       <div className="min-w-0">
                         <p className="text-xs text-surface-600 dark:text-surface-400 tabular-nums">#{idx + 1}</p>
-                        <p className="text-sm font-semibold text-surface-900 dark:text-white">{row.stockName}</p>
+                        <StockSignalLink
+                          stockSlug={row.stockSlug}
+                          className="text-sm font-semibold"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {row.stockName}
+                        </StockSignalLink>
                         <p className="text-xs text-surface-500 mt-0.5 truncate">{row.sector}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -584,7 +591,13 @@ export default function SmartMoneyTracker({
                           >
                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                           </svg>
-                          {row.stockName}
+                          <StockSignalLink
+                            stockSlug={row.stockSlug}
+                            className="font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {row.stockName}
+                          </StockSignalLink>
                         </span>
                       </td>
                       <td className="px-4 py-3 text-surface-500 hidden sm:table-cell">{row.sector}</td>

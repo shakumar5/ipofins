@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchFundHoldingsBySlug, type FundHoldingRow } from '../../lib/fund-holdings-client';
+import StockSignalLink from './StockSignalLink';
 
 export type { FundHoldingRow };
 
@@ -101,7 +102,9 @@ export default function FundHoldingsTable({
           >
             <div className="col-span-1 text-xs text-surface-400">{i + 1}</div>
             <div className="col-span-5">
-              <p className="font-medium text-surface-900 dark:text-white text-sm">{h.name}</p>
+              <StockSignalLink stockSlug={h.stockSlug} className="font-medium text-sm">
+                {h.name}
+              </StockSignalLink>
               <p className="text-[10px] text-surface-400 md:hidden">{h.sector}</p>
             </div>
             <div className="col-span-3 text-xs text-surface-500 hidden md:block">{h.sector}</div>

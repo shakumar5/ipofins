@@ -1,7 +1,6 @@
 import { catToSlug } from './fund-category-slug';
 import type { FundTableKind } from './fund-table-meta';
 import { SMART_MONEY_BASE_PATH, smartMoneyTabPath } from './smart-money-meta';
-import { signalDetailPath } from './signal-detail-meta';
 import { STOCK_SIGNAL_BASE, stockSignalPath } from './stock-signal-meta';
 
 export type IpoListFrom =
@@ -120,7 +119,7 @@ export function signalDetailHref(
   const params: Record<string, string> = { ...extra };
   if (month) params.month = month;
   if (category) params.category = category;
-  return appendFromParam(signalDetailPath(stockSlug), from, params);
+  return appendFromParam(stockSignalPath(stockSlug), from, params);
 }
 
 export function stockSignalDetailBackNav(stockName?: string, stockSlug?: string): { href: string; label: string } {
