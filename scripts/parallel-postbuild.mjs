@@ -31,6 +31,7 @@ const parallel = [
   'scripts/verify-signals-export.mjs',
 ];
 
+await run('scripts/normalize-dist-layout.mjs');
 await run('scripts/ensure-dist-data.mjs');
 await run('scripts/verify-dist-build.mjs');
 

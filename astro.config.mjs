@@ -71,6 +71,8 @@ export default defineConfig({
   output: 'static',
   adapter: vercel(),
   build: {
+    // Default ./client/ nests HTML under dist/client/; postbuild + deploy expect dist/{path}/.
+    client: '.',
     // ~17 KiB global CSS — inline to remove render-blocking link (saves ~170–340 ms LCP/FCP)
     inlineStylesheets: 'always',
     // Increased from 2 → 8: pages are fully static (all data pre-exported to public/data/).

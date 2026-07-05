@@ -16,15 +16,11 @@ import {
   classifySitemapBucket,
   collectAstroSitemapLocs,
   collectBuiltPageLocs,
-  collectSmartMoneySignalFilterSitemapUrls,
-  collectTopStocksFilterSitemapUrls,
-  filterLocsWithBuiltHtml,
   isFundDetailPath,
   isPortfolioOverlapRewritePath,
   loadCanonicalFundPaths,
   minIndexableSitemapUrls,
-  projectArtifactRoots,
-  resolveArtifactRoot,
+  resolvePageArtifactRoot,
   SITEMAP_EXCLUDED_PATH_PREFIXES,
   TOP_STOCKS_DEFAULT_COMBO_PATH,
   pathnameFromLoc,
@@ -46,36 +42,30 @@ const LEGACY_SITEMAPS = [
 ];
 
 function collectIndexableLocs() {
-  const artifactRoots = projectArtifactRoots(ROOT);
-  const artifactRoot = resolveArtifactRoot(ROOT);
-  const astroLocs = collectAstroSitemapLocs(artifactRoots);
-  const builtLocs = collectBuiltPageLocs(artifactRoot);
+  const pageRoot = resolvePageArtifactRoot(ROOT);
+  const astroLocs = collectAstroSitemapLocs(ROOT);
+  const builtLocs = collectBuiltPageLocs(pageRoot);
   const minUrls = minIndexableSitemapUrls();
 
-  let baseLocs;
   if (astroLocs.length >= minUrls) {
-    baseLocs = astroLocs;
     console.log(`  ✓ Astro sitemap urlsets (${astroLocs.length} URLs)`);
-  } else if (builtLocs.length >= minUrls) {
-    baseLocs = builtLocs;
-    console.warn(
-      `  ⚠ Astro sitemap urlsets missing/thin (${astroLocs.length}) — using ${builtLocs.length} built HTML paths`,
-    );
-  } else {
-    baseLocs = [...new Set([...astroLocs, ...builtLocs])];
-    if (baseLocs.length) {
-      console.warn(
-        `  ⚠ Thin build output: ${astroLocs.length} Astro urlset URL(s), ${builtLocs.length} HTML path(s)`,
-      );
-    }
+    return astroLocs;
   }
 
-  const supplemental = filterLocsWithBuiltHtml(ROOT, [
-    ...collectTopStocksFilterSitemapUrls(),
-    ...collectSmartMoneySignalFilterSitemapUrls(),
-  ]);
+  if (builtLocs.length >= minUrls) {
+    console.warn(
+      `  ⚠ Astro sitemap urlsets missing/thin (${astroLocs.length}) — using ${builtLocs.length} HTML paths from ${pageRoot.replace(ROOT, '')}`,
+    );
+    return builtLocs;
+  }
 
-  return [...new Set([...baseLocs, ...supplemental])];
+  const merged = [...new Set([...astroLocs, ...builtLocs])];
+  if (merged.length) {
+    console.warn(
+      `  ⚠ Thin build output: ${astroLocs.length} Astro urlset URL(s), ${builtLocs.length} HTML path(s) under ${pageRoot.replace(ROOT, '')}`,
+    );
+  }
+  return merged;
 }
 
 /** Directories to search for the fund holdings index, most-specific first. */
@@ -89,6 +79,7 @@ function bucketUrls(allLocs, canonicalFundPaths) {
   for (const loc of allLocs) {
     const path = pathnameFromLoc(loc);
     if (!path || path === '/404') continue;
+    if (SITEMAP_EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))) continue;
     if (path.startsWith('/1-percent-club/holder/')) continue;
     if (isPortfolioOverlapRewritePath(path)) {
       droppedOverlapComparisons += 1;

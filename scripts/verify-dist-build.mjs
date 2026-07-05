@@ -4,37 +4,41 @@
  */
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import {
   countBuiltHtmlPages,
+  distRoot,
   minBuiltHtmlPages,
-  projectArtifactRoots,
-  resolveArtifactRoot,
+  resolvePageArtifactRoot,
 } from './lib/sitemap-utils.mjs';
-import { existsSync } from 'fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const minPages = minBuiltHtmlPages();
 
 function main() {
-  const roots = projectArtifactRoots(ROOT);
-  const counts = roots.map((root) => ({
-    label: root.replace(ROOT, '').replace(/\\/g, '/') || '/',
-    count: countBuiltHtmlPages(root),
-  }));
-  const artifactRoot = resolveArtifactRoot(ROOT);
-  const best = counts.reduce((a, b) => (b.count > a.count ? b : a), { count: 0 });
+  const dist = distRoot(ROOT);
+  const pageRoot = resolvePageArtifactRoot(ROOT);
+  const pageCount = countBuiltHtmlPages(pageRoot, { max: 50_000 });
+  const nested = !existsSync(join(dist, 'index.html')) && existsSync(join(dist, 'client', 'index.html'));
 
-  if (!existsSync(artifactRoot) || best.count < minPages) {
+  if (pageCount < minPages) {
     console.error('  ❌ Astro build output is incomplete — too few prerendered HTML pages');
-    for (const row of counts) {
-      console.error(`       ${row.label}: ${row.count} index.html`);
-    }
+    console.error(`       dist/index.html: ${existsSync(join(dist, 'index.html'))}`);
+    console.error(`       dist/client/index.html: ${existsSync(join(dist, 'client', 'index.html'))}`);
+    console.error(`       page artifact root: ${pageRoot.replace(ROOT, '')} (${pageCount} index.html)`);
     console.error(`       required: >= ${minPages}`);
-    console.error('  Check the Astro build log for prerender/Neon errors above this step.');
+    if (nested) {
+      console.error('  Hint: run scripts/normalize-dist-layout.mjs (dist/client/ was not hoisted).');
+    }
+    console.error('  Check the Astro build log for prerender errors above this step.');
     process.exit(1);
   }
 
-  console.log(`  ✓ dist build artifacts OK (${best.count} prerendered pages, min ${minPages})`);
+  if (pageRoot !== dist) {
+    console.warn(`  ⚠ pages under ${pageRoot.replace(ROOT, '')} — expected dist/ after normalize-dist-layout`);
+  }
+
+  console.log(`  ✓ dist build artifacts OK (${pageCount} pages at ${pageRoot.replace(ROOT, '') || '/dist'})`);
 }
 
 main();
