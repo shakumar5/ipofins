@@ -147,13 +147,24 @@ const variantsJson = JSON.stringify(variants);
     }
   }
 
+  function readStoredBack() {
+    try {
+      var raw = sessionStorage.getItem('mf-list-back');
+      if (!raw) return null;
+      sessionStorage.removeItem('mf-list-back');
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.href && parsed.label) return parsed;
+    } catch (e) {}
+    return null;
+  }
+
   const variantMap = JSON.parse(variantsJson);
   const params = new URLSearchParams(window.location.search);
   const el = document.getElementById(id);
   const textEl = el && el.querySelector('.back-link-text');
   if (!el || !textEl) return;
 
-  let resolved = resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
+  let resolved = readStoredBack() || resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
   if (!params.get('from') && id === 'stock-signal-detail-back') {
     resolved = resolveReferrerBack(resolved.href, resolved.label);
   }

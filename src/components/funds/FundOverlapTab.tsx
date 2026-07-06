@@ -69,7 +69,6 @@ export default function FundOverlapTab({ funds }: Props) {
           <a
             key={fund.slug}
             href={fundOverlapDetailHref(fund.slug, 'fund-overlap')}
-            data-astro-prefetch="viewport"
             className="card-compact block hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
           >
             <span className="text-sm font-medium text-surface-900 dark:text-white">{fund.name}</span>

@@ -121,16 +121,17 @@ const jsonLd = {
               <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/30 align-top">
                 <td class="px-4 py-3">
                   {row.hasOverlapPage ? (
-                    <a href={fundOverlapDetailHref(row.slug, 'fund-overlap')} data-astro-prefetch="viewport" class="font-medium text-primary-600 hover:underline">{row.name}</a>
+                    <a href={fundOverlapDetailHref(row.slug, 'fund-overlap')} class="font-medium text-primary-600 hover:underline">{row.name}</a>
                   ) : (
                     <span class="font-medium text-surface-900 dark:text-white">{row.name}</span>
                   )}
                   {holdingsHref ? (
                     <a
                       href={holdingsHref}
-                      data-astro-prefetch="viewport"
-                      class="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
+                      class="mf-overlap-holdings-link inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
                       aria-label={`View holdings for ${row.name}`}
+                      data-mf-back-href={`/mutual-funds/fund-overlap/${slug}`}
+                      data-mf-back-label={`Back to ${fundName} overlap`}
                     >
                       View holdings
                       <span aria-hidden="true">→</span>
@@ -183,3 +184,18 @@ const jsonLd = {
     display: none;
   }
 </style>
+
+<script is:inline>
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!(target instanceof Element)) return;
+    var link = target.closest('.mf-overlap-holdings-link');
+    if (!link || !(link instanceof HTMLAnchorElement)) return;
+    var href = link.getAttribute('data-mf-back-href');
+    var label = link.getAttribute('data-mf-back-label');
+    if (!href || !label) return;
+    try {
+      sessionStorage.setItem('mf-list-back', JSON.stringify({ href: href, label: label }));
+    } catch (e) {}
+  });
+</script>
