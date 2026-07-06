@@ -1,20 +1,15 @@
 /** Resolve stock slugs from listing identifiers only: ISIN → NSE → BSE. */
-import { sanitizeListingCodes } from './listing-codes';
+import { sanitizeListingCodes, type ListingCodeInput } from './listing-codes';
 export interface StockListingCodes {
   isin: string;
   nseSymbol: string;
   bseCode: string;
 }
 
-export interface HoldingListingInput {
-  isin?: string | null;
-  nseSymbol?: string | null;
-  nse_symbol?: string | null;
-  bseCode?: string | null;
-  bse_code?: string | null;
+export type HoldingListingInput = ListingCodeInput & {
   stockSlug?: string | null;
   stock_slug?: string | null;
-}
+};
 
 export function resolveStockSlugFromListing(
   isin: string | undefined | null,

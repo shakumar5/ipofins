@@ -31,6 +31,12 @@ export interface HoldingListingRow {
   [key: string]: unknown;
 }
 
+/** Minimal shape for ISIN/NSE/BSE extraction (holdings rows, listing maps, client fetch). */
+export type ListingCodeInput = Pick<
+  HoldingListingRow,
+  'isin' | 'nseSymbol' | 'nse_symbol' | 'bseCode' | 'bse_code'
+>;
+
 const INTERNATIONAL_FUND_PATTERN =
   /\b(taiwan|japan|japanese|china|chinese|korea|korean|asian|asia[\s-]?pacific|international|global|world|us[\s-]?bluechip|us[\s-]?equity|u\.s\.|europe|european|emerging[\s-]?markets|overseas|foreign[\s-]?equity|latin[\s-]?america|hang[\s-]?seng|asean)\b/i;
 
@@ -74,10 +80,11 @@ export function isInternationalHolding(
   return false;
 }
 
-export function sanitizeListingCodes(row: HoldingListingRow): ListingCodes {
-  let isin = String(row.isin || '').trim().toUpperCase();
-  const nseSymbol = String(row.nseSymbol || row.nse_symbol || '').trim().toUpperCase();
-  const bseCode = String(row.bseCode || row.bse_code || '').trim();
+export function sanitizeListingCodes(row: ListingCodeInput | ListingCodes): ListingCodes {
+  const input = row as ListingCodeInput;
+  let isin = String(input.isin || '').trim().toUpperCase();
+  const nseSymbol = String(input.nseSymbol || input.nse_symbol || '').trim().toUpperCase();
+  const bseCode = String(input.bseCode || input.bse_code || '').trim();
 
   if (isin && !/^[A-Z0-9]{12}$/.test(isin)) isin = '';
   if (isin && !isValidIndianEquityIsin(isin) && isin.length !== 12) isin = '';
@@ -90,7 +97,7 @@ export function sanitizeListingCodes(row: HoldingListingRow): ListingCodes {
   return { isin, nseSymbol, bseCode };
 }
 
-export function hasListingCode(row: HoldingListingRow): boolean {
+export function hasListingCode(row: ListingCodeInput | ListingCodes): boolean {
   const { isin, nseSymbol, bseCode } = sanitizeListingCodes(row);
   return Boolean(isin || nseSymbol || bseCode);
 }
