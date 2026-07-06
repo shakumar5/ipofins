@@ -122,14 +122,94 @@ export function signalDetailHref(
   return appendFromParam(stockSignalPath(stockSlug), from, params);
 }
 
-export function stockSignalDetailBackNav(stockName?: string, stockSlug?: string): { href: string; label: string } {
-  if (stockSlug && stockName) {
+export function stockSignalDetailBackNav(): { href: string; label: string } {
+  return SMART_MONEY_LIST_BACK.signals;
+}
+
+/** Resolve contextual back link from URL search params (client or Astro.url). */
+export function resolveListBackFromParams(
+  params: URLSearchParams,
+  variants: Record<string, { href: string; label: string }>,
+  fallbackHref: string,
+  fallbackLabel: string,
+): { href: string; label: string } {
+  const from = params.get('from');
+  if (!from) {
+    return { href: fallbackHref, label: fallbackLabel };
+  }
+
+  if (from === 'sector') {
+    const sector = params.get('sector');
+    if (sector) {
+      const sectorLabel = params.get('sectorLabel');
+      return {
+        href: `/ipo/sector/${sector}`,
+        label: sectorLabel ? `Back to ${sectorLabel} IPOs` : 'Back to Sector IPOs',
+      };
+    }
+  }
+
+  if (from === 'fund') {
+    const fundSlug = params.get('fundSlug');
+    if (fundSlug) {
+      const fundName = params.get('fundName');
+      return {
+        href: `/mutual-funds/fund/${fundSlug}`,
+        label: fundName ? `Back to ${fundName}` : 'Back to Fund Details',
+      };
+    }
+  }
+
+  if (from === 'fund-overlap') {
+    const fundSlug = params.get('fundSlug');
+    if (fundSlug) {
+      const fundName = params.get('fundName');
+      return {
+        href: `/mutual-funds/fund-overlap/${fundSlug}`,
+        label: fundName ? `Back to ${fundName} overlap` : 'Back to Fund Overlap',
+      };
+    }
+  }
+
+  if (from === 'tracker-view') {
+    const viewPath = params.get('viewPath');
+    if (viewPath && viewPath.startsWith('/mutual-funds/smart-money/')) {
+      const viewLabel = params.get('viewLabel');
+      return {
+        href: viewPath,
+        label: viewLabel || 'Back to Smart Money Tracker',
+      };
+    }
+  }
+
+  if (from === 'signals') {
+    const month = params.get('month');
+    const category = params.get('category');
+    let href = '/mutual-funds/smart-money/smart-money-signal';
+    const q = new URLSearchParams();
+    if (month) q.set('month', month);
+    if (category && category !== 'All') q.set('category', category);
+    const qs = q.toString();
+    if (qs) href += `?${qs}`;
+    return { href, label: 'Back to Smart Money Signal' };
+  }
+
+  if (from === 'stock-signal') {
+    const stockSlug = params.get('stockSlug');
+    const stockName = params.get('stockName');
+    const href = stockSlug
+      ? stockSignalPath(stockSlug)
+      : STOCK_SIGNAL_BASE;
     return {
-      href: stockSignalPath(stockSlug),
-      label: `Back to ${stockName}`,
+      href,
+      label: stockName ? `Back to ${stockName}` : 'Back to Stock Signal',
     };
   }
-  return SMART_MONEY_LIST_BACK['stock-signal'];
+
+  const match = variants[from];
+  if (match) return match;
+
+  return { href: fallbackHref, label: fallbackLabel };
 }
 
 export const MF_LIST_BACK: Record<Exclude<MfListFrom, 'fund'>, { href: string; label: string }> = {

@@ -311,6 +311,7 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
           return pageSlug ? (
             <a
               href={fundOverlapDetailHref(pageSlug, 'fund', { fundSlug: `${fund.slug}-holdings`, fundName: fund.name })}
+              data-astro-prefetch="viewport"
               class={`${cardClass} hover:shadow-md`}
             >
               {inner}

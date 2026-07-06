@@ -225,6 +225,79 @@ interface DiskHoldingStock {
   isin?: string;
   sector: string;
   pct: number;
+  stockSlug?: string;
+}
+
+let stockNameSlugCache: Map<string, string> | null | undefined;
+
+function normalizeStockNameKey(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** Name → slug from exported top-stocks and smart-money signal search payloads. */
+function loadStockNameSlugIndex(): Map<string, string> {
+  if (stockNameSlugCache !== undefined) return stockNameSlugCache!;
+
+  const map = new Map<string, string>();
+
+  const ingest = (stockSlug?: string, stockName?: string) => {
+    if (!stockSlug || !stockName) return;
+    const key = normalizeStockNameKey(stockName);
+    if (!map.has(key)) map.set(key, stockSlug);
+  };
+
+  const topPath = dataFilePath('top-stocks.json');
+  if (topPath) {
+    try {
+      const top = JSON.parse(readFileSync(topPath, 'utf-8')) as {
+        buckets?: Record<string, { stockSlug?: string; stockName?: string }[]>;
+      };
+      for (const rows of Object.values(top.buckets || {})) {
+        for (const row of rows) ingest(row.stockSlug, row.stockName);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  for (const root of projectRoots()) {
+    const dir = join(root, 'public', 'data', 'smart-money-signals');
+    if (!existsSync(dir)) continue;
+    try {
+      for (const fileName of readdirSync(dir)) {
+        if (!fileName.endsWith('--search.json')) continue;
+        const rows = JSON.parse(readFileSync(join(dir, fileName), 'utf-8')) as {
+          stockSlug?: string;
+          stockName?: string;
+        }[];
+        if (!Array.isArray(rows)) continue;
+        for (const row of rows) ingest(row.stockSlug, row.stockName);
+      }
+    } catch {
+      /* ignore */
+    }
+    break;
+  }
+
+  stockNameSlugCache = map;
+  return map;
+}
+
+export function resolveStockSlugFromDisk(name: string, explicit?: string | null): string | undefined {
+  const trimmed = explicit?.trim();
+  if (trimmed) return trimmed;
+  return loadStockNameSlugIndex().get(normalizeStockNameKey(name));
+}
+
+function mapDiskHoldingRow(stock: DiskHoldingStock, month?: string): Record<string, unknown> {
+  const stockSlug = resolveStockSlugFromDisk(stock.name, stock.stockSlug);
+  return {
+    name: stock.name,
+    pct: stock.pct,
+    sector: stock.sector || '',
+    month,
+    ...(stockSlug ? { stock_slug: stockSlug } : {}),
+  };
 }
 
 interface DiskFundHoldingsEntry {
@@ -364,12 +437,7 @@ export function readFundHoldingsBySlugFromDisk(fundSlug: string): Record<string,
     const file = readPerFundHoldingsFile(slug);
     if (!file?.stocks?.length) continue;
     const month = file.month ? monthLabelToDate(file.month) : undefined;
-    return file.stocks.map((stock) => ({
-      name: stock.name,
-      pct: stock.pct,
-      sector: stock.sector || '',
-      month,
-    }));
+    return file.stocks.map((stock) => mapDiskHoldingRow(stock, month));
   }
   return null;
 }
@@ -385,12 +453,7 @@ export function readFundHoldingsRowsFromDisk(fundSlug: string): Record<string, u
     const hit = slugIndex.get(slug);
     if (!hit?.stocks?.length) continue;
     const month = monthIso(hit.monthLabel);
-    return hit.stocks.map((stock) => ({
-      name: stock.name,
-      pct: stock.pct,
-      sector: stock.sector || '',
-      month,
-    }));
+    return hit.stocks.map((stock) => mapDiskHoldingRow(stock, month));
   }
 
   return null;
