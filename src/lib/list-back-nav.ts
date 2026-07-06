@@ -123,7 +123,20 @@ export function signalDetailHref(
 }
 
 export function stockSignalDetailBackNav(): { href: string; label: string } {
-  return SMART_MONEY_LIST_BACK.signals;
+  return SMART_MONEY_LIST_BACK['stock-signal'];
+}
+
+/** Stock signal link from a fund holdings page — preserves back navigation context. */
+export function fundStockSignalHref(
+  stockSlug: string,
+  fundSlug: string,
+  fundName: string,
+): string {
+  const holdingsSlug = fundSlug.replace(/-holdings$/, '');
+  return appendFromParam(stockSignalPath(stockSlug), 'fund', {
+    fundSlug: `${holdingsSlug}-holdings`,
+    fundName,
+  });
 }
 
 /** Resolve contextual back link from URL search params (client or Astro.url). */

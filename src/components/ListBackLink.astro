@@ -129,6 +129,34 @@ const variantsJson = JSON.stringify(variants);
       }
       const refUrl = new URL(ref);
       const path = refUrl.pathname;
+      const qs = refUrl.search || '';
+
+      const fundHoldingsMatch = path.match(/^\/mutual-funds\/fund\/(.+)-holdings\/?$/);
+      if (fundHoldingsMatch) {
+        const fundNameParam = refUrl.searchParams.get('fundName');
+        return {
+          href: path + qs,
+          label: fundNameParam ? 'Back to ' + fundNameParam : 'Back to Fund Holdings',
+        };
+      }
+
+      const overlapDetailMatch = path.match(/^\/mutual-funds\/fund-overlap\/([^/]+)\/?$/);
+      if (overlapDetailMatch) {
+        const fundNameParam = refUrl.searchParams.get('fundName');
+        return {
+          href: path + qs,
+          label: fundNameParam ? 'Back to ' + fundNameParam + ' overlap' : 'Back to Fund Overlap',
+        };
+      }
+
+      if (path === '/mutual-funds/fund-overlap' || path === '/mutual-funds/fund-overlap/') {
+        return { href: '/mutual-funds/fund-overlap', label: 'Back to Fund Overlap' };
+      }
+
+      if (path.startsWith('/mutual-funds/all') || path.startsWith('/mutual-funds/best')) {
+        return { href: path + qs, label: 'Back to Mutual Funds' };
+      }
+
       if (!path.includes('/mutual-funds/smart-money')) {
         return { href: fallbackHref, label: fallbackLabel };
       }
@@ -165,8 +193,10 @@ const variantsJson = JSON.stringify(variants);
   if (!el || !textEl) return;
 
   let resolved = readStoredBack() || resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
-  if (!params.get('from') && id === 'stock-signal-detail-back') {
-    resolved = resolveReferrerBack(resolved.href, resolved.label);
+  if (!params.get('from')) {
+    if (id === 'stock-signal-detail-back' || id === 'fund-list-back') {
+      resolved = resolveReferrerBack(resolved.href, resolved.label);
+    }
   }
 
   el.href = resolved.href;

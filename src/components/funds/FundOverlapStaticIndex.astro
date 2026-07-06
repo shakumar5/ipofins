@@ -1,0 +1,149 @@
+---
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { fundOverlapDetailHref } from '../../lib/list-back-nav';
+
+interface FundOverlapItem {
+  slug: string;
+  name: string;
+}
+
+function loadOverlapFunds(): FundOverlapItem[] {
+  const path = join(process.cwd(), 'public', 'data', 'fund-overlap-index.json');
+  if (!existsSync(path)) return [];
+  try {
+    const data = JSON.parse(readFileSync(path, 'utf-8')) as FundOverlapItem[];
+    return Array.isArray(data) ? data.filter((f) => f.slug && f.name) : [];
+  } catch {
+    return [];
+  }
+}
+
+const funds = loadOverlapFunds();
+const PAGE_SIZE = 40;
+const initialFunds = funds.slice(0, PAGE_SIZE);
+---
+
+{funds.length === 0 ? (
+  <p class="text-surface-500 py-12 text-center text-sm">
+    Overlap data not available yet. Run the monthly holdings pipeline and compute overlaps.
+  </p>
+) : (
+  <div id="fund-overlap-static-index" data-page-size={PAGE_SIZE} data-total={funds.length}>
+    <p class="text-sm text-surface-500 mb-4">
+      {funds.length} funds with holdings — select one to see overlap with other schemes that also have holdings data.
+      For 2–4 fund comparison use{' '}
+      <a href="/mutual-funds/portfolio-overlap-checker" class="text-primary-600 hover:underline">
+        Portfolio Overlap Checker
+      </a>.
+    </p>
+
+    <input
+      type="search"
+      id="fund-overlap-search"
+      placeholder="Search funds…"
+      class="w-full mb-4 px-3 py-2.5 text-sm border border-surface-200 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-900 text-surface-900 dark:text-white"
+      autocomplete="off"
+    />
+
+    <p class="text-xs text-surface-500 mb-3" id="fund-overlap-count">
+      Showing {initialFunds.length} of {funds.length} funds
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2" id="fund-overlap-grid">
+      {initialFunds.map((fund) => (
+        <a
+          href={fundOverlapDetailHref(fund.slug, 'fund-overlap')}
+          class="fund-overlap-card card-compact block hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
+          data-name={fund.name.toLowerCase()}
+          data-slug={fund.slug}
+        >
+          <span class="text-sm font-medium text-surface-900 dark:text-white">{fund.name}</span>
+        </a>
+      ))}
+    </div>
+
+    {funds.length > PAGE_SIZE && (
+      <div class="text-center mt-6">
+        <button
+          type="button"
+          id="fund-overlap-load-more"
+          class="px-4 py-2 text-sm font-medium rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-surface-700"
+        >
+          Load more ({funds.length - PAGE_SIZE} remaining)
+        </button>
+      </div>
+    )}
+
+    <template id="fund-overlap-card-template">
+      <a
+        class="fund-overlap-card card-compact block hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
+      >
+        <span class="text-sm font-medium text-surface-900 dark:text-white"></span>
+      </a>
+    </template>
+  </div>
+)}
+
+<script is:inline define:vars={{ funds, PAGE_SIZE }}>
+  (function () {
+    const root = document.getElementById('fund-overlap-static-index');
+    if (!root || !funds.length) return;
+
+    const grid = document.getElementById('fund-overlap-grid');
+    const search = document.getElementById('fund-overlap-search');
+    const countEl = document.getElementById('fund-overlap-count');
+    const loadMoreBtn = document.getElementById('fund-overlap-load-more');
+    const template = document.getElementById('fund-overlap-card-template');
+    if (!grid || !search || !countEl || !template) return;
+
+    let filtered = funds.slice();
+    let visibleCount = PAGE_SIZE;
+
+    function cardHref(slug) {
+      return '/mutual-funds/fund-overlap/' + encodeURIComponent(slug) + '?from=fund-overlap';
+    }
+
+    function render() {
+      const slice = filtered.slice(0, visibleCount);
+      grid.innerHTML = '';
+      for (const fund of slice) {
+        const clone = template.content.firstElementChild.cloneNode(true);
+        const link = clone;
+        link.href = cardHref(fund.slug);
+        link.setAttribute('data-name', fund.name.toLowerCase());
+        link.setAttribute('data-slug', fund.slug);
+        link.querySelector('span').textContent = fund.name;
+        grid.appendChild(link);
+      }
+      countEl.textContent =
+        'Showing ' + slice.length + ' of ' + filtered.length + ' funds';
+      if (loadMoreBtn) {
+        const left = filtered.length - visibleCount;
+        if (left <= 0) loadMoreBtn.style.display = 'none';
+        else {
+          loadMoreBtn.style.display = '';
+          loadMoreBtn.textContent = 'Load more (' + left + ' remaining)';
+        }
+      }
+    }
+
+    search.addEventListener('input', function () {
+      const q = search.value.trim().toLowerCase();
+      filtered = !q
+        ? funds.slice()
+        : funds.filter(function (f) {
+            return f.name.toLowerCase().includes(q) || f.slug.includes(q);
+          });
+      visibleCount = PAGE_SIZE;
+      render();
+    });
+
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', function () {
+        visibleCount += PAGE_SIZE;
+        render();
+      });
+    }
+  })();
+</script>
