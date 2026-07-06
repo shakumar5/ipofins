@@ -80,7 +80,9 @@ async function loadStockBseSlugIndex(): Promise<Map<string, string>> {
   return stockBseSlugIndex;
 }
 
-function resolveClientStockSlug(row: FundHoldingRow, indexes: {
+function resolveClientStockSlug(
+  row: Pick<FundHoldingRow, 'isin' | 'nseSymbol' | 'bseCode'>,
+  indexes: {
   isin: Map<string, string>;
   nse: Map<string, string>;
   bse: Map<string, string>;

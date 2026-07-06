@@ -805,7 +805,8 @@ function bestPerFundHoldingsAmongCandidates(fundSlug: string): { slug: string; f
   let best: { slug: string; file: PerFundHoldingsDisk; count: number } | null = null;
   for (const slug of fundSlugCandidates(fundSlug)) {
     const file = readPerFundHoldingsFile(slug);
-    const count = file?.stocks?.length ?? 0;
+    if (!file) continue;
+    const count = file.stocks?.length ?? 0;
     if (count > 0 && (!best || count > best.count)) {
       best = { slug, file, count };
     }
@@ -845,7 +846,9 @@ export function readFundHoldingsRowsFromDisk(fundSlug: string): Record<string, u
 
   if (!best) return null;
   const month = monthIso(best.monthLabel);
-  return best.stocks.map((stock) => mapDiskHoldingRow(stock, month));
+  return best.stocks
+    .map((stock) => mapDiskHoldingRow(stock, month))
+    .filter((row): row is Record<string, unknown> => row !== null);
 }
 
 /** Count of holdings rows we can actually render (never inflated AMC totalStocks metadata). */
