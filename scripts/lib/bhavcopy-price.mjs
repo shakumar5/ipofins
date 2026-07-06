@@ -206,7 +206,7 @@ function unzipSingleZip(buf) {
   return null;
 }
 
-function csvTextFromBytes(buf) {
+export function csvTextFromBytes(buf) {
   if (!buf?.length) return null;
   if (buf.readUInt32LE(0) === 0x04034b50) {
     const raw = unzipSingleZip(buf);

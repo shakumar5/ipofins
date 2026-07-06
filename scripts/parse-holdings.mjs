@@ -37,7 +37,11 @@ import {
   isGarbageDisclosureFund,
   normalizeDisclosureFundName,
 } from './lib/holdings-name-utils.mjs';
-import { isMutualFundSchemeHolding, isValidEquityIsin } from './lib/stock-utils.mjs';
+import {
+  isMutualFundSchemeHolding,
+  isValidEquityIsin,
+  normalizeDisclosureIsin,
+} from './lib/stock-utils.mjs';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
@@ -76,7 +80,7 @@ function mergeFundMonthData(existing, incoming) {
       continue;
     }
     const current = unpackMonthHoldings(existing[month]);
-    if (packed.totalStocks > current.totalStocks) existing[month] = incoming[month];
+    if (packed.stocks.length > current.stocks.length) existing[month] = incoming[month];
   }
 }
 
@@ -789,11 +793,11 @@ function parseHoldingsFromSheet(data) {
     if (stockName.includes('(a) Listed') || stockName.includes('(b) Unlisted')) continue;
     if (stockName.includes('Grand Total') || stockName.includes('Sub Total') || stockName.includes('Net Assets')) continue;
     
-    // Must have a valid ISIN (INE…) or at least a numeric quantity — ISIN may be backfilled at seed from NSE master
-    const hasISIN = isValidEquityIsin(isin);
+    // Indian INE/IN0, foreign TW/US/etc. ISIN, or quantity — ISIN may be backfilled at seed from NSE master
+    const parsedIsin = normalizeDisclosureIsin(isin);
     const qty = parseFloat(String(row[colQty] || '0').replace(/,/g, '')) || 0;
-    
-    if (!hasISIN && qty === 0) continue;
+
+    if (!parsedIsin && qty === 0) continue;
     
     // Get sector — skip industry codes (numeric) and credit ratings
     let sector = colSector >= 0 ? String(row[colSector] || '').trim() : '';
@@ -839,7 +843,7 @@ function parseHoldingsFromSheet(data) {
     
     holdings.push({
       name: stockName.replace(/\s+/g, ' '),
-      isin: hasISIN ? String(isin).trim().toUpperCase() : '',
+      isin: parsedIsin,
       sector: sector.replace(/\r\n/g, ' '),
       quantity: qty,
       value: Math.round(value * 100) / 100,

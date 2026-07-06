@@ -3,19 +3,19 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PageHeader from '../../../components/layout/PageHeader.astro';
 import MfSectionTabs from '../../../components/funds/MfSectionTabs.astro';
 import { getFundsWithHoldings, getRelatedFunds, getFundHoldingsLinkMeta, fundHoldingsHref, resolveFundDetailSlug, type FundRecord } from '../../../lib/data/funds';
-import { getFundHoldings, getFundOverlaps, getFundPortfolioStockCount, getFundsWithOverlaps } from '../../../lib/data/holdings';
+import { getFundHoldings, getFundOverlaps, getFundsWithOverlaps } from '../../../lib/data/holdings';
 import { buildFundOverlapPageSlugResolver } from '../../../lib/fund-overlap-slug';
-import { readFundHoldingsAliasesFromDisk } from '../../../lib/holdings-compare-server';
+import { readFundHoldingsAliasesFromDisk, resolveStockSlugFromDisk } from '../../../lib/holdings-compare-server';
 import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 import { catToSlug } from '../../../lib/fund-category-slug';
-import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref, fundStockSignalHref, MF_LIST_BACK } from '../../../lib/list-back-nav';
+import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref, fundStockSignalHref, resolveListBackFromParams } from '../../../lib/list-back-nav';
 import ListBackLink from '../../../components/ListBackLink.astro';
 import FundHoldingsStaticTable from '../../../components/funds/FundHoldingsStaticTable.astro';
 
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
   const aliases = readFundHoldingsAliasesFromDisk() ?? {};
-  const pathMap = new Map<string, { params: { slug: string }; props: { fund?: FundRecord; redirectTo?: string } }>();
+  const pathMap = new Map<string, { params: { slug: string }; props: { fund: FundRecord } }>();
 
   for (const fund of fundsData) {
     const slugParam = `${fund.slug}-holdings`;
@@ -25,18 +25,14 @@ export async function getStaticPaths() {
   for (const [listableSlug, pageSlug] of Object.entries(aliases)) {
     if (listableSlug === pageSlug) continue;
     const aliasParam = `${listableSlug}-holdings`;
-    const canonical = `/mutual-funds/fund/${pageSlug}-holdings`;
-    if (!pathMap.has(aliasParam)) {
-      pathMap.set(aliasParam, { params: { slug: aliasParam }, props: { redirectTo: canonical } });
+    if (pathMap.has(aliasParam)) continue;
+    const canonicalFund = fundsData.find((f) => f.slug === pageSlug);
+    if (canonicalFund) {
+      pathMap.set(aliasParam, { params: { slug: aliasParam }, props: { fund: canonicalFund } });
     }
   }
 
   return [...pathMap.values()];
-}
-
-const redirectTo = Astro.props.redirectTo;
-if (redirectTo) {
-  return Astro.redirect(redirectTo, 301);
 }
 
 const { fund } = Astro.props;
@@ -45,10 +41,13 @@ if (!fund) {
 }
 const categorySlug = catToSlug(fund.category);
 const defaultBack = fundListBackNav('all', fund.category);
-const backVariants = {
-  ...fundListBackVariants(fund.category),
-  'fund-overlap': MF_LIST_BACK['fund-overlap'],
-};
+const backVariants = fundListBackVariants(fund.category);
+const contextualBack = resolveListBackFromParams(
+  Astro.url.searchParams,
+  backVariants,
+  defaultBack.href,
+  defaultBack.label,
+);
 const categoryListHref = `/mutual-funds/all/${categorySlug}`;
 const holdingsMeta = await getFundHoldingsLinkMeta();
 const relatedFunds = await getRelatedFunds(fund.category, fund.slug, 5);
@@ -104,7 +103,6 @@ const faqJsonLd = {
 
 // Get holdings for this fund (latest month)
 const fundHoldingsRows = (await getFundHoldings(fund.slug)) as Array<Record<string, unknown>>;
-const portfolioStockCount = await getFundPortfolioStockCount(fund.slug);
 const fundOverlaps = (await getFundOverlaps(fund.slug, 5)) as Array<Record<string, unknown>>;
 const overlapIndex = await getFundsWithOverlaps();
 const { resolve: resolveOverlapPageSlug } = buildFundOverlapPageSlugResolver(overlapIndex);
@@ -119,7 +117,27 @@ const holdings = fundHoldingsRows.filter((h: Record<string, unknown>) => {
   if (sector && /^(CRISIL|ICRA|FITCH|CARE|IND|BWR)\s/i.test(sector)) return false;
   if (/^\d+\.?\d*%\s/.test(name)) return false;
   return true;
+}).map((h: Record<string, unknown>) => {
+  const isin = String(h.isin || '');
+  const nseSymbol = String(h.nse_symbol || h.nseSymbol || '');
+  const bseCode = String(h.bse_code || h.bseCode || '');
+  const stock_slug = resolveStockSlugFromDisk(
+    isin || undefined,
+    nseSymbol || undefined,
+    bseCode || undefined,
+  );
+  return {
+    name: String(h.name || ''),
+    sector: String(h.sector || ''),
+    pct: h.pct != null ? Number(h.pct) : 0,
+    isin,
+    nseSymbol,
+    bseCode,
+    stock_slug,
+  };
 });
+const topHolding = holdings.reduce((best, h) => (!best || h.pct > best.pct ? h : best), null as typeof holdings[number] | null);
+const topHoldingStockSlug = topHolding?.stock_slug;
 import ContentGuideSection from '../../../components/content-guide/ContentGuideSection.astro';
 import ContentGuideFaqList from '../../../components/content-guide/ContentGuideFaqList.astro';
 import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideFaqItem.astro';
@@ -149,8 +167,8 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
   <section class="container-wide pt-6 pb-4">
     <ListBackLink
       id="fund-list-back"
-      defaultHref={defaultBack.href}
-      defaultLabel={defaultBack.label}
+      defaultHref={contextualBack.href}
+      defaultLabel={contextualBack.label}
       variants={backVariants}
       class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
     />
@@ -216,10 +234,10 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
   <!-- Top Holdings -->
   <section class="container-wide py-4">
     <h2 class="text-lg font-bold text-surface-900 dark:text-white mb-3 section-accent">Top Holdings</h2>
-    {holdings.length > 0 && holdings[0]?.stock_slug && (
+    {holdings.length > 0 && topHoldingStockSlug && (
       <p class="text-sm text-surface-500 mb-3">
         Track institutional activity on top holding
-        <a href={fundStockSignalHref(String(holdings[0].stock_slug), fund.slug, fund.name)} class="text-primary-600 hover:underline ml-1">
+        <a href={fundStockSignalHref(topHoldingStockSlug, fund.slug, fund.name)} class="text-primary-600 hover:underline ml-1">
           {String(holdings[0].name)} → Smart Money
         </a>
       </p>
@@ -228,14 +246,16 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
       <FundHoldingsStaticTable
         fundSlug={fund.slug}
         fundName={fund.name}
-        holdings={holdings.map((h: Record<string, unknown>) => ({
-          name: String(h.name || ''),
-          sector: String(h.sector || ''),
-          pct: h.pct != null ? Number(h.pct) : 0,
-          stockSlug: h.stock_slug ? String(h.stock_slug) : undefined,
+        holdings={holdings.map((h) => ({
+          name: h.name,
+          sector: h.sector,
+          pct: h.pct,
+          stockSlug: h.stock_slug,
+          isin: h.isin || undefined,
+          nseSymbol: h.nseSymbol || undefined,
+          bseCode: h.bseCode || undefined,
         }))}
         latestMonth={latestMonth}
-        portfolioStockCount={portfolioStockCount}
       />
     ) : (
       <div class="card">

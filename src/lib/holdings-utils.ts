@@ -85,6 +85,73 @@ export function normalizeStockName(name: string): string {
     .trim();
 }
 
+/** Repair AMC/DB names truncated before "td" — e.g. "INTERNATIONAL L" → "INTERNATIONAL Ltd". */
+export function repairTruncatedStockName(name: string): string {
+  const raw = String(name || '').trim();
+  if (!raw) return raw;
+  if (/\s+L\.?$/i.test(raw) && !/\b(LTD|LIMITED)\b/i.test(raw)) {
+    return raw.replace(/\s+L\.?$/i, ' Ltd');
+  }
+  return raw;
+}
+
+/** AMC vs index spelling variants (abbreviations, Pvt noise, &/and). */
+export function expandStockNameTextVariants(name: string): string[] {
+  const raw = String(name || '').trim();
+  if (!raw) return [];
+  const variants = new Set([raw]);
+  const repaired = repairTruncatedStockName(raw);
+  if (repaired !== raw) variants.add(repaired);
+
+  const transforms = [
+    (s: string) => s.replace(/\bpetrochem\b/gi, 'petro'),
+    (s: string) => s.replace(/\bpetrochemicals\b/gi, 'petro'),
+    (s: string) => s.replace(/\bcorporation\b/gi, 'corp'),
+    (s: string) => s.replace(/\s+&\s+/g, ' and '),
+    (s: string) => s.replace(/\band\b/gi, '').replace(/\s+/g, ' ').trim(),
+    (s: string) => s.replace(/\s+(pvt|private)\.?\b/gi, '').replace(/\s+/g, ' ').trim(),
+  ];
+
+  for (const fn of transforms) {
+    for (const v of [...variants]) {
+      const t = fn(v);
+      if (t && t !== v) variants.add(t);
+    }
+  }
+  return [...variants];
+}
+
+/** Keys for name→slug lookup (AMC labels often include tickers in parentheses). */
+export function stockNameLookupKeys(name: string): string[] {
+  const raw = String(name || '').trim();
+  if (!raw) return [];
+  const textVariants = new Set(expandStockNameTextVariants(raw));
+
+  const withoutParen = raw.replace(/\s*\([^)]*\)\s*$/g, '').trim();
+  if (withoutParen && withoutParen !== raw) {
+    for (const v of expandStockNameTextVariants(withoutParen)) textVariants.add(v);
+  }
+
+  const keys = new Set<string>();
+  for (const variant of textVariants) {
+    keys.add(normalizeStockName(variant));
+    keys.add(variant.toLowerCase().replace(/\s+/g, ' ').trim());
+  }
+
+  const paren = raw.match(/\(([^)]+)\)\s*$/);
+  if (paren) {
+    const ticker = paren[1].trim();
+    if (ticker) {
+      for (const suffix of [' Limited', ' Ltd', ' Ltd.', '']) {
+        keys.add(normalizeStockName(`${ticker}${suffix}`));
+      }
+      keys.add(ticker.toLowerCase());
+    }
+  }
+
+  return [...keys].filter(Boolean);
+}
+
 /** AMC sector labels that are not equity industry names (debt, F&O, offshore, placeholders). */
 const NON_EQUITY_SECTOR_LABELS = new Set(
   [

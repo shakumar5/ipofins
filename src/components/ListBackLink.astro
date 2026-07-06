@@ -17,7 +17,7 @@ const {
   defaultHref,
   defaultLabel,
   variants = {},
-  class: className = 'text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1 back-link-pending',
+  class: className = 'text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1',
 } = Astro.props;
 
 const variantsJson = JSON.stringify(variants);
@@ -29,16 +29,6 @@ const variantsJson = JSON.stringify(variants);
   </svg>
   <span class="back-link-text">{defaultLabel}</span>
 </a>
-
-<style>
-  .back-link-pending {
-    opacity: 0;
-  }
-  .back-link-ready {
-    opacity: 1;
-    transition: opacity 0.12s ease;
-  }
-</style>
 
 <script is:inline define:vars={{ id, defaultHref, defaultLabel, variantsJson }}>
   function resolveContextualBack(params, variants, fallbackHref, fallbackLabel) {
@@ -153,6 +143,10 @@ const variantsJson = JSON.stringify(variants);
         return { href: '/mutual-funds/fund-overlap', label: 'Back to Fund Overlap' };
       }
 
+      if (path === '/mutual-funds/mutual-fund-holdings-changes' || path.startsWith('/mutual-funds/mutual-fund-holdings-changes/')) {
+        return { href: path + qs, label: 'Back to Holdings Changes' };
+      }
+
       if (path.startsWith('/mutual-funds/all') || path.startsWith('/mutual-funds/best')) {
         return { href: path + qs, label: 'Back to Mutual Funds' };
       }
@@ -179,11 +173,16 @@ const variantsJson = JSON.stringify(variants);
     try {
       var raw = sessionStorage.getItem('mf-list-back');
       if (!raw) return null;
-      sessionStorage.removeItem('mf-list-back');
       var parsed = JSON.parse(raw);
       if (parsed && parsed.href && parsed.label) return parsed;
     } catch (e) {}
     return null;
+  }
+
+  function shouldResolveReferrer(params) {
+    if (!params.get('from')) return true;
+    if (params.get('from') === 'fund-overlap' && !params.get('fundSlug')) return true;
+    return false;
   }
 
   const variantMap = JSON.parse(variantsJson);
@@ -193,14 +192,24 @@ const variantsJson = JSON.stringify(variants);
   if (!el || !textEl) return;
 
   let resolved = readStoredBack() || resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
-  if (!params.get('from')) {
-    if (id === 'stock-signal-detail-back' || id === 'fund-list-back') {
-      resolved = resolveReferrerBack(resolved.href, resolved.label);
-    }
+  if (
+    shouldResolveReferrer(params)
+    && (
+      id === 'stock-signal-detail-back'
+      || id === 'fund-list-back'
+      || id === 'fund-overlap-detail-back'
+      || id === 'holdings-changes-detail-back'
+    )
+  ) {
+    resolved = resolveReferrerBack(resolved.href, resolved.label);
   }
 
   el.href = resolved.href;
   textEl.textContent = resolved.label;
-  el.classList.remove('back-link-pending');
-  el.classList.add('back-link-ready');
+
+  el.addEventListener('click', function () {
+    try {
+      sessionStorage.removeItem('mf-list-back');
+    } catch (e) {}
+  });
 </script>

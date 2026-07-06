@@ -22,6 +22,28 @@ import {
 } from './lib/signal-export-utils.mjs';
 import { finalizeSignalsOnDisk } from './lib/finalize-signals-on-disk.mjs';
 import { unpackMonthHoldings, latestMonthForFund } from './lib/holdings-month.mjs';
+import {
+  compactHoldings,
+  mergeHoldingsPreferMoreStocks,
+  loadHoldingsFromDb,
+  loadHoldingsFromJson,
+  sortMonthLabels,
+  overlayInternationalHoldingsFromParser,
+} from './lib/holdings-data-merge.mjs';
+import { writeFundHoldingsBySlugFromMergedHoldings } from './lib/fund-holdings-by-slug-write.mjs';
+import {
+  buildStockListingSlugLookupsFromDisk,
+  buildStockSlugListingLookupFromDisk,
+  enrichHoldingListingCodes,
+  resolveStockSlugFromListing,
+  writeStockListingSlugIndexFiles,
+} from './lib/stock-slug-lookup.mjs';
+import { normalizeEquityHoldingRow, isInternationalEquityFund } from './lib/listing-codes.mjs';
+import {
+  enrichHoldingsIndexWithTer,
+  loadFundTerBySlugFromDb,
+  writeFundTerBySlugExport,
+} from './lib/fund-ter-export.mjs';
 import { buildMfHubExports, loadMutualFundsJson } from './lib/mf-hub-export.mjs';
 import {
   loadHoldingsMetaFromDb,
@@ -66,141 +88,167 @@ function logStep(label) {
   };
 }
 
-const MONTH_ORDER = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-function sortMonthLabels(months) {
-  return [...months].sort((a, b) => {
-    const [ma, ya] = a.split(' ');
-    const [mb, yb] = b.split(' ');
-    if (ya !== yb) return Number(ya) - Number(yb);
-    return MONTH_ORDER.indexOf(ma) - MONTH_ORDER.indexOf(mb);
-  });
-}
-
-function compactHoldings(raw) {
-  const holdings = {};
-  for (const [slug, fund] of Object.entries(raw.holdings || {})) {
-    const entry = { name: fund.name, amc: fund.amc };
-    for (const [key, val] of Object.entries(fund)) {
-      if (key === 'name' || key === 'amc') continue;
-      const { stocks } = unpackMonthHoldings(val);
-      if (stocks.length) entry[key] = stocks.map((h) => ({
-        name: h.name,
-        isin: h.isin || '',
-        sector: h.sector || '',
-        pct: h.pct ?? 0,
-      }));
-    }
-    holdings[slug] = entry;
-  }
-  return {
-    months: raw.months || [],
-    amcs: raw.amcs || {},
-    holdings,
-  };
-}
-
-/** Prefer the source with more parsed stocks per fund/month (JSON parse often beats DB top-N rows). */
-function mergeHoldingsPreferMoreStocks(primary, supplemental) {
-  if (!supplemental?.holdings) return primary;
-  if (!primary?.holdings) return supplemental;
-  const merged = {
-    ...primary,
-    months: sortMonthLabels([...new Set([...(primary.months || []), ...(supplemental.months || [])])]),
-    amcs: { ...(supplemental.amcs || {}), ...(primary.amcs || {}) },
-    holdings: { ...primary.holdings },
-  };
-  const months = merged.months;
-  for (const [slug, fund] of Object.entries(supplemental.holdings)) {
-    for (const month of months) {
-      const fromExtra = unpackMonthHoldings(fund[month]);
-      if (!fromExtra.stocks.length) continue;
-      if (!merged.holdings[slug]) {
-        merged.holdings[slug] = { name: fund.name, amc: fund.amc };
-      }
-      const entry = merged.holdings[slug];
-      const fromPrimary = unpackMonthHoldings(entry[month]);
-      if (fromExtra.stocks.length > fromPrimary.stocks.length) {
-        entry[month] = fromExtra.stocks.map((h) => ({
-          name: h.name,
-          isin: h.isin || '',
-          sector: h.sector || '',
-          pct: h.pct ?? 0,
-        }));
-      }
-    }
-  }
-  return merged;
-}
-
-function normalizeStockNameKey(name) {
-  return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
 function buildStockSlugLookupFromTopStocks() {
-  const map = new Map();
-  const topPath = join(OUT_DIR, 'top-stocks.json');
-  if (!existsSync(topPath)) return map;
-  try {
-    const top = JSON.parse(readFileSync(topPath, 'utf-8'));
-    for (const rows of Object.values(top.buckets || {})) {
-      if (!Array.isArray(rows)) continue;
-      for (const row of rows) {
-        if (!row.stockSlug || !row.stockName) continue;
-        const key = normalizeStockNameKey(row.stockName);
-        if (!map.has(key)) map.set(key, row.stockSlug);
-      }
-    }
-  } catch {
-    /* ignore */
+  return buildStockListingSlugLookupsFromDisk();
+}
+
+function resolveExportStockSlug(h, listingLookups) {
+  const { isinMap, nseMap, bseMap } = listingLookups;
+  return resolveStockSlugFromListing(
+    h.isin,
+    h.nseSymbol || h.nse_symbol,
+    h.bseCode || h.bse_code,
+    isinMap,
+    nseMap,
+    bseMap,
+  );
+}
+
+async function loadStockListingSlugLookupsFromDb() {
+  const rows = await sql`
+    SELECT COALESCE(isin, '') AS isin,
+           COALESCE(nse_symbol, '') AS nse_symbol,
+           COALESCE(bse_code, '') AS bse_code,
+           slug
+    FROM stocks
+    WHERE slug IS NOT NULL AND TRIM(slug) <> ''
+  `;
+  const isinMap = new Map();
+  const nseMap = new Map();
+  const bseMap = new Map();
+  for (const r of rows) {
+    const slug = String(r.slug).trim();
+    const isin = String(r.isin).trim().toUpperCase();
+    const nse = String(r.nse_symbol).trim().toUpperCase();
+    const bse = String(r.bse_code).trim();
+    if (isin && !isinMap.has(isin)) isinMap.set(isin, slug);
+    if (nse && !nseMap.has(nse)) nseMap.set(nse, slug);
+    if (bse && !bseMap.has(bse)) bseMap.set(bse, slug);
   }
-  return map;
+  return { isinMap, nseMap, bseMap };
 }
 
-function resolveExportStockSlug(name, explicit, lookup) {
-  const trimmed = explicit ? String(explicit).trim() : '';
-  if (trimmed) return trimmed;
-  return lookup.get(normalizeStockNameKey(name)) || '';
+async function writeStockListingSlugIndexesFromDb() {
+  const lookups = await loadStockListingSlugLookupsFromDb();
+  writeJson('stock-isin-slug-index.json', Object.fromEntries(lookups.isinMap));
+  writeJson('stock-nse-slug-index.json', Object.fromEntries(lookups.nseMap));
+  writeJson('stock-bse-slug-index.json', Object.fromEntries(lookups.bseMap));
+  const slugListing = invertListingLookupsToSlugMap(lookups);
+  writeJson('stock-slug-listing-index.json', Object.fromEntries(slugListing));
+  console.log(`  ✓ stock-isin-slug-index (${lookups.isinMap.size} ISINs)`);
+  console.log(`  ✓ stock-nse-slug-index (${lookups.nseMap.size} NSE symbols)`);
+  console.log(`  ✓ stock-bse-slug-index (${lookups.bseMap.size} BSE codes)`);
+  console.log(`  ✓ stock-slug-listing-index (${slugListing.size} slugs)`);
+  return lookups;
 }
 
-function writeFundHoldingsBySlugExports(holdings, slugLookup = null) {
+function invertListingLookupsToSlugMap({ isinMap, nseMap, bseMap }) {
+  const bySlug = new Map();
+  const touch = (slug) => {
+    const key = String(slug || '').trim();
+    if (!key) return null;
+    if (!bySlug.has(key)) bySlug.set(key, { isin: '', nseSymbol: '', bseCode: '' });
+    return bySlug.get(key);
+  };
+  for (const [isin, slug] of isinMap) {
+    const entry = touch(slug);
+    if (entry && isin) entry.isin = String(isin).trim().toUpperCase();
+  }
+  for (const [nse, slug] of nseMap) {
+    const entry = touch(slug);
+    if (entry && nse) entry.nseSymbol = String(nse).trim().toUpperCase();
+  }
+  for (const [bse, slug] of bseMap) {
+    const entry = touch(slug);
+    if (entry && bse) entry.bseCode = String(bse).trim();
+  }
+  return bySlug;
+}
+
+function writeFundHoldingsBySlugExports(holdings, listingLookups = null, { force = false } = {}) {
   const dir = join(OUT_DIR, 'fund-holdings-by-slug');
   mkdirSync(dir, { recursive: true });
-  const lookup = slugLookup || buildStockSlugLookupFromTopStocks();
-  const months = holdings.months || [];
-  let count = 0;
-  for (const [slug, fund] of Object.entries(holdings.holdings || {})) {
-    const month = latestMonthForFund(fund, months);
-    if (!month) continue;
-    const { stocks } = unpackMonthHoldings(fund[month]);
-    if (!stocks.length) continue;
-    writeFileSync(
-      join(dir, `${slug}.json`),
-      JSON.stringify({
-        slug,
-        month,
-        stocks: stocks.map((h) => ({
-          name: h.name,
-          stockSlug: resolveExportStockSlug(h.name, h.stockSlug, lookup),
-          sector: h.sector || '',
-          pct: h.pct ?? 0,
-        })),
-      }),
-    );
-    count++;
+  const lookups = listingLookups || buildStockListingSlugLookupsFromDisk();
+  const slugListing = buildStockSlugListingLookupFromDisk();
+  const { written } = writeFundHoldingsBySlugFromMergedHoldings(
+    holdings,
+    dir,
+    lookups,
+    slugListing,
+    { force },
+  );
+  console.log(`  ✓ fund-holdings-by-slug/ (${written} funds${force ? ', DB authoritative' : ''})`);
+}
+
+function holdingOverlapKey(stock) {
+  const isin = String(stock.isin || '').trim().toUpperCase();
+  if (isin) return `isin:${isin}`;
+  const slug = String(stock.stockSlug || '').trim();
+  if (slug) return `slug:${slug}`;
+  return '';
+}
+
+/** Copy the fullest holdings file across alias slug pairs when they are the same fund. */
+function aliasHoldingsOverlap(fileA, fileB) {
+  if (!fileA?.stocks?.length || !fileB?.stocks?.length) return true;
+  if (fileA.month && fileB.month && fileA.month !== fileB.month) return false;
+  const keysA = new Set(fileA.stocks.map(holdingOverlapKey).filter(Boolean));
+  let overlap = 0;
+  for (const stock of fileB.stocks) {
+    const key = holdingOverlapKey(stock);
+    if (key && keysA.has(key)) overlap += 1;
+    if (overlap >= 3) return true;
   }
-  console.log(`  ✓ fund-holdings-by-slug/ (${count} funds)`);
+  return overlap >= Math.min(3, Math.min(fileA.stocks.length, fileB.stocks.length));
+}
+
+function propagateHoldingsToAliasSlugs(aliases = {}) {
+  const dir = join(OUT_DIR, 'fund-holdings-by-slug');
+  if (!existsSync(dir)) return 0;
+
+  const readFundFile = (slug) => {
+    const path = join(dir, `${slug}.json`);
+    if (!existsSync(path)) return null;
+    try {
+      return JSON.parse(readFileSync(path, 'utf-8'));
+    } catch {
+      return null;
+    }
+  };
+
+  let copied = 0;
+  for (const [listable, canonical] of Object.entries(aliases)) {
+    if (!listable || !canonical || listable === canonical) continue;
+    const fileA = readFundFile(listable);
+    const fileB = readFundFile(canonical);
+    const countA = Array.isArray(fileA?.stocks) ? fileA.stocks.length : 0;
+    const countB = Array.isArray(fileB?.stocks) ? fileB.stocks.length : 0;
+    if (!countA && !countB) continue;
+    if (fileA && fileB && !aliasHoldingsOverlap(fileA, fileB)) continue;
+    const best = countA >= countB ? fileA : fileB;
+    if (!best?.stocks?.length) continue;
+    for (const slug of new Set([listable, canonical])) {
+      const current = readFundFile(slug);
+      const currentCount = Array.isArray(current?.stocks) ? current.stocks.length : 0;
+      if (currentCount >= best.stocks.length) continue;
+      writeFileSync(
+        join(dir, `${slug}.json`),
+        JSON.stringify({ ...best, slug }),
+      );
+      copied++;
+    }
+  }
+
+  if (copied) console.log(`  ✓ fund-holdings-by-slug alias sync (${copied} file(s))`);
+  return copied;
 }
 
 /** Re-write per-fund holdings JSON with stock slugs after top-stocks export. */
 function enrichFundHoldingsBySlugStockSlugs() {
   const dir = join(OUT_DIR, 'fund-holdings-by-slug');
   if (!existsSync(dir)) return 0;
-  const lookup = buildStockSlugLookupFromTopStocks();
-  if (!lookup.size) return 0;
+  const lookups = buildStockListingSlugLookupsFromDisk();
+  if (!lookups.isinMap.size && !lookups.nseMap.size && !lookups.bseMap.size) return 0;
   let files = 0;
   let enriched = 0;
   for (const fileName of readdirSync(dir)) {
@@ -215,7 +263,7 @@ function enrichFundHoldingsBySlugStockSlugs() {
     if (!Array.isArray(data.stocks)) continue;
     let changed = false;
     data.stocks = data.stocks.map((h) => {
-      const slug = resolveExportStockSlug(h.name, h.stockSlug, lookup);
+      const slug = resolveExportStockSlug(h, lookups);
       if (slug && slug !== (h.stockSlug || '')) {
         changed = true;
         enriched++;
@@ -228,71 +276,6 @@ function enrichFundHoldingsBySlugStockSlugs() {
   }
   if (enriched) console.log(`  ✓ fund-holdings-by-slug slug enrichment (${enriched} stocks in ${files} funds)`);
   return enriched;
-}
-
-async function loadHoldingsFromDb() {
-  return withDbRetry(async () => {
-    const rows = await sql`
-    SELECT
-      f.slug,
-      f.name AS fund_name,
-      a.name AS amc_name,
-      a.slug AS amc_slug,
-      TRIM(TO_CHAR(fh.month, 'FMMonth YYYY')) AS month_label,
-      s.name AS stock_name,
-      s.slug AS stock_slug,
-      COALESCE(s.isin, '') AS isin,
-      COALESCE(sec.name, '') AS sector,
-      fh.pct_to_nav AS pct
-    FROM fund_holdings fh
-    JOIN funds f ON f.id = fh.fund_id AND f.is_active = true
-    JOIN amcs a ON a.id = f.amc_id
-    JOIN stocks s ON s.id = fh.stock_id
-    LEFT JOIN sectors sec ON sec.id = s.sector_id
-    ORDER BY fh.month, a.name, f.name
-  `;
-
-  const monthsSet = new Set();
-  const holdings = {};
-  const amcFunds = new Map();
-  const amcSlugs = new Map();
-
-  for (const r of rows) {
-    const slug = String(r.slug);
-    const month = String(r.month_label).trim();
-    const amc = String(r.amc_name);
-    const amcSlug = String(r.amc_slug);
-    const fundName = String(r.fund_name);
-    monthsSet.add(month);
-    amcSlugs.set(amc, amcSlug);
-
-    if (!holdings[slug]) {
-      holdings[slug] = { name: fundName, amc };
-      if (!amcFunds.has(amc)) amcFunds.set(amc, new Set());
-      amcFunds.get(amc).add(fundName);
-    }
-    if (!holdings[slug][month]) holdings[slug][month] = [];
-    holdings[slug][month].push({
-      name: String(r.stock_name),
-      stockSlug: String(r.stock_slug),
-      isin: String(r.isin),
-      sector: String(r.sector),
-      pct: r.pct != null ? Number(r.pct) : 0,
-    });
-  }
-
-  const amcs = {};
-  for (const [amc, names] of amcFunds) amcs[amc] = [...names].sort();
-
-  const compact = compactHoldings({
-    months: sortMonthLabels([...monthsSet]),
-    amcs,
-    holdings,
-  });
-
-  compact.amcSlugs = Object.fromEntries(amcSlugs);
-  return compact;
-  }, { label: 'Load holdings from DB' });
 }
 
 function buildPortfolioOverlapExport(holdings) {
@@ -315,12 +298,6 @@ function buildPortfolioOverlapExport(holdings) {
 
   funds.sort((a, b) => a.name.localeCompare(b.name));
   return { month, funds, holdings: holdingsBySlug };
-}
-
-function loadHoldingsFromJson() {
-  const path = join(ROOT, 'src', 'data', 'fund-holdings.json');
-  if (!existsSync(path)) return null;
-  return compactHoldings(JSON.parse(readFileSync(path, 'utf-8')));
 }
 
 function monthFileSlug(month) {
@@ -693,7 +670,7 @@ async function main() {
 
   const doneHoldings = logStep('Load holdings');
   if (preferJson) {
-    holdings = loadHoldingsFromJson();
+    holdings = loadHoldingsFromJson(ROOT);
     if (holdings) console.log('  ℹ Holdings from fund-holdings.json (fast path)');
   }
   if (!holdings && isDbConfigured() && holdingsSource !== 'json') {
@@ -704,11 +681,11 @@ async function main() {
     }
   }
   if (!holdings) {
-    holdings = loadHoldingsFromJson();
+    holdings = loadHoldingsFromJson(ROOT);
     if (holdings) console.log('  ℹ Using fund-holdings.json fallback');
   }
   if (!holdings) throw new Error('No holdings data source available');
-  const jsonHoldings = existsSync(jsonHoldingsPath) ? loadHoldingsFromJson() : null;
+  const jsonHoldings = existsSync(jsonHoldingsPath) ? loadHoldingsFromJson(ROOT) : null;
   if (jsonHoldings && holdings) {
     holdings = mergeHoldingsPreferMoreStocks(holdings, jsonHoldings);
     console.log('  ℹ Merged fund-holdings.json where it has fuller portfolios');
@@ -717,17 +694,32 @@ async function main() {
 
   const doneCompare = logStep('Holdings compare + overlap');
   writeHoldingsCompareExports(holdings);
+  let exportHoldings = holdings;
   if (isDbConfigured()) {
     try {
-      const fullHoldings = await withDbRetry(() => loadHoldingsFromDb(), { label: 'Fund holdings by slug' });
-      writeFundHoldingsBySlugExports(fullHoldings);
-      console.log('  ℹ fund-holdings-by-slug from Neon (full portfolios)');
+      const listingLookups = await writeStockListingSlugIndexesFromDb();
+      const dbHoldings = await withDbRetry(() => loadHoldingsFromDb(), { label: 'Fund holdings by slug' });
+      const parserHoldings = existsSync(jsonHoldingsPath) ? loadHoldingsFromJson(ROOT) : null;
+      exportHoldings = overlayInternationalHoldingsFromParser(dbHoldings, parserHoldings);
+      writeFundHoldingsBySlugExports(exportHoldings, listingLookups, { force: true });
+      console.log('  ℹ fund-holdings-by-slug from DB (authoritative)');
     } catch (e) {
       console.warn('  ⚠ DB by-slug export failed, using parser export:', e.message);
       writeFundHoldingsBySlugExports(holdings);
     }
   } else {
+    const counts = writeStockListingSlugIndexFiles();
+    console.log(`  ℹ listing slug indexes (ISIN ${counts.isin}, NSE ${counts.nse}, BSE ${counts.bse})`);
     writeFundHoldingsBySlugExports(holdings);
+  }
+  try {
+    const reconcile = join(dirname(fileURLToPath(import.meta.url)), 'reconcile-holdings-meta.mjs');
+    const result = spawnSync(process.execPath, [reconcile], { stdio: 'inherit', cwd: ROOT });
+    if (result.status !== 0) {
+      console.warn('  ⚠ reconcile-holdings-meta.mjs failed — stock counts may be stale');
+    }
+  } catch (e) {
+    console.warn('  ⚠ Could not reconcile holdings meta:', e.message);
   }
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
@@ -821,6 +813,17 @@ async function main() {
       console.log('  ℹ Fund holdings index from mf-hub fallback');
     }
     if (holdingsIndex.length) {
+      let terBySlug = {};
+      if (isDbConfigured()) {
+        try {
+          terBySlug = await withDbRetry(() => loadFundTerBySlugFromDb(sql), { label: 'Fund TER export' });
+          writeFundTerBySlugExport(ROOT, terBySlug);
+          console.log(`  ✓ fund-ter-by-slug.json (${Object.keys(terBySlug).length} funds)`);
+        } catch (e) {
+          console.warn('  ⚠ fund-ter-by-slug export failed:', e.message);
+        }
+      }
+      holdingsIndex = enrichHoldingsIndexWithTer(holdingsIndex, terBySlug);
       writeJson('fund-holdings-index.json', holdingsIndex);
       const aliases = buildFundHoldingsAliases(
         hub.all,
@@ -940,6 +943,13 @@ async function main() {
     : {};
   if (Object.keys(aliases).length) {
     alignFundOverlapExports(aliases);
+    propagateHoldingsToAliasSlugs(aliases);
+    try {
+      const reconcile = join(dirname(fileURLToPath(import.meta.url)), 'reconcile-holdings-meta.mjs');
+      spawnSync(process.execPath, [reconcile], { stdio: 'inherit', cwd: ROOT });
+    } catch (e) {
+      console.warn('  ⚠ Could not re-reconcile holdings meta after alias sync:', e.message);
+    }
   }
   verifyFundOverlapExports(aliases);
   verifySmartMoneyExports();

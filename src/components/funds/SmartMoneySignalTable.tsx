@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition, useDe
 
 import type { SmartMoneySignalRow, SmartMoneySignalsData, SmartMoneySignalType } from '../../lib/smart-money-signals';
 
-import { SIGNAL_OPTIONS, stockCapDisplayLabel } from '../../lib/smart-money-signals';
+import { SIGNAL_OPTIONS, resolveSignalForRow, stockCapDisplayLabel } from '../../lib/smart-money-signals';
 import { applyClientPageMeta } from '../../lib/apply-client-page-meta';
 import { signalDetailHref } from '../../lib/list-back-nav';
 import StockSignalLink from './StockSignalLink';
@@ -137,6 +137,10 @@ export default function SmartMoneySignalTable({
 
   const rows = useMemo(() => {
     return data.rows
+      .map((r) => {
+        const { signal, emoji } = resolveSignalForRow(r);
+        return signal === r.signal && emoji === r.signalEmoji ? r : { ...r, signal, signalEmoji: emoji };
+      })
       .filter((r) => {
         if (deferredMonth && r.month !== deferredMonth) return false;
         if (deferredCategory !== 'All' && r.category !== deferredCategory) return false;
@@ -346,6 +350,7 @@ function SignalCard({
   category: string;
 }) {
   const detailUrl = signalDetailHref(row.stockSlug, 'signals', month, row.category);
+  const { signal, emoji } = resolveSignalForRow(row);
 
   return (
     <div className="card p-3 border border-surface-200 dark:border-surface-700">
@@ -367,8 +372,8 @@ function SignalCard({
       </div>
       <div className="flex items-center justify-between mt-3 gap-2">
         <span className="inline-flex items-center gap-1 text-xs font-medium text-surface-700 dark:text-surface-300">
-          <span>{row.signalEmoji}</span>
-          <span>{row.signal}</span>
+          <span>{emoji}</span>
+          <span>{signal}</span>
         </span>
         <a href={detailUrl} className="text-primary-600 hover:text-primary-700 font-medium text-sm flex-shrink-0">
           View →
@@ -401,6 +406,7 @@ function SignalRow({
 }) {
 
   const detailUrl = signalDetailHref(row.stockSlug, 'signals', month, row.category);
+  const { signal, emoji } = resolveSignalForRow(row);
 
 
 
@@ -426,9 +432,9 @@ function SignalRow({
 
         <span className="inline-flex items-center gap-1.5">
 
-          <span>{row.signalEmoji}</span>
+          <span>{emoji}</span>
 
-          <span className="hidden sm:inline">{row.signal}</span>
+          <span className="hidden sm:inline">{signal}</span>
 
         </span>
 
