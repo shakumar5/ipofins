@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useDeferredValue } from 'react';
+import { useCallback, useEffect, useMemo, useState, useDeferredValue, useRef } from 'react';
 
 import type { SmartMoneySignalRow } from '../../lib/smart-money-signals';
 import { buildInterpretation, stockSignalMetaLine } from '../../lib/smart-money-signals';
@@ -167,11 +167,14 @@ export default function StockSignalView({
     return () => window.removeEventListener('popstate', sync);
   }, []);
 
+  // Honour SSR slug on first mount only — do not reset after client-side search navigation.
+  const mountedSlug = useRef(initialStockSlug);
   useEffect(() => {
-    if (initialStockSlug && initialStockSlug !== activeSlug) {
+    if (!mountedSlug.current && initialStockSlug) {
+      mountedSlug.current = initialStockSlug;
       setActiveSlug(initialStockSlug);
     }
-  }, [initialStockSlug, activeSlug]);
+  }, [initialStockSlug]);
 
   useEffect(() => {
     if (!activeSlug || !month) {

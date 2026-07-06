@@ -17,7 +17,7 @@ const {
   defaultHref,
   defaultLabel,
   variants = {},
-  class: className = 'text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1',
+  class: className = 'text-sm text-primary-600 dark:text-primary-400 hover:underline mb-4 inline-flex items-center gap-1 back-link-pending',
 } = Astro.props;
 
 const variantsJson = JSON.stringify(variants);
@@ -29,6 +29,16 @@ const variantsJson = JSON.stringify(variants);
   </svg>
   <span class="back-link-text">{defaultLabel}</span>
 </a>
+
+<style>
+  .back-link-pending {
+    opacity: 0;
+  }
+  .back-link-ready {
+    opacity: 1;
+    transition: opacity 0.12s ease;
+  }
+</style>
 
 <script is:inline define:vars={{ id, defaultHref, defaultLabel, variantsJson }}>
   function resolveContextualBack(params, variants, fallbackHref, fallbackLabel) {
@@ -42,8 +52,8 @@ const variantsJson = JSON.stringify(variants);
       if (sector) {
         const sectorLabel = params.get('sectorLabel');
         return {
-          href: `/ipo/sector/${sector}`,
-          label: sectorLabel ? `Back to ${sectorLabel} IPOs` : 'Back to Sector IPOs',
+          href: '/ipo/sector/' + sector,
+          label: sectorLabel ? 'Back to ' + sectorLabel + ' IPOs' : 'Back to Sector IPOs',
         };
       }
     }
@@ -53,8 +63,8 @@ const variantsJson = JSON.stringify(variants);
       if (fundSlug) {
         const fundName = params.get('fundName');
         return {
-          href: `/mutual-funds/fund/${fundSlug}`,
-          label: fundName ? `Back to ${fundName}` : 'Back to Fund Details',
+          href: '/mutual-funds/fund/' + fundSlug,
+          label: fundName ? 'Back to ' + fundName : 'Back to Fund Details',
         };
       }
     }
@@ -64,8 +74,8 @@ const variantsJson = JSON.stringify(variants);
       if (fundSlug) {
         const fundName = params.get('fundName');
         return {
-          href: `/mutual-funds/fund-overlap/${fundSlug}`,
-          label: fundName ? `Back to ${fundName} overlap` : 'Back to Fund Overlap',
+          href: '/mutual-funds/fund-overlap/' + fundSlug,
+          label: fundName ? 'Back to ' + fundName + ' overlap' : 'Back to Fund Overlap',
         };
       }
     }
@@ -89,19 +99,19 @@ const variantsJson = JSON.stringify(variants);
       if (month) q.set('month', month);
       if (category && category !== 'All') q.set('category', category);
       const qs = q.toString();
-      if (qs) href += `?${qs}`;
-      return { href, label: 'Back to Smart Money Signal' };
+      if (qs) href += '?' + qs;
+      return { href: href, label: 'Back to Smart Money Signal' };
     }
 
     if (from === 'stock-signal') {
       const stockSlug = params.get('stockSlug');
       const stockName = params.get('stockName');
       const href = stockSlug
-        ? `/mutual-funds/smart-money/stock-signal/${encodeURIComponent(stockSlug)}`
+        ? '/mutual-funds/smart-money/stock-signal/' + encodeURIComponent(stockSlug)
         : '/mutual-funds/smart-money/stock-signal';
       return {
-        href,
-        label: stockName ? `Back to ${stockName}` : 'Back to Stock Signal',
+        href: href,
+        label: stockName ? 'Back to ' + stockName : 'Back to Stock Signal',
       };
     }
 
@@ -111,13 +121,56 @@ const variantsJson = JSON.stringify(variants);
     return { href: fallbackHref, label: fallbackLabel };
   }
 
+  function resolveReferrerBack(fallbackHref, fallbackLabel) {
+    try {
+      const ref = document.referrer;
+      if (!ref || !ref.startsWith(window.location.origin)) {
+        return { href: fallbackHref, label: fallbackLabel };
+      }
+      const refUrl = new URL(ref);
+      const path = refUrl.pathname;
+      if (!path.includes('/mutual-funds/smart-money')) {
+        return { href: fallbackHref, label: fallbackLabel };
+      }
+      if (path.includes('/stock-signal')) {
+        return { href: fallbackHref, label: fallbackLabel };
+      }
+      if (path.includes('/smart-money-signal')) {
+        return { href: refUrl.pathname + refUrl.search, label: 'Back to Smart Money Signal' };
+      }
+      if (path.includes('/smart-money-tracker') || path.includes('/tracker')) {
+        return { href: refUrl.pathname + refUrl.search, label: 'Back to Smart Money Tracker' };
+      }
+      return { href: refUrl.pathname + refUrl.search, label: 'Back to Smart Money' };
+    } catch {
+      return { href: fallbackHref, label: fallbackLabel };
+    }
+  }
+
+  function readStoredBack() {
+    try {
+      var raw = sessionStorage.getItem('mf-list-back');
+      if (!raw) return null;
+      sessionStorage.removeItem('mf-list-back');
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.href && parsed.label) return parsed;
+    } catch (e) {}
+    return null;
+  }
+
   const variantMap = JSON.parse(variantsJson);
   const params = new URLSearchParams(window.location.search);
   const el = document.getElementById(id);
-  const textEl = el?.querySelector('.back-link-text');
+  const textEl = el && el.querySelector('.back-link-text');
   if (!el || !textEl) return;
 
-  const resolved = resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
+  let resolved = readStoredBack() || resolveContextualBack(params, variantMap, defaultHref, defaultLabel);
+  if (!params.get('from') && id === 'stock-signal-detail-back') {
+    resolved = resolveReferrerBack(resolved.href, resolved.label);
+  }
+
   el.href = resolved.href;
   textEl.textContent = resolved.label;
+  el.classList.remove('back-link-pending');
+  el.classList.add('back-link-ready');
 </script>

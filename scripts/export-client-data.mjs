@@ -651,7 +651,18 @@ async function main() {
 
   const doneCompare = logStep('Holdings compare + overlap');
   writeHoldingsCompareExports(holdings);
-  writeFundHoldingsBySlugExports(holdings);
+  if (isDbConfigured()) {
+    try {
+      const fullHoldings = await withDbRetry(() => loadHoldingsFromDb(), { label: 'Fund holdings by slug' });
+      writeFundHoldingsBySlugExports(fullHoldings);
+      console.log('  ℹ fund-holdings-by-slug from Neon (full portfolios)');
+    } catch (e) {
+      console.warn('  ⚠ DB by-slug export failed, using parser export:', e.message);
+      writeFundHoldingsBySlugExports(holdings);
+    }
+  } else {
+    writeFundHoldingsBySlugExports(holdings);
+  }
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
   // fund-overlap-index.json is written only with fund-overlaps-by-fund.json (DB step below).

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fetchFundHoldingsBySlug, type FundHoldingRow } from '../../lib/fund-holdings-client';
 import StockSignalLink from './StockSignalLink';
 
@@ -11,8 +11,7 @@ interface Props {
   portfolioStockCount?: number | null;
 }
 
-const INITIAL_ROWS = 20;
-const ROWS_PAGE = 20;
+const ROWS_PAGE = 40;
 
 export default function FundHoldingsTable({
   holdings: initialHoldings,
@@ -20,50 +19,59 @@ export default function FundHoldingsTable({
   latestMonth,
   portfolioStockCount,
 }: Props) {
+  const expectedTotal = portfolioStockCount ?? initialHoldings.length;
+  const startsComplete = initialHoldings.length >= expectedTotal;
+
   const [allHoldings, setAllHoldings] = useState(initialHoldings);
-  const [visibleLimit, setVisibleLimit] = useState(INITIAL_ROWS);
+  const [visibleLimit, setVisibleLimit] = useState(
+    startsComplete ? initialHoldings.length : Math.min(ROWS_PAGE, initialHoldings.length),
+  );
   const [loadingMore, setLoadingMore] = useState(false);
-  const [fetchExhausted, setFetchExhausted] = useState(false);
+  const [fetchExhausted, setFetchExhausted] = useState(startsComplete);
 
   useEffect(() => {
+    const total = portfolioStockCount ?? initialHoldings.length;
+    const complete = initialHoldings.length >= total;
     setAllHoldings(initialHoldings);
-    setVisibleLimit(INITIAL_ROWS);
-    setFetchExhausted(false);
-  }, [initialHoldings, fundSlug]);
+    setVisibleLimit(complete ? initialHoldings.length : Math.min(ROWS_PAGE, initialHoldings.length));
+    setFetchExhausted(complete);
+  }, [initialHoldings, fundSlug, portfolioStockCount]);
 
   useEffect(() => {
-    if (!fundSlug || !portfolioStockCount || initialHoldings.length >= portfolioStockCount) return;
+    if (!fundSlug || fetchExhausted) return;
+    if (portfolioStockCount && initialHoldings.length >= portfolioStockCount) return;
+
     let cancelled = false;
     void fetchFundHoldingsBySlug(fundSlug).then((rows) => {
-      if (cancelled) return;
-      if (rows.length > initialHoldings.length) {
-        setAllHoldings(rows);
-      }
+      if (cancelled || !rows.length) return;
+      setAllHoldings((prev) => (rows.length > prev.length ? rows : prev));
       if (!portfolioStockCount || rows.length >= portfolioStockCount) {
         setFetchExhausted(true);
+        setVisibleLimit(rows.length);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [fundSlug, portfolioStockCount, initialHoldings]);
+  }, [fundSlug, portfolioStockCount, initialHoldings.length, fetchExhausted]);
 
-  const reportedTotal =
-    portfolioStockCount && portfolioStockCount > allHoldings.length
-      ? portfolioStockCount
-      : allHoldings.length;
-  const totalCount = fetchExhausted ? allHoldings.length : reportedTotal;
+  const totalCount = useMemo(() => {
+    if (fetchExhausted) return allHoldings.length;
+    if (portfolioStockCount && portfolioStockCount > allHoldings.length) return portfolioStockCount;
+    return allHoldings.length;
+  }, [allHoldings.length, fetchExhausted, portfolioStockCount]);
+
   const visibleHoldings = allHoldings.slice(0, visibleLimit);
   const hasMoreLoaded = visibleLimit < allHoldings.length;
   const canFetchMore = Boolean(
     !fetchExhausted && fundSlug && portfolioStockCount && allHoldings.length < portfolioStockCount,
   );
   const showMoreButton = hasMoreLoaded || canFetchMore;
-  const remaining = Math.min(totalCount, canFetchMore ? totalCount : allHoldings.length) - visibleLimit;
+  const remaining = totalCount - visibleLimit;
 
   async function handleShowMore() {
     if (visibleLimit < allHoldings.length) {
-      setVisibleLimit((n) => n + ROWS_PAGE);
+      setVisibleLimit((n) => Math.min(n + ROWS_PAGE, allHoldings.length));
       return;
     }
     if (!fundSlug) return;
@@ -72,11 +80,13 @@ export default function FundHoldingsTable({
       const rows = await fetchFundHoldingsBySlug(fundSlug);
       if (rows.length > allHoldings.length) {
         setAllHoldings(rows);
+        setVisibleLimit(rows.length);
       }
       if (!portfolioStockCount || rows.length >= portfolioStockCount) {
         setFetchExhausted(true);
+      } else {
+        setVisibleLimit((n) => n + ROWS_PAGE);
       }
-      setVisibleLimit((n) => n + ROWS_PAGE);
     } finally {
       setLoadingMore(false);
     }

@@ -38,7 +38,7 @@ const pageMeta = isPlaceholder
   ? getStockSignalPageMeta()
   : getStockSignalPageMeta(stockName, stockSlug);
 const sm = loadSmartMoneyTrackerLinks();
-const defaultBack = stockSignalDetailBackNav(isPlaceholder ? undefined : stockName, isPlaceholder ? undefined : stockSlug);
+const defaultBack = stockSignalDetailBackNav();
 const smBackVariants = Object.fromEntries(
   Object.entries(SMART_MONEY_LIST_BACK).filter(([key]) => key !== 'stock-signal'),
 );

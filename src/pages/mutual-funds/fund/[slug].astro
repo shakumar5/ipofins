@@ -10,7 +10,7 @@ import { ZERODHA_OPEN_ACCOUNT_URL } from '../../../lib/affiliate-links';
 import { catToSlug } from '../../../lib/fund-category-slug';
 import { fundListBackNav, fundListBackVariants, fundOverlapDetailHref, MF_LIST_BACK } from '../../../lib/list-back-nav';
 import ListBackLink from '../../../components/ListBackLink.astro';
-import FundHoldingsTable from '../../../components/funds/FundHoldingsTable.tsx';
+import FundHoldingsStaticTable from '../../../components/funds/FundHoldingsStaticTable.astro';
 
 export async function getStaticPaths() {
   const fundsData = await getFundsWithHoldings();
@@ -225,8 +225,7 @@ import ContentGuideFaqItem from '../../../components/content-guide/ContentGuideF
       </p>
     )}
     {holdings.length > 0 ? (
-      <FundHoldingsTable
-        client:load
+      <FundHoldingsStaticTable
         fundSlug={fund.slug}
         holdings={holdings.map((h: Record<string, unknown>) => ({
           name: String(h.name || ''),

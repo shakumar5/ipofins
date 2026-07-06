@@ -352,7 +352,7 @@ function SignalCard({
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
           <p className="text-xs text-surface-600 dark:text-surface-400 tabular-nums">#{rank}</p>
-          <StockSignalLink stockSlug={row.stockSlug} className="text-sm font-semibold">
+          <StockSignalLink stockSlug={row.stockSlug} href={detailUrl} className="text-sm font-semibold">
             {row.stockName}
           </StockSignalLink>
           <p className="text-xs text-surface-500 mt-0.5">
@@ -411,9 +411,9 @@ function SignalRow({
       <td className="px-4 py-3 text-surface-500">{rank}</td>
 
       <td className="px-4 py-3 font-medium text-surface-900 dark:text-white">
-        <StockSignalLink stockSlug={row.stockSlug} className="font-medium">
+        <a href={detailUrl} className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
           {row.stockName}
-        </StockSignalLink>
+        </a>
         <span className="block text-xs font-normal text-surface-500 dark:text-surface-400 mt-0.5">
           {row.sector}
           {stockCapDisplayLabel(row.category) ? ` · ${stockCapDisplayLabel(row.category)}` : ''}
