@@ -13,6 +13,17 @@ function normalizeStockNameKey(name: string): string {
   return name.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function ingestStockRows(
+  map: Map<string, string>,
+  rows: { stockSlug?: string; stockName?: string }[] | undefined,
+): void {
+  for (const row of rows || []) {
+    if (!row.stockSlug || !row.stockName) continue;
+    const key = normalizeStockNameKey(row.stockName);
+    if (!map.has(key)) map.set(key, row.stockSlug);
+  }
+}
+
 async function loadStockNameSlugIndex(): Promise<Map<string, string>> {
   if (stockNameSlugIndex) return stockNameSlugIndex;
   const map = new Map<string, string>();
@@ -23,10 +34,22 @@ async function loadStockNameSlugIndex(): Promise<Map<string, string>> {
         buckets?: Record<string, { stockSlug?: string; stockName?: string }[]>;
       };
       for (const rows of Object.values(data.buckets || {})) {
-        for (const row of rows) {
-          if (!row.stockSlug || !row.stockName) continue;
-          const key = normalizeStockNameKey(row.stockName);
-          if (!map.has(key)) map.set(key, row.stockSlug);
+        ingestStockRows(map, rows);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const indexRes = await fetch('/data/smart-money-signals-index.json');
+    if (indexRes.ok) {
+      const index = (await indexRes.json()) as { months?: { label: string }[] };
+      const latest = index.months?.[0]?.label;
+      if (latest) {
+        const monthSlug = latest.toLowerCase().replace(/\s+/g, '-');
+        const searchRes = await fetch(`/data/smart-money-signals/${monthSlug}--search.json`);
+        if (searchRes.ok) {
+          ingestStockRows(map, (await searchRes.json()) as { stockSlug?: string; stockName?: string }[]);
         }
       }
     }

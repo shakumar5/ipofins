@@ -1,5 +1,5 @@
 ---
-import { stockSignalPath } from '../../lib/stock-signal-meta';
+import { fundStockSignalHref } from '../../lib/list-back-nav';
 
 export interface FundHoldingRow {
   name: string;
@@ -10,23 +10,28 @@ export interface FundHoldingRow {
 
 interface Props {
   fundSlug: string;
+  fundName: string;
   holdings: FundHoldingRow[];
   latestMonth?: string;
   portfolioStockCount?: number | null;
 }
 
-const { fundSlug, holdings, latestMonth, portfolioStockCount } = Astro.props;
+const { fundSlug, fundName, holdings, latestMonth, portfolioStockCount } = Astro.props;
 const totalCount = portfolioStockCount ?? holdings.length;
-const initialVisible = Math.min(40, holdings.length);
-const visibleHoldings = holdings.slice(0, initialVisible);
-const remaining = Math.max(0, totalCount - initialVisible);
-const showMoreButton = remaining > 0 || holdings.length < totalCount;
 const tableId = `fund-holdings-${fundSlug.replace(/[^a-z0-9-]/gi, '-')}`;
+const needsClientFetch = holdings.length < totalCount || (holdings.length <= 20 && totalCount > 20);
 ---
 
-<div class="fund-holdings-static" data-fund-holdings-root data-fund-slug={fundSlug} data-total={totalCount}>
+<div
+  class="fund-holdings-static"
+  data-fund-holdings-root
+  data-fund-slug={fundSlug}
+  data-fund-name={fundName}
+  data-total={totalCount}
+  data-needs-fetch={needsClientFetch ? '1' : '0'}
+>
   <p class="text-xs text-surface-500 mb-4" data-fund-holdings-summary>
-    Showing <span data-fund-holdings-shown>{Math.min(initialVisible, holdings.length)}</span> of <span data-fund-holdings-total>{totalCount}</span> stocks
+    Showing <span data-fund-holdings-shown>{holdings.length}</span> of <span data-fund-holdings-total>{totalCount}</span> stocks
     {latestMonth ? ` held by this fund as of ${latestMonth}` : ''} (Source: AMC monthly disclosure)
   </p>
   <div class="card overflow-hidden">
@@ -36,8 +41,8 @@ const tableId = `fund-holdings-${fundSlug.replace(/[^a-z0-9-]/gi, '-')}`;
       <div class="col-span-3">Sector</div>
       <div class="col-span-3 text-right">Weight (%)</div>
     </div>
-    <div id={tableId} data-visible-limit={initialVisible}>
-      {visibleHoldings.map((h, i) => (
+    <div id={tableId}>
+      {holdings.map((h, i) => (
         <div
           class={`grid grid-cols-12 gap-4 px-4 py-2.5 text-sm items-center ${i % 2 === 0 ? '' : 'bg-surface-50 dark:bg-surface-800/50'}`}
           data-holding-row
@@ -46,7 +51,7 @@ const tableId = `fund-holdings-${fundSlug.replace(/[^a-z0-9-]/gi, '-')}`;
           <div class="col-span-5">
             {h.stockSlug ? (
               <a
-                href={stockSignalPath(h.stockSlug)}
+                href={fundStockSignalHref(h.stockSlug, fundSlug, fundName)}
                 class="font-medium text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
               >
                 {h.name}
@@ -64,98 +69,149 @@ const tableId = `fund-holdings-${fundSlug.replace(/[^a-z0-9-]/gi, '-')}`;
       ))}
     </div>
   </div>
-  {showMoreButton && (
-    <div class="text-center mt-4">
-      <button
-        type="button"
-        class="fund-holdings-show-more px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors disabled:opacity-60"
-        data-remaining={remaining}
-      >
-        Show more ({remaining} remaining)
-      </button>
-    </div>
-  )}
   <p class="text-xs text-surface-400 mt-3">
     All returns shown are for Direct-Growth plan. Data from AMC monthly portfolio disclosure.
   </p>
 </div>
 
-<script is:inline define:vars={{ tableId, fundSlug, initialHoldings: holdings, totalCount }}>
+<script is:inline define:vars={{ tableId, fundSlug, fundName, initialHoldings: holdings, totalCount, needsClientFetch }}>
   (function () {
     const root = document.querySelector('[data-fund-holdings-root][data-fund-slug="' + fundSlug + '"]');
     const tbody = document.getElementById(tableId);
-    const btn = root && root.querySelector('.fund-holdings-show-more');
-    if (!root || !tbody || !btn) return;
+    if (!root || !tbody) return;
 
     let allRows = initialHoldings.slice();
-    let visibleLimit = Number(tbody.getAttribute('data-visible-limit') || 40);
-    let fetchExhausted = allRows.length >= totalCount;
-    const pageSize = 40;
+    let slugIndex = null;
+
+    function normalizeName(name) {
+      return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    function resolveSlug(name, explicit) {
+      const trimmed = explicit ? String(explicit).trim() : '';
+      if (trimmed) return trimmed;
+      if (!slugIndex) return '';
+      return slugIndex.get(normalizeName(name)) || '';
+    }
+
+    function stockHref(slug) {
+      const base = '/mutual-funds/smart-money/stock-signal/' + encodeURIComponent(slug);
+      const params = new URLSearchParams({
+        from: 'fund',
+        fundSlug: fundSlug.replace(/-holdings$/, '') + '-holdings',
+        fundName: fundName,
+      });
+      return base + '?' + params.toString();
+    }
 
     function rowHtml(h, index) {
       const stripe = index % 2 === 0 ? '' : ' bg-surface-50 dark:bg-surface-800/50';
-      const slug = h.stockSlug ? String(h.stockSlug).trim() : '';
+      const slug = resolveSlug(h.name, h.stockSlug);
+      const safeName = String(h.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeSector = String(h.sector || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const nameCell = slug
-        ? '<a href="/mutual-funds/smart-money/stock-signal/' + encodeURIComponent(slug) + '" class="font-medium text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">' + h.name + '</a>'
-        : '<span class="font-medium text-sm text-surface-900 dark:text-white">' + h.name + '</span>';
+        ? '<a href="' + stockHref(slug) + '" class="font-medium text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">' + safeName + '</a>'
+        : '<span class="font-medium text-sm text-surface-900 dark:text-white">' + safeName + '</span>';
       return (
         '<div class="grid grid-cols-12 gap-4 px-4 py-2.5 text-sm items-center' + stripe + '" data-holding-row>' +
         '<div class="col-span-1 text-xs text-surface-400">' + (index + 1) + '</div>' +
         '<div class="col-span-5">' + nameCell +
-        '<p class="text-[10px] text-surface-400 md:hidden">' + (h.sector || '') + '</p></div>' +
-        '<div class="col-span-3 text-xs text-surface-500 hidden md:block">' + (h.sector || '') + '</div>' +
+        '<p class="text-[10px] text-surface-400 md:hidden">' + safeSector + '</p></div>' +
+        '<div class="col-span-3 text-xs text-surface-500 hidden md:block">' + safeSector + '</div>' +
         '<div class="col-span-3 text-right"><span class="text-sm font-semibold text-primary-600">' + h.pct + '%</span></div>' +
         '</div>'
       );
     }
 
     function render() {
-      const slice = allRows.slice(0, visibleLimit);
-      tbody.innerHTML = slice.map(function (h, i) { return rowHtml(h, i); }).join('');
+      tbody.innerHTML = allRows.map(function (h, i) { return rowHtml(h, i); }).join('');
       const shownEl = root.querySelector('[data-fund-holdings-shown]');
-      if (shownEl) shownEl.textContent = String(Math.min(visibleLimit, allRows.length));
-      const left = fetchExhausted
-        ? Math.max(0, allRows.length - visibleLimit)
-        : Math.max(0, totalCount - visibleLimit);
-      if (left <= 0) {
-        btn.remove();
-        return;
-      }
-      btn.textContent = 'Show more (' + left + ' remaining)';
-      btn.disabled = false;
+      const totalEl = root.querySelector('[data-fund-holdings-total]');
+      if (shownEl) shownEl.textContent = String(allRows.length);
+      if (totalEl) totalEl.textContent = String(Math.max(totalCount, allRows.length));
     }
 
-    btn.addEventListener('click', function () {
-      if (visibleLimit < allRows.length) {
-        visibleLimit = Math.min(visibleLimit + pageSize, allRows.length);
-        render();
-        return;
+    function loadSlugIndex() {
+      if (slugIndex) return Promise.resolve(slugIndex);
+      function ingest(rows) {
+        if (!Array.isArray(rows)) return;
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          if (!row.stockSlug || !row.stockName) continue;
+          var key = normalizeName(row.stockName);
+          if (!slugIndex.has(key)) slugIndex.set(key, row.stockSlug);
+        }
       }
-      if (fetchExhausted) return;
-      btn.disabled = true;
-      btn.textContent = 'Loading…';
-      fetch('/data/fund-holdings-by-slug/' + encodeURIComponent(fundSlug) + '.json')
+      slugIndex = new Map();
+      return fetch('/data/top-stocks.json')
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (data) {
+          if (data && data.buckets) {
+            for (var bucket of Object.values(data.buckets)) ingest(bucket);
+          }
+          return fetch('/data/smart-money-signals-index.json')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (index) {
+              var latest = index && index.months && index.months[0] && index.months[0].label;
+              if (!latest) return slugIndex;
+              var monthSlug = latest.toLowerCase().replace(/\s+/g, '-');
+              return fetch('/data/smart-money-signals/' + monthSlug + '--search.json')
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (searchRows) {
+                  ingest(searchRows);
+                  return slugIndex;
+                });
+            });
+        })
+        .catch(function () {
+          slugIndex = slugIndex || new Map();
+          return slugIndex;
+        });
+    }
+
+    function fetchFullHoldings() {
+      return fetch('/data/fund-holdings-by-slug/' + encodeURIComponent(fundSlug) + '.json')
         .then(function (res) { return res.ok ? res.json() : null; })
         .then(function (data) {
           const stocks = (data && data.stocks) || [];
-          if (stocks.length > allRows.length) {
+          if (!stocks.length) return;
+          return loadSlugIndex().then(function () {
             allRows = stocks.map(function (h) {
               return {
                 name: String(h.name || ''),
                 sector: String(h.sector || ''),
                 pct: h.pct != null ? Number(h.pct) : 0,
-                stockSlug: h.stockSlug ? String(h.stockSlug) : undefined,
+                stockSlug: resolveSlug(String(h.name || ''), h.stockSlug),
               };
             });
-          }
-          fetchExhausted = !totalCount || allRows.length >= totalCount;
-          visibleLimit = Math.min(visibleLimit + pageSize, allRows.length);
-          render();
-        })
-        .catch(function () {
-          btn.disabled = false;
-          btn.textContent = 'Show more (' + Math.max(0, totalCount - visibleLimit) + ' remaining)';
+            render();
+          });
         });
-    });
+    }
+
+    function enhanceRows() {
+      return loadSlugIndex().then(function () {
+        var changed = false;
+        allRows = allRows.map(function (h) {
+          var slug = resolveSlug(h.name, h.stockSlug);
+          if (slug && slug !== h.stockSlug) {
+            changed = true;
+            return { name: h.name, sector: h.sector, pct: h.pct, stockSlug: slug };
+          }
+          if (slug && !h.stockSlug) {
+            changed = true;
+            return { name: h.name, sector: h.sector, pct: h.pct, stockSlug: slug };
+          }
+          return h;
+        });
+        if (changed) render();
+      });
+    }
+
+    var bootstrap = needsClientFetch
+      ? loadSlugIndex().then(function () { return fetchFullHoldings(); })
+      : enhanceRows();
+
+    bootstrap.catch(function () {});
   })();
 </script>

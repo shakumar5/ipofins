@@ -1,9 +1,8 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import MfSectionHeader from '../../../components/funds/MfSectionHeader.astro';
-import FundOverlapLoader from '../../../components/funds/FundOverlapLoader.tsx';
+import FundOverlapStaticIndex from '../../../components/funds/FundOverlapStaticIndex.astro';
 import { mfTabConfig } from '../../../lib/mf-section-config';
-
 const cfg = mfTabConfig('fund-overlap');
 
 const jsonLd = {
@@ -40,6 +39,5 @@ const jsonLd = {
   </section>
 
   <section class="container-wide pb-12">
-    <FundOverlapLoader client:load />
-  </section>
-</BaseLayout>
+    <FundOverlapStaticIndex />
+  </section></BaseLayout>

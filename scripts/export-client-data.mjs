@@ -136,9 +136,40 @@ function mergeHoldingsPreferMoreStocks(primary, supplemental) {
   return merged;
 }
 
-function writeFundHoldingsBySlugExports(holdings) {
+function normalizeStockNameKey(name) {
+  return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function buildStockSlugLookupFromTopStocks() {
+  const map = new Map();
+  const topPath = join(OUT_DIR, 'top-stocks.json');
+  if (!existsSync(topPath)) return map;
+  try {
+    const top = JSON.parse(readFileSync(topPath, 'utf-8'));
+    for (const rows of Object.values(top.buckets || {})) {
+      if (!Array.isArray(rows)) continue;
+      for (const row of rows) {
+        if (!row.stockSlug || !row.stockName) continue;
+        const key = normalizeStockNameKey(row.stockName);
+        if (!map.has(key)) map.set(key, row.stockSlug);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return map;
+}
+
+function resolveExportStockSlug(name, explicit, lookup) {
+  const trimmed = explicit ? String(explicit).trim() : '';
+  if (trimmed) return trimmed;
+  return lookup.get(normalizeStockNameKey(name)) || '';
+}
+
+function writeFundHoldingsBySlugExports(holdings, slugLookup = null) {
   const dir = join(OUT_DIR, 'fund-holdings-by-slug');
   mkdirSync(dir, { recursive: true });
+  const lookup = slugLookup || buildStockSlugLookupFromTopStocks();
   const months = holdings.months || [];
   let count = 0;
   for (const [slug, fund] of Object.entries(holdings.holdings || {})) {
@@ -153,7 +184,7 @@ function writeFundHoldingsBySlugExports(holdings) {
         month,
         stocks: stocks.map((h) => ({
           name: h.name,
-          stockSlug: h.stockSlug || '',
+          stockSlug: resolveExportStockSlug(h.name, h.stockSlug, lookup),
           sector: h.sector || '',
           pct: h.pct ?? 0,
         })),
@@ -162,6 +193,41 @@ function writeFundHoldingsBySlugExports(holdings) {
     count++;
   }
   console.log(`  ✓ fund-holdings-by-slug/ (${count} funds)`);
+}
+
+/** Re-write per-fund holdings JSON with stock slugs after top-stocks export. */
+function enrichFundHoldingsBySlugStockSlugs() {
+  const dir = join(OUT_DIR, 'fund-holdings-by-slug');
+  if (!existsSync(dir)) return 0;
+  const lookup = buildStockSlugLookupFromTopStocks();
+  if (!lookup.size) return 0;
+  let files = 0;
+  let enriched = 0;
+  for (const fileName of readdirSync(dir)) {
+    if (!fileName.endsWith('.json')) continue;
+    const filePath = join(dir, fileName);
+    let data;
+    try {
+      data = JSON.parse(readFileSync(filePath, 'utf-8'));
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(data.stocks)) continue;
+    let changed = false;
+    data.stocks = data.stocks.map((h) => {
+      const slug = resolveExportStockSlug(h.name, h.stockSlug, lookup);
+      if (slug && slug !== (h.stockSlug || '')) {
+        changed = true;
+        enriched++;
+        return { ...h, stockSlug: slug };
+      }
+      return h;
+    });
+    if (changed) writeFileSync(filePath, JSON.stringify(data));
+    files++;
+  }
+  if (enriched) console.log(`  ✓ fund-holdings-by-slug slug enrichment (${enriched} stocks in ${files} funds)`);
+  return enriched;
 }
 
 async function loadHoldingsFromDb() {
@@ -877,6 +943,7 @@ async function main() {
   }
   verifyFundOverlapExports(aliases);
   verifySmartMoneyExports();
+  enrichFundHoldingsBySlugStockSlugs();
   doneFinalize();
 
   const totalSec = ((Date.now() - totalStart) / 1000).toFixed(1);
