@@ -8,6 +8,7 @@ import {
   readFundHoldingsIndexFromDisk,
   readHoldingsCompareIndexFromDisk,
   readPortfolioOverlapFromDisk,
+  supplementHoldingsIndexFromHub,
 } from '../holdings-compare-server';
 import { LISTABLE_EQUITY_CATEGORIES } from '../holdings-utils';
 import { fundHoldingsPath, resolveDetailSlug, enrichLinkMetaWithOverlap } from '../fund-detail-slug';
@@ -115,7 +116,8 @@ async function loadAllFunds(): Promise<FundRecord[]> {
 
 /** Funds with holdings — builds detail pages for listable Direct Plan funds. */
 export async function getFundsWithHoldings(): Promise<FundRecord[]> {
-  const disk = readFundHoldingsIndexFromDisk();
+  const rawDisk = readFundHoldingsIndexFromDisk();
+  const disk = rawDisk?.length ? supplementHoldingsIndexFromHub(rawDisk) : rawDisk;
   if (disk?.length) {
     return disk.map((f) => ({
       name: f.name,

@@ -269,11 +269,22 @@ export function signalDirection(
   netFundFlow: number,
   netWeightChangePct = 0,
 ): SignalDirection {
-  if (netFundFlow > 0) return 'accumulation';
-  if (netFundFlow < 0) return 'distribution';
-  if (netWeightChangePct > 0) return 'accumulation';
-  if (netWeightChangePct < 0) return 'distribution';
-  return 'neutral';
+  const flowDir: SignalDirection | null =
+    netFundFlow > 0 ? 'accumulation' : netFundFlow < 0 ? 'distribution' : null;
+  const weightDir: SignalDirection | null =
+    netWeightChangePct > 0 ? 'accumulation' : netWeightChangePct < 0 ? 'distribution' : null;
+
+  if (flowDir && weightDir) {
+    if (flowDir === weightDir) return flowDir;
+    // Aggregate weight reflects net institutional positioning; fund-event counts can diverge
+    // when many small funds trim while larger holders add (or the reverse).
+    if (netWeightChangePct > 0) return 'accumulation';
+    if (netWeightChangePct < 0 && Math.abs(netWeightChangePct) >= 1) return 'distribution';
+    if (Math.abs(netFundFlow) >= 10) return flowDir;
+    return flowDir;
+  }
+
+  return weightDir ?? flowDir ?? 'neutral';
 }
 
 /** Conviction score (peer rank) + flow direction → user-facing signal label. */
@@ -302,6 +313,28 @@ export function deriveSignal(
   return { signal: 'Neutral', emoji: '⚪' };
 }
 
+type SignalResolvableRow = Pick<
+  SmartMoneySignalRow,
+  | 'convictionScore'
+  | 'netBuying'
+  | 'netWeightChangePct'
+  | 'increasedCount'
+  | 'decreasedCount'
+  | 'freshEntries'
+  | 'completeExits'
+>;
+
+/** Always derive label from live metrics — avoids stale baked JSON in list UI. */
+export function resolveSignalForRow(row: SignalResolvableRow): {
+  signal: SmartMoneySignalType;
+  emoji: string;
+} {
+  const netFlow =
+    row.netBuying ??
+    netFundFlow(row.increasedCount, row.decreasedCount, row.freshEntries, row.completeExits);
+  return deriveSignal(row.convictionScore, netFlow, row.netWeightChangePct ?? 0);
+}
+
 export function amcInstitutionalConfidence(amcCount: number): { label: string; stars: number } {
   if (amcCount >= 20) return { label: 'Very High', stars: 5 };
   if (amcCount >= 15) return { label: 'High', stars: 4 };
@@ -321,14 +354,28 @@ export function hydrateSignalListRow(
     row.institutionalConfidence != null && row.confidenceStars != null
       ? { label: row.institutionalConfidence, stars: row.confidenceStars }
       : amcInstitutionalConfidence(row.amcCount ?? 0);
+  const netFlow =
+    row.netBuying ??
+    netFundFlow(row.increasedCount, row.decreasedCount, row.freshEntries, row.completeExits);
+  const { signal, emoji } = deriveSignal(row.convictionScore, netFlow, row.netWeightChangePct ?? 0);
 
   return {
     ...row,
     month,
     category,
+    netBuying: netFlow,
+    signal,
+    signalEmoji: emoji,
     institutionalConfidence: conf.label,
     confidenceStars: conf.stars,
     topFundHolders: row.topFundHolders ?? [],
+    interpretation: buildInterpretation(row.stockName, signal, {
+      netFundFlow: netFlow,
+      freshEntries: row.freshEntries,
+      convictionScore: row.convictionScore,
+      category,
+      netWeightChangePct: row.netWeightChangePct,
+    }),
   };
 }
 

@@ -655,6 +655,21 @@ export async function upsertExpenseRatiosFromAMFI(terRecords, terMonth) {
     updated++;
   }
 
+  // Copy direct TER onto -direct-plan rows when base slug has TER but direct plan does not.
+  const copied = await sql`
+    UPDATE funds f_direct
+    SET expense_ratio = f_base.expense_ratio, updated_at = NOW()
+    FROM funds f_base
+    WHERE f_direct.slug LIKE '%-direct-plan'
+      AND f_direct.is_active = true
+      AND f_base.slug = regexp_replace(f_direct.slug, '-direct-plan$', '')
+      AND f_base.id <> f_direct.id
+      AND f_base.expense_ratio IS NOT NULL
+      AND f_direct.expense_ratio IS NULL
+    RETURNING f_direct.id
+  `;
+  updated += copied.length;
+
   // Secondary pass: match AMFI rows not hit via fund.name (full TER scheme label)
   for (const row of terRecords) {
     const schemeName = String(row.Scheme_Name || '').trim();
@@ -662,10 +677,15 @@ export async function upsertExpenseRatiosFromAMFI(terRecords, terMonth) {
 
     const isDirect = /\bdirect\b/i.test(schemeName);
     const isRegular = /\bregular\b/i.test(schemeName);
-    if (!isDirect && !isRegular) continue;
+    const directTer = parseFloat(String(row.D_TER ?? row.TER_total ?? row.TER ?? '').replace(/%/g, ''));
+    const regularTer = parseFloat(String(row.R_TER ?? '').replace(/%/g, ''));
+    const ter = isRegular
+      ? (Number.isFinite(regularTer) ? regularTer : null)
+      : (Number.isFinite(directTer) ? directTer : null);
+    if (ter == null || !Number.isFinite(ter)) continue;
 
     const key = normalizeTerSchemeName(schemeName);
-    const passKey = `${key}|${isDirect ? 'd' : 'r'}`;
+    const passKey = `${key}|${isDirect ? 'd' : isRegular ? 'r' : 'd'}`;
     if (matchedKeys.has(passKey)) continue;
 
     const fund = [...funds].find((f) => {
@@ -674,9 +694,6 @@ export async function upsertExpenseRatiosFromAMFI(terRecords, terMonth) {
       return isDirect ? f.slug.endsWith('-direct-plan') : !f.slug.endsWith('-direct-plan');
     });
     if (!fund) continue;
-
-    const ter = parseFloat(String(row.TER_total ?? row.TER ?? '').replace(/%/g, ''));
-    if (!Number.isFinite(ter)) continue;
 
     matched++;
     matchedKeys.add(passKey);
@@ -698,10 +715,13 @@ export async function upsertExpenseRatiosFromAMFI(terRecords, terMonth) {
 
 /** Fetch latest AMFI TER and upsert funds.expense_ratio (used by monthly holdings pipeline). */
 export async function syncExpenseRatiosFromAMFI(monthArg = null) {
-  const { fetchAMFITERRecords, financialYearForDate } = await import('./amfi-ter.mjs');
+  const { fetchAMFITERRecordsWithFallback, financialYearForDate } = await import('./amfi-ter.mjs');
   requireDb();
   const fy = financialYearForDate();
-  const { month, records } = await fetchAMFITERRecords(monthArg, fy);
+  const { month, records, apiRecords, csvRecords } = await fetchAMFITERRecordsWithFallback(
+    monthArg,
+    fy,
+  );
   const result = await upsertExpenseRatiosFromAMFI(records, month);
-  return { month, records: records.length, ...result };
+  return { month, records: records.length, apiRecords, csvRecords, ...result };
 }

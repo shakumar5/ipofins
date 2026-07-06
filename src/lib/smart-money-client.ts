@@ -88,8 +88,8 @@ function mergeSignalWithDetail(
     ...(detail.fundActivity ? { fundActivity: detail.fundActivity } : {}),
     ...(detail.topFundHolders?.length ? { topFundHolders: detail.topFundHolders } : {}),
     interpretation:
-      detail.interpretation ||
       list.interpretation ||
+      detail.interpretation ||
       buildInterpretation(list.stockName, list.signal),
   };
 }
@@ -149,11 +149,8 @@ export async function loadSignalsIndex(): Promise<SignalsIndex> {
 }
 
 export async function loadSignalsSearchIndex(month: string): Promise<SignalSearchEntry[]> {
+  const index = await loadSignalsIndex();
   try {
-    const file = await fetchJsonCached<SignalsSearchIndexFile>(signalSearchPublicUrl(month));
-    return file.stocks;
-  } catch {
-    const index = await loadSignalsIndex();
     const rows = await loadSignalsAllCategories(month, index);
     return dedupeSignalsByStock(rows)
       .sort((a, b) => b.convictionScore - a.convictionScore)
@@ -166,6 +163,9 @@ export async function loadSignalsSearchIndex(month: string): Promise<SignalSearc
         signal: row.signal,
         ...(row.nseSymbol ? { nseSymbol: row.nseSymbol } : {}),
       }));
+  } catch {
+    const file = await fetchJsonCached<SignalsSearchIndexFile>(signalSearchPublicUrl(month));
+    return file.stocks;
   }
 }
 

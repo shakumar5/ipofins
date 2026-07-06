@@ -129,19 +129,27 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
       data = data.filter(f => f.name.toLowerCase().includes(normalizedSearch));
     }
     data = [...data].sort((a, b) => {
+      const dir = sortDir === 'desc' ? 1 : -1;
+
       if (sortBy === 'holdings') {
         const aH = a.hasHoldings ? 1 : 0;
         const bH = b.hasHoldings ? 1 : 0;
-        return sortDir === 'desc' ? bH - aH : aH - bH;
-      }
-      if (sortBy === 'stocks') {
+        if (aH !== bH) return dir * (bH - aH);
         const aVal = a.stockCount ?? 0;
         const bVal = b.stockCount ?? 0;
-        return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
+        return dir * (bVal - aVal);
+      }
+      if (sortBy === 'stocks') {
+        const aH = a.hasHoldings ? 1 : 0;
+        const bH = b.hasHoldings ? 1 : 0;
+        if (aH !== bH) return dir * (bH - aH);
+        const aVal = a.stockCount ?? 0;
+        const bVal = b.stockCount ?? 0;
+        return dir * (bVal - aVal);
       }
       const aVal = (a[sortBy] as number) || 0;
       const bVal = (b[sortBy] as number) || 0;
-      return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
+      return dir * (bVal - aVal);
     });
     return data;
   }, [funds, catFilter, normalizedSearch, sortBy, sortDir]);
@@ -157,14 +165,16 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
     tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleSort = (col: typeof sortBy) => {
+  const handleSort = (col: SortKey) => {
     startTransition(() => {
-      if (sortBy === col) {
-        setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
-      } else {
-        setSortBy(col);
+      setSortBy((prev) => {
+        if (prev === col) {
+          setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+          return prev;
+        }
         setSortDir('desc');
-      }
+        return col;
+      });
     });
   };
 
@@ -270,21 +280,28 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
           </div>
         </div>
         <div className="text-center">
-          <button onClick={() => handleSort('nav')} className="hover:text-blue-600 cursor-pointer">NAV<SortIcon col="nav" /></button>
+          <button onClick={() => handleSort('nav')} type="button" className="hover:text-blue-600 cursor-pointer">NAV<SortIcon col="nav" /></button>
         </div>
         <div className="text-center">
-          <button onClick={() => handleSort('returns1y')} className="hover:text-blue-600 cursor-pointer">1Y<SortIcon col="returns1y" /></button>
+          <button onClick={() => handleSort('returns1y')} type="button" className="hover:text-blue-600 cursor-pointer">1Y<SortIcon col="returns1y" /></button>
         </div>
         <div className="text-center">
-          <button onClick={() => handleSort('returns3y')} className="hover:text-blue-600 cursor-pointer">3Y<SortIcon col="returns3y" /></button>
+          <button onClick={() => handleSort('returns3y')} type="button" className="hover:text-blue-600 cursor-pointer">3Y<SortIcon col="returns3y" /></button>
         </div>
         <div className="text-center">
-          <button onClick={() => handleSort('returns5y')} className="hover:text-blue-600 cursor-pointer">5Y<SortIcon col="returns5y" /></button>
+          <button onClick={() => handleSort('returns5y')} type="button" className="hover:text-blue-600 cursor-pointer">5Y<SortIcon col="returns5y" /></button>
         </div>
         <div className="text-center">Rating</div>
         <div className="text-center">Risk</div>
         <div className="text-center">
-          <button onClick={() => handleSort('holdings')} className="hover:text-blue-600 cursor-pointer">Holdings<SortIcon col="holdings" /></button>
+          <button
+            type="button"
+            onClick={() => handleSort('holdings')}
+            className="hover:text-blue-600 cursor-pointer"
+            title="Sort by holdings availability, then number of stocks"
+          >
+            Holdings<SortIcon col="holdings" />
+          </button>
         </div>
         <div className="text-center">
           <button
@@ -307,7 +324,7 @@ export default function FundTable({ funds, categories, defaultCategory = 'All', 
             onClick={() => handleSort(col)}
             className={`text-xs px-2 py-1 rounded ${sortBy === col ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-blue-600'}`}
           >
-            {col === 'nav' ? 'NAV' : col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : col === 'stocks' ? 'Stocks' : 'Portfolio'}
+            {col === 'nav' ? 'NAV' : col === 'returns1y' ? '1Y' : col === 'returns3y' ? '3Y' : col === 'returns5y' ? '5Y' : col === 'stocks' ? 'Stocks' : 'Holdings'}
             {sortBy === col && (sortDir === 'desc' ? ' ↓' : ' ↑')}
           </button>
         ))}

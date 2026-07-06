@@ -115,11 +115,19 @@ export function scoreToSignal(score) {
 }
 
 export function signalDirection(netFundFlow, netWeightChangePct = 0) {
-  if (netFundFlow > 0) return 'accumulation';
-  if (netFundFlow < 0) return 'distribution';
-  if (netWeightChangePct > 0) return 'accumulation';
-  if (netWeightChangePct < 0) return 'distribution';
-  return 'neutral';
+  const flowDir = netFundFlow > 0 ? 'accumulation' : netFundFlow < 0 ? 'distribution' : null;
+  const weightDir =
+    netWeightChangePct > 0 ? 'accumulation' : netWeightChangePct < 0 ? 'distribution' : null;
+
+  if (flowDir && weightDir) {
+    if (flowDir === weightDir) return flowDir;
+    if (netWeightChangePct > 0) return 'accumulation';
+    if (netWeightChangePct < 0 && Math.abs(netWeightChangePct) >= 1) return 'distribution';
+    if (Math.abs(netFundFlow) >= 10) return flowDir;
+    return flowDir;
+  }
+
+  return weightDir ?? flowDir ?? 'neutral';
 }
 
 export function deriveSignal(convictionScore, netFundFlow, netWeightChangePct = 0) {

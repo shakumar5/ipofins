@@ -1,11 +1,18 @@
 /** Stock name normalization & quality scoring for deduplication. */
 
 import { isExcludedPlanName } from './canonical-fund-filter.mjs';
+import { hasListingCode } from './listing-codes.mjs';
 
 /** Indian equity ISIN (INE…) or alternate IN0… prefix from AMFI disclosures. */
 export function isValidEquityIsin(isin) {
   const s = String(isin || '').trim().toUpperCase();
   return s.startsWith('INE') || s.startsWith('IN0');
+}
+
+/** Twelve-character ISIN from AMC disclosure (Indian or foreign listed equity). */
+export function normalizeDisclosureIsin(isin) {
+  const s = String(isin || '').trim().toUpperCase();
+  return /^[A-Z0-9]{12}$/.test(s) ? s : '';
 }
 
 export function normalizeStockName(name) {
@@ -19,6 +26,73 @@ export function normalizeStockName(name) {
     .trim()
     .replace(/\bltd\s*$/g, '')
     .trim();
+}
+
+/** Repair AMC/DB names truncated before "td" — e.g. "INTERNATIONAL L" → "INTERNATIONAL Ltd". */
+export function repairTruncatedStockName(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return raw;
+  if (/\s+L\.?$/i.test(raw) && !/\b(LTD|LIMITED)\b/i.test(raw)) {
+    return raw.replace(/\s+L\.?$/i, ' Ltd');
+  }
+  return raw;
+}
+
+/** AMC vs index spelling variants (abbreviations, Pvt noise, &/and). */
+export function expandStockNameTextVariants(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return [];
+  const variants = new Set([raw]);
+  const repaired = repairTruncatedStockName(raw);
+  if (repaired !== raw) variants.add(repaired);
+
+  const transforms = [
+    (s) => s.replace(/\bpetrochem\b/gi, 'petro'),
+    (s) => s.replace(/\bpetrochemicals\b/gi, 'petro'),
+    (s) => s.replace(/\bcorporation\b/gi, 'corp'),
+    (s) => s.replace(/\s+&\s+/g, ' and '),
+    (s) => s.replace(/\band\b/gi, '').replace(/\s+/g, ' ').trim(),
+    (s) => s.replace(/\s+(pvt|private)\.?\b/gi, '').replace(/\s+/g, ' ').trim(),
+  ];
+
+  for (const fn of transforms) {
+    for (const v of [...variants]) {
+      const t = fn(v);
+      if (t && t !== v) variants.add(t);
+    }
+  }
+  return [...variants];
+}
+
+/** Keys for name→slug lookup (AMC labels often include tickers in parentheses). */
+export function stockNameLookupKeys(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return [];
+  const textVariants = new Set(expandStockNameTextVariants(raw));
+
+  const withoutParen = raw.replace(/\s*\([^)]*\)\s*$/g, '').trim();
+  if (withoutParen && withoutParen !== raw) {
+    for (const v of expandStockNameTextVariants(withoutParen)) textVariants.add(v);
+  }
+
+  const keys = new Set();
+  for (const variant of textVariants) {
+    keys.add(normalizeStockName(variant));
+    keys.add(variant.toLowerCase().replace(/\s+/g, ' ').trim());
+  }
+
+  const paren = raw.match(/\(([^)]+)\)\s*$/);
+  if (paren) {
+    const ticker = paren[1].trim();
+    if (ticker) {
+      for (const suffix of [' Limited', ' Ltd', ' Ltd.', '']) {
+        keys.add(normalizeStockName(`${ticker}${suffix}`));
+      }
+      keys.add(ticker.toLowerCase());
+    }
+  }
+
+  return [...keys].filter(Boolean);
 }
 
 const NON_EQUITY_SECTOR_LABELS = new Set(
@@ -216,11 +290,7 @@ export function stockGroupKey(stock) {
 }
 
 export function hasListingIdentity(listing) {
-  if (!listing) return false;
-  if (isValidEquityIsin(listing.isin)) return true;
-  if (listing.nse_symbol && String(listing.nse_symbol).trim()) return true;
-  if (listing.bse_code && String(listing.bse_code).trim()) return true;
-  return false;
+  return hasListingCode(listing || {});
 }
 
 /**

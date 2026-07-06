@@ -14,6 +14,21 @@ import {
 } from '../../lib/mf-hub-client';
 import type { MfHubFundRow } from '../../lib/mf-hub-build';
 
+function mergeHoldingsMetaWithBySlugCounts(
+  meta: FundHoldingsMetaDisk,
+  bySlugCounts: Record<string, number> | null,
+): FundHoldingsMetaDisk {
+  if (!bySlugCounts || !Object.keys(bySlugCounts).length) return meta;
+  const stockCounts = { ...(meta.stockCounts || {}) };
+  for (const [slug, count] of Object.entries(bySlugCounts)) {
+    stockCounts[slug] = Math.max(stockCounts[slug] ?? 0, count);
+  }
+  return {
+    slugs: meta.slugs,
+    stockCounts,
+  };
+}
+
 const FETCH_TIMEOUT_MS = 12000;
 
 import { withErrorBoundary } from '../withErrorBoundary';
@@ -52,15 +67,19 @@ function FundTableLoaderInner({ table, basePath, defaultCategory = 'All' }: Prop
             loadMfHubFunds(table),
             fetchJsonCached<FundHoldingsMetaDisk>(holdingsMetaUrl(hubMeta)).catch(() => null),
             fetchJsonCached<Record<string, string>>(holdingsAliasesUrl(hubMeta)).catch(() => ({})),
+            fetchJsonCached<Record<string, number>>(
+              `/data/fund-holdings-by-slug-counts.json${hubMeta?.dataDate && hubMeta.dataDate !== 'N/A' ? `?v=${encodeURIComponent(hubMeta.dataDate.replace(/\s+/g, '-'))}` : ''}`,
+            ).catch(() => null),
           ]),
           FETCH_TIMEOUT_MS,
         );
       })
       .then((result) => {
         if (cancelled || !result) return;
-        const [rows, holdingsMeta, amfiAliases] = result;
+        const [rows, holdingsMeta, amfiAliases, bySlugCounts] = result;
         if (holdingsMeta?.stockCounts && Object.keys(holdingsMeta.stockCounts).length > 0) {
-          setFunds(enrichMfHubFundsWithHoldings(rows, holdingsMeta, amfiAliases));
+          const mergedMeta = mergeHoldingsMetaWithBySlugCounts(holdingsMeta, bySlugCounts);
+          setFunds(enrichMfHubFundsWithHoldings(rows, mergedMeta, amfiAliases));
           return;
         }
         setFunds(rows);

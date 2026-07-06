@@ -92,9 +92,6 @@ export function enrichMfHubFundsWithHoldings(
         detailSlug: hit.detailSlug,
       };
     }
-    if (fund.hasHoldings === true && fund.stockCount && fund.stockCount > 0 && fund.detailSlug) {
-      return fund;
-    }
     return { ...fund, hasHoldings: false, stockCount: 0, detailSlug: null };
   });
 }

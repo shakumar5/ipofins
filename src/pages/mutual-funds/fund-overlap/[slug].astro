@@ -10,22 +10,44 @@ import {
   fundHoldingsDetailHref,
   fundOverlapDetailHref,
   MF_LIST_BACK,
+  resolveListBackFromParams,
 } from '../../../lib/list-back-nav';
 import { buildFundOverlapPageSlugResolver } from '../../../lib/fund-overlap-slug';
+import { readFundHoldingsAliasesFromDisk } from '../../../lib/holdings-compare-server';
 import ListBackLink from '../../../components/ListBackLink.astro';
 
 const defaultBack = defaultFundOverlapBack();
 const overlapBackVariants = Object.fromEntries(
   Object.entries(MF_LIST_BACK).filter(([key]) => key !== 'fund-overlap'),
 );
+const contextualBack = resolveListBackFromParams(
+  Astro.url.searchParams,
+  overlapBackVariants,
+  defaultBack.href,
+  defaultBack.label,
+);
 
 export async function getStaticPaths() {
   const funds = await getFundsWithOverlaps();
+  const holdingsAliases = readFundHoldingsAliasesFromDisk() ?? {};
+  const pathMap = new Map<string, { params: { slug: string }; props: { fundName: string } }>();
 
-  return funds.map((f) => ({
-    params: { slug: f.slug },
-    props: { fundName: f.name },
-  }));
+  for (const fund of funds) {
+    const register = (slug: string) => {
+      const key = String(slug || '').trim();
+      if (!key || pathMap.has(key)) return;
+      pathMap.set(key, { params: { slug: key }, props: { fundName: fund.name } });
+    };
+
+    register(fund.slug);
+
+    // Serve listable slugs (e.g. 360-one-focused-fund) as full static pages — no redirect flash.
+    for (const [listable, canonical] of Object.entries(holdingsAliases)) {
+      if (canonical === fund.slug) register(listable);
+    }
+  }
+
+  return [...pathMap.values()];
 }
 
 const { slug } = Astro.params;
@@ -77,8 +99,8 @@ const jsonLd = {
   <section class="container-wide pt-8 pb-4">
     <ListBackLink
       id="fund-overlap-detail-back"
-      defaultHref={defaultBack.href}
-      defaultLabel={defaultBack.label}
+      defaultHref={contextualBack.href}
+      defaultLabel={contextualBack.label}
       variants={overlapBackVariants}
       class="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 inline-flex items-center gap-1"
     />
@@ -197,5 +219,5 @@ const jsonLd = {
     try {
       sessionStorage.setItem('mf-list-back', JSON.stringify({ href: href, label: label }));
     } catch (e) {}
-  });
+  }, true);
 </script>

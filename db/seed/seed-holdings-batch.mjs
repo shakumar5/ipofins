@@ -22,6 +22,7 @@ import {
   isValidEquityIsin,
   sanitizeSectorName,
 } from '../../scripts/lib/stock-utils.mjs';
+import { normalizeEquityHoldingRow, normalizeStockListingRow, isInternationalEquityFund } from '../../scripts/lib/listing-codes.mjs';
 import { unpackMonthHoldings } from '../../scripts/lib/holdings-month.mjs';
 import { buildCuratedParserSlugSet } from '../../scripts/lib/canonical-fund-filter.mjs';
 import {
@@ -94,6 +95,21 @@ function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs, re
         const stockSlug = slugify(holding.name);
         if (!stockSlug || stockBySlug.has(stockSlug)) continue;
 
+        const fundContext = {
+          fundSlug,
+          fundName: fundData.name,
+          internationalFund: isInternationalEquityFund(fundSlug, fundData.name),
+        };
+
+        const stockRow = normalizeStockListingRow({
+          isin: listing.isin,
+          nse_symbol: listing.nse_symbol,
+          bse_code: listing.bse_code,
+          name: holding.name,
+          slug: stockSlug,
+        }, fundContext);
+        if (!stockRow) continue;
+
         const sectorName = sanitizeSectorName(holding.sector);
         if (sectorName) {
           const sectorSlug = slugify(sectorName);
@@ -103,9 +119,9 @@ function collectHoldingsStocks(holdingsData, targetDates, allowedParserSlugs, re
         }
 
         stockBySlug.set(stockSlug, {
-          isin: listing.isin,
-          nse_symbol: listing.nse_symbol,
-          bse_code: listing.bse_code,
+          isin: stockRow.isin,
+          nse_symbol: stockRow.nse_symbol,
+          bse_code: stockRow.bse_code,
           name: holding.name,
           slug: stockSlug,
           sectorSlug: sectorName ? slugify(sectorName) : null,
@@ -131,14 +147,16 @@ async function ensureStocksFromHoldings(holdingsData, targetDates, allowedParser
   const sectorRows = await sql`SELECT id, slug FROM sectors`;
   const sectorIdBySlug = Object.fromEntries(sectorRows.map((r) => [r.slug, r.id]));
 
-  const stockRows = stocks.map((stock) => ({
-    isin: stock.isin,
-    nse_symbol: stock.nse_symbol,
-    bse_code: stock.bse_code,
-    name: stock.name,
-    slug: stock.slug,
-    sector_id: stock.sectorSlug ? sectorIdBySlug[stock.sectorSlug] ?? null : null,
-  }));
+  const stockRows = stocks
+    .map((stock) => normalizeStockListingRow({
+      isin: stock.isin,
+      nse_symbol: stock.nse_symbol,
+      bse_code: stock.bse_code,
+      name: stock.name,
+      slug: stock.slug,
+      sector_id: stock.sectorSlug ? sectorIdBySlug[stock.sectorSlug] ?? null : null,
+    }))
+    .filter(Boolean);
 
   return bulkUpsertStocks(stockRows);
 }
@@ -229,6 +247,7 @@ async function main() {
   let holdingsListingFromMaster = 0;
   let holdingsNseFallback = 0;
   let holdingsBseFallback = 0;
+  let holdingsSkippedNoListing = 0;
 
   for (const [fundSlug, fundData] of Object.entries(holdingsData.holdings)) {
     if (allowedParserSlugs && !allowedParserSlugs.has(fundSlug)) continue;
@@ -253,14 +272,6 @@ async function main() {
       });
 
       for (const h of holdings) {
-        if (
-          !h?.name ||
-          isDebtInstrument(h.name, h.sector) ||
-          isMutualFundSchemeHolding(h.name, h.sector)
-        ) {
-          continue;
-        }
-
         const hadIsin = isValidEquityIsin(h.isin);
         const listing = resolveListing(h);
         if (!hadIsin && listing.isin) holdingsListingFromMaster++;
@@ -269,7 +280,38 @@ async function main() {
           holdingsBseFallback++;
         }
 
-        const stockId = resolveStockId({ ...h, ...listing });
+        const fundContext = {
+          fundSlug,
+          fundName: fundData.name,
+          internationalFund: isInternationalEquityFund(fundSlug, fundData.name),
+        };
+
+        const normalized = normalizeEquityHoldingRow(
+          {
+            ...h,
+            isin: listing.isin || h.isin,
+            nseSymbol: listing.nse_symbol,
+            bseCode: listing.bse_code,
+          },
+          { enrichFromSlug: false, fundContext },
+        );
+        if (!normalized) {
+          if (
+            h?.name &&
+            !isDebtInstrument(h.name, h.sector) &&
+            !isMutualFundSchemeHolding(h.name, h.sector)
+          ) {
+            holdingsSkippedNoListing++;
+          }
+          continue;
+        }
+
+        const stockId = resolveStockId({
+          ...h,
+          isin: normalized.isin,
+          nse_symbol: normalized.nseSymbol,
+          bse_code: normalized.bseCode,
+        });
         if (!stockId) continue;
         allRows.push({
           fund_id: fundId,
@@ -285,6 +327,7 @@ async function main() {
 
   console.log(`  Matched funds: ${matchedFunds} (${unmatchedFunds} unmatched)`);
   console.log(`  Listing backfill from master — ISIN: ${holdingsListingFromMaster}, NSE: ${holdingsNseFallback}, BSE: ${holdingsBseFallback}`);
+  console.log(`  Skipped (no ISIN/NSE/BSE): ${holdingsSkippedNoListing}`);
   console.log(`  Rows to insert: ${allRows.length}`);
 
   // Dedupe (same fund+stock+month can appear from overlapping disclosure files)

@@ -3,6 +3,7 @@
  */
 
 import pg from 'pg';
+import { normalizeStockListingRow } from './listing-codes.mjs';
 
 const { Pool } = pg;
 
@@ -92,7 +93,12 @@ export async function bulkUpsertSectors(rows, chunkSize = 200) {
  * Bulk upsert stocks from holdings disclosures.
  */
 export async function bulkUpsertStocks(rows, chunkSize = 500) {
-  const validRows = rows.filter((r) => r?.name && r?.slug);
+  const validRows = rows
+    .map((r) => {
+      if (!r?.name || !r?.slug) return null;
+      return normalizeStockListingRow(r);
+    })
+    .filter(Boolean);
   if (!validRows.length) return 0;
   const pool = getPgPool();
   let upserted = 0;

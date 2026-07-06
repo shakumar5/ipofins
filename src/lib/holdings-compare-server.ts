@@ -1,11 +1,18 @@
-/**
- * Build-time / SSR fallback for holdings compare pages when Neon is unavailable.
- * Reads exported static JSON from public/data/.
- */
-
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { normalizeStockName } from './holdings-utils';
+import {
+  buildSlugToListingMap,
+  enrichHoldingListingCodes,
+  resolveStockSlugFromListing,
+  type BhavcopyListingIndex,
+} from './stock-listing-resolve';
+import {
+  applyTerToFundRow,
+  loadFundTerBySlugFromDisk,
+} from '../../scripts/lib/fund-ter-export.mjs';
+import { normalizeEquityHoldingRow, isInternationalEquityFund } from './listing-codes';
 
 export interface HoldingsCompareIndexDisk {
   months: string[];
@@ -169,6 +176,90 @@ export interface FundHoldingsMetaDisk {
 let fundHoldingsIndexCache: FundHoldingsIndexDisk[] | null | undefined;
 let fundHoldingsMetaCache: FundHoldingsMetaDisk | null | undefined;
 let fundHoldingsAliasesCache: Record<string, string> | null | undefined;
+let mfHubAllCache: MfHubAllDiskRow[] | null | undefined;
+
+export interface MfHubAllDiskRow {
+  name: string;
+  slug: string;
+  category: string;
+  nav: number | null;
+  returns1y?: number | null;
+  returns3y?: number | null;
+  returns5y?: number | null;
+  aum?: string | null;
+  riskLevel?: string;
+  rating?: number | null;
+  hasHoldings?: boolean;
+  stockCount?: number;
+  detailSlug?: string | null;
+}
+
+function mfHubAllFilePath(): string | null {
+  for (const root of projectRoots()) {
+    for (const sub of ['public/data', 'dist/data']) {
+      const path = join(root, sub, 'mf-hub', 'all.json');
+      if (existsSync(path)) return path;
+    }
+  }
+  return null;
+}
+
+export function readMfHubAllFromDisk(): MfHubAllDiskRow[] | null {
+  if (mfHubAllCache !== undefined) return mfHubAllCache;
+  const path = mfHubAllFilePath();
+  if (!path) {
+    mfHubAllCache = null;
+    return null;
+  }
+  try {
+    mfHubAllCache = JSON.parse(readFileSync(path, 'utf-8')) as MfHubAllDiskRow[];
+    return mfHubAllCache;
+  } catch {
+    mfHubAllCache = null;
+    return null;
+  }
+}
+
+/** Add mf-hub rows flagged hasHoldings when fund-holdings-index export is stale vs meta/hub. */
+export function supplementHoldingsIndexFromHub(
+  index: FundHoldingsIndexDisk[],
+): FundHoldingsIndexDisk[] {
+  const hub = readMfHubAllFromDisk();
+  if (!hub?.length) return index;
+
+  const terBySlug = loadFundTerBySlugFromDisk();
+  const seen = new Set(index.map((f) => f.slug));
+  const out = index.map((row) => applyTerToFundRow(row, terBySlug));
+
+  for (const row of hub) {
+    const detailSlug = row.detailSlug?.trim();
+    if (!row.hasHoldings || !detailSlug || seen.has(detailSlug)) continue;
+    seen.add(detailSlug);
+    out.push(
+      applyTerToFundRow(
+        {
+          name: row.name,
+          slug: detailSlug,
+          category: row.category,
+          nav: row.nav ?? null,
+          returns1y: row.returns1y ?? null,
+          returns3y: row.returns3y ?? null,
+          returns5y: row.returns5y ?? null,
+          aum: row.aum ?? null,
+          riskLevel: row.riskLevel || 'moderate',
+          rating: row.rating ?? null,
+          schemeCode: '',
+          lastUpdated: null,
+          expenseRatio: null,
+          expenseRatioRegular: null,
+        },
+        terBySlug,
+      ),
+    );
+  }
+
+  return out;
+}
 
 /** Funds with static holdings detail pages (canonical funds.slug values). */
 export function readFundHoldingsIndexFromDisk(): FundHoldingsIndexDisk[] | null {
@@ -179,12 +270,69 @@ export function readFundHoldingsIndexFromDisk(): FundHoldingsIndexDisk[] | null 
     return null;
   }
   try {
-    fundHoldingsIndexCache = JSON.parse(readFileSync(path, 'utf-8')) as FundHoldingsIndexDisk[];
+    const raw = JSON.parse(readFileSync(path, 'utf-8')) as FundHoldingsIndexDisk[];
+    const terBySlug = loadFundTerBySlugFromDisk();
+    fundHoldingsIndexCache = raw.map((row) => applyTerToFundRow(row, terBySlug));
     return fundHoldingsIndexCache;
   } catch {
     fundHoldingsIndexCache = null;
     return null;
   }
+}
+
+function fundHoldingsBySlugDir(): string | null {
+  for (const root of projectRoots()) {
+    for (const sub of ['public/data', 'dist/data']) {
+      const dir = join(root, sub, 'fund-holdings-by-slug');
+      if (existsSync(dir)) return dir;
+    }
+  }
+  return null;
+}
+
+/** Prefer per-fund export lengths — meta DB counts can under-count vs full AMC disclosure rows. */
+export function readBySlugStockCountsFromDisk(): Record<string, number> {
+  const dir = fundHoldingsBySlugDir();
+  if (!dir) return {};
+
+  const counts: Record<string, number> = {};
+  for (const fileName of readdirSync(dir)) {
+    if (!fileName.endsWith('.json')) continue;
+    const slug = fileName.replace(/\.json$/, '');
+    try {
+      const data = JSON.parse(readFileSync(join(dir, fileName), 'utf-8')) as PerFundHoldingsDisk;
+      const n = data.stocks?.length ?? 0;
+      if (n > 0) counts[slug] = n;
+    } catch {
+      // skip bad file
+    }
+  }
+  return counts;
+}
+
+function reconcileMetaStockCounts(meta: FundHoldingsMetaDisk): FundHoldingsMetaDisk {
+  const bySlug = readBySlugStockCountsFromDisk();
+  if (!Object.keys(bySlug).length) return meta;
+
+  const stockCounts = { ...(meta.stockCounts || {}) };
+  for (const [slug, count] of Object.entries(bySlug)) {
+    stockCounts[slug] = Math.max(stockCounts[slug] ?? 0, count);
+  }
+
+  const aliases = readFundHoldingsAliasesFromDisk() ?? {};
+  for (const [listable, canonical] of Object.entries(aliases)) {
+    const canonicalCount = stockCounts[canonical];
+    if (canonicalCount != null && canonicalCount > 0) {
+      stockCounts[listable] = Math.max(stockCounts[listable] ?? 0, canonicalCount);
+    }
+  }
+
+  const slugs = [...new Set([
+    ...(meta.slugs || []),
+    ...Object.keys(stockCounts).filter((k) => (stockCounts[k] ?? 0) > 0),
+  ])];
+
+  return { slugs, stockCounts };
 }
 
 export function readFundHoldingsMetaFromDisk(): FundHoldingsMetaDisk | null {
@@ -195,7 +343,8 @@ export function readFundHoldingsMetaFromDisk(): FundHoldingsMetaDisk | null {
     return null;
   }
   try {
-    fundHoldingsMetaCache = JSON.parse(readFileSync(path, 'utf-8')) as FundHoldingsMetaDisk;
+    const raw = JSON.parse(readFileSync(path, 'utf-8')) as FundHoldingsMetaDisk;
+    fundHoldingsMetaCache = reconcileMetaStockCounts(raw);
     return fundHoldingsMetaCache;
   } catch {
     fundHoldingsMetaCache = null;
@@ -223,55 +372,68 @@ export function readFundHoldingsAliasesFromDisk(): Record<string, string> | null
 interface DiskHoldingStock {
   name: string;
   isin?: string;
+  nseSymbol?: string;
+  bseCode?: string;
   sector: string;
   pct: number;
   stockSlug?: string;
 }
 
-let stockNameSlugCache: Map<string, string> | null | undefined;
+let stockIsinSlugCache: Map<string, string> | null | undefined;
+let stockNseSlugCache: Map<string, string> | null | undefined;
+let stockBseSlugCache: Map<string, string> | null | undefined;
+let stockSlugListingCache: Map<string, import('./stock-listing-resolve').StockListingCodes> | null | undefined;
 
 function normalizeStockNameKey(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, ' ').trim();
+  return normalizeStockName(name);
 }
 
-/** Name → slug from exported top-stocks and smart-money signal search payloads. */
-function loadStockNameSlugIndex(): Map<string, string> {
-  if (stockNameSlugCache !== undefined) return stockNameSlugCache!;
+function holdingRowKey(isin: string | undefined | null, name: string): string {
+  const code = String(isin || '').trim().toUpperCase();
+  if (code) return `isin:${code}`;
+  return `name:${normalizeStockNameKey(name)}`;
+}
 
+function loadListingSlugIndex(fileName: string, normalizeKey: (k: string) => string): Map<string, string> {
   const map = new Map<string, string>();
-
-  const ingest = (stockSlug?: string, stockName?: string) => {
-    if (!stockSlug || !stockName) return;
-    const key = normalizeStockNameKey(stockName);
-    if (!map.has(key)) map.set(key, stockSlug);
-  };
-
-  const topPath = dataFilePath('top-stocks.json');
-  if (topPath) {
+  const indexPath = dataFilePath(fileName);
+  if (indexPath) {
     try {
-      const top = JSON.parse(readFileSync(topPath, 'utf-8')) as {
-        buckets?: Record<string, { stockSlug?: string; stockName?: string }[]>;
-      };
-      for (const rows of Object.values(top.buckets || {})) {
-        for (const row of rows) ingest(row.stockSlug, row.stockName);
+      const index = JSON.parse(readFileSync(indexPath, 'utf-8')) as Record<string, string>;
+      for (const [key, slug] of Object.entries(index)) {
+        const code = normalizeKey(String(key || ''));
+        const s = String(slug || '').trim();
+        if (code && s && !map.has(code)) map.set(code, s);
       }
     } catch {
       /* ignore */
     }
   }
+  return map;
+}
+
+/** ISIN → slug from exported stock index and per-fund holdings JSON. */
+function loadStockIsinSlugIndex(): Map<string, string> {
+  if (stockIsinSlugCache !== undefined) return stockIsinSlugCache!;
+
+  const map = loadListingSlugIndex('stock-isin-slug-index.json', (k) => k.trim().toUpperCase());
+  const ingest = (isin?: string, stockSlug?: string) => {
+    const code = String(isin || '').trim().toUpperCase();
+    const slug = String(stockSlug || '').trim();
+    if (!code || !slug || map.has(code)) return;
+    map.set(code, slug);
+  };
 
   for (const root of projectRoots()) {
-    const dir = join(root, 'public', 'data', 'smart-money-signals');
+    const dir = join(root, 'public', 'data', 'fund-holdings-by-slug');
     if (!existsSync(dir)) continue;
     try {
       for (const fileName of readdirSync(dir)) {
-        if (!fileName.endsWith('--search.json')) continue;
-        const rows = JSON.parse(readFileSync(join(dir, fileName), 'utf-8')) as {
-          stockSlug?: string;
-          stockName?: string;
-        }[];
-        if (!Array.isArray(rows)) continue;
-        for (const row of rows) ingest(row.stockSlug, row.stockName);
+        if (!fileName.endsWith('.json')) continue;
+        const data = JSON.parse(readFileSync(join(dir, fileName), 'utf-8')) as {
+          stocks?: { isin?: string; stockSlug?: string }[];
+        };
+        for (const row of data.stocks || []) ingest(row.isin, row.stockSlug);
       }
     } catch {
       /* ignore */
@@ -279,22 +441,223 @@ function loadStockNameSlugIndex(): Map<string, string> {
     break;
   }
 
-  stockNameSlugCache = map;
+  stockIsinSlugCache = map;
   return map;
 }
 
-export function resolveStockSlugFromDisk(name: string, explicit?: string | null): string | undefined {
-  const trimmed = explicit?.trim();
-  if (trimmed) return trimmed;
-  return loadStockNameSlugIndex().get(normalizeStockNameKey(name));
+function loadStockNseSlugIndex(): Map<string, string> {
+  if (stockNseSlugCache !== undefined) return stockNseSlugCache!;
+  const map = loadListingSlugIndex('stock-nse-slug-index.json', (k) => k.trim().toUpperCase());
+
+  for (const root of projectRoots()) {
+    const dir = join(root, 'public', 'data', 'smart-money-signals');
+    if (!existsSync(dir)) continue;
+    try {
+      for (const fileName of readdirSync(dir)) {
+        if (!fileName.endsWith('.json') || fileName.includes('--detail')) continue;
+        const parsed = JSON.parse(readFileSync(join(dir, fileName), 'utf-8')) as
+          | { nseSymbol?: string; stockSlug?: string }[]
+          | { stocks?: { nseSymbol?: string; stockSlug?: string }[]; rows?: { nseSymbol?: string; stockSlug?: string }[] };
+        const rows = Array.isArray(parsed)
+          ? parsed
+          : [...(parsed.stocks || []), ...(parsed.rows || [])];
+        for (const row of rows) {
+          const nse = String(row.nseSymbol || '').trim().toUpperCase();
+          const slug = String(row.stockSlug || '').trim();
+          if (nse && slug && !map.has(nse)) map.set(nse, slug);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    break;
+  }
+
+  stockNseSlugCache = map;
+  return map;
 }
 
-function mapDiskHoldingRow(stock: DiskHoldingStock, month?: string): Record<string, unknown> {
-  const stockSlug = resolveStockSlugFromDisk(stock.name, stock.stockSlug);
+function loadStockBseSlugIndex(): Map<string, string> {
+  if (stockBseSlugCache !== undefined) return stockBseSlugCache!;
+  stockBseSlugCache = loadListingSlugIndex('stock-bse-slug-index.json', (k) => k.trim());
+  return stockBseSlugCache;
+}
+
+let bhavcopyListingCache: BhavcopyListingIndex | null | undefined;
+
+function loadBhavcopyListingIndex(): BhavcopyListingIndex | null {
+  if (bhavcopyListingCache !== undefined) return bhavcopyListingCache;
+
+  const filePath = dataFilePath('stock-bhavcopy-listings.json');
+  if (!filePath) {
+    bhavcopyListingCache = null;
+    return null;
+  }
+
+  try {
+    const raw = JSON.parse(readFileSync(filePath, 'utf-8')) as {
+      byIsin?: Record<string, { isin?: string; nseSymbol?: string; bseCode?: string }>;
+      byNse?: Record<string, { isin?: string; nseSymbol?: string; bseCode?: string }>;
+      byBse?: Record<string, { isin?: string; nseSymbol?: string; bseCode?: string }>;
+    };
+
+    const toCodes = (entry?: { isin?: string; nseSymbol?: string; bseCode?: string }) => ({
+      isin: String(entry?.isin || '').trim().toUpperCase(),
+      nseSymbol: String(entry?.nseSymbol || '').trim().toUpperCase(),
+      bseCode: String(entry?.bseCode || '').trim(),
+    });
+
+    const loadMap = (obj?: Record<string, { isin?: string; nseSymbol?: string; bseCode?: string }>) => {
+      const map = new Map<string, import('./stock-listing-resolve').StockListingCodes>();
+      if (!obj) return map;
+      for (const [key, entry] of Object.entries(obj)) {
+        const code = String(key || '').trim();
+        if (!code) continue;
+        map.set(code, toCodes(entry));
+      }
+      return map;
+    };
+
+    bhavcopyListingCache = {
+      byIsin: loadMap(raw.byIsin),
+      byNse: loadMap(raw.byNse),
+      byBse: loadMap(raw.byBse),
+    };
+    return bhavcopyListingCache;
+  } catch {
+    bhavcopyListingCache = null;
+    return null;
+  }
+}
+
+/** slug → { isin, nse, bse } for recovering listing codes on holdings rows. */
+function loadStockSlugListingIndex(): Map<string, import('./stock-listing-resolve').StockListingCodes> {
+  if (stockSlugListingCache !== undefined) return stockSlugListingCache!;
+
+  const filePath = dataFilePath('stock-slug-listing-index.json');
+  if (filePath) {
+    try {
+      const raw = JSON.parse(readFileSync(filePath, 'utf-8')) as Record<
+        string,
+        { isin?: string; nseSymbol?: string; nse?: string; bseCode?: string; bse?: string }
+      >;
+      const map = new Map<string, import('./stock-listing-resolve').StockListingCodes>();
+      for (const [slug, codes] of Object.entries(raw)) {
+        const key = String(slug || '').trim();
+        if (!key) continue;
+        map.set(key, {
+          isin: String(codes.isin || '').trim().toUpperCase(),
+          nseSymbol: String(codes.nseSymbol || codes.nse || '').trim().toUpperCase(),
+          bseCode: String(codes.bseCode || codes.bse || '').trim(),
+        });
+      }
+      if (map.size > 0) {
+        stockSlugListingCache = map;
+        return map;
+      }
+    } catch {
+      /* fall through to build from listing indexes */
+    }
+  }
+
+  stockSlugListingCache = buildSlugToListingMap(
+    loadStockIsinSlugIndex(),
+    loadStockNseSlugIndex(),
+    loadStockBseSlugIndex(),
+  );
+  return stockSlugListingCache;
+}
+
+/** Resolve slug from listing identifiers only: ISIN → NSE → BSE. */
+export function resolveStockSlugFromDisk(
+  isin?: string | null,
+  nse?: string | null,
+  bse?: string | null,
+): string | undefined {
+  return resolveStockSlugFromListing(
+    isin || undefined,
+    nse || undefined,
+    bse || undefined,
+    loadStockIsinSlugIndex(),
+    loadStockNseSlugIndex(),
+    loadStockBseSlugIndex(),
+  );
+}
+
+/** Merge slug/isin from canonical per-fund export into a longer holdings list. */
+export function enrichHoldingsRowsWithSlugs(
+  rows: Record<string, unknown>[],
+  slugSource: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  const listingByKey = new Map<string, { isin?: string; nse?: string; bse?: string }>();
+  for (const row of slugSource) {
+    const name = String(row.name || '');
+    const isin = String(row.isin || '').trim().toUpperCase();
+    const nse = String(row.nse_symbol || row.nseSymbol || '').trim().toUpperCase();
+    const bse = String(row.bse_code || row.bseCode || '').trim();
+    listingByKey.set(holdingRowKey(isin, name), {
+      isin: isin || undefined,
+      nse: nse || undefined,
+      bse: bse || undefined,
+    });
+  }
+
+  return rows.map((row) => {
+    const name = String(row.name || '');
+    const isin = String(row.isin || '').trim().toUpperCase();
+    const key = holdingRowKey(isin, name);
+    const hit = listingByKey.get(key);
+    const stock_slug = resolveStockSlugFromDisk(
+      isin || hit?.isin,
+      String(row.nse_symbol || row.nseSymbol || hit?.nse || ''),
+      String(row.bse_code || row.bseCode || hit?.bse || ''),
+    );
+    return {
+      ...row,
+      name,
+      isin: isin || hit?.isin || '',
+      sector: String(row.sector || ''),
+      pct: row.pct != null ? Number(row.pct) : 0,
+      ...(stock_slug ? { stock_slug } : {}),
+    };
+  });
+}
+
+function mapDiskHoldingRow(
+  stock: DiskHoldingStock,
+  month?: string,
+  fundContext?: import('./listing-codes').FundListingContext,
+): Record<string, unknown> | null {
+  const listing = enrichHoldingListingCodes(
+    stock,
+    loadStockSlugListingIndex(),
+    loadBhavcopyListingIndex(),
+  );
+  const normalized = normalizeEquityHoldingRow(
+    {
+      ...stock,
+      isin: listing.isin,
+      nseSymbol: listing.nseSymbol,
+      bseCode: listing.bseCode,
+    },
+    { enrichFromSlug: false, fundContext },
+  );
+  if (!normalized) return null;
+
+  const stockSlug =
+    String(stock.stockSlug || '').trim() ||
+    resolveStockSlugFromDisk(
+      normalized.isin as string,
+      normalized.nseSymbol as string,
+      normalized.bseCode as string,
+    );
   return {
     name: stock.name,
     pct: stock.pct,
     sector: stock.sector || '',
+    isin: normalized.isin,
+    nse_symbol: normalized.nseSymbol,
+    bse_code: normalized.bseCode,
     month,
     ...(stockSlug ? { stock_slug: stockSlug } : {}),
   };
@@ -361,6 +724,12 @@ export function fundSlugCandidates(fundSlug: string): string[] {
       candidates.add(listable);
       candidates.add(page);
     }
+  }
+  const base = fundSlug.replace(/-holdings$/, '');
+  if (base.endsWith('-direct-plan')) {
+    candidates.add(base.replace(/-direct-plan$/, ''));
+  } else if (base && !base.endsWith('-direct-plan')) {
+    candidates.add(`${base}-direct-plan`);
   }
   return [...candidates];
 }
@@ -431,15 +800,31 @@ function readPerFundHoldingsFile(fundSlug: string): PerFundHoldingsDisk | null {
   return null;
 }
 
-/** Full latest-month holdings from per-fund export (preferred over AMC index chunks). */
-export function readFundHoldingsBySlugFromDisk(fundSlug: string): Record<string, unknown>[] | null {
+/** Prefer the slug variant with the most stocks (page slug often has a 20-row preview file). */
+function bestPerFundHoldingsAmongCandidates(fundSlug: string): { slug: string; file: PerFundHoldingsDisk } | null {
+  let best: { slug: string; file: PerFundHoldingsDisk; count: number } | null = null;
   for (const slug of fundSlugCandidates(fundSlug)) {
     const file = readPerFundHoldingsFile(slug);
-    if (!file?.stocks?.length) continue;
-    const month = file.month ? monthLabelToDate(file.month) : undefined;
-    return file.stocks.map((stock) => mapDiskHoldingRow(stock, month));
+    const count = file?.stocks?.length ?? 0;
+    if (count > 0 && (!best || count > best.count)) {
+      best = { slug, file, count };
+    }
   }
-  return null;
+  return best ? { slug: best.slug, file: best.file } : null;
+}
+
+/** Full latest-month holdings from per-fund export (preferred over AMC index chunks). */
+export function readFundHoldingsBySlugFromDisk(fundSlug: string): Record<string, unknown>[] | null {
+  const hit = bestPerFundHoldingsAmongCandidates(fundSlug);
+  if (!hit) return null;
+  const month = hit.file.month ? monthLabelToDate(hit.file.month) : undefined;
+  const fundContext = {
+    fundSlug: hit.slug,
+    internationalFund: isInternationalEquityFund(hit.slug),
+  };
+  return hit.file.stocks
+    .map((stock) => mapDiskHoldingRow(stock, month, fundContext))
+    .filter((row): row is Record<string, unknown> => row !== null);
 }
 
 /** Latest-month top holdings for fund detail pages (from export JSON, no Neon). */
@@ -448,25 +833,28 @@ export function readFundHoldingsRowsFromDisk(fundSlug: string): Record<string, u
   if (!slugIndex) return null;
 
   const monthIso = (monthLabel: string) => monthLabelToDate(monthLabel);
+  let best: { monthLabel: string; stocks: DiskHoldingStock[]; count: number } | null = null;
 
   for (const slug of fundSlugCandidates(fundSlug)) {
     const hit = slugIndex.get(slug);
-    if (!hit?.stocks?.length) continue;
-    const month = monthIso(hit.monthLabel);
-    return hit.stocks.map((stock) => mapDiskHoldingRow(stock, month));
+    const count = hit?.stocks?.length ?? 0;
+    if (count > 0 && (!best || count > best.count)) {
+      best = { monthLabel: hit!.monthLabel, stocks: hit!.stocks, count };
+    }
   }
 
-  return null;
+  if (!best) return null;
+  const month = monthIso(best.monthLabel);
+  return best.stocks.map((stock) => mapDiskHoldingRow(stock, month));
 }
 
+/** Count of holdings rows we can actually render (never inflated AMC totalStocks metadata). */
 export function readFundPortfolioStockCountFromDisk(fundSlug: string): number | null {
-  const meta = readFundHoldingsMetaFromDisk();
-  if (!meta?.stockCounts) return null;
+  const rows = readFundHoldingsBySlugFromDisk(fundSlug);
+  if (rows?.length) return rows.length;
 
-  for (const slug of fundSlugCandidates(fundSlug)) {
-    const count = meta.stockCounts[slug];
-    if (count != null && count > 0) return count;
-  }
+  const fromIndex = readFundHoldingsRowsFromDisk(fundSlug);
+  if (fromIndex?.length) return fromIndex.length;
 
   return null;
 }

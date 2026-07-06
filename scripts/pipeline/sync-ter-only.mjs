@@ -21,7 +21,7 @@ async function main() {
   console.log('\n  [1/1] Fetching TER + upserting to Neon...');
   const result = await syncExpenseRatiosFromAMFI();
   console.log(
-    `    ✅ TER ${result.month}: updated ${result.updated} funds (${result.matched} matched, ${result.records} AMFI rows)`,
+    `    ✅ TER ${result.month}: updated ${result.updated} funds (${result.matched} matched, ${result.records} merged rows; API ${result.apiRecords ?? 0}, CSV ${result.csvRecords ?? 0})`,
   );
 
   console.log('\n  ✅ TER sync complete — run `npm run build` to refresh fund detail pages\n');

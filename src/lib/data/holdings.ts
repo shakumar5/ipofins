@@ -7,15 +7,15 @@ import { buildFundOverlapPageSlugResolver } from '../fund-overlap-slug';
 import {
   monthsFromIndex,
   readFundHoldingsMetaFromDisk,
-  readFundHoldingsRowsFromDisk,
-  readFundHoldingsBySlugFromDisk,
   readFundPortfolioStockCountFromDisk,
   readFundOverlapIndexFromDisk,
   readFundOverlapsByFundFromDisk,
   fundSlugCandidates,
   readHoldingsCompareIndexFromDisk,
   readPortfolioOverlapFromDisk,
+  resolveStockSlugFromDisk,
 } from '../holdings-compare-server';
+import { resolveFundHoldingsFromDisk } from '../fund-holdings-resolve';
 import {
   computeTrackerStockWeights,
   filterTrackerSectorOptions,
@@ -773,24 +773,33 @@ export async function getFundPortfolioStockCount(fundSlug: string): Promise<numb
 }
 
 function mapFundHoldingRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
-  return rows.map((r) => ({
-    name: String(r.name || r.stock_name || ''),
-    stock_slug: r.stock_slug ? String(r.stock_slug) : undefined,
-    pct: r.pct != null ? Number(r.pct) : 0,
-    sector: String(r.sector || ''),
-    month: r.month,
-  }));
+  return rows.map((r) => {
+    const name = String(r.name || r.stock_name || '');
+    const isin = String(r.isin || '');
+    const stock_slug = resolveStockSlugFromDisk(
+      isin || undefined,
+      String(r.nse_symbol || r.nseSymbol || ''),
+      String(r.bse_code || r.bseCode || ''),
+    );
+    return {
+      name,
+      isin,
+      stock_slug,
+      pct: r.pct != null ? Number(r.pct) : 0,
+      sector: String(r.sector || ''),
+      month: r.month,
+    };
+  });
 }
 
 export async function getFundHoldings(fundSlug: string): Promise<Record<string, unknown>[]> {
-  const diskCandidates = [
-    readFundHoldingsBySlugFromDisk(fundSlug),
-    readFundHoldingsRowsFromDisk(fundSlug),
-  ].filter((rows): rows is Record<string, unknown>[] => Boolean(rows?.length));
-  const diskRows = diskCandidates.sort((a, b) => b.length - a.length)[0] ?? null;
+  const { rows: diskRows } = resolveFundHoldingsFromDisk(fundSlug);
+  if (diskRows.length) {
+    return diskRows;
+  }
 
   if (import.meta.env.PROD || process.env.CI === 'true') {
-    return diskRows ?? [];
+    return [];
   }
 
   const sql = requireDb();
@@ -859,9 +868,7 @@ export async function getFundHoldings(fundSlug: string): Promise<Record<string, 
     ORDER BY fh.pct_to_nav DESC NULLS LAST
   `) as Record<string, unknown>[];
 
-  const dbRows = mapFundHoldingRows(rows);
-  if (dbRows.length >= (diskRows?.length ?? 0)) return dbRows;
-  return diskRows ?? dbRows;
+  return mapFundHoldingRows(rows);
 }
 
 export interface FundComparisonResult {

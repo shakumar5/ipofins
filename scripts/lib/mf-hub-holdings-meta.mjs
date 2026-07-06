@@ -258,8 +258,8 @@ export function buildHoldingsMetaFromJson(holdings) {
   for (const [parserSlug, fund] of Object.entries(holdings.holdings || {})) {
     const month = latestMonthForFund(fund, months);
     if (!month) continue;
-    const { totalStocks } = unpackMonthHoldings(fund[month]);
-    if (!totalStocks) continue;
+    const { stocks } = unpackMonthHoldings(fund[month]);
+    if (!stocks.length) continue;
 
     const alias = AMFI_SLUG_ALIASES[parserSlug];
     const mfSlug = REVERSE_ALIASES[parserSlug] || REVERSE_ALIASES[baseSlug(parserSlug)] || parserSlug;
@@ -268,7 +268,8 @@ export function buildHoldingsMetaFromJson(holdings) {
         ? alias
         : mfSlugToDetailSlug(mfSlug, parserSlug);
 
-    stockCounts[detailSlug] = Math.max(stockCounts[detailSlug] || 0, totalStocks);
+    const count = stocks.length;
+    stockCounts[detailSlug] = Math.max(stockCounts[detailSlug] || 0, count);
     registerBaseSlugAliases(byBaseSlug, baseSlug(parserSlug), detailSlug);
     registerBaseSlugAliases(byBaseSlug, baseSlug(detailSlug), detailSlug);
     if (mfSlug !== parserSlug) {
