@@ -79,6 +79,17 @@ function parsePriceBandNums(priceRange?: string): number[] {
     .filter((n) => Number.isFinite(n) && n > 0);
 }
 
+function looksLikeDateFragmentPrice(min?: number | null, max?: number | null): boolean {
+  const lo = min != null ? Number(min) : null;
+  const hi = max != null ? Number(max) : lo;
+  if (hi == null || !Number.isFinite(hi)) return false;
+
+  const hiLooksLikeYear = hi >= 2000 && hi <= 2100 && Number.isInteger(hi);
+  const loLooksLikeDay = lo != null && lo >= 1 && lo <= 31 && Number.isInteger(lo);
+  const loneYearLike = lo != null && lo === hi && hiLooksLikeYear;
+  return hiLooksLikeYear && (loLooksLikeDay || loneYearLike);
+}
+
 function isPlausibleIpoPriceBand(
   min?: number | null,
   max?: number | null,
@@ -89,6 +100,7 @@ function isPlausibleIpoPriceBand(
   const floor = type === 'sme' ? 12 : 30;
   if (hi == null || !Number.isFinite(hi) || hi < floor) return false;
   if (lo != null && Number.isFinite(lo) && lo > hi) return false;
+  if (looksLikeDateFragmentPrice(lo, hi)) return false;
   return true;
 }
 
