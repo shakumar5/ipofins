@@ -14,6 +14,7 @@ import {
   collectTopStocksFilterSitemapUrls,
   escapeXml,
   findForbiddenSitemapPaths,
+  isAstroDefaultSitemapFile,
   isFundDetailPath,
   isPortfolioOverlapRewritePath,
   locToDistHtml,
@@ -91,6 +92,14 @@ test('classify tools/blog/learn/broker fallbacks', () => {
 test('pathnameFromLoc normalizes trailing slash', () => {
   assert.equal(pathnameFromLoc(`${SITE}/top-stocks/`), '/top-stocks');
   assert.equal(pathnameFromLoc(`${SITE}/`), '/');
+});
+
+test('isAstroDefaultSitemapFile matches Astro urlsets only', () => {
+  assert.equal(isAstroDefaultSitemapFile('sitemap-0.xml'), true);
+  assert.equal(isAstroDefaultSitemapFile('sitemap-0-0.xml'), true);
+  assert.equal(isAstroDefaultSitemapFile('sitemap-index.xml'), false);
+  assert.equal(isAstroDefaultSitemapFile('sitemap-ipos.xml'), false);
+  assert.equal(isAstroDefaultSitemapFile('sitemap-top-stocks.xml'), false);
 });
 
 test('parseUrlsetLocs extracts locs', () => {

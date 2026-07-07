@@ -27,6 +27,8 @@ import {
   todayIso,
   writeSitemapIndexSync,
   writeUrlsetSync,
+  removeAstroDefaultSitemapFiles,
+  syncGcsSitemapsToVercelStatic,
 } from './lib/sitemap-utils.mjs';
 
 import { removeNonIndexableSitemapFiles } from './lib/cleanup-non-indexable-sitemaps.mjs';
@@ -35,7 +37,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 const LASTMOD = todayIso();
 
-const ASTRO_SITEMAP_RE = /^sitemap-\d+\.xml$/;
+const ASTRO_SITEMAP_RE = /^sitemap-\d+(-\d+)?\.xml$/;
 const LEGACY_SITEMAPS = [
   'sitemap-smart-money-tracker.xml',
   'sitemap-portfolio-overlap-index.xml',
@@ -216,6 +218,14 @@ function main() {
   );
 
   removeNonIndexableSitemapFilesFromDist();
+
+  const vercelSync = syncGcsSitemapsToVercelStatic(ROOT, { distDir: DIST });
+  if (vercelSync.synced.length) {
+    console.log(`  ✓ synced ${vercelSync.synced.length} GSC sitemap file(s) → .vercel/output/static/`);
+  }
+  if (vercelSync.removed) {
+    console.log(`  ✓ removed ${vercelSync.removed} Astro default sitemap(s) from .vercel/output/static/`);
+  }
 }
 
 main();

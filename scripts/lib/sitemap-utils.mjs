@@ -1,9 +1,11 @@
 /** Shared helpers for sitemap XML generation. */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { cpSync, existsSync, readFileSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { join } from 'path';
 
-const ASTRO_SITEMAP_URLSET_RE = /^sitemap-\d+\.xml$/;
+/** @astrojs/sitemap defaults: sitemap-0.xml, sitemap-0-0.xml — not GSC bucket urlsets. */
+export const ASTRO_DEFAULT_SITEMAP_RE = /^sitemap-\d+(-\d+)?\.xml$/;
+const ASTRO_SITEMAP_URLSET_RE = ASTRO_DEFAULT_SITEMAP_RE;
 const SKIP_HTML_WALK_DIRS = new Set(['data', '_astro', 'fonts', 'images', 'og']);
 const MIN_CI_INDEXABLE_URLS = 1000;
 
@@ -471,4 +473,45 @@ export function collectAllSitemapPaths(distRoot, childNames) {
     }
   }
   return paths;
+}
+
+export function isAstroDefaultSitemapFile(name) {
+  return ASTRO_DEFAULT_SITEMAP_RE.test(name);
+}
+
+/** Remove Astro's raw numbered urlsets (trailing-slash duplicates of bucket sitemaps). */
+export function removeAstroDefaultSitemapFiles(dir) {
+  if (!existsSync(dir)) return 0;
+  let removed = 0;
+  for (const name of readdirSync(dir)) {
+    if (!isAstroDefaultSitemapFile(name)) continue;
+    unlinkSync(join(dir, name));
+    removed += 1;
+  }
+  return removed;
+}
+
+export function vercelStaticRoot(projectRoot) {
+  return join(projectRoot, '.vercel', 'output', 'static');
+}
+
+/**
+ * Prebuilt Vercel deploy serves .vercel/output/static — Astro copies sitemaps there
+ * before postbuild reorganize runs on dist/ only. Sync GSC sitemaps + strip Astro defaults.
+ */
+export function syncGcsSitemapsToVercelStatic(projectRoot, { distDir = join(projectRoot, 'dist') } = {}) {
+  const vercelStatic = vercelStaticRoot(projectRoot);
+  if (!existsSync(vercelStatic) || !existsSync(distDir)) return { synced: [], removed: 0 };
+
+  const files = ['sitemap-index.xml', ...CANONICAL_SITEMAP_INDEX];
+  const synced = [];
+  for (const name of files) {
+    const src = join(distDir, name);
+    if (!existsSync(src)) continue;
+    cpSync(src, join(vercelStatic, name), { force: true });
+    synced.push(name);
+  }
+
+  const removed = removeAstroDefaultSitemapFiles(vercelStatic);
+  return { synced, removed };
 }

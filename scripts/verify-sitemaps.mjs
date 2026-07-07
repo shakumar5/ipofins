@@ -13,11 +13,13 @@ import {
   collectAllSitemapPaths,
   findBuiltHtml,
   findForbiddenSitemapPaths,
+  isAstroDefaultSitemapFile,
   isPortfolioOverlapRewritePath,
   loadCanonicalFundPaths,
   parseSitemapIndexChildNames,
   parseUrlsetLocs,
   pathnameFromLoc,
+  vercelStaticRoot,
 } from './lib/sitemap-utils.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -57,6 +59,18 @@ function main() {
       }
       if (/^sitemap-overlap-staging-\d+\.xml$/.test(name)) {
         report(`overlap staging sitemap must not ship in dist/: ${name}`);
+      }
+      if (isAstroDefaultSitemapFile(name)) {
+        report(`Astro default sitemap must not ship in dist/: ${name}`);
+      }
+    }
+  }
+
+  const vercelStatic = vercelStaticRoot(ROOT);
+  if (existsSync(vercelStatic)) {
+    for (const name of readdirSync(vercelStatic)) {
+      if (isAstroDefaultSitemapFile(name)) {
+        report(`Astro default sitemap must not ship in .vercel/output/static/: ${name}`);
       }
     }
   }

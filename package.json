@@ -59,6 +59,7 @@
     "sitemap:materialize-overlap": "node scripts/materialize-portfolio-overlap-sitemaps.mjs",
     "sitemap:verify": "node scripts/verify-sitemaps.mjs",
     "test:sitemap-utils": "node scripts/verify-sitemap-utils.mjs",
+    "test:sitemap-vercel-sync": "node scripts/verify-sitemap-vercel-sync.mjs",
     "test:si-live-stats": "node scripts/verify-si-live-stats.mjs",
     "test:si-holdings-merge": "node scripts/verify-si-holdings-merge.mjs",
     "test:si-profile-local": "node scripts/node-with-ca.mjs scripts/test-si-profile-local.mjs",
