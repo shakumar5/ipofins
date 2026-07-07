@@ -1,5 +1,6 @@
 import type { PageMeta } from './page-meta';
 import { mfTabConfig } from './mf-section-config';
+import { pathnameWithoutTrailingSlash } from './pathname';
 
 export const PORTFOLIO_OVERLAP_BASE = '/mutual-funds/portfolio-overlap-checker';
 
@@ -23,8 +24,9 @@ export function comparisonPathFromSlugs(slugs: string[]): string {
 }
 
 export function parseComparisonFromPathname(pathname: string): string[] {
-  if (!pathname.startsWith(PORTFOLIO_OVERLAP_BASE)) return [];
-  const rest = pathname.slice(PORTFOLIO_OVERLAP_BASE.length).replace(/^\//, '');
+  const normalized = pathnameWithoutTrailingSlash(pathname);
+  if (!normalized.startsWith(PORTFOLIO_OVERLAP_BASE)) return [];
+  const rest = normalized.slice(PORTFOLIO_OVERLAP_BASE.length).replace(/^\//, '');
   if (!rest) return [];
   return slugsFromComparisonSegment(decodeURIComponent(rest));
 }

@@ -1,3 +1,5 @@
+import { pathnameWithoutTrailingSlash } from './pathname';
+
 /** AMFI canonical names → short labels for UI cards and nav. */
 const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   'Equity Scheme - Large Cap Fund': 'Large Cap Funds',
@@ -53,9 +55,11 @@ export function categoryFromPath(
   basePath: string,
   categories: string[],
 ): string {
-  if (pathname === basePath) return 'All';
-  const prefix = `${basePath}/`;
-  if (!pathname.startsWith(prefix)) return 'All';
-  const slug = pathname.slice(prefix.length);
+  const normalized = pathnameWithoutTrailingSlash(pathname);
+  const base = pathnameWithoutTrailingSlash(basePath);
+  if (normalized === base) return 'All';
+  const prefix = `${base}/`;
+  if (!normalized.startsWith(prefix)) return 'All';
+  const slug = normalized.slice(prefix.length);
   return slugToCat(slug, categories) ?? 'All';
 }

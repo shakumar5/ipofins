@@ -160,7 +160,8 @@ export default function StockSignalView({
     if (typeof window === 'undefined') return;
     const sync = () => {
       const slug = parseStockSignalSlugFromPathname(window.location.pathname);
-      setActiveSlug(slug);
+      // Do not wipe SSR slug when the path only differs by a trailing slash.
+      if (slug) setActiveSlug(slug);
     };
     sync();
     window.addEventListener('popstate', sync);
