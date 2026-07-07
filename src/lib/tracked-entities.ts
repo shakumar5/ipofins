@@ -276,7 +276,7 @@ export interface EntityQuarterChangeDetail {
   rows: EntityStockChangeRow[];
 }
 
-/** Latest-quarter holdings for a curated super investor. */
+/** Latest-quarter holdings for a curated super investor (pipeline-linked DB rows only). */
 export async function getEntityHoldings(entitySlug: string): Promise<EntityHoldingRow[]> {
   if (!sql) return [];
   try {
@@ -778,8 +778,17 @@ export async function getEntityQuarterHistory(
     const rows = (await sql!`
       SELECT
         eqs.quarter,
-        COALESCE(NULLIF(eh_live.cnt, 0), sph_live.cnt, 0) AS total_holdings,
-        COALESCE(NULLIF(eh_live.value_cr, 0), sph_live.value_cr) AS portfolio_value_cr,
+        COALESCE(
+          NULLIF(eh_live.cnt, 0),
+          sph_live.cnt,
+          NULLIF(eqs.total_holdings, 0),
+          0
+        ) AS total_holdings,
+        COALESCE(
+          NULLIF(eh_live.value_cr, 0),
+          sph_live.value_cr,
+          NULLIF(eqs.portfolio_value_cr, 0)
+        ) AS portfolio_value_cr,
         mov.fresh_entries,
         mov.adds,
         mov.exits,
@@ -986,17 +995,41 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
   if (!sql) return map;
 
   try {
-    // Outer-join the latest entity stats with the latest-quarter move counts.
-    // Both come from migration 005 (entity_quarterly_stats + entity_changes).
+    // Per-entity latest quarter that has SHP/entity_holdings rows — not the global
+    // MAX(entity_quarterly_stats) quarter, which can run ahead of ingest for some
+    // investors and zero out portfolio value on hub cards.
     const rows = (await sql!`
-      WITH latest AS (
-        SELECT MAX(quarter) AS q FROM entity_quarterly_stats
+      WITH entity_quarter AS (
+        SELECT
+          te.id AS entity_id,
+          te.slug,
+          COALESCE(
+            (SELECT MAX(eh.quarter)
+             FROM entity_holdings eh
+             WHERE eh.entity_id = te.id AND eh.strategy_id IS NULL),
+            (SELECT MAX(sph.quarter)
+             FROM shareholding_pattern_holders sph
+             WHERE sph.entity_id = te.id
+               AND sph.is_promoter = FALSE
+               AND sph.pct_of_company >= 1.0
+               AND COALESCE(sph.match_confidence, 0) >= 0.85)
+          ) AS quarter
+        FROM tracked_entities te
       )
       SELECT
-        te.slug,
-        eqs.quarter,
-        COALESCE(NULLIF(eh_live.cnt, 0), sph_live.cnt, 0) AS total_holdings,
-        COALESCE(NULLIF(eh_live.value_cr, 0), sph_live.value_cr) AS portfolio_value_cr,
+        eq.slug,
+        eq.quarter,
+        COALESCE(
+          NULLIF(eh_live.cnt, 0),
+          sph_live.cnt,
+          NULLIF(eqs.total_holdings, 0),
+          0
+        ) AS total_holdings,
+        COALESCE(
+          NULLIF(eh_live.value_cr, 0),
+          sph_live.value_cr,
+          NULLIF(eqs.portfolio_value_cr, 0)
+        ) AS portfolio_value_cr,
         eqs.top5_concentration,
         eqs.large_cap_pct,
         eqs.mid_cap_pct,
@@ -1005,10 +1038,12 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
         mov.exits,
         mov.adds,
         mov.trims
-      FROM tracked_entities te
+      FROM entity_quarter eq
+      JOIN tracked_entities te ON te.id = eq.entity_id
       LEFT JOIN entity_quarterly_stats eqs
-        ON eqs.entity_id = te.id AND eqs.strategy_id IS NULL
-       AND eqs.quarter = (SELECT q FROM latest)
+        ON eqs.entity_id = eq.entity_id
+       AND eqs.strategy_id IS NULL
+       AND eqs.quarter = eq.quarter
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*)::int AS cnt,
@@ -1027,12 +1062,12 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
           JOIN stocks s ON s.id = eh.stock_id
           LEFT JOIN stock_quarter_prices sqp
             ON sqp.stock_id = eh.stock_id AND sqp.quarter = eh.quarter
-          WHERE eh.entity_id = te.id
+          WHERE eh.entity_id = eq.entity_id
             AND eh.strategy_id IS NULL
-            AND eh.quarter = (SELECT q FROM latest)
+            AND eh.quarter = eq.quarter
           GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
         ) deduped
-      ) eh_live ON TRUE
+      ) eh_live ON eq.quarter IS NOT NULL
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*)::int AS cnt,
@@ -1048,14 +1083,14 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
           JOIN stocks s ON s.id = sph.stock_id
           LEFT JOIN stock_quarter_prices sqp
             ON sqp.stock_id = sph.stock_id AND sqp.quarter = sph.quarter
-          WHERE sph.entity_id = te.id
+          WHERE sph.entity_id = eq.entity_id
             AND sph.is_promoter = FALSE
             AND sph.pct_of_company >= 1.0
             AND COALESCE(sph.match_confidence, 0) >= 0.85
-            AND sph.quarter = (SELECT q FROM latest)
+            AND sph.quarter = eq.quarter
           GROUP BY ${sql.unsafe(STOCK_LISTING_KEY)}
         ) deduped
-      ) sph_live ON TRUE
+      ) sph_live ON eq.quarter IS NOT NULL
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*) FILTER (WHERE d.change_type = 'fresh_entry')   AS fresh_entries,
@@ -1067,16 +1102,17 @@ async function loadLiveStats(): Promise<Map<string, EntityLiveStats>> {
             ec.change_type
           FROM entity_changes ec
           JOIN stocks s ON s.id = ec.stock_id
-          WHERE ec.entity_id = te.id
+          WHERE ec.entity_id = eq.entity_id
             AND ec.strategy_id IS NULL
-            AND ec.quarter = (SELECT q FROM latest)
+            AND ec.quarter = eq.quarter
           ORDER BY ${sql.unsafe(STOCK_LISTING_KEY)},
             CASE ec.change_type
               WHEN 'fresh_entry' THEN 0 WHEN 'complete_exit' THEN 1
               WHEN 'increased' THEN 2 WHEN 'decreased' THEN 3 ELSE 4
             END
         ) d
-      ) mov ON TRUE
+      ) mov ON eq.quarter IS NOT NULL
+      WHERE eq.quarter IS NOT NULL
     `) as EntityStatsRow[];
     for (const r of rows) {
       map.set(r.slug, {
@@ -1508,10 +1544,11 @@ let distinctHolderSlugsCache:
 export async function getDistinctHolderSlugs(): Promise<
   { holderSlug: string; holderName: string; entitySlug: string | null; stockCount: number }[]
 > {
-  if (distinctHolderSlugsCache) return distinctHolderSlugsCache;
+  if (!import.meta.env.DEV && distinctHolderSlugsCache) return distinctHolderSlugsCache;
   if (!sql) return [];
   try {
-    const rows = (await sql!`
+    const [rows, entityRows] = (await Promise.all([
+      sql!`
       WITH latest AS (
         SELECT MAX(quarter) AS q FROM shareholding_pattern_holders
       ),
@@ -1558,8 +1595,30 @@ export async function getDistinctHolderSlugs(): Promise<
       UNION ALL
       SELECT holder_name, entity_slug, stock_count FROM mystery
       ORDER BY holder_name
-    `) as { holder_name: string; entity_slug: string | null; stock_count: number }[];
-    distinctHolderSlugsCache = rows.map((r) => ({
+    `,
+      sql!`
+        SELECT name, display_name, aliases
+        FROM tracked_entities
+        WHERE is_active = true
+      `,
+    ])) as [
+      { holder_name: string; entity_slug: string | null; stock_count: number }[],
+      { name: string; display_name: string; aliases: string[] | null }[],
+    ];
+
+    const curatedNormKeys = new Set<string>();
+    for (const e of entityRows) {
+      for (const n of [e.name, e.display_name, ...(e.aliases ?? [])]) {
+        if (n) curatedNormKeys.add(normalizeHolderSearchKey(n));
+      }
+    }
+
+    distinctHolderSlugsCache = rows
+      .filter((r) => {
+        if (r.entity_slug) return true;
+        return !curatedNormKeys.has(normalizeHolderSearchKey(r.holder_name));
+      })
+      .map((r) => ({
       holderSlug: r.entity_slug || slugifyEntity(r.holder_name),
       holderName: r.holder_name,
       entitySlug: r.entity_slug,
@@ -1820,11 +1879,14 @@ async function loadHolderPositionsMapFromExportAtBuild(): Promise<
 export async function getOnePercentHolderPositionsMap(): Promise<
   Map<string, OnePercentHolderPosition[]>
 > {
-  const fromExport = await loadHolderPositionsMapFromExportAtBuild();
-  if (fromExport) {
-    return fromExport;
+  // Dev: live DB so pipeline/backfill fixes show without re-exporting JSON.
+  if (!import.meta.env.DEV) {
+    const fromExport = await loadHolderPositionsMapFromExportAtBuild();
+    if (fromExport) {
+      return fromExport;
+    }
   }
-  if (sqlPositionsMapCache) return sqlPositionsMapCache;
+  if (sqlPositionsMapCache && !import.meta.env.DEV) return sqlPositionsMapCache;
 
   const map = new Map<string, OnePercentHolderPosition[]>();
   if (!sql) return map;
@@ -1970,7 +2032,7 @@ export async function getOnePercentHolderPositionsMap(): Promise<
   } catch {
     /* empty */
   }
-  sqlPositionsMapCache = map;
+  if (!import.meta.env.DEV) sqlPositionsMapCache = map;
   return map;
 }
 

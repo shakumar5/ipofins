@@ -73,6 +73,12 @@ function edgeRoutes() {
       status: 308,
       headers: { Location: '/mutual-funds/mutual-fund-holdings-changes' },
     },
+    // Canonical URLs omit trailing slashes (matches sitemap + rel=canonical).
+    {
+      src: '/(.+)/',
+      status: 308,
+      headers: { Location: '/$1' },
+    },
     {
       src: '/mutual-funds/portfolio-overlap-checker/([^/]+-vs-[^/]+)/?',
       dest: '/mutual-funds/portfolio-overlap-checker/index.html',

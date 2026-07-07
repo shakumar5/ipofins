@@ -1,6 +1,7 @@
 import type { PageMeta } from './page-meta';
 import { withBrandSuffix } from './brand';
 import { getSmartMoneyPageMeta } from './smart-money-meta';
+import { pathnameWithoutTrailingSlash } from './pathname';
 
 export const STOCK_SIGNAL_BASE = '/mutual-funds/smart-money/stock-signal';
 
@@ -10,8 +11,9 @@ export function stockSignalPath(stockSlug?: string): string {
 }
 
 export function parseStockSignalSlugFromPathname(pathname: string): string | null {
-  if (!pathname.startsWith(STOCK_SIGNAL_BASE)) return null;
-  const rest = pathname.slice(STOCK_SIGNAL_BASE.length).replace(/^\//, '');
+  const normalized = pathnameWithoutTrailingSlash(pathname);
+  if (!normalized.startsWith(STOCK_SIGNAL_BASE)) return null;
+  const rest = normalized.slice(STOCK_SIGNAL_BASE.length).replace(/^\//, '');
   if (!rest || rest.includes('/')) return null;
   return decodeURIComponent(rest);
 }

@@ -7,6 +7,7 @@ import DeferredAnalytics from '../components/DeferredAnalytics.astro';
 import { BRAND_NAME, BRAND_URL, BRAND_TWITTER_HANDLE, BRAND_TWITTER_URL } from '../lib/brand';
 import { OG_DEFAULT_IMAGE, resolveOgImageUrl } from '../lib/og-images';
 import { ADSENSE_CLIENT_ID, adsenseScriptUrl } from '../lib/adsense';
+import { pathnameWithoutTrailingSlash } from '../lib/pathname';
 
 const adsenseScriptSrc = adsenseScriptUrl();
 
@@ -32,7 +33,7 @@ const siteUrl = BRAND_URL;
 // Canonicalise to the non-trailing-slash form (except root) so the default
 // canonical matches sitemap URLs and explicit canonicalFor() values, avoiding
 // duplicate trailing-slash vs non-slash signals in Search Console.
-const normalizedPathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const normalizedPathname = pathnameWithoutTrailingSlash(Astro.url.pathname);
 const canonical = canonicalUrl || new URL(normalizedPathname, siteUrl).href;
 const socialImage = resolveOgImageUrl(ogImage);
 

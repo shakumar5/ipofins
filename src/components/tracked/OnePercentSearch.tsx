@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { withErrorBoundary } from '../withErrorBoundary';
 import { filterHolderSearchQuery } from '../../lib/holder-name-search';
 import { filterStockSearchQuery, matchStockSearchQuery } from '../../lib/stock-search-match';
 import type { HolderPosition } from '../../lib/one-percent-holder-positions';
-import { stockSignalPath } from '../../lib/stock-signal-meta';import HolderHoldingsTable from './HolderHoldingsTable';
+import { stockSignalPath } from '../../lib/stock-signal-meta';
+import HolderHoldingsTable from './HolderHoldingsTable';
 import StockNotOnRadarCard from './StockNotOnRadarCard';
 
 export type SearchMode = 'stock' | 'name';
@@ -41,8 +42,10 @@ function OnePercentSearchInner({
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [expandedHolder, setExpandedHolder] = useState<SearchHolder | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  const stockResults = useMemo(() => {    if (!query.trim() || mode !== 'stock') return [];
+  const stockResults = useMemo(() => {
+    if (!query.trim() || mode !== 'stock') return [];
     return filterStockSearchQuery(query, stocks, 12);
   }, [query, mode, stocks]);
 
@@ -61,6 +64,24 @@ function OnePercentSearchInner({
   const mfStockSignalUrl = mfMatch ? stockSignalPath(mfMatch.slug) : null;
   const mfDisplayName = mfMatch?.name ?? query.trim();
 
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
   function goStock(slug: string) {
     window.location.href = `${stockBase}/${slug}`;
   }
@@ -77,6 +98,10 @@ function OnePercentSearchInner({
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (open) {
+      setOpen(false);
+      return;
+    }
     if (mode === 'stock') {
       if (stockResults[0]) {
         goStock(stockResults[0].slug);
@@ -92,7 +117,7 @@ function OnePercentSearchInner({
 
   const expandedPositions = expandedHolder?.positions ?? [];
   return (
-    <div className="card">
+    <div className="card" ref={rootRef}>
       <div className="relative z-30 flex gap-2 mb-4" role="tablist" aria-label="Search mode">
         <button
           type="button"
@@ -150,6 +175,12 @@ function OnePercentSearchInner({
             }
           }}
           onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && open) {
+              e.preventDefault();
+              setOpen(false);
+            }
+          }}
           className="w-full px-4 py-3 rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 text-surface-900 dark:text-white text-sm"
         />
         {open && showStockEmpty && mfMatch && (
@@ -157,6 +188,7 @@ function OnePercentSearchInner({
             <button
               type="button"
               className="w-full text-left px-4 py-3 text-sm hover:bg-primary-50 dark:hover:bg-primary-950/30 border-b border-surface-100 dark:border-surface-800"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => goMfStockSignal(mfMatch.slug)}
             >
               <span className="font-medium text-surface-900 dark:text-white">{mfMatch.name}</span>
@@ -192,6 +224,7 @@ function OnePercentSearchInner({
                 <button
                   type="button"
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-surface-800 text-surface-900 dark:text-white"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectHolder(h)}
                 >
                   <span className="font-medium">{h.name}</span>
@@ -213,6 +246,7 @@ function OnePercentSearchInner({
                 <button
                   type="button"
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-surface-800 text-surface-900 dark:text-white"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => goStock(s.slug)}
                 >
                   {s.name}

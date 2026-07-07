@@ -2,6 +2,8 @@
  * Fuzzy investor-name search for 1% Club (SHP filing names are often "Surname First").
  */
 
+import superInvestorsJson from '../data/super-investors.json';
+
 /** Collapse filing-name variants (case, spacing, trailing dots). Client-safe duplicate of tracked-entities. */
 export function normalizeHolderSearchKey(name: string): string {
   return String(name || '')
@@ -88,6 +90,29 @@ function holderSearchRank(holder: HolderSearchOption, query: string): number {
   return 4;
 }
 
+function slugifyEntityName(text: string): string {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .substring(0, 80);
+}
+
+/** All normalized filing-name variants for a curated super-investor slug. */
+function rosterNormKeysForEntitySlug(entitySlug: string): Set<string> {
+  const seed = (superInvestorsJson as Array<{
+    name: string;
+    displayName?: string;
+    aliases?: string[];
+  }>).find((e) => slugifyEntityName(e.name) === entitySlug);
+  if (!seed) return new Set();
+  const keys = new Set<string>();
+  for (const n of [seed.name, seed.displayName, ...(seed.aliases ?? [])]) {
+    if (n) keys.add(normalizeHolderSearchKey(n));
+  }
+  return keys;
+}
+
 function dedupeKey(holder: HolderSearchOption): string {
   if (holder.entitySlug) return `entity:${holder.entitySlug}`;
   return `name:${normalizeHolderSearchKey(holder.name)}`;
@@ -107,6 +132,7 @@ function dedupeHolderResults<T extends HolderSearchOption>(matches: T[]): T[] {
 
     if (!h.entitySlug) {
       const tokens = new Set(holderNameTokens(h.name));
+      const nk = normalizeHolderSearchKey(h.name);
       const subsumed = curatedTokenSets.some((ct) => {
         if (ct.size < 2 || tokens.size < 2) return false;
         let overlap = 0;
@@ -114,6 +140,13 @@ function dedupeHolderResults<T extends HolderSearchOption>(matches: T[]): T[] {
         return overlap >= Math.min(tokens.size, ct.size);
       });
       if (subsumed) continue;
+
+      // Filing typo variants (e.g. BHANSHALI vs BHANSALI) match roster aliases exactly.
+      const subsumedByRoster = curated.some((c) => {
+        if (!c.entitySlug) return false;
+        return rosterNormKeysForEntitySlug(c.entitySlug).has(nk);
+      });
+      if (subsumedByRoster) continue;
     }
 
     seen.add(key);

@@ -1,5 +1,6 @@
 import type { PageMeta } from './page-meta';
 import { withBrandSuffix } from './brand';
+import { pathnameWithoutTrailingSlash } from './pathname';
 import { parseTrackerFromPathname } from './smart-money-tracker-meta';
 
 export type SmartMoneyTab = 'tracker' | 'signals' | 'stock-signal' | 'sectors';
@@ -26,10 +27,11 @@ export function smartMoneyTabPath(tab: SmartMoneyTab): string {
 }
 
 export function parseSmartMoneyTabFromPathname(pathname: string): SmartMoneyTab | null {
-  if (!pathname.startsWith(SMART_MONEY_BASE_PATH)) return null;
-  if (parseTrackerFromPathname(pathname)) return 'tracker';
+  const normalized = pathnameWithoutTrailingSlash(pathname);
+  if (!normalized.startsWith(SMART_MONEY_BASE_PATH)) return null;
+  if (parseTrackerFromPathname(normalized)) return 'tracker';
 
-  const rest = pathname.slice(SMART_MONEY_BASE_PATH.length).replace(/^\//, '');
+  const rest = normalized.slice(SMART_MONEY_BASE_PATH.length).replace(/^\//, '');
   if (!rest || rest.startsWith('signal/')) return null;
 
   for (const [tab, slug] of Object.entries(TAB_SLUGS) as [Exclude<SmartMoneyTab, 'tracker'>, string][]) {
