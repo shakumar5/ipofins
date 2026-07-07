@@ -55,6 +55,13 @@ export async function fetchHTML(url) {
   return response.text();
 }
 
+function formatLocalDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 /** Normalize assorted date strings to YYYY-MM-DD for Postgres DATE columns */
 export function parseDateToISO(dateStr) {
   if (!dateStr) return null;
@@ -72,13 +79,13 @@ export function parseDateToISO(dateStr) {
 
   // Epoch ms
   if (/^\d{13}$/.test(s)) {
-    return new Date(Number(s)).toISOString().slice(0, 10);
+    return formatLocalDate(new Date(Number(s)));
   }
 
   // "Jun 09, 2026" / "10 Jun 2026" / "10th Jun 2026"
   const ordinal = s.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
   const d = new Date(ordinal);
-  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  if (!isNaN(d.getTime())) return formatLocalDate(d);
 
   return null;
 }
@@ -87,7 +94,7 @@ export function tsToISO(ts) {
   if (!ts) return null;
   const n = Number(ts);
   if (!n || Number.isNaN(n)) return null;
-  return new Date(n).toISOString().slice(0, 10);
+  return formatLocalDate(new Date(n));
 }
 
 export function coalesce(...vals) {
@@ -151,6 +158,20 @@ export function parsePriceRange(priceRange) {
   return { min: single || null, max: single || null };
 }
 
+function looksLikeDateFragmentPrice(min, max) {
+  const lo = min != null ? Number(min) : null;
+  const hi = max != null ? Number(max) : lo;
+  if (hi == null || !Number.isFinite(hi)) return false;
+
+  // Scraped date fragments like "29 Jun 2026" can leak through as "29-2026".
+  // Reject day-year pairs and lone 20xx values so merge logic can fall back
+  // to the correct broker source instead of persisting a fake issue price.
+  const hiLooksLikeYear = hi >= 2000 && hi <= 2100 && Number.isInteger(hi);
+  const loLooksLikeDay = lo != null && lo >= 1 && lo <= 31 && Number.isInteger(lo);
+  const loneYearLike = lo != null && lo === hi && hiLooksLikeYear;
+  return hiLooksLikeYear && (loLooksLikeDay || loneYearLike);
+}
+
 /** Reject date fragments and other scrape junk masquerading as IPO prices. */
 export function isPlausibleIpoPriceBand(min, max, type = 'mainboard') {
   const hi = max != null ? Number(max) : min != null ? Number(min) : null;
@@ -159,6 +180,7 @@ export function isPlausibleIpoPriceBand(min, max, type = 'mainboard') {
   if (hi == null || !Number.isFinite(hi) || hi < floor) return false;
   if (lo != null && Number.isFinite(lo) && lo > hi) return false;
   if (lo != null && Number.isFinite(lo) && lo < Math.max(5, floor * 0.25)) return false;
+  if (looksLikeDateFragmentPrice(lo, hi)) return false;
   return true;
 }
 

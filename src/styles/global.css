@@ -43,8 +43,16 @@
   --color-danger-600: #dc2626;
 
   --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
   --color-warning-500: #f59e0b;
   --color-warning-600: #b45309;
+  --color-warning-700: #a16207;
+  --color-warning-800: #854d0e;
+  --color-warning-900: #713f12;
+  --color-warning-950: #422006;
 
   --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
