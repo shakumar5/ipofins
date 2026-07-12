@@ -362,6 +362,10 @@ function detectAMC(filename, sheetData) {
   if (combined.includes('nippon india') || fn.includes('nimf')) return 'Nippon India';
   if (combined.includes('motilal oswal') || fn.includes('motilal')) return 'Motilal Oswal';
   if (combined.includes('invesco')) return 'Invesco India';
+  // Before Kotak: "Mahindra Manulife" sheets must not be confused with Kotak Mahindra
+  if (combined.includes('mahindra manulife') || combined.includes('mahindra-manulife')) {
+    return 'Mahindra Manulife';
+  }
   if (combined.includes('edelweiss') || fn.includes('edel_') || fn.includes('edel_portfolio')) return 'Edelweiss';
   if (combined.includes('helios')) return 'Helios';
   if (combined.includes('lic mf') || fn.includes('lic ') || fn.startsWith('lic ')) return 'LIC';
