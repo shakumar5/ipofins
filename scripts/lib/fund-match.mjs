@@ -213,10 +213,11 @@ export const AMFI_SLUG_ALIASES = {
   'invesco-india-smallcap-fund-direct-plan': 'invesco-india-small-cap-fund',
   'invesco-india-multicap-fund-direct-plan': 'invesco-india-multi-cap-fund',
   'invesco-india-large-and-mid-cap-fund': 'invesco-india-large-mid-cap-fund',
-  'invesco-india-large-cap-fund': 'invesco-india-largecap-fund',
-  'invesco-india-mid-cap-fund': 'invesco-india-midcap-fund',
-  'invesco-india-small-cap-fund': 'invesco-india-smallcap-fund',
-  'invesco-india-multi-cap-fund': 'invesco-india-multicap-fund',
+  // AMFI compact slugs → hyphenated DB/export slugs (do not reverse — that orphaned hub pages)
+  'invesco-india-largecap-fund': 'invesco-india-large-cap-fund',
+  'invesco-india-midcap-fund': 'invesco-india-mid-cap-fund',
+  'invesco-india-smallcap-fund': 'invesco-india-small-cap-fund',
+  'invesco-india-multicap-fund': 'invesco-india-multi-cap-fund',
   'icici-prudential-smallcap-fund-direct-plan': 'icici-prudential-small-cap-fund',
   'icici-prudential-flexicap-fund-direct-plan': 'icici-prudential-flexi-cap-fund',
   'icici-prudential-exports-services-fund-direct-plan': 'icici-prudential-exports-and-services-fund',
@@ -247,6 +248,14 @@ export const AMFI_SLUG_ALIASES = {
   'mirae-asset-large-cap-fund': 'mirae-asset-large-cap-fund-direct-plan',
   'mirae-asset-large-midcap-fund': 'mirae-asset-large-midcap-fund-direct-plan',
   'mirae-asset-multicap-fund': 'mirae-asset-multicap-fund-direct-plan',
+  'mirae-asset-healthcare-fund': 'mirae-asset-healthcare-fund-direct-plan',
+  'mirae-asset-infrastructure-fund': 'mirae-asset-infrastructure-fund',
+  'whiteoak-capital-flexi-cap-fund': 'whiteoak-capital-flexi-cap-fund-direct-plan',
+  'whiteoak-capital-large-cap-fund': 'whiteoak-capital-large-cap-fund-direct-plan',
+  'whiteoak-capital-mid-cap-fund': 'whiteoak-capital-mid-cap-fund-direct-plan',
+  'whiteoak-capital-multi-cap-fund': 'whiteoak-capital-multi-cap-fund-direct-plan',
+  'whiteoak-capital-large-mid-cap-fund': 'whiteoak-capital-large-mid-cap-fund-direct-plan-growth',
+  'whiteoak-capital-pharma-and-healthcare-fund': 'whiteoak-capital-pharma-and-heathcare-fund-direct-plan-growth',
   'quant-flexi-cap-fund': 'quant-flexi-cap-fund-growth-option-direct-plan',
   'quant-large-cap-fund': 'quant-large-cap-fund-growth-option-direct-plan',
   'quant-mid-cap-fund': 'quant-mid-cap-fund-growth-option-direct-plan',
@@ -343,6 +352,29 @@ export const HOLDINGS_SLUG_REMAPS = {
     'capitalmind-flexi-cap-fund',
   'capitalmind-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across-':
     'capitalmind-flexi-cap-fund',
+  // Invesco: keep hyphenated Neon slug and AMFI compact slug in sync (either side may be source)
+  'invesco-india-large-cap-fund': 'invesco-india-largecap-fund',
+  'invesco-india-largecap-fund': 'invesco-india-large-cap-fund',
+  'invesco-india-mid-cap-fund': 'invesco-india-midcap-fund',
+  'invesco-india-midcap-fund': 'invesco-india-mid-cap-fund',
+  'invesco-india-small-cap-fund': 'invesco-india-smallcap-fund',
+  'invesco-india-smallcap-fund': 'invesco-india-small-cap-fund',
+  'invesco-india-multi-cap-fund': 'invesco-india-multicap-fund',
+  'invesco-india-multicap-fund': 'invesco-india-multi-cap-fund',
+  'mirae-asset-healthcare-fund': 'mirae-asset-healthcare-fund-direct-plan',
+  'mirae-asset-healthcare-fund-direct-plan': 'mirae-asset-healthcare-fund',
+  'whiteoak-capital-flexi-cap-fund': 'whiteoak-capital-flexi-cap-fund-direct-plan',
+  'whiteoak-capital-flexi-cap-fund-direct-plan': 'whiteoak-capital-flexi-cap-fund',
+  'whiteoak-capital-large-cap-fund': 'whiteoak-capital-large-cap-fund-direct-plan',
+  'whiteoak-capital-large-cap-fund-direct-plan': 'whiteoak-capital-large-cap-fund',
+  'whiteoak-capital-mid-cap-fund': 'whiteoak-capital-mid-cap-fund-direct-plan',
+  'whiteoak-capital-mid-cap-fund-direct-plan': 'whiteoak-capital-mid-cap-fund',
+  'whiteoak-capital-multi-cap-fund': 'whiteoak-capital-multi-cap-fund-direct-plan',
+  'whiteoak-capital-multi-cap-fund-direct-plan': 'whiteoak-capital-multi-cap-fund',
+  'whiteoak-capital-large-mid-cap-fund': 'whiteoak-capital-large-mid-cap-fund-direct-plan-growth',
+  'whiteoak-capital-large-mid-cap-fund-direct-plan-growth': 'whiteoak-capital-large-mid-cap-fund',
+  'whiteoak-capital-pharma-and-healthcare-fund': 'whiteoak-capital-pharma-and-heathcare-fund-direct-plan-growth',
+  'whiteoak-capital-pharma-and-heathcare-fund-direct-plan-growth': 'whiteoak-capital-pharma-and-healthcare-fund',
 };
 
 /**
@@ -461,19 +493,36 @@ export function buildFundMatcher(fundRows, amcRows) {
       stripAmcPrefix(fundData.name, fundData.amc),
     ];
 
+    const amcOk = (fundId) => {
+      if (!fundId || !amcSlug) return true;
+      const fund = fundById.get(fundId);
+      if (!fund) return false;
+      const fundAmc = amcSlugById[fund.amc_id] || '';
+      return fundAmc === amcSlug || fundAmc.startsWith(amcSlug) || amcSlug.startsWith(fundAmc);
+    };
+
     for (const norm of norms) {
       const key = `${amcSlug}|${slugify(norm)}`;
-      if (byAmcNorm.has(key)) return byAmcNorm.get(key);
+      if (byAmcNorm.has(key)) {
+        const id = byAmcNorm.get(key);
+        if (amcOk(id)) return id;
+      }
       for (const v of slugVariants(slugify(norm))) {
         const id = byAmcNorm.get(`${amcSlug}|${v}`);
-        if (id) return id;
+        if (id && amcOk(id)) return id;
       }
     }
 
-    if (bySlug.has(fundSlug)) return bySlug.get(fundSlug);
+    if (bySlug.has(fundSlug)) {
+      const id = bySlug.get(fundSlug);
+      if (amcOk(id)) return id;
+    }
 
     for (const v of slugVariants(fundSlug)) {
-      if (bySlug.has(v)) return bySlug.get(v);
+      if (bySlug.has(v)) {
+        const id = bySlug.get(v);
+        if (amcOk(id)) return id;
+      }
     }
 
     return null;
