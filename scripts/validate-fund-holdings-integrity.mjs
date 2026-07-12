@@ -61,14 +61,26 @@ if (existsSync(HUB_ALL)) {
         const fileCount = bySlugCounts[detailSlug] ?? 0;
         const hubCount = Number(row.stockCount) || 0;
         if (fileCount > 0 && hubCount !== fileCount) {
-          console.error(
-            `  ✗ hub count mismatch ${detailSlug}: hub=${hubCount} file=${fileCount}`,
-          );
-          errors++;
+          if (isInternationalEquityFund(detailSlug)) {
+            console.warn(
+              `  ⚠ hub count mismatch (international) ${detailSlug}: hub=${hubCount} file=${fileCount}`,
+            );
+            warnings++;
+          } else {
+            console.error(
+              `  ✗ hub count mismatch ${detailSlug}: hub=${hubCount} file=${fileCount}`,
+            );
+            errors++;
+          }
         }
         if (fileCount <= 0) {
-          console.error(`  ✗ hub hasHoldings but missing by-slug file: ${detailSlug}`);
-          errors++;
+          if (isInternationalEquityFund(detailSlug)) {
+            console.warn(`  ⚠ hub hasHoldings but missing by-slug (international): ${detailSlug}`);
+            warnings++;
+          } else {
+            console.error(`  ✗ hub hasHoldings but missing by-slug file: ${detailSlug}`);
+            errors++;
+          }
         }
       }
     }

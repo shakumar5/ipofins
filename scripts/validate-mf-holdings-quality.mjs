@@ -217,10 +217,19 @@ function validateExportJson() {
       }
       const fileCount = bySlugCounts[detail] || 0;
       if (fileCount <= 0) {
+        if (isInternationalEquityFund(detail)) {
+          note(`${label}: international ${detail} hasHoldings but empty by-slug (Phase B)`);
+          continue;
+        }
         fail(`${label}: hasHoldings but empty/missing by-slug for ${detail}`);
+        continue;
       }
       const hubCount = Number(row.stockCount) || 0;
       if (fileCount > 0 && hubCount !== fileCount) {
+        if (isInternationalEquityFund(detail)) {
+          note(`${label}: international ${detail} hub=${hubCount} file=${fileCount} (Phase B)`);
+          continue;
+        }
         fail(`${label}: ${detail} hub=${hubCount} file=${fileCount}`);
       }
     }
@@ -470,8 +479,13 @@ async function validateCrossCheck() {
     compared++;
     if (fileCount === dbCount) continue;
 
-    if (isInternationalEquityFund(slug) && fileCount >= dbCount) {
+    // Phase B: international / overseas funds often have fewer exportable Indian
+    // listings than DB rows (foreign ISINs dropped). Never hard-fail these.
+    if (isInternationalEquityFund(slug)) {
       intlSparse++;
+      note(
+        `DB↔JSON international overlay ${slug}: db=${dbCount} file=${fileCount} (Phase B)`,
+      );
       continue;
     }
 
@@ -523,8 +537,8 @@ async function main() {
   console.log('\n── Summary ──');
   console.log(`  Hard failures: ${hard.length}`);
   console.log(`  Warnings:      ${warn.length}`);
-
   if (hard.length) {
+    for (const msg of hard) console.error(`  ✗ ${msg}`);
     console.error('\nvalidate:mf-holdings-quality FAILED — fix hard issues before deploy.\n');
     process.exit(1);
   }
