@@ -48,8 +48,10 @@ jobs:
         id: export-cache
         with:
           path: public/data
-          key: export-data-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
+          # v2: bust stale May alias by-slug files that broke FORCE_EXPORT quality gate
+          key: export-data-v2-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
           restore-keys: |
+            export-data-v2-
             export-data-
 
       - name: Export cache status
@@ -88,16 +90,18 @@ jobs:
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          EXPORT_MAX_AGE_MINUTES: 10080
+          # Manual runs always refresh from Neon. Push builds keep a short freshness window.
+          EXPORT_MAX_AGE_MINUTES: ${{ github.event_name == 'workflow_dispatch' && '0' || '180' }}
           FORCE_DIST_DATA_SYNC: '1'
-          FORCE_EXPORT: ${{ (github.event_name == 'workflow_dispatch' && (inputs.force_export || inputs.run_data_pipelines)) && '1' || '' }}
+          FORCE_EXPORT: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+          EXPORT_HOLDINGS: ${{ github.event_name == 'workflow_dispatch' && 'db' || '' }}
 
       - name: Save exported client data cache
         if: success()
         uses: actions/cache/save@v5
         with:
           path: public/data
-          key: export-data-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
+          key: export-data-v2-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
 
       - name: Deploy prebuilt static site to Vercel
         run: |
