@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { unpackMonthHoldings } from './holdings-month.mjs';
 import { normalizeEquityHoldingRow, isInternationalEquityFund } from './listing-codes.mjs';
 import { sql, withDbRetry } from './db.mjs';
+import { HOLDINGS_SLUG_REMAPS } from './fund-match.mjs';
 
 const MONTH_ORDER = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -189,6 +190,55 @@ export function overlayInternationalHoldingsFromParser(dbHoldings, parserHolding
     console.log(`  ℹ Parser overlay for ${overlaid} international fund(s) missing from DB`);
   }
   return merged;
+}
+
+/**
+ * Copy holdings from mangled disclosure slugs onto AMFI/page canonicals so by-slug
+ * and aliases share the same file (e.g. Capitalmind open-ended → capitalmind-flexi-cap-fund).
+ */
+export function applyHoldingsSlugRemaps(holdings, remaps = HOLDINGS_SLUG_REMAPS) {
+  if (!holdings?.holdings || !remaps) return holdings;
+  const out = {
+    ...holdings,
+    holdings: { ...holdings.holdings },
+  };
+  let remapped = 0;
+  for (const [fromSlug, toSlug] of Object.entries(remaps)) {
+    if (!fromSlug || !toSlug || fromSlug === toSlug) continue;
+    const from = out.holdings[fromSlug];
+    if (!from) continue;
+
+    const months = sortMonthLabels([
+      ...new Set([
+        ...(holdings.months || []),
+        ...Object.keys(from).filter((k) => k !== 'name' && k !== 'amc'),
+      ]),
+    ]);
+
+    if (!out.holdings[toSlug]) {
+      out.holdings[toSlug] = { name: from.name, amc: from.amc };
+    }
+    const dest = out.holdings[toSlug];
+    let copiedMonth = false;
+    for (const month of months) {
+      const fromPack = unpackMonthHoldings(from[month]);
+      if (!fromPack.stocks.length) continue;
+      const destPack = unpackMonthHoldings(dest[month]);
+      if (fromPack.stocks.length >= destPack.stocks.length) {
+        dest[month] = fromPack.stocks;
+        copiedMonth = true;
+      }
+    }
+    if (copiedMonth) {
+      if (!dest.name) dest.name = from.name;
+      if (!dest.amc) dest.amc = from.amc;
+      remapped++;
+    }
+  }
+  if (remapped) {
+    console.log(`  ℹ Remapped ${remapped} mangled holdings slug(s) → canonical page slug(s)`);
+  }
+  return out;
 }
 
 export function loadHoldingsFromJson(root = process.cwd()) {

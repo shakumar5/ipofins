@@ -116,6 +116,9 @@ export function isMangledFund(fund) {
   const name = String(fund.name || '');
   const slug = String(fund.slug || '');
   if (fund.scheme_code) return false;
+  // Disclosure titles embedded in slug/name (even *-direct-plan) are not AMFI masters.
+  if (/an-open-ended|open-ended-dynamic|formerly-known-as/i.test(`${name} ${slug}`)) return true;
+  if (slug.length > 70) return true;
   if (slug.includes('direct-plan') || slug.includes('regular-plan')) return false;
   if (name.includes('(') && !name.includes(')')) return true;
   if (slug.length > 55) return true;
@@ -329,6 +332,17 @@ export const AMFI_SLUG_ALIASES = {
   'jioblackrock-flexi-cap-fund-direct-plan': 'jioblackrock-flexi-cap-fund',
   'jioblackrock-large-cap-fund-direct-plan': 'jioblackrock-large-cap-fund',
   'jioblackrock-sector-rotation-fund-direct-plan': 'jioblackrock-sector-rotation-fund',
+};
+
+/**
+ * Mangled DB/parser disclosure slugs → AMFI / page holdings slug.
+ * Export remaps by-slug + overlap onto the canonical page slug.
+ */
+export const HOLDINGS_SLUG_REMAPS = {
+  'capitalmind-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across--direct-plan':
+    'capitalmind-flexi-cap-fund',
+  'capitalmind-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across-':
+    'capitalmind-flexi-cap-fund',
 };
 
 /**

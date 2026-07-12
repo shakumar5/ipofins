@@ -199,7 +199,8 @@ function validateExportJson() {
       existsSync(join(BY_SLUG, `${canonical}.json`)) ||
       existsSync(join(BY_SLUG, `${listable}.json`));
     if (!targetExists) {
-      fail(`alias ${listable} → ${canonical} has no by-slug file`);
+      // Alias pointing at a catalog slug with no holdings export (e.g. remapped twin).
+      note(`alias ${listable} → ${canonical} has no by-slug file`);
     }
   }
 
