@@ -171,12 +171,15 @@ export function buildFundHoldingsIndexFromHub(hubAll, mfFunds = []) {
 }
 
 /** AMFI / listable slugs → canonical holdings page slug (for 301 redirect pages). */
-export function buildFundHoldingsAliases(hubAll, pageSlugs = []) {
+export function buildFundHoldingsAliases(hubAll, pageSlugs = [], opts = {}) {
   const slugSet = new Set(pageSlugs);
   const aliases = {};
+  const bySlugExists = opts.bySlugExists;
 
   const add = (from, to) => {
     if (!from || !to || from === to || !slugSet.has(to)) return;
+    // Don't emit aliases that cannot resolve to a by-slug file (CI quality gate).
+    if (typeof bySlugExists === 'function' && !bySlugExists(to) && !bySlugExists(from)) return;
     if (!aliases[from]) aliases[from] = to;
   };
 

@@ -29,6 +29,7 @@ import {
   loadHoldingsFromJson,
   sortMonthLabels,
   overlayInternationalHoldingsFromParser,
+  applyHoldingsSlugRemaps,
 } from './lib/holdings-data-merge.mjs';
 import { writeFundHoldingsBySlugFromMergedHoldings } from './lib/fund-holdings-by-slug-write.mjs';
 import {
@@ -760,6 +761,7 @@ async function main() {
     holdings = mergeHoldingsPreferMoreStocks(holdings, jsonHoldings);
     console.log('  ℹ Merged fund-holdings.json where it has fuller portfolios');
   }
+  holdings = applyHoldingsSlugRemaps(holdings);
   doneHoldings(`${holdings.months?.length || 0} months, ${Object.keys(holdings.holdings || {}).length} funds`);
 
   const doneCompare = logStep('Holdings compare + overlap');
@@ -771,6 +773,7 @@ async function main() {
       const dbHoldings = await withDbRetry(() => loadHoldingsFromDb(), { label: 'Fund holdings by slug' });
       const parserHoldings = existsSync(jsonHoldingsPath) ? loadHoldingsFromJson(ROOT) : null;
       exportHoldings = overlayInternationalHoldingsFromParser(dbHoldings, parserHoldings);
+      exportHoldings = applyHoldingsSlugRemaps(exportHoldings);
       writeFundHoldingsBySlugExports(exportHoldings, listingLookups, { force: true });
       console.log('  ℹ fund-holdings-by-slug from DB (authoritative)');
     } catch (e) {
@@ -895,6 +898,10 @@ async function main() {
       const aliases = buildFundHoldingsAliases(
         hub.all,
         holdingsIndex.map((f) => f.slug),
+        {
+          bySlugExists: (slug) =>
+            Boolean(slug) && existsSync(join(bySlugDir, `${slug}.json`)),
+        },
       );
       writeJson('fund-holdings-aliases.json', aliases);
       alignFundOverlapExports(aliases);
