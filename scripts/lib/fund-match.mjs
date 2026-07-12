@@ -213,10 +213,11 @@ export const AMFI_SLUG_ALIASES = {
   'invesco-india-smallcap-fund-direct-plan': 'invesco-india-small-cap-fund',
   'invesco-india-multicap-fund-direct-plan': 'invesco-india-multi-cap-fund',
   'invesco-india-large-and-mid-cap-fund': 'invesco-india-large-mid-cap-fund',
-  'invesco-india-large-cap-fund': 'invesco-india-largecap-fund',
-  'invesco-india-mid-cap-fund': 'invesco-india-midcap-fund',
-  'invesco-india-small-cap-fund': 'invesco-india-smallcap-fund',
-  'invesco-india-multi-cap-fund': 'invesco-india-multicap-fund',
+  // AMFI compact slugs → hyphenated DB/export slugs (do not reverse — that orphaned hub pages)
+  'invesco-india-largecap-fund': 'invesco-india-large-cap-fund',
+  'invesco-india-midcap-fund': 'invesco-india-mid-cap-fund',
+  'invesco-india-smallcap-fund': 'invesco-india-small-cap-fund',
+  'invesco-india-multicap-fund': 'invesco-india-multi-cap-fund',
   'icici-prudential-smallcap-fund-direct-plan': 'icici-prudential-small-cap-fund',
   'icici-prudential-flexicap-fund-direct-plan': 'icici-prudential-flexi-cap-fund',
   'icici-prudential-exports-services-fund-direct-plan': 'icici-prudential-exports-and-services-fund',
@@ -343,6 +344,15 @@ export const HOLDINGS_SLUG_REMAPS = {
     'capitalmind-flexi-cap-fund',
   'capitalmind-flexi-cap-fund-an-open-ended-dynamic-equity-scheme-investing-across-':
     'capitalmind-flexi-cap-fund',
+  // Invesco: keep hyphenated Neon slug and AMFI compact slug in sync (either side may be source)
+  'invesco-india-large-cap-fund': 'invesco-india-largecap-fund',
+  'invesco-india-largecap-fund': 'invesco-india-large-cap-fund',
+  'invesco-india-mid-cap-fund': 'invesco-india-midcap-fund',
+  'invesco-india-midcap-fund': 'invesco-india-mid-cap-fund',
+  'invesco-india-small-cap-fund': 'invesco-india-smallcap-fund',
+  'invesco-india-smallcap-fund': 'invesco-india-small-cap-fund',
+  'invesco-india-multi-cap-fund': 'invesco-india-multicap-fund',
+  'invesco-india-multicap-fund': 'invesco-india-multi-cap-fund',
 };
 
 /**
