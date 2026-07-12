@@ -1,7 +1,12 @@
 /**
  * Resolve mutual-funds.json table rows → DB direct-plan holdings slugs + stock counts.
  * Mirrors src/lib/data/holdings.ts queryFundHoldingsMeta matching rules.
+ *
+ * Display counts are authoritative from fund-holdings-by-slug/*.json row lengths only.
+ * fund_portfolio_stats.total_stocks is AMC metadata — never use it for UI/list counts.
  */
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { AMFI_SLUG_ALIASES, slugVariants } from './fund-match.mjs';
 import { unpackMonthHoldings, latestMonthForFund } from './holdings-month.mjs';
 
@@ -112,16 +117,61 @@ function detailSlugCandidates(mfSlug) {
   return out;
 }
 
-/** DB-backed holdings meta (listable direct-plan funds with portfolio stock counts). */
+/**
+ * Read stockCounts from fund-holdings-by-slug/*.json (stocks.length).
+ * This is the only authoritative display-count source.
+ */
+export function readBySlugStockCounts(bySlugDir) {
+  const stockCounts = {};
+  if (!bySlugDir || !existsSync(bySlugDir)) return stockCounts;
+  for (const fileName of readdirSync(bySlugDir)) {
+    if (!fileName.endsWith('.json')) continue;
+    const slug = fileName.replace(/\.json$/, '');
+    try {
+      const data = JSON.parse(readFileSync(join(bySlugDir, fileName), 'utf-8'));
+      const n = Array.isArray(data.stocks) ? data.stocks.length : 0;
+      if (n > 0) stockCounts[slug] = n;
+    } catch {
+      // skip bad file
+    }
+  }
+  return stockCounts;
+}
+
+/** Propagate by-slug counts onto listable aliases. Never inflate canonical above its file. */
+export function applyBySlugCountsToMeta(meta, bySlugCounts, aliases = {}) {
+  const stockCounts = {};
+  for (const [slug, count] of Object.entries(bySlugCounts || {})) {
+    const n = Number(count) || 0;
+    if (n > 0) stockCounts[slug] = n;
+  }
+  // Listable AMFI slugs share the canonical detail-page file count (A1: UI = by-slug rows).
+  for (const [listable, canonical] of Object.entries(aliases || {})) {
+    const canonicalCount = Number(stockCounts[canonical]) || 0;
+    if (canonicalCount > 0) {
+      stockCounts[listable] = canonicalCount;
+      continue;
+    }
+    const listableCount = Number(stockCounts[listable]) || 0;
+    if (listableCount > 0) stockCounts[listable] = listableCount;
+  }
+  return {
+    stockCounts,
+    bySchemeCode: { ...(meta?.bySchemeCode || {}) },
+    byBaseSlug: { ...(meta?.byBaseSlug || {}) },
+    overlapSlugSet: meta?.overlapSlugSet,
+    pageSlugSet: meta?.pageSlugSet,
+  };
+}
+
+/**
+ * DB-backed slug maps + stored fund_holdings row counts (never fund_portfolio_stats.total_stocks).
+ * Export should overwrite stockCounts with readBySlugStockCounts after by-slug write.
+ */
 export async function loadHoldingsMetaFromDb(sql) {
   const rows = await sql`
     WITH fund_latest AS (
       SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
-    ),
-    portfolio_stats AS (
-      SELECT ps.fund_id, ps.total_stocks
-      FROM fund_portfolio_stats ps
-      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
     ),
     holders AS (
       SELECT
@@ -132,12 +182,10 @@ export async function loadHoldingsMetaFromDb(sql) {
           regexp_replace(f.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
           '-growth-option$', ''
         ) AS holder_base,
-        COUNT(DISTINCT fh.stock_id)::int AS stored_stock_count,
-        MAX(ps.total_stocks)::int AS portfolio_total
+        COUNT(DISTINCT fh.stock_id)::int AS stored_stock_count
       FROM fund_holdings fh
       JOIN funds f ON f.id = fh.fund_id
       INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
-      LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
       GROUP BY f.id, f.amc_id, f.scheme_code, holder_base
     ),
     listable AS (
@@ -160,10 +208,10 @@ export async function loadHoldingsMetaFromDb(sql) {
         AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     )
     SELECT l.slug, TRIM(l.scheme_code) AS scheme_code, l.base_slug,
-           COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) AS stock_count
+           h.stored_stock_count AS stock_count
     FROM listable l
     CROSS JOIN LATERAL (
-      SELECT h.portfolio_total, h.stored_stock_count
+      SELECT h.stored_stock_count
       FROM holders h
       WHERE h.holder_id = l.id
          OR (
@@ -189,20 +237,15 @@ export async function loadHoldingsMetaFromDb(sql) {
           AND h.holder_scheme = l.scheme_code
         ) DESC,
         (h.holder_base = l.base_slug) DESC,
-        COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) DESC
+        h.stored_stock_count DESC
       LIMIT 1
     ) h
-    WHERE COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) > 0
+    WHERE h.stored_stock_count > 0
   `;
 
   const directRows = await sql`
     WITH fund_latest AS (
       SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
-    ),
-    portfolio_stats AS (
-      SELECT ps.fund_id, ps.total_stocks
-      FROM fund_portfolio_stats ps
-      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
     )
     SELECT
       f.slug,
@@ -211,12 +254,11 @@ export async function loadHoldingsMetaFromDb(sql) {
         regexp_replace(f.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
         '-growth-option$', ''
       ) AS base_slug,
-      COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) AS stock_count
+      COUNT(DISTINCT fh.stock_id)::int AS stock_count
     FROM fund_holdings fh
     JOIN funds f ON f.id = fh.fund_id
     INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
-    LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
-      AND f.is_active = true
+    WHERE f.is_active = true
       AND f.slug LIKE '%-direct-plan'
       AND f.category = ANY(${LISTABLE_EQUITY_CATEGORIES})
       AND f.name NOT ILIKE '%IDCW%'
@@ -224,7 +266,7 @@ export async function loadHoldingsMetaFromDb(sql) {
       AND f.name NOT ILIKE '%dividend plan%'
       AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     GROUP BY f.slug, f.scheme_code
-    HAVING COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) > 0
+    HAVING COUNT(DISTINCT fh.stock_id) > 0
   `;
 
   const stockCounts = {};
@@ -280,7 +322,10 @@ export function buildHoldingsMetaFromJson(holdings) {
   return { stockCounts, bySchemeCode: {}, byBaseSlug };
 }
 
-/** Union DB + parser meta so table rows match funds present in fund-holdings.json. */
+/**
+ * Merge slug maps (bySchemeCode / byBaseSlug). Prefer primary stockCounts;
+ * only fill missing supplemental slugs — never Math.max-inflate display counts.
+ */
 export function mergeHoldingsMeta(primary, supplemental) {
   const empty = { stockCounts: {}, bySchemeCode: {}, byBaseSlug: {} };
   const a = primary?.stockCounts ? primary : empty;
@@ -288,9 +333,11 @@ export function mergeHoldingsMeta(primary, supplemental) {
   if (!Object.keys(a.stockCounts).length) return { ...b, stockCounts: { ...b.stockCounts } };
   if (!Object.keys(b.stockCounts).length) return { ...a, stockCounts: { ...a.stockCounts } };
 
-  const stockCounts = { ...b.stockCounts };
-  for (const [slug, count] of Object.entries(a.stockCounts)) {
-    stockCounts[slug] = Math.max(stockCounts[slug] || 0, Number(count) || 0);
+  const stockCounts = { ...a.stockCounts };
+  for (const [slug, count] of Object.entries(b.stockCounts)) {
+    if (!(slug in stockCounts) && Number(count) > 0) {
+      stockCounts[slug] = Number(count);
+    }
   }
 
   return {

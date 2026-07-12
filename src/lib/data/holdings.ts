@@ -600,15 +600,11 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
     return { slugs: new Set(), stockCounts: {} };
   }
 
+  // Dev fallback only — prod/CI use disk meta. Counts = stored fund_holdings rows (never total_stocks).
   const sql = requireDb();
   const rows = await sql`
     WITH fund_latest AS (
       SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
-    ),
-    portfolio_stats AS (
-      SELECT ps.fund_id, ps.total_stocks
-      FROM fund_portfolio_stats ps
-      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
     ),
     holders AS (
       SELECT
@@ -619,12 +615,10 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
           regexp_replace(f.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
           '-growth-option$', ''
         ) AS holder_base,
-        COUNT(DISTINCT fh.stock_id)::int AS stored_stock_count,
-        MAX(ps.total_stocks)::int AS portfolio_total
+        COUNT(DISTINCT fh.stock_id)::int AS stored_stock_count
       FROM fund_holdings fh
       JOIN funds f ON f.id = fh.fund_id
       INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
-      LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
       GROUP BY f.id, f.amc_id, f.scheme_code, holder_base
     ),
     listable AS (
@@ -648,10 +642,10 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
         AND f.name NOT ILIKE '%dividend plan%'
         AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     )
-    SELECT l.slug, COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) AS stock_count
+    SELECT l.slug, h.stored_stock_count AS stock_count
     FROM listable l
     CROSS JOIN LATERAL (
-      SELECT h.portfolio_total, h.stored_stock_count
+      SELECT h.stored_stock_count
       FROM holders h
       WHERE h.holder_id = l.id
          OR (
@@ -677,28 +671,22 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
           AND h.holder_scheme = l.scheme_code
         ) DESC,
         (h.holder_base = l.base_slug) DESC,
-        COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) DESC
+        h.stored_stock_count DESC
       LIMIT 1
     ) h
-    WHERE COALESCE(NULLIF(h.stored_stock_count, 0), h.portfolio_total) > 0
+    WHERE h.stored_stock_count > 0
   `;
   const directRows = await sql`
     WITH fund_latest AS (
       SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
-    ),
-    portfolio_stats AS (
-      SELECT ps.fund_id, ps.total_stocks
-      FROM fund_portfolio_stats ps
-      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
     )
     SELECT
       f.slug,
-      COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) AS stock_count
+      COUNT(DISTINCT fh.stock_id)::int AS stock_count
     FROM fund_holdings fh
     JOIN funds f ON f.id = fh.fund_id
     INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
-    LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
-      AND f.is_active = true
+    WHERE f.is_active = true
       AND f.slug LIKE '%-direct-plan'
       AND f.category = ANY(${LISTABLE_EQUITY_CATEGORIES})
       AND f.name NOT ILIKE '%IDCW%'
@@ -706,7 +694,7 @@ async function queryFundHoldingsMeta(): Promise<FundHoldingsMeta> {
       AND f.name NOT ILIKE '%dividend plan%'
       AND NOT (f.name LIKE '%(%' AND f.name NOT LIKE '%)%')
     GROUP BY f.slug
-    HAVING COALESCE(COUNT(DISTINCT fh.stock_id)::int, MAX(ps.total_stocks)) > 0
+    HAVING COUNT(DISTINCT fh.stock_id) > 0
   `;
   const slugs = new Set<string>();
   const stockCounts: Record<string, number> = {};

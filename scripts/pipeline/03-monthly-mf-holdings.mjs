@@ -57,6 +57,8 @@ async function main() {
   }
 
   run(nodeExecCmd('scripts/export-client-data.mjs'), 'Export client JSON (holdings, smart money)');
+  // export-client-data already runs quality gate; re-run as explicit pipeline step for logs
+  run(nodeExecCmd('scripts/validate-mf-holdings-quality.mjs'), 'MF holdings quality gate (DB + JSON)');
 
   const { sql, withDbRetry } = await import('../lib/db.mjs');
 
