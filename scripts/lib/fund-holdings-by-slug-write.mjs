@@ -1,7 +1,7 @@
 /**
  * Write public/data/fund-holdings-by-slug/*.json without downgrading row counts.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeEquityHoldingRow, isInternationalEquityFund, sanitizeListingCodes } from './listing-codes.mjs';
 import {
@@ -9,6 +9,18 @@ import {
   resolveStockSlugFromListing,
 } from './stock-slug-lookup.mjs';
 import { unpackMonthHoldings, latestMonthForFund } from './holdings-month.mjs';
+
+/** Drop cached by-slug JSON so FORCE/DB export cannot leave orphan uncoded files. */
+export function clearFundHoldingsBySlugDir(outDir) {
+  if (!existsSync(outDir)) return 0;
+  let removed = 0;
+  for (const fileName of readdirSync(outDir)) {
+    if (!fileName.endsWith('.json')) continue;
+    unlinkSync(join(outDir, fileName));
+    removed++;
+  }
+  return removed;
+}
 
 function holdingListingKey(row) {
   const { isin, nseSymbol, bseCode } = sanitizeListingCodes(row);
@@ -113,6 +125,14 @@ export function writeFundHoldingsBySlugFromMergedHoldings(
   slugListing,
   { force = false } = {},
 ) {
+  // Authoritative DB export must not keep stale cache/listable twins that lack listing codes.
+  if (force) {
+    const cleared = clearFundHoldingsBySlugDir(outDir);
+    if (cleared) {
+      console.log(`  ℹ Cleared ${cleared} cached fund-holdings-by-slug file(s) before DB write`);
+    }
+  }
+
   const months = holdings.months || [];
   let written = 0;
   let skipped = 0;
