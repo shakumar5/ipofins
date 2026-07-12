@@ -37,26 +37,43 @@ const DATA_DIR = join(ROOT, 'src', 'data');
 
 /** parser slug → preferred DB fund slug (exact) */
 const PARSER_TO_DB = {
-  // Intended targets
   'icici-prudential-focused-equity-fund': 'icici-prudential-focused-equity-fund-direct-plan',
   'icici-prudential-large-cap-fund': 'icici-prudential-bluechip-fund',
+  'icici-prudential-flexicap-fund': 'icici-prudential-flexicap-fund-direct-plan',
+  'icici-prudential-large-mid-cap-fund': 'icici-prudential-large-mid-cap-fund-direct-plan',
+  'icici-prudential-midcap-fund': 'icici-prudential-midcap-fund-direct-plan',
+  'icici-prudential-smallcap-fund': 'icici-prudential-smallcap-fund-direct-plan',
   'mahindra-manulife-flexi-cap-fund': 'mahindra-manulife-flexi-cap-fund-direct-plan',
   'mahindra-manulife-large-mid-cap-fund': 'mahindra-manulife-large-mid-cap-fund-direct-plan',
   'mahindra-manulife-mid-cap-fund': 'mahindra-manulife-mid-cap-fund-direct-plan',
   'mahindra-manulife-small-cap-fund': 'mahindra-manulife-small-cap-fund-direct-plan',
   'mahindra-manulife-large-cap-fund': 'mahindra-manulife-large-cap-fund-direct-plan',
-  // Restore funds corrupted by fuzzy matcher (May/June wiped)
-  'icici-prudential-flexi-cap-fund': 'icici-prudential-flexicap-fund-direct-plan',
-  'icici-prudential-flexicap-fund': 'icici-prudential-flexicap-fund-direct-plan',
-  'icici-prudential-large-mid-cap-fund': 'icici-prudential-large-mid-cap-fund-direct-plan',
-  'icici-prudential-mid-cap-fund': 'icici-prudential-midcap-fund-direct-plan',
-  'icici-prudential-midcap-fund': 'icici-prudential-midcap-fund-direct-plan',
-  'icici-prudential-small-cap-fund': 'icici-prudential-smallcap-fund-direct-plan',
-  'icici-prudential-smallcap-fund': 'icici-prudential-smallcap-fund-direct-plan',
   'mahindra-manulife-focused-fund': 'mahindra-manulife-focused-fund-direct-plan',
+  // Mirae Asset
+  'mirae-asset-flexi-cap-fund': 'mirae-asset-flexi-cap-fund-direct-plan',
+  'mirae-asset-midcap-fund': 'mirae-asset-mid-cap-fund-direct-plan',
+  'mirae-asset-small-cap-fund': 'mirae-asset-small-cap-fund-direct-plan',
+  'mirae-asset-focused-fund': 'mirae-asset-focused-fund-direct-plan',
+  'mirae-asset-large-cap-fund': 'mirae-asset-large-cap-fund-direct-plan',
+  'mirae-asset-large-midcap-fund': 'mirae-asset-large-midcap-fund-direct-plan',
+  'mirae-asset-multicap-fund': 'mirae-asset-multicap-fund-direct-plan',
+  'mirae-asset-healthcare-fund': 'mirae-asset-healthcare-fund-direct-plan',
+  'mirae-asset-infrastructure-fund': 'mirae-asset-infrastructure-fund',
+  // White Oak Capital
+  'whiteoak-capital-flexi-cap-fund': 'whiteoak-capital-flexi-cap-fund-direct-plan',
+  'whiteoak-capital-large-cap-fund': 'whiteoak-capital-large-cap-fund-direct-plan',
+  'whiteoak-capital-mid-cap-fund': 'whiteoak-capital-mid-cap-fund-direct-plan',
+  'whiteoak-capital-multi-cap-fund': 'whiteoak-capital-multi-cap-fund-direct-plan',
+  'whiteoak-capital-large-mid-cap-fund': 'whiteoak-capital-large-mid-cap-fund-direct-plan-growth',
+  // DB typo: heathcare
+  'whiteoak-capital-pharma-and-healthcare-fund': 'whiteoak-capital-pharma-and-heathcare-fund-direct-plan-growth',
 };
 
-const MONTHS = ['May 2026', 'June 2026'];
+// Override via: --months=May 2026,June 2026
+const monthArg = process.argv.find((a) => a.startsWith('--months='))?.slice('--months='.length);
+const MONTHS = monthArg
+  ? monthArg.split(',').map((s) => s.trim()).filter(Boolean)
+  : ['May 2026', 'June 2026'];
 
 function monthToDate(monthStr) {
   const months = {
@@ -81,7 +98,7 @@ async function main() {
   const holdingsData = JSON.parse(readFileSync(path, 'utf-8'));
 
   const targetDates = [...new Set(MONTHS.map(monthToDate).filter(Boolean))];
-  console.log('\n  Targeted seed (explicit slug map): ICICI + Mahindra + restore');
+  console.log('\n  Targeted seed (explicit slug map): ICICI + Mahindra + Mirae + WhiteOak');
   console.log(`  Months: ${MONTHS.join(', ')}\n`);
 
   const fundRows = await sql`SELECT id, slug, name FROM funds`;

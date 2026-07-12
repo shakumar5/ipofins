@@ -1414,8 +1414,12 @@ function parseGrowwConsolidatedFile(wb, filename, filepath) {
 
 function isMiraePortfolioFile(filepath, filename) {
   const pathLow = filepath.replace(/\\/g, '/').toLowerCase();
-  if (/(?:^|[/\\])mirae(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(filename)) return true;
-  return /^ma[a-z]{3,4}-(?:april|may)\d{4}\.xlsx$/i.test(filename);
+  const fileLow = String(filename || '').toLowerCase();
+  if (/(?:^|[/\\])mirae(?:[/\\]|$)/.test(pathLow) && /\.xlsx?$/i.test(fileLow)) return true;
+  // Short codes: mafcf-june2026.xlsx, miiof-may2026.xlsx, infra-june2026.xlsx
+  if (/^ma[a-z]{2,5}-[a-z]+\d{4}\.xlsx$/i.test(fileLow)) return true;
+  if (/^(?:infra|miiof)-[a-z]+\d{4}\.xlsx$/i.test(fileLow)) return true;
+  return false;
 }
 
 function fundNameFromMiraeSheet(data) {
@@ -1669,8 +1673,13 @@ function processFile(filepath, filename) {
   if (pathLower.includes('franklin') || pathLower.includes('templeton')) pathAMC = 'Franklin India';
   if (pathLower.includes('taurus')) pathAMC = 'Taurus';
   if (pathLower.includes('bandhan')) pathAMC = 'Bandhan';
-  if (pathLower.includes('mirae')) pathAMC = 'Mirae Asset';
-  if (/^ma[a-z]{3,4}-(?:april|may)\d{4}\.xlsx$/i.test(fileLow)) pathAMC = 'Mirae Asset';
+  // Path segment `mirae` only — avoid matching `_tmp_mirae_woc` etc.
+  if (/(?:^|[/\\])mirae(?:[/\\]|$)/.test(pathLower)) pathAMC = 'Mirae Asset';
+  if (/^ma[a-z]{2,5}-[a-z]+\d{4}\.xlsx$/i.test(fileLow)) pathAMC = 'Mirae Asset';
+  if (/^(?:infra|miiof)-[a-z]+\d{4}\.xlsx$/i.test(fileLow)) pathAMC = 'Mirae Asset';
+  if (/^woc[\s_-]/i.test(fileLow) || fileLow.includes('whiteoak') || fileLow.includes('white oak')) {
+    pathAMC = 'White Oak Capital';
+  }
   if (pathLower.includes('trustmf') || pathLower.includes('trust-mf')) pathAMC = 'Trust MF';
   if (pathLower.includes('jioblack') || pathLower.includes('jio-black')) pathAMC = 'Jio BlackRock';
   if (pathLower.includes('angel-one') || pathLower.includes('angelone')) pathAMC = 'Angel One';
