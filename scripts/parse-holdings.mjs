@@ -114,7 +114,25 @@ function detectMonth(filename, sheetData) {
   if (fn.includes('april') || fn.includes('apr-2026') || fn.includes('30-04') || fn.includes('30-apr') || fn.includes('apr_2026') || fn.includes('april-2026') || fn.includes('_30_04') || fn.includes('30042026') || fn.includes('apr 2026') || fn.includes('april 2026') || /\d{1,2}\s+apr\b/i.test(fn)) return 'April 2026';
   if (fn.includes('march') || fn.includes('mar-2026') || fn.includes('31-03') || fn.includes('31-mar') || fn.includes('31march') || fn.includes('mar_2026') || fn.includes('march-2026') || fn.includes('_31_03') || fn.includes('mar2026') || fn.includes('31032026') || fn.includes('mar 2026') || fn.includes('march 2026') || /\d{1,2}\s+mar\b/i.test(fn)) return 'March 2026';
   if (fn.includes('may') || fn.includes('may-2026') || fn.includes('31-05') || fn.includes('may_2026') || fn.includes('_31_05') || fn.includes('may2026') || fn.includes('may 2026') || fn.includes('31052026') || /\d{1,2}\s+may\b/i.test(fn)) return 'May 2026';
-  if (fn.includes('june') || fn.includes('jun-2026') || fn.includes('30-06') || fn.includes('30-jun') || fn.includes('jun_2026') || fn.includes('june-2026') || fn.includes('_30_06') || fn.includes('30062026') || fn.includes('jun 2026') || fn.includes('june 2026') || /\d{1,2}\s+jun\b/i.test(fn)) return 'June 2026';
+  if (
+    fn.includes('june') ||
+    fn.includes('jun-2026') ||
+    fn.includes('jun-26') ||
+    fn.includes('jun_26') ||
+    fn.includes('jun26') ||
+    fn.includes('30-06') ||
+    fn.includes('30-jun') ||
+    fn.includes('30jun') ||
+    fn.includes('jun_2026') ||
+    fn.includes('june-2026') ||
+    fn.includes('_30_06') ||
+    fn.includes('30062026') ||
+    fn.includes('jun 2026') ||
+    fn.includes('june 2026') ||
+    /30[\.\-\/]?06[\.\-\/]?2026/.test(fn) ||
+    /\bjun(?:e)?[\s\-_,.]+\d{1,2}[\s,]*\d{4}/.test(fn) ||
+    /\d{1,2}\s+jun\b/i.test(fn)
+  ) return 'June 2026';
   
   // Support folder structure: Holdings/2026/May/
   const pathMatch = fn.match(/holdings[\/\\](\d{4})[\/\\](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)/);
@@ -442,6 +460,14 @@ function fundNameFromFilename(filename) {
 // DETECT FUND NAME FROM SHEET DATA
 // ═══════════════════════════════════════════════════════════════
 function detectFundName(sheetData, sheetName, filename) {
+  const isBoilerplateName = (val) =>
+    /Asset Management Company/i.test(val) ||
+    /Investment Manager/i.test(val) ||
+    /Registered Office/i.test(val) ||
+    /Back to Index/i.test(val) ||
+    /^CIN\b/i.test(val) ||
+    /Mutual Fund$/i.test(val) && val.split(/\s+/).length <= 4;
+
   // Priority 1: Look for explicit "SCHEME NAME:" label (SBI, Kotak, etc. use this)
   for (let i = 0; i < Math.min(6, sheetData.length); i++) {
     const row = sheetData[i];
@@ -460,14 +486,15 @@ function detectFundName(sheetData, sheetName, filename) {
     }
   }
 
-  // Priority 2: Check first 5 rows for fund name (but skip generic AMC names)
-  for (let i = 0; i < Math.min(5, sheetData.length); i++) {
+  // Priority 2: Check first 15 rows for fund name (Motilal puts scheme title after AS ON header)
+  for (let i = 0; i < Math.min(15, sheetData.length); i++) {
     const row = sheetData[i];
     if (!row) continue;
     for (let ci = 0; ci < row.length; ci++) {
       const cell = row[ci];
       if (!cell || typeof cell !== 'string') continue;
       const val = cell.trim();
+      if (isBoilerplateName(val)) continue;
       if (val.includes('PORTFOLIO STATEMENT OF')) {
         return val.replace(/PORTFOLIO STATEMENT OF\s+/i, '').replace(/\s+AS ON.*$/i, '').replace(/\r\n/g, ' ').trim();
       }
@@ -487,12 +514,13 @@ function detectFundName(sheetData, sheetName, filename) {
   }
   
   // Second pass: look for any string > 15 chars in first few rows that looks like a name
-  for (let i = 0; i < Math.min(4, sheetData.length); i++) {
+  for (let i = 0; i < Math.min(12, sheetData.length); i++) {
     const row = sheetData[i];
     if (!row) continue;
     for (const cell of row) {
       if (!cell || typeof cell !== 'string') continue;
       const val = cell.trim();
+      if (isBoilerplateName(val)) continue;
       if (val.length > 15 && val.length < 100 && 
           !val.includes('Portfolio') && !val.includes('Monthly') &&
           !val.includes('Generated') && !val.includes('Statement') &&
@@ -958,7 +986,7 @@ function shouldSkipExternalAmc(amc, fundName = '') {
 }
 
 function isLicPortfolioFile(filepath, filename) {
-  return /^leeqtf/i.test(filename);
+  return /^leeqtf/i.test(filename) || /lic\s*mf.*(?:equity\s*)?portfolio/i.test(filename);
 }
 
 function fundNameFromLicSheet(data) {
@@ -1010,7 +1038,12 @@ function isSundaramPortfolioFile(filepath, filename) {
 }
 
 function isTrustPortfolioFile(filepath, filename) {
-  return /^monthly port_/i.test(filename);
+  return (
+    /^monthly port_/i.test(filename) ||
+    /^copy of mont_/i.test(filename) ||
+    /(?:^|[\s_-])mont_\d{8,}/i.test(filename) ||
+    /^trustmf\s/i.test(filename)
+  );
 }
 
 function buildSundaramSheetFundMap(wb) {
@@ -1897,7 +1930,14 @@ function detectMonthQuick(filepath, filename) {
     /(?:^|[/\\])tata_?(?:[/\\]|$)/i.test(pathNorm) ||
     /(?:^|[/\\])quant_?(?:[/\\]|$)/i.test(pathNorm) ||
     /^tata_/i.test(filename) ||
-    /^quant_/i.test(filename)
+    /^quant_/i.test(filename) ||
+    /^obf[a-z]?_/i.test(filename) ||
+    /^copy of mont_/i.test(filename) ||
+    /(?:^|[\s_-])mont_\d{8,}/i.test(filename) ||
+    /^monthly_portfolio_jun/i.test(filename) ||
+    /itimf_monthly_portfolio/i.test(filename) ||
+    /^edel_portfolio/i.test(filename) ||
+    /lic\s*mf.*portfolio/i.test(filename)
   ) {
     return peekWorkbookMonth(filepath);
   }

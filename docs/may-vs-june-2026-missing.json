@@ -1,0 +1,363 @@
+{
+  "mayFunds": 463,
+  "juneFunds": 418,
+  "missingFunds": 58,
+  "amcSummary": {
+    "360 ONE": {
+      "may": 3,
+      "june": 3,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Abakkus": {
+      "may": 2,
+      "june": 2,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Aditya Birla Sun Life": {
+      "may": 23,
+      "june": 23,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Axis": {
+      "may": 16,
+      "june": 16,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Bajaj Finserv": {
+      "may": 8,
+      "june": 8,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Bandhan": {
+      "may": 9,
+      "june": 9,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Bank of India": {
+      "may": 12,
+      "june": 10,
+      "missing": 2,
+      "status": "PARTIAL"
+    },
+    "Baroda BNP": {
+      "may": 19,
+      "june": 19,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Canara Robeco": {
+      "may": 8,
+      "june": 7,
+      "missing": 1,
+      "status": "PARTIAL"
+    },
+    "Capitalmind": {
+      "may": 1,
+      "june": 1,
+      "missing": 0,
+      "status": "OK"
+    },
+    "DSP": {
+      "may": 13,
+      "june": 13,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Edelweiss": {
+      "may": 15,
+      "june": 15,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Franklin India": {
+      "may": 13,
+      "june": 13,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Groww": {
+      "may": 7,
+      "june": 4,
+      "missing": 3,
+      "status": "PARTIAL"
+    },
+    "HDFC": {
+      "may": 10,
+      "june": 7,
+      "missing": 3,
+      "status": "PARTIAL"
+    },
+    "HSBC": {
+      "may": 9,
+      "june": 8,
+      "missing": 1,
+      "status": "PARTIAL"
+    },
+    "Helios": {
+      "may": 4,
+      "june": 4,
+      "missing": 0,
+      "status": "OK"
+    },
+    "ICICI Prudential": {
+      "may": 37,
+      "june": 35,
+      "missing": 2,
+      "status": "PARTIAL"
+    },
+    "ITI": {
+      "may": 12,
+      "june": 12,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Invesco India": {
+      "may": 7,
+      "june": 5,
+      "missing": 2,
+      "status": "PARTIAL"
+    },
+    "JM Financial": {
+      "may": 4,
+      "june": 7,
+      "missing": 0,
+      "status": "MORE_IN_JUNE"
+    },
+    "Jio BlackRock": {
+      "may": 3,
+      "june": 3,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Kotak": {
+      "may": 26,
+      "june": 26,
+      "missing": 0,
+      "status": "OK"
+    },
+    "LIC": {
+      "may": 16,
+      "june": 16,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Mirae Asset": {
+      "may": 8,
+      "june": 0,
+      "missing": 8,
+      "status": "MISSING_AMC"
+    },
+    "Motilal Oswal": {
+      "may": 18,
+      "june": 19,
+      "missing": 0,
+      "status": "MORE_IN_JUNE"
+    },
+    "NJ": {
+      "may": 1,
+      "june": 1,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Navi": {
+      "may": 3,
+      "june": 2,
+      "missing": 1,
+      "status": "PARTIAL"
+    },
+    "Nippon India": {
+      "may": 15,
+      "june": 15,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Old Bridge": {
+      "may": 2,
+      "june": 2,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Other": {
+      "may": 4,
+      "june": 1,
+      "missing": 3,
+      "status": "PARTIAL"
+    },
+    "PGIM India": {
+      "may": 7,
+      "june": 7,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Parag Parikh": {
+      "may": 1,
+      "june": 1,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Quant": {
+      "may": 20,
+      "june": 8,
+      "missing": 12,
+      "status": "PARTIAL"
+    },
+    "SBI": {
+      "may": 25,
+      "june": 22,
+      "missing": 3,
+      "status": "PARTIAL"
+    },
+    "Samco": {
+      "may": 1,
+      "june": 1,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Shriram": {
+      "may": 2,
+      "june": 2,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Sundaram": {
+      "may": 21,
+      "june": 21,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Tata": {
+      "may": 19,
+      "june": 19,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Taurus": {
+      "may": 5,
+      "june": 4,
+      "missing": 1,
+      "status": "PARTIAL"
+    },
+    "Trust": {
+      "may": 4,
+      "june": 4,
+      "missing": 0,
+      "status": "OK"
+    },
+    "UTI": {
+      "may": 16,
+      "june": 16,
+      "missing": 0,
+      "status": "OK"
+    },
+    "Union": {
+      "may": 10,
+      "june": 7,
+      "missing": 3,
+      "status": "PARTIAL"
+    },
+    "WhiteOak Capital": {
+      "may": 4,
+      "june": 0,
+      "missing": 4,
+      "status": "MISSING_AMC"
+    }
+  },
+  "missingByAmc": {
+    "Bandhan": [
+      "Bandhan Innovation Fund",
+      "Bandhan Multi-Factor Fund"
+    ],
+    "Bank of India": [
+      "Bank Of India MID CAP TAX FUND Series 2 ( A 10 year Close -ended equity linked savings scheme)",
+      "Bank Of India Mid Cap Tax Fund Series 1 ( A 10 year Close -ended equity linked savings scheme)"
+    ],
+    "Canara Robeco": [
+      "Canara Robeco Value Fund"
+    ],
+    "Groww": [
+      "Groww Nifty India Railways PSU Index",
+      "IB13-Groww Value Fund",
+      "IB31-Groww Nifty India Railways PSU Index"
+    ],
+    "HDFC": [
+      "HDFC Childrens Fund",
+      "HDFC Defence Fund",
+      "HDFC Flexi Cap Fund",
+      "HDFC Focused Fund"
+    ],
+    "HSBC": [
+      "HSBC Infrastructure Fund"
+    ],
+    "ICICI Prudential": [
+      "Mahindra Manulife Banking & Financial Services Fund - Direct",
+      "Mahindra Manulife Business Cycle Fund",
+      "Mahindra Manulife Consumption Fund",
+      "Mahindra Manulife Innovation Opportunities Fund - Direct",
+      "Mahindra Manulife Manufacturing Fund",
+      "Mahindra Manulife Multi Cap Fund",
+      "Mahindra Manulife Value Fund"
+    ],
+    "Invesco India": [
+      "Invesco India PSU Equity Fund",
+      "Invesco India Technology Fund"
+    ],
+    "Mirae Asset": [
+      "Mirae Asset Flexi Cap Fund",
+      "Mirae Asset Focused Fund",
+      "Mirae Asset Healthcare Fund",
+      "Mirae Asset Large & Midcap Fund",
+      "Mirae Asset Large Cap Fund",
+      "Mirae Asset Midcap Fund",
+      "Mirae Asset Multicap Fund",
+      "Mirae Asset Small Cap Fund"
+    ],
+    "Navi": [
+      "NAVI MUTUAL FUND"
+    ],
+    "Other": [
+      "WCET-THE WEALTH COMPANY ETHICAL FUND",
+      "WCFL-THE WEALTH COMPANY FLEXI CAP FUND",
+      "WCMA-THE WEALTH COMPANY MULTIASSET ALLOC FUND",
+      "WCSC-THE WEALTH COMPANY SMALL CAP FUND"
+    ],
+    "Quant": [
+      "Quant BFSI Fund",
+      "Quant Business Cycle Fund",
+      "Quant Commodities Fund",
+      "Quant Consumption Fund",
+      "Quant ESG Integration Strategy Fund",
+      "Quant Healthcare Fund",
+      "Quant Infrastructure Fund",
+      "Quant Manufacturing Fund",
+      "Quant Momentum Fund",
+      "Quant PSU Fund",
+      "Quant Quantamental Fund",
+      "Quant Teck Fund"
+    ],
+    "SBI": [
+      "SBI Long Term Advantage Fund - Series IV",
+      "SBI Long Term Advantage Fund - Series V",
+      "SBI Long Term Advantage Fund - Series VI"
+    ],
+    "Taurus": [
+      "Taurus Ethical Fund"
+    ],
+    "Union": [
+      "Union Active Momentum Fund",
+      "Union Innovation & Opportunities Fund",
+      "Union Value Fund"
+    ],
+    "WhiteOak Capital": [
+      "WhiteOak Capital Flexi Cap Fund",
+      "WhiteOak Capital Large Cap Fund",
+      "WhiteOak Capital Mid Cap Fund",
+      "WhiteOak Capital Multi Cap Fund"
+    ]
+  }
+}
