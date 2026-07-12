@@ -48,11 +48,10 @@ jobs:
         id: export-cache
         with:
           path: public/data
-          # v2: bust stale May alias by-slug files that broke FORCE_EXPORT quality gate
-          key: export-data-v2-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
+          # v3: clear by-slug on DB force + always overwrite alias twins (uncoded cache orphans)
+          key: export-data-v3-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
           restore-keys: |
-            export-data-v2-
-            export-data-
+            export-data-v3-
 
       - name: Export cache status
         run: |
@@ -101,7 +100,7 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: public/data
-          key: export-data-v2-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
+          key: export-data-v3-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
 
       - name: Deploy prebuilt static site to Vercel
         run: |

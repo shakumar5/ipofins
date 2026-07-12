@@ -78,8 +78,13 @@ export function mergeHoldingsPreferMoreStocks(primary, supplemental) {
       const entry = merged.holdings[slug];
       const fromPrimary = unpackMonthHoldings(entry[month]);
       if (fromExtra.stocks.length > fromPrimary.stocks.length) {
+        const fundContext = {
+          fundSlug: slug,
+          fundName: fund.name || entry.name,
+          internationalFund: isInternationalEquityFund(slug, fund.name || entry.name),
+        };
         entry[month] = fromExtra.stocks
-          .map((h) => normalizeEquityHoldingRow(h, { enrichFromSlug: false }))
+          .map((h) => normalizeEquityHoldingRow(h, { enrichFromSlug: false, fundContext }))
           .filter(Boolean)
           .map((h) => ({
             name: h.name,

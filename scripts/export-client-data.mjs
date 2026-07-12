@@ -264,6 +264,18 @@ function propagateHoldingsToAliasSlugs(aliases = {}) {
     const countB = Array.isArray(fileB?.stocks) ? fileB.stocks.length : 0;
     if (!countA && !countB) continue;
 
+    // Same-month pairs that look like different funds must not overwrite each other.
+    if (
+      countA &&
+      countB &&
+      fileA.month &&
+      fileB.month &&
+      fileA.month === fileB.month &&
+      !aliasHoldingsOverlap(fileA, fileB)
+    ) {
+      continue;
+    }
+
     let best = null;
     // Prefer newer month (DB June must replace stale May listable copies).
     if (fileA?.month && fileB?.month && fileA.month !== fileB.month) {
@@ -277,15 +289,18 @@ function propagateHoldingsToAliasSlugs(aliases = {}) {
     }
     if (!best?.stocks?.length) continue;
 
+    // Always sync both sides to best — never keep a larger uncoded cache twin.
     for (const slug of new Set([listable, canonical])) {
       const current = readFundFile(slug);
       const currentCount = Array.isArray(current?.stocks) ? current.stocks.length : 0;
-      const currentRank = holdingsMonthRank(current?.month);
-      const bestRank = holdingsMonthRank(best.month);
-      const needsNewerMonth =
-        Boolean(current?.month && best.month && current.month !== best.month && bestRank > currentRank);
-      const needsFill = currentCount < best.stocks.length;
-      if (!needsNewerMonth && !needsFill && currentCount > 0) continue;
+      if (
+        current &&
+        current.month === best.month &&
+        currentCount === best.stocks.length &&
+        currentCount > 0
+      ) {
+        continue;
+      }
       writeFileSync(
         join(dir, `${slug}.json`),
         JSON.stringify({ ...best, slug }),
