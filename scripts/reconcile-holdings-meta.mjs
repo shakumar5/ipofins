@@ -36,16 +36,13 @@ writeFileSync(COUNTS_PATH, JSON.stringify(bySlugCounts));
 console.log(`  ✓ fund-holdings-by-slug-counts.json (${Object.keys(bySlugCounts).length} funds)`);
 
 function effectiveCount(slug, aliases = {}) {
+  // Authoritative: this slug's by-slug file only (A1). Do not Math.max with alias files.
   let count = bySlugCounts[slug] || 0;
-  for (const [listable, canonical] of Object.entries(aliases)) {
-    if (listable !== slug && canonical !== slug) continue;
-    count = Math.max(
-      count,
-      bySlugCounts[listable] || 0,
-      bySlugCounts[canonical] || 0,
-    );
-  }
-  return count;
+  if (count > 0) return count;
+  // If this is a listable alias with no file, use canonical detail file count.
+  const canonical = aliases[slug];
+  if (canonical && bySlugCounts[canonical]) return bySlugCounts[canonical];
+  return 0;
 }
 
 if (!existsSync(META_PATH)) {
@@ -85,16 +82,17 @@ for (const slug of Object.keys(bySlugCounts)) {
 }
 
 for (const [listable, canonical] of Object.entries(aliases)) {
-  const canonicalCount = effectiveCount(canonical, aliases) || stockCounts[canonical] || 0;
-  const listableCount = effectiveCount(listable, aliases) || stockCounts[listable] || 0;
-  const best = Math.max(canonicalCount, listableCount);
+  const canonicalCount = bySlugCounts[canonical] || 0;
+  const listableCount = bySlugCounts[listable] || 0;
+  // Detail page (canonical) wins; listable mirrors it. Never inflate canonical.
+  const best = canonicalCount > 0 ? canonicalCount : listableCount;
   if (best > 0) {
     if (stockCounts[listable] !== best) {
       stockCounts[listable] = best;
       updated++;
     }
-    if (stockCounts[canonical] !== best) {
-      stockCounts[canonical] = best;
+    if (canonicalCount > 0 && stockCounts[canonical] !== canonicalCount) {
+      stockCounts[canonical] = canonicalCount;
       updated++;
     }
   }
@@ -117,7 +115,8 @@ function syncMfHubStockCounts(fileName) {
   let hubUpdated = 0;
   for (const row of rows) {
     const detailSlug = row.detailSlug ? String(row.detailSlug) : '';
-    const count = detailSlug ? effectiveCount(detailSlug, aliases) : 0;
+    // Hub stockCount must equal detail by-slug file length (not alias Math.max).
+    const count = detailSlug ? (bySlugCounts[detailSlug] || 0) : 0;
     if (!count || count <= 0) {
       if (row.hasHoldings !== false) {
         row.hasHoldings = false;

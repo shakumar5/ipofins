@@ -50,6 +50,8 @@ import {
   buildHoldingsMetaFromJson,
   enrichHoldingsMetaWithOverlap,
   mergeHoldingsMeta,
+  readBySlugStockCounts,
+  applyBySlugCountsToMeta,
 } from './lib/mf-hub-holdings-meta.mjs';
 import { filterMutualFundsToCurated } from './lib/canonical-fund-filter.mjs';
 import {
@@ -77,6 +79,27 @@ function neonTlsHint() {
   if (platform() !== 'win32') return '';
   if (process.execArgv.includes('--use-system-ca')) return '';
   return ' On Windows, run: npm run export:client-data (uses --use-system-ca for Neon TLS).';
+}
+
+function runHoldingsReconcileOrFail() {
+  const reconcile = join(dirname(fileURLToPath(import.meta.url)), 'reconcile-holdings-meta.mjs');
+  const result = spawnSync(process.execPath, [reconcile], { stdio: 'inherit', cwd: ROOT });
+  if ((result.status ?? 1) !== 0) {
+    throw new Error('reconcile-holdings-meta.mjs failed — refusing to ship inconsistent counts');
+  }
+}
+
+function runHoldingsValidatorsOrFail() {
+  // Full quality gate: integrity + listing codes + DB dups/orphans + cross-check
+  const script = join(dirname(fileURLToPath(import.meta.url)), 'validate-mf-holdings-quality.mjs');
+  const result = spawnSync(process.execPath, [...nodeExtraArgs(), script], {
+    stdio: 'inherit',
+    cwd: ROOT,
+    env: process.env,
+  });
+  if ((result.status ?? 1) !== 0) {
+    throw new Error('validate-mf-holdings-quality failed — refusing to ship bad holdings data');
+  }
 }
 
 function logStep(label) {
@@ -712,15 +735,7 @@ async function main() {
     console.log(`  ℹ listing slug indexes (ISIN ${counts.isin}, NSE ${counts.nse}, BSE ${counts.bse})`);
     writeFundHoldingsBySlugExports(holdings);
   }
-  try {
-    const reconcile = join(dirname(fileURLToPath(import.meta.url)), 'reconcile-holdings-meta.mjs');
-    const result = spawnSync(process.execPath, [reconcile], { stdio: 'inherit', cwd: ROOT });
-    if (result.status !== 0) {
-      console.warn('  ⚠ reconcile-holdings-meta.mjs failed — stock counts may be stale');
-    }
-  } catch (e) {
-    console.warn('  ⚠ Could not reconcile holdings meta:', e.message);
-  }
+  // Counts come from by-slug files only — reconcile runs once after meta/hub/aliases are written.
   const portfolioOverlap = buildPortfolioOverlapExport(holdings);
   writeJson('portfolio-overlap.json', portfolioOverlap);
   // fund-overlap-index.json is written only with fund-overlaps-by-fund.json (DB step below).
@@ -765,25 +780,25 @@ async function main() {
   if (mfFunds.length) {
     const doneHoldingsPages = logStep('fund holdings pages export');
     const overlapSlugs = portfolioOverlap.funds.map((f) => f.slug).filter(Boolean);
-    const jsonHoldingsMeta = buildHoldingsMetaFromJson(holdings);
-    let holdingsMeta = jsonHoldingsMeta;
+    const bySlugDir = join(OUT_DIR, 'fund-holdings-by-slug');
+    const bySlugCounts = readBySlugStockCounts(bySlugDir);
+
+    // Slug maps from DB (or JSON fallback); display counts overwritten from by-slug files.
+    let holdingsMeta = buildHoldingsMetaFromJson(exportHoldings || holdings);
     if (isDbConfigured()) {
       try {
         const dbMeta = await withDbRetry(
           () => loadHoldingsMetaFromDb(sql),
-          { label: 'mf-hub holdings meta' },
+          { label: 'mf-hub holdings meta maps' },
         );
-        holdingsMeta = mergeHoldingsMeta(dbMeta, jsonHoldingsMeta);
-        const dbOnly = Object.keys(dbMeta.stockCounts || {}).length;
-        const merged = Object.keys(holdingsMeta.stockCounts || {}).length;
-        if (merged > dbOnly) {
-          console.log(`  ℹ Merged parser holdings meta (+${merged - dbOnly} slugs not in DB match)`);
-        }
+        holdingsMeta = mergeHoldingsMeta(dbMeta, holdingsMeta);
       } catch (e) {
         console.warn('  ⚠ mf-hub holdings meta from DB failed:', e.message);
-        console.log('  ℹ Using parser fund-holdings.json for holdings meta');
+        console.log('  ℹ Using parser/export holdings for slug maps');
       }
     }
+    holdingsMeta = applyBySlugCountsToMeta(holdingsMeta, bySlugCounts);
+    console.log(`  ℹ stockCounts from by-slug files (${Object.keys(bySlugCounts).length} funds)`);
     const enrichedMeta = enrichHoldingsMetaWithOverlap(holdingsMeta, overlapSlugs);
 
     let holdingsIndex = [];
@@ -831,18 +846,42 @@ async function main() {
       );
       writeJson('fund-holdings-aliases.json', aliases);
       alignFundOverlapExports(aliases);
+      propagateHoldingsToAliasSlugs(aliases);
+      // Re-apply counts after alias file sync (new by-slug files may appear).
+      const countsAfterAlias = readBySlugStockCounts(bySlugDir);
+      const metaAfterAlias = applyBySlugCountsToMeta(
+        enrichHoldingsMetaWithOverlap(
+          applyBySlugCountsToMeta(holdingsMeta, countsAfterAlias, aliases),
+          overlapSlugs,
+        ),
+        countsAfterAlias,
+        aliases,
+      );
+      const hubSynced = buildMfHubExports(mfFunds, metaAfterAlias, {
+        amcCount: Object.keys(holdings.amcs || {}).length,
+        fundCount: Object.values(metaAfterAlias.stockCounts).length,
+        latestMonth: holdings.months?.[holdings.months.length - 1] || '',
+        overlapSlugs,
+        pageSlugSet,
+      });
+      mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });
+      writeJson('mf-hub/meta.json', hubSynced.meta);
+      writeJson('mf-hub/best.json', hubSynced.best);
+      writeJson('mf-hub/all.json', hubSynced.all);
+      writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(metaAfterAlias, hubSynced.all));
       doneHoldingsPages(
         `${holdingsIndex.length} pages, ${Object.keys(aliases).length} aliases`,
       );
+      doneMfHub(`${mfFunds.length} funds`);
     } else {
+      mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });
+      writeJson('mf-hub/meta.json', hub.meta);
+      writeJson('mf-hub/best.json', hub.best);
+      writeJson('mf-hub/all.json', hub.all);
+      writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(enrichedMeta, hub.all));
       doneHoldingsPages('skipped (no holdings pages)');
+      doneMfHub(`${mfFunds.length} funds`);
     }
-    mkdirSync(join(OUT_DIR, 'mf-hub'), { recursive: true });
-    writeJson('mf-hub/meta.json', hub.meta);
-    writeJson('mf-hub/best.json', hub.best);
-    writeJson('mf-hub/all.json', hub.all);
-    writeJson('fund-holdings-meta.json', serializeHoldingsMetaForDisk(enrichedMeta, hub.all));
-    doneMfHub(`${mfFunds.length} funds`);
   }
 
   if (isDbConfigured()) {
@@ -944,13 +983,10 @@ async function main() {
   if (Object.keys(aliases).length) {
     alignFundOverlapExports(aliases);
     propagateHoldingsToAliasSlugs(aliases);
-    try {
-      const reconcile = join(dirname(fileURLToPath(import.meta.url)), 'reconcile-holdings-meta.mjs');
-      spawnSync(process.execPath, [reconcile], { stdio: 'inherit', cwd: ROOT });
-    } catch (e) {
-      console.warn('  ⚠ Could not re-reconcile holdings meta after alias sync:', e.message);
-    }
   }
+  // By-slug → meta/hub reconcile once at end (fail hard), then integrity gates.
+  runHoldingsReconcileOrFail();
+  runHoldingsValidatorsOrFail();
   verifyFundOverlapExports(aliases);
   verifySmartMoneyExports();
   enrichFundHoldingsBySlugStockSlugs();

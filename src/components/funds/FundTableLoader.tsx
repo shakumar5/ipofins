@@ -14,17 +14,19 @@ import {
 } from '../../lib/mf-hub-client';
 import type { MfHubFundRow } from '../../lib/mf-hub-build';
 
-function mergeHoldingsMetaWithBySlugCounts(
+/** Prefer by-slug row lengths as authoritative display counts (no Math.max inflate). */
+function applyBySlugCountsToMeta(
   meta: FundHoldingsMetaDisk,
   bySlugCounts: Record<string, number> | null,
 ): FundHoldingsMetaDisk {
   if (!bySlugCounts || !Object.keys(bySlugCounts).length) return meta;
   const stockCounts = { ...(meta.stockCounts || {}) };
   for (const [slug, count] of Object.entries(bySlugCounts)) {
-    stockCounts[slug] = Math.max(stockCounts[slug] ?? 0, count);
+    const n = Number(count) || 0;
+    if (n > 0) stockCounts[slug] = n;
   }
   return {
-    slugs: meta.slugs,
+    slugs: [...new Set([...(meta.slugs || []), ...Object.keys(stockCounts).filter((k) => stockCounts[k] > 0)])],
     stockCounts,
   };
 }
@@ -78,7 +80,7 @@ function FundTableLoaderInner({ table, basePath, defaultCategory = 'All' }: Prop
         if (cancelled || !result) return;
         const [rows, holdingsMeta, amfiAliases, bySlugCounts] = result;
         if (holdingsMeta?.stockCounts && Object.keys(holdingsMeta.stockCounts).length > 0) {
-          const mergedMeta = mergeHoldingsMetaWithBySlugCounts(holdingsMeta, bySlugCounts);
+          const mergedMeta = applyBySlugCountsToMeta(holdingsMeta, bySlugCounts);
           setFunds(enrichMfHubFundsWithHoldings(rows, mergedMeta, amfiAliases));
           return;
         }

@@ -3,7 +3,6 @@
  * Slugs must match funds.slug used in getStaticPaths — not parser/holdings keys.
  */
 import { AMFI_SLUG_ALIASES, slugVariants } from './fund-match.mjs';
-import { LISTABLE_EQUITY_CATEGORIES } from './mf-hub-holdings-meta.mjs';
 
 function baseSlug(slug) {
   return String(slug)
@@ -39,11 +38,6 @@ export async function loadFundHoldingsIndexFromDb(sql, overlapSlugs = []) {
     WITH fund_latest AS (
       SELECT fund_id, MAX(month) AS m FROM fund_holdings GROUP BY fund_id
     ),
-    portfolio_stats AS (
-      SELECT ps.fund_id, ps.total_stocks
-      FROM fund_portfolio_stats ps
-      INNER JOIN fund_latest fl ON fl.fund_id = ps.fund_id AND ps.month = fl.m
-    ),
     holders AS (
       SELECT
         f.id AS holder_id,
@@ -54,18 +48,16 @@ export async function loadFundHoldingsIndexFromDb(sql, overlapSlugs = []) {
           regexp_replace(f.slug, '(-direct-plan|-regular-plan)(-growth(-plan)?|-growth-option)?$', ''),
           '-growth-option$', ''
         ) AS holder_base,
-        COUNT(DISTINCT fh.stock_id)::int AS stored_stock_count,
-        MAX(ps.total_stocks)::int AS portfolio_total
+        COUNT(DISTINCT fh.stock_id)::int AS stored_stock_count
       FROM fund_holdings fh
       JOIN funds f ON f.id = fh.fund_id
       INNER JOIN fund_latest fl ON fl.fund_id = fh.fund_id AND fh.month = fl.m
-      LEFT JOIN portfolio_stats ps ON ps.fund_id = f.id
       GROUP BY f.id, f.slug, f.amc_id, f.scheme_code, holder_base
     ),
     holder_slugs AS (
       SELECT DISTINCT holder_slug AS slug
       FROM holders
-      WHERE COALESCE(NULLIF(stored_stock_count, 0), portfolio_total) > 0
+      WHERE stored_stock_count > 0
     )
     SELECT slug FROM holder_slugs
   `;
@@ -119,14 +111,17 @@ export async function loadFundHoldingsIndexFromDb(sql, overlapSlugs = []) {
   return fundRows.map(mapFundRow);
 }
 
-/** Ensure canonical holdings page slugs carry resolved hub stock counts (not listable AMFI slugs). */
+/** Ensure canonical holdings page slugs carry resolved hub stock counts (not listable AMFI slugs).
+ * Never inflate above by-slug / meta counts — only fill missing detailSlug keys.
+ */
 export function expandStockCountsFromHubRows(stockCounts, hubRows = []) {
   const counts = { ...(stockCounts || {}) };
   for (const row of hubRows) {
     if (!row?.hasHoldings || !row.detailSlug) continue;
-    const count = Math.max(Number(row.stockCount) || 0, Number(counts[row.detailSlug]) || 0);
-    if (count <= 0) continue;
-    counts[row.detailSlug] = Math.max(counts[row.detailSlug] || 0, count);
+    const existing = Number(counts[row.detailSlug]) || 0;
+    if (existing > 0) continue;
+    const fromHub = Number(row.stockCount) || 0;
+    if (fromHub > 0) counts[row.detailSlug] = fromHub;
   }
   return counts;
 }

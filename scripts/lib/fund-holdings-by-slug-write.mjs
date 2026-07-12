@@ -3,16 +3,42 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalizeEquityHoldingRow, isInternationalEquityFund } from './listing-codes.mjs';
+import { normalizeEquityHoldingRow, isInternationalEquityFund, sanitizeListingCodes } from './listing-codes.mjs';
 import {
   enrichHoldingListingCodes,
   resolveStockSlugFromListing,
 } from './stock-slug-lookup.mjs';
 import { unpackMonthHoldings, latestMonthForFund } from './holdings-month.mjs';
 
+function holdingListingKey(row) {
+  const { isin, nseSymbol, bseCode } = sanitizeListingCodes(row);
+  if (isin) return `isin:${isin}`;
+  if (nseSymbol) return `nse:${nseSymbol}`;
+  if (bseCode) return `bse:${bseCode}`;
+  return '';
+}
+
+/** Collapse duplicate listing rows; keep higher pct. */
+export function dedupeMappedHoldingsByListing(mapped) {
+  const byKey = new Map();
+  const noKey = [];
+  for (const row of mapped) {
+    const key = holdingListingKey(row);
+    if (!key) {
+      noKey.push(row);
+      continue;
+    }
+    const prev = byKey.get(key);
+    if (!prev || Number(row.pct) > Number(prev.pct)) {
+      byKey.set(key, row);
+    }
+  }
+  return [...byKey.values(), ...noKey];
+}
+
 export function mapStocksForBySlugExport(stocks, fundContext, lookups, slugListing) {
   const { isinMap, nseMap, bseMap } = lookups;
-  return stocks
+  const mapped = stocks
     .map((h) => {
       const listing = enrichHoldingListingCodes(h, slugListing);
       const normalized = normalizeEquityHoldingRow(
@@ -45,6 +71,7 @@ export function mapStocksForBySlugExport(stocks, fundContext, lookups, slugListi
       };
     })
     .filter(Boolean);
+  return dedupeMappedHoldingsByListing(mapped);
 }
 
 export function readBySlugFile(outDir, slug) {

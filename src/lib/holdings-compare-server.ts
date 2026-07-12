@@ -314,16 +314,15 @@ function reconcileMetaStockCounts(meta: FundHoldingsMetaDisk): FundHoldingsMetaD
   const bySlug = readBySlugStockCountsFromDisk();
   if (!Object.keys(bySlug).length) return meta;
 
-  const stockCounts = { ...(meta.stockCounts || {}) };
-  for (const [slug, count] of Object.entries(bySlug)) {
-    stockCounts[slug] = Math.max(stockCounts[slug] ?? 0, count);
-  }
+  // Authoritative: by-slug file row lengths (never inflate above actual rows).
+  const stockCounts: Record<string, number> = { ...bySlug };
 
   const aliases = readFundHoldingsAliasesFromDisk() ?? {};
   for (const [listable, canonical] of Object.entries(aliases)) {
-    const canonicalCount = stockCounts[canonical];
-    if (canonicalCount != null && canonicalCount > 0) {
-      stockCounts[listable] = Math.max(stockCounts[listable] ?? 0, canonicalCount);
+    const count = Math.max(stockCounts[listable] ?? 0, stockCounts[canonical] ?? 0);
+    if (count > 0) {
+      stockCounts[listable] = count;
+      stockCounts[canonical] = count;
     }
   }
 

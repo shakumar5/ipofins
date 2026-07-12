@@ -72,6 +72,8 @@
     "restore:fund-holdings-from-parser": "node scripts/node-with-ca.mjs scripts/restore-fund-holdings-from-parser.mjs",
     "validate:holdings-listing-codes": "node scripts/validate-holdings-listing-codes.mjs",
     "validate:fund-holdings-integrity": "node scripts/validate-fund-holdings-integrity.mjs",
+    "validate:mf-holdings-quality": "node scripts/node-with-ca.mjs scripts/validate-mf-holdings-quality.mjs",
+    "repair:fund-holdings-by-slug-dedupe": "node scripts/repair-fund-holdings-by-slug-dedupe.mjs",
     "build:overlap-static-pages": "node scripts/generate-overlap-static-pages.mjs",
     "verify:encoding": "node scripts/verify-source-encoding.mjs",
     "generate:insights": "node scripts/generate-insights-articles.mjs",
