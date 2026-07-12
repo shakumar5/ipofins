@@ -471,19 +471,36 @@ export function buildFundMatcher(fundRows, amcRows) {
       stripAmcPrefix(fundData.name, fundData.amc),
     ];
 
+    const amcOk = (fundId) => {
+      if (!fundId || !amcSlug) return true;
+      const fund = fundById.get(fundId);
+      if (!fund) return false;
+      const fundAmc = amcSlugById[fund.amc_id] || '';
+      return fundAmc === amcSlug || fundAmc.startsWith(amcSlug) || amcSlug.startsWith(fundAmc);
+    };
+
     for (const norm of norms) {
       const key = `${amcSlug}|${slugify(norm)}`;
-      if (byAmcNorm.has(key)) return byAmcNorm.get(key);
+      if (byAmcNorm.has(key)) {
+        const id = byAmcNorm.get(key);
+        if (amcOk(id)) return id;
+      }
       for (const v of slugVariants(slugify(norm))) {
         const id = byAmcNorm.get(`${amcSlug}|${v}`);
-        if (id) return id;
+        if (id && amcOk(id)) return id;
       }
     }
 
-    if (bySlug.has(fundSlug)) return bySlug.get(fundSlug);
+    if (bySlug.has(fundSlug)) {
+      const id = bySlug.get(fundSlug);
+      if (amcOk(id)) return id;
+    }
 
     for (const v of slugVariants(fundSlug)) {
-      if (bySlug.has(v)) return bySlug.get(v);
+      if (bySlug.has(v)) {
+        const id = bySlug.get(v);
+        if (amcOk(id)) return id;
+      }
     }
 
     return null;
