@@ -225,6 +225,22 @@ function aliasHoldingsOverlap(fileA, fileB) {
   return overlap >= Math.min(3, Math.min(fileA.stocks.length, fileB.stocks.length));
 }
 
+/** Rank month labels like "June 2026" for fresher-wins alias sync. */
+function holdingsMonthRank(monthLabel) {
+  const raw = String(monthLabel || '').trim();
+  const m = raw.match(
+    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/i,
+  );
+  if (!m) return 0;
+  const order = [
+    'january', 'february', 'march', 'april', 'may', 'june',
+    'july', 'august', 'september', 'october', 'november', 'december',
+  ];
+  const mi = order.indexOf(m[1].toLowerCase());
+  if (mi < 0) return 0;
+  return Number(m[2]) * 12 + mi;
+}
+
 function propagateHoldingsToAliasSlugs(aliases = {}) {
   const dir = join(OUT_DIR, 'fund-holdings-by-slug');
   if (!existsSync(dir)) return 0;
@@ -247,13 +263,29 @@ function propagateHoldingsToAliasSlugs(aliases = {}) {
     const countA = Array.isArray(fileA?.stocks) ? fileA.stocks.length : 0;
     const countB = Array.isArray(fileB?.stocks) ? fileB.stocks.length : 0;
     if (!countA && !countB) continue;
-    if (fileA && fileB && !aliasHoldingsOverlap(fileA, fileB)) continue;
-    const best = countA >= countB ? fileA : fileB;
+
+    let best = null;
+    // Prefer newer month (DB June must replace stale May listable copies).
+    if (fileA?.month && fileB?.month && fileA.month !== fileB.month) {
+      best =
+        holdingsMonthRank(fileB.month) >= holdingsMonthRank(fileA.month) ? fileB : fileA;
+    } else if (countB > 0) {
+      // Canonical/detail (usually *-direct-plan from Neon) wins over a larger stale twin.
+      best = fileB;
+    } else {
+      best = fileA;
+    }
     if (!best?.stocks?.length) continue;
+
     for (const slug of new Set([listable, canonical])) {
       const current = readFundFile(slug);
       const currentCount = Array.isArray(current?.stocks) ? current.stocks.length : 0;
-      if (currentCount >= best.stocks.length) continue;
+      const currentRank = holdingsMonthRank(current?.month);
+      const bestRank = holdingsMonthRank(best.month);
+      const needsNewerMonth =
+        Boolean(current?.month && best.month && current.month !== best.month && bestRank > currentRank);
+      const needsFill = currentCount < best.stocks.length;
+      if (!needsNewerMonth && !needsFill && currentCount > 0) continue;
       writeFileSync(
         join(dir, `${slug}.json`),
         JSON.stringify({ ...best, slug }),
@@ -727,6 +759,11 @@ async function main() {
       writeFundHoldingsBySlugExports(exportHoldings, listingLookups, { force: true });
       console.log('  ℹ fund-holdings-by-slug from DB (authoritative)');
     } catch (e) {
+      // Stale git/cache JSON must not ship when we intended a Neon refresh — that causes
+      // DB↔JSON severe-drift hard failures on CI after Neon blips.
+      if (process.env.FORCE_EXPORT === '1' || process.env.EXPORT_HOLDINGS === 'db') {
+        throw new Error(`DB by-slug export failed under FORCE_EXPORT: ${e.message}`);
+      }
       console.warn('  ⚠ DB by-slug export failed, using parser export:', e.message);
       writeFundHoldingsBySlugExports(holdings);
     }
