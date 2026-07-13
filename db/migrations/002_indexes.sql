@@ -6,6 +6,9 @@
 -- Stocks
 CREATE INDEX IF NOT EXISTS idx_stocks_sector ON stocks(sector_id);
 CREATE INDEX IF NOT EXISTS idx_stocks_isin ON stocks(isin);
+
+-- ISIN is the natural key for equities (one row per ISIN). Empty → NULL.
+-- Applied/enforced in 014_stocks_isin_unique.sql as stocks_isin_unique.
 CREATE INDEX IF NOT EXISTS idx_stocks_nse ON stocks(nse_symbol);
 CREATE INDEX IF NOT EXISTS idx_stocks_market_cap ON stocks(market_cap_category);
 

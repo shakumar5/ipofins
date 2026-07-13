@@ -90,6 +90,20 @@ console.log(`  Fund NAVs:      ${counts.fund_navs}`);
 console.log(`  Fund holdings:  ${counts.fund_holdings}`);
 console.log(`  Stocks:         ${counts.stocks}`);
 
+const [isinUnique] = await sql`
+  SELECT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE tablename = 'stocks' AND indexname = 'stocks_isin_unique'
+  ) AS present
+`;
+if (!isinUnique?.present) {
+  console.error('\n❌ Missing UNIQUE index stocks_isin_unique (ISIN must be one stock row)');
+  console.error('  node --use-system-ca db/fix-isin.mjs');
+  console.error('  # or: psql $DATABASE_URL -f db/migrations/014_stocks_isin_unique.sql');
+  process.exit(1);
+}
+console.log('  ISIN unique:    stocks_isin_unique ✓');
+
 // Super-investor counts — only queried if the tables exist (graceful skip).
 if (!missingSuperInvestor.length) {
   const [siCounts] = await sql`

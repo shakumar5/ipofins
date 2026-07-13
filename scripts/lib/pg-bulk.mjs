@@ -96,7 +96,13 @@ export async function bulkUpsertStocks(rows, chunkSize = 500) {
   const validRows = rows
     .map((r) => {
       if (!r?.name || !r?.slug) return null;
-      return normalizeStockListingRow(r);
+      const normalized = normalizeStockListingRow(r);
+      if (!normalized) return null;
+      // ISIN is the natural key — empty → NULL for partial unique index.
+      normalized.isin = normalized.isin
+        ? String(normalized.isin).trim().toUpperCase()
+        : null;
+      return normalized;
     })
     .filter(Boolean);
   if (!validRows.length) return 0;
@@ -105,15 +111,14 @@ export async function bulkUpsertStocks(rows, chunkSize = 500) {
 
   for (let i = 0; i < validRows.length; i += chunkSize) {
     const chunk = validRows.slice(i, i + chunkSize);
-    const isins = chunk.map((r) => r.isin || null);
+    const isins = chunk.map((r) => r.isin);
     const names = chunk.map((r) => r.name);
     const slugs = chunk.map((r) => r.slug);
     const sectorIds = chunk.map((r) => r.sector_id ?? null);
     const nseSymbols = chunk.map((r) => r.nse_symbol || null);
     const bseCodes = chunk.map((r) => r.bse_code || null);
 
-    // Prefer existing ISIN row — never create a second stock for the same ISIN
-    // (slug-only ON CONFLICT was creating quality-gate failures after holdings seeds).
+    // 1) Enrich canonical row when ISIN already exists (never insert a twin).
     await pool.query(
       `UPDATE stocks s SET
          nse_symbol = COALESCE(NULLIF(TRIM(s.nse_symbol), ''), NULLIF(TRIM(u.nse_symbol), '')),
@@ -121,27 +126,28 @@ export async function bulkUpsertStocks(rows, chunkSize = 500) {
          sector_id = COALESCE(u.sector_id, s.sector_id)
        FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int[], $5::text[], $6::text[])
          AS u(isin, name, slug, sector_id, nse_symbol, bse_code)
-       WHERE NULLIF(TRIM(u.isin), '') IS NOT NULL
-         AND UPPER(TRIM(s.isin)) = UPPER(TRIM(u.isin))`,
+       WHERE u.isin IS NOT NULL AND s.isin = u.isin`,
       [isins, names, slugs, sectorIds, nseSymbols, bseCodes],
     );
 
+    // 2) Insert only when ISIN is new (or null). Slug conflict updates listing fields
+    //    but must NOT overwrite a different stock's ISIN.
     await pool.query(
       `INSERT INTO stocks (isin, name, slug, sector_id, nse_symbol, bse_code)
        SELECT u.isin, u.name, u.slug, u.sector_id, u.nse_symbol, u.bse_code
        FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int[], $5::text[], $6::text[])
          AS u(isin, name, slug, sector_id, nse_symbol, bse_code)
-       WHERE NULLIF(TRIM(u.isin), '') IS NULL
-          OR NOT EXISTS (
-            SELECT 1 FROM stocks s
-            WHERE NULLIF(TRIM(s.isin), '') IS NOT NULL
-              AND UPPER(TRIM(s.isin)) = UPPER(TRIM(u.isin))
-          )
+       WHERE u.isin IS NULL
+          OR NOT EXISTS (SELECT 1 FROM stocks s WHERE s.isin = u.isin)
        ON CONFLICT (slug) DO UPDATE SET
-         isin = COALESCE(stocks.isin, EXCLUDED.isin),
+         isin = CASE
+           WHEN stocks.isin IS NULL THEN EXCLUDED.isin
+           ELSE stocks.isin
+         END,
          nse_symbol = COALESCE(stocks.nse_symbol, EXCLUDED.nse_symbol),
          bse_code = COALESCE(stocks.bse_code, EXCLUDED.bse_code),
-         sector_id = COALESCE(EXCLUDED.sector_id, stocks.sector_id)`,
+         sector_id = COALESCE(EXCLUDED.sector_id, stocks.sector_id)
+       WHERE stocks.isin IS NULL OR stocks.isin = EXCLUDED.isin OR EXCLUDED.isin IS NULL`,
       [isins, names, slugs, sectorIds, nseSymbols, bseCodes],
     );
     upserted += chunk.length;
