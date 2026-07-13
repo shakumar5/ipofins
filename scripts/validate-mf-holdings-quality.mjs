@@ -350,6 +350,25 @@ async function validateDb() {
     ok('no duplicate NSE-only stock groups');
   }
 
+  const dupBse = await withDbRetry(
+    () => sql`
+      SELECT TRIM(bse_code) AS bse, COUNT(*)::int AS cnt
+      FROM stocks
+      WHERE NULLIF(TRIM(isin), '') IS NULL
+        AND NULLIF(TRIM(nse_symbol), '') IS NULL
+        AND NULLIF(TRIM(bse_code), '') IS NOT NULL
+      GROUP BY 1
+      HAVING COUNT(*) > 1
+      LIMIT 25
+    `,
+    { label: 'dup BSE' },
+  );
+  if (dupBse.length) {
+    fail(`stocks duplicate BSE (no ISIN/NSE) groups: ${dupBse.length}+`);
+  } else {
+    ok('no duplicate BSE-only stock groups');
+  }
+
   const badPctDb = await withDbRetry(
     () => sql`
       SELECT COUNT(*)::int AS cnt
