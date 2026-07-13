@@ -49,9 +49,10 @@ jobs:
         with:
           path: public/data
           # v3: clear by-slug on DB force + always overwrite alias twins (uncoded cache orphans)
-          key: export-data-v3-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
+          # v4: invalidate stale by-slug cache after ICICI/Mahindra/Mirae Neon seeds
+          key: export-data-v4-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
           restore-keys: |
-            export-data-v3-
+            export-data-v4-
 
       - name: Export cache status
         run: |
@@ -89,18 +90,18 @@ jobs:
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          # Manual runs always refresh from Neon. Push builds keep a short freshness window.
-          EXPORT_MAX_AGE_MINUTES: ${{ github.event_name == 'workflow_dispatch' && '0' || '180' }}
+          # Always refresh holdings from Neon on prod deploys — 180m skip left ICICI/Mahindra No Data.
+          EXPORT_MAX_AGE_MINUTES: '0'
           FORCE_DIST_DATA_SYNC: '1'
-          FORCE_EXPORT: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
-          EXPORT_HOLDINGS: ${{ github.event_name == 'workflow_dispatch' && 'db' || '' }}
+          FORCE_EXPORT: '1'
+          EXPORT_HOLDINGS: 'db'
 
       - name: Save exported client data cache
         if: success()
         uses: actions/cache/save@v5
         with:
           path: public/data
-          key: export-data-v3-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
+          key: export-data-v4-${{ hashFiles('package-lock.json', 'scripts/export-client-data.mjs', 'scripts/lib/**', 'scripts/run-export-if-needed.mjs', 'scripts/lib/dist-data-sync.mjs', 'scripts/ensure-dist-data.mjs', 'scripts/validate-export-cache.mjs') }}
 
       - name: Deploy prebuilt static site to Vercel
         run: |
