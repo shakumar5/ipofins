@@ -96,13 +96,30 @@ const [isinUnique] = await sql`
     WHERE tablename = 'stocks' AND indexname = 'stocks_isin_unique'
   ) AS present
 `;
-if (!isinUnique?.present) {
-  console.error('\n❌ Missing UNIQUE index stocks_isin_unique (ISIN must be one stock row)');
+const [nseUnique] = await sql`
+  SELECT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE tablename = 'stocks' AND indexname = 'stocks_nse_unique_no_isin'
+  ) AS present
+`;
+const [bseUnique] = await sql`
+  SELECT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE tablename = 'stocks' AND indexname = 'stocks_bse_unique_no_isin_nse'
+  ) AS present
+`;
+const missingListingUnique = [
+  !isinUnique?.present && 'stocks_isin_unique',
+  !nseUnique?.present && 'stocks_nse_unique_no_isin',
+  !bseUnique?.present && 'stocks_bse_unique_no_isin_nse',
+].filter(Boolean);
+if (missingListingUnique.length) {
+  console.error(`\n❌ Missing UNIQUE listing indexes: ${missingListingUnique.join(', ')}`);
   console.error('  node --use-system-ca db/fix-isin.mjs');
   console.error('  # or: psql $DATABASE_URL -f db/migrations/014_stocks_isin_unique.sql');
   process.exit(1);
 }
-console.log('  ISIN unique:    stocks_isin_unique ✓');
+console.log('  Listing unique: ISIN → NSE(no ISIN) → BSE(no ISIN/NSE) ✓');
 
 // Super-investor counts — only queried if the tables exist (graceful skip).
 if (!missingSuperInvestor.length) {
