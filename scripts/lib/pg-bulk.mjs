@@ -112,11 +112,31 @@ export async function bulkUpsertStocks(rows, chunkSize = 500) {
     const nseSymbols = chunk.map((r) => r.nse_symbol || null);
     const bseCodes = chunk.map((r) => r.bse_code || null);
 
+    // Prefer existing ISIN row — never create a second stock for the same ISIN
+    // (slug-only ON CONFLICT was creating quality-gate failures after holdings seeds).
+    await pool.query(
+      `UPDATE stocks s SET
+         nse_symbol = COALESCE(NULLIF(TRIM(s.nse_symbol), ''), NULLIF(TRIM(u.nse_symbol), '')),
+         bse_code = COALESCE(NULLIF(TRIM(s.bse_code), ''), NULLIF(TRIM(u.bse_code), '')),
+         sector_id = COALESCE(u.sector_id, s.sector_id)
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int[], $5::text[], $6::text[])
+         AS u(isin, name, slug, sector_id, nse_symbol, bse_code)
+       WHERE NULLIF(TRIM(u.isin), '') IS NOT NULL
+         AND UPPER(TRIM(s.isin)) = UPPER(TRIM(u.isin))`,
+      [isins, names, slugs, sectorIds, nseSymbols, bseCodes],
+    );
+
     await pool.query(
       `INSERT INTO stocks (isin, name, slug, sector_id, nse_symbol, bse_code)
        SELECT u.isin, u.name, u.slug, u.sector_id, u.nse_symbol, u.bse_code
        FROM UNNEST($1::text[], $2::text[], $3::text[], $4::int[], $5::text[], $6::text[])
          AS u(isin, name, slug, sector_id, nse_symbol, bse_code)
+       WHERE NULLIF(TRIM(u.isin), '') IS NULL
+          OR NOT EXISTS (
+            SELECT 1 FROM stocks s
+            WHERE NULLIF(TRIM(s.isin), '') IS NOT NULL
+              AND UPPER(TRIM(s.isin)) = UPPER(TRIM(u.isin))
+          )
        ON CONFLICT (slug) DO UPDATE SET
          isin = COALESCE(stocks.isin, EXCLUDED.isin),
          nse_symbol = COALESCE(stocks.nse_symbol, EXCLUDED.nse_symbol),
