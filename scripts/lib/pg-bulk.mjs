@@ -263,26 +263,61 @@ export async function bulkApplyAmfiMarketCapCategories(rows, chunkSize = 500) {
  * Bulk upsert NSE listed equities (name, slug, isin, nse_symbol).
  * Used by Super Investors / 1% Club — independent of MF holdings universe.
  */
+/**
+ * Bulk upsert NSE listed equities (name, slug, isin, nse_symbol).
+ * ISIN is the natural key — never insert a second row for an existing ISIN.
+ */
 export async function bulkUpsertListedEquities(rows, chunkSize = 500) {
   if (!rows.length) return 0;
   const pool = getPgPool();
   let upserted = 0;
 
   for (let i = 0; i < rows.length; i += chunkSize) {
-    const chunk = rows.slice(i, i + chunkSize);
+    const chunk = rows.slice(i, i + chunkSize).map((r) => ({
+      isin: r.isin ? String(r.isin).trim().toUpperCase() : null,
+      name: r.name,
+      slug: r.slug,
+      nse_symbol: r.nse_symbol ? String(r.nse_symbol).trim().toUpperCase() : null,
+    })).filter((r) => r.isin && r.name && r.slug);
+
+    if (!chunk.length) continue;
+
     const isins = chunk.map((r) => r.isin);
     const names = chunk.map((r) => r.name);
     const slugs = chunk.map((r) => r.slug);
     const symbols = chunk.map((r) => r.nse_symbol);
 
+    // 1) Enrich existing ISIN row (authoritative path after stocks_isin_unique).
+    await pool.query(
+      `UPDATE stocks s SET
+         nse_symbol = COALESCE(u.nse_symbol, s.nse_symbol),
+         updated_at = NOW()
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[])
+         AS u(isin, name, slug, nse_symbol)
+       WHERE s.isin = u.isin`,
+      [isins, names, slugs, symbols],
+    );
+
+    // 2) Insert only brand-new ISINs. If slug is taken by another stock, use symbol suffix.
     await pool.query(
       `INSERT INTO stocks (isin, name, slug, nse_symbol)
-       SELECT u.isin, u.name, u.slug, u.nse_symbol
-       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[]) AS u(isin, name, slug, nse_symbol)
+       SELECT
+         u.isin,
+         u.name,
+         CASE
+           WHEN EXISTS (SELECT 1 FROM stocks s2 WHERE s2.slug = u.slug)
+             THEN u.slug || '-' || LOWER(RIGHT(u.isin, 6))
+           ELSE u.slug
+         END,
+         u.nse_symbol
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[])
+         AS u(isin, name, slug, nse_symbol)
+       WHERE NOT EXISTS (SELECT 1 FROM stocks s WHERE s.isin = u.isin)
        ON CONFLICT (slug) DO UPDATE SET
-         isin = COALESCE(stocks.isin, EXCLUDED.isin),
+         isin = CASE WHEN stocks.isin IS NULL THEN EXCLUDED.isin ELSE stocks.isin END,
          nse_symbol = COALESCE(EXCLUDED.nse_symbol, stocks.nse_symbol),
-         updated_at = NOW()`,
+         updated_at = NOW()
+       WHERE stocks.isin IS NULL OR stocks.isin = EXCLUDED.isin`,
       [isins, names, slugs, symbols],
     );
     upserted += chunk.length;
@@ -294,6 +329,7 @@ export async function bulkUpsertListedEquities(rows, chunkSize = 500) {
 /**
  * Bulk upsert BSE-only listed equities (name, slug, isin, bse_code).
  * Skips rows whose ISIN already has an NSE symbol (dual-listed stay on NSE path).
+ * ISIN is the natural key — never insert a twin row.
  */
 export async function bulkUpsertBseOnlyEquities(rows, chunkSize = 500) {
   if (!rows.length) return 0;
@@ -301,20 +337,51 @@ export async function bulkUpsertBseOnlyEquities(rows, chunkSize = 500) {
   let upserted = 0;
 
   for (let i = 0; i < rows.length; i += chunkSize) {
-    const chunk = rows.slice(i, i + chunkSize);
+    const chunk = rows.slice(i, i + chunkSize).map((r) => ({
+      isin: r.isin ? String(r.isin).trim().toUpperCase() : null,
+      name: r.name,
+      slug: r.slug,
+      bse_code: r.bse_code ? String(r.bse_code).trim() : null,
+    })).filter((r) => r.isin && r.name && r.slug);
+
+    if (!chunk.length) continue;
+
     const isins = chunk.map((r) => r.isin);
     const names = chunk.map((r) => r.name);
     const slugs = chunk.map((r) => r.slug);
     const codes = chunk.map((r) => r.bse_code);
 
+    // 1) Enrich existing ISIN row (don't overwrite NSE-listed duals' primary identity).
+    await pool.query(
+      `UPDATE stocks s SET
+         bse_code = COALESCE(s.bse_code, u.bse_code),
+         updated_at = NOW()
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[])
+         AS u(isin, name, slug, bse_code)
+       WHERE s.isin = u.isin`,
+      [isins, names, slugs, codes],
+    );
+
+    // 2) Insert only brand-new ISINs that aren't already NSE-listed.
     await pool.query(
       `INSERT INTO stocks (isin, name, slug, bse_code)
-       SELECT u.isin, u.name, u.slug, u.bse_code
-       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[]) AS u(isin, name, slug, bse_code)
+       SELECT
+         u.isin,
+         u.name,
+         CASE
+           WHEN EXISTS (SELECT 1 FROM stocks s2 WHERE s2.slug = u.slug)
+             THEN u.slug || '-' || LOWER(RIGHT(u.isin, 6))
+           ELSE u.slug
+         END,
+         u.bse_code
+       FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[])
+         AS u(isin, name, slug, bse_code)
+       WHERE NOT EXISTS (SELECT 1 FROM stocks s WHERE s.isin = u.isin)
        ON CONFLICT (slug) DO UPDATE SET
-         isin = COALESCE(stocks.isin, EXCLUDED.isin),
+         isin = CASE WHEN stocks.isin IS NULL THEN EXCLUDED.isin ELSE stocks.isin END,
          bse_code = COALESCE(EXCLUDED.bse_code, stocks.bse_code),
-         updated_at = NOW()`,
+         updated_at = NOW()
+       WHERE stocks.isin IS NULL OR stocks.isin = EXCLUDED.isin`,
       [isins, names, slugs, codes],
     );
     upserted += chunk.length;
