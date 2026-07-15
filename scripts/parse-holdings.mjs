@@ -10,7 +10,9 @@
  *   - Market Value (Rs. in Lakhs)
  *   - % to NAV/Net Assets
  * 
- * Input:  C:\Users\shaik\Downloads\Holdings\*.xlsx (+ subfolders)
+ * Input:  HOLDINGS_INPUT_DIR (Excel root). Local default if present:
+ *         C:\Users\shaik\Downloads\Holdings\*.xlsx (+ subfolders)
+ *         Pass --skip-if-missing (or HOLDINGS_SKIP_IF_MISSING=1) on CI.
  * Output: src/data/fund-holdings.json
  * 
  * Structure of output:
@@ -47,7 +49,22 @@ const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const INPUT_DIR = process.env.HOLDINGS_INPUT_DIR || 'C:/Users/shaik/Downloads/Holdings/';
+/** Local Excel root. Override with HOLDINGS_INPUT_DIR. Never assume a machine-specific path on CI. */
+const DEFAULT_HOLDINGS_CANDIDATES = [
+  'C:/Users/shaik/Downloads/Holdings',
+  'C:\\Users\\shaik\\Downloads\\Holdings',
+];
+function resolveHoldingsInputDir() {
+  if (process.env.HOLDINGS_INPUT_DIR) return process.env.HOLDINGS_INPUT_DIR;
+  for (const p of DEFAULT_HOLDINGS_CANDIDATES) {
+    if (existsSync(p)) return p.endsWith('/') || p.endsWith('\\') ? p : `${p}/`;
+  }
+  return DEFAULT_HOLDINGS_CANDIDATES[0] + '/';
+}
+const INPUT_DIR = resolveHoldingsInputDir();
+const SKIP_IF_MISSING =
+  process.env.HOLDINGS_SKIP_IF_MISSING === '1' ||
+  process.argv.includes('--skip-if-missing');
 const OUTPUT_FILE = join(__dirname, '..', 'src', 'data', 'fund-holdings.json');
 function packMonthHoldings(holdings) {
   const sorted = [...holdings].sort((a, b) => b.pct - a.pct);
@@ -1893,6 +1910,12 @@ function isDuplicateFolderPath(filePath) {
 }
 
 function getAllFiles(dir) {
+  if (!existsSync(dir)) {
+    throw new Error(
+      `Holdings folder not found: ${dir}\n` +
+        `  Set HOLDINGS_INPUT_DIR to your Excel root, or pass --skip-if-missing on CI.`,
+    );
+  }
   const results = [];
   const items = readdirSync(dir);
   
@@ -2009,6 +2032,17 @@ console.log('  IPOfins — Holdings Data Parser');
 console.log('═══════════════════════════════════════════════════════════');
 console.log(`  📂 Source: ${INPUT_DIR}`);
 console.log('');
+
+if (!existsSync(INPUT_DIR)) {
+  if (SKIP_IF_MISSING) {
+    console.log('  ⏭ Holdings folder missing — skip parse (--skip-if-missing / HOLDINGS_SKIP_IF_MISSING=1)');
+    console.log('  ℹ️  Neon remains the source of truth until Excels are parsed locally.\n');
+    process.exit(0);
+  }
+  console.error(`  ❌ Holdings folder not found: ${INPUT_DIR}`);
+  console.error('     Set HOLDINGS_INPUT_DIR, or use --skip-if-missing on CI.\n');
+  process.exit(1);
+}
 
 let allFiles = getAllFiles(INPUT_DIR);
 const parsedMonths = new Set();

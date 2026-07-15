@@ -4,9 +4,13 @@
  *
  * Default (incremental): parse latest month → fix AMCs → seed latest month → TER sync → compute latest month only
  * Full reload: npm run pipeline:monthly -- --full
+ *
+ * On CI (no Excel folder): skips parse + JSON seed and refreshes from Neon
+ * (TER, export, quality gate, signals). Set HOLDINGS_INPUT_DIR to enable parse.
  */
 
 import { execSync } from 'child_process';
+import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { requireDb, syncExpenseRatiosFromAMFI } from '../lib/db-writers.mjs';
@@ -18,6 +22,17 @@ const ROOT = join(__dirname, '..', '..');
 
 const args = process.argv.slice(2);
 const fullReload = args.includes('--full');
+
+function resolveHoldingsDir() {
+  if (process.env.HOLDINGS_INPUT_DIR) return process.env.HOLDINGS_INPUT_DIR;
+  for (const p of [
+    'C:/Users/shaik/Downloads/Holdings',
+    'C:\\Users\\shaik\\Downloads\\Holdings',
+  ]) {
+    if (existsSync(p)) return p;
+  }
+  return null;
+}
 
 function run(cmd, label) {
   console.log(`\n  ▶ ${label}`);
@@ -36,15 +51,34 @@ async function main() {
   try {
     requireDb();
 
-  const parseFlags = fullReload ? '' : ' --incremental';
-  run(`node scripts/parse-holdings.mjs${parseFlags}`, 'Parse Excel → fund-holdings.json');
+  const holdingsDir = resolveHoldingsDir();
+  const holdingsJson = join(ROOT, 'src', 'data', 'fund-holdings.json');
+  const canParseExcel = Boolean(holdingsDir);
+  const canSeedFromJson = existsSync(holdingsJson);
+
+  if (canParseExcel) {
+    const parseFlags = fullReload ? '' : ' --incremental';
+    run(
+      `node scripts/parse-holdings.mjs${parseFlags}`,
+      `Parse Excel → fund-holdings.json (${holdingsDir})`,
+    );
+  } else {
+    console.log('\n  ⏭ Skip Excel parse — no HOLDINGS_INPUT_DIR / local Holdings folder');
+    console.log('     (CI/cron uses Neon; parse Excels locally then seed.)');
+  }
+
   run(nodeExecCmd('db/seed/seed-listed-equities.mjs'), 'Refresh NSE equity master (ISIN/NSE lookup)');
   run(nodeExecCmd('db/seed/seed-bse-listed-equities.mjs'), 'Refresh BSE-only equity master (ISIN/BSE lookup)');
   run(nodeExecCmd('db/seed/seed-curated-mf.mjs'), 'Upsert curated fund universe');
 
-  const seedFlags = fullReload ? '--full --curated-only' : '--curated-only';
-  run(nodeExecCmd('db/seed/seed-holdings-batch.mjs', seedFlags), 'Seed holdings into Neon');
-  run(nodeExecCmd('db/seed/dedupe-stocks-canonical.mjs'), 'Deduplicate stocks + remove debt rows');
+  if (canParseExcel || canSeedFromJson) {
+    const seedFlags = fullReload ? '--full --curated-only' : '--curated-only';
+    run(nodeExecCmd('db/seed/seed-holdings-batch.mjs', seedFlags), 'Seed holdings into Neon');
+    run(nodeExecCmd('db/seed/dedupe-stocks-canonical.mjs'), 'Deduplicate stocks + remove debt rows');
+  } else {
+    console.log('\n  ⏭ Skip JSON→Neon seed — no fund-holdings.json on runner');
+    console.log('     Continuing with existing Neon holdings (export + TER + signals).');
+  }
 
   console.log('\n  ▶ Sync expense ratio (AMFI TER)');
   try {
