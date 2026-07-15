@@ -57,6 +57,8 @@ jobs:
           fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Excel holdings live on the operator machine — CI refreshes from Neon.
+          HOLDINGS_SKIP_IF_MISSING: '1'
 
       - name: Type check
         if: github.event_name != 'workflow_dispatch' || inputs.skip_deploy != true
