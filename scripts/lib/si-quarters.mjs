@@ -2,9 +2,10 @@
  * Calendar quarter helpers for Super Investors SHP pipeline.
  * Shareholding Pattern filings use calendar quarters (Jan–Mar, Apr–Jun, …).
  *
- * SEBI: SHP due within 21 days of quarter-end. We treat a quarter as ingestible
- * after quarter-end + 25 days (see quarterFilingWindowEnd). GitHub cron runs on
- * the 28th of Jan/Apr/Jul/Oct so NSE/BSE usually have the new quarter live.
+ * SEBI: SHP due within 21 days of quarter-end.
+ *   - quarterFilingWindowEnd: +25 days — earliest technical ingest (optional catch-up).
+ *   - quarterPublicationReady: +40 days — ~70%+ of listings filed; used by cron.
+ * GitHub cron runs on the 12th of Feb/May/Aug/Nov (see pipeline-quarterly-super-investors.yml).
  */
 
 /** Quarter start dates for a calendar year (ISO YYYY-MM-DD). */
@@ -12,13 +13,26 @@ export function calendarQuartersForYear(year) {
   return [`${year}-01-01`, `${year}-04-01`, `${year}-07-01`, `${year}-10-01`];
 }
 
-function quarterFilingWindowEnd(quarterStart) {
+function daysAfterQuarterEnd(quarterStart, extraDays) {
   const d = new Date(quarterStart);
   const endMonth = d.getMonth() + 2; // Mar/Jun/Sep/Dec
   const endYear = d.getFullYear() + (endMonth > 11 ? 1 : 0);
   const end = new Date(endYear, endMonth % 12 + 1, 0);
-  end.setDate(end.getDate() + 25);
+  end.setDate(end.getDate() + extraDays);
   return end;
+}
+
+function quarterFilingWindowEnd(quarterStart) {
+  return daysAfterQuarterEnd(quarterStart, 25);
+}
+
+/** When cron should run a full ingest + quality gate (most listings filed). */
+export function quarterPublicationReady(quarterStart) {
+  return daysAfterQuarterEnd(quarterStart, 40);
+}
+
+export function isQuarterPublicationReady(quarterStart, now = new Date()) {
+  return now >= quarterPublicationReady(quarterStart);
 }
 
 /**
@@ -33,6 +47,23 @@ export function inferLatestQuarter(now = new Date()) {
 
   for (const q of candidates) {
     if (now >= quarterFilingWindowEnd(q)) return q;
+  }
+  return candidates[candidates.length - 1];
+}
+
+/**
+ * Most recent quarter ready for full cron ingest (publication window passed).
+ * On Jul 28 this is still 2026-01-01; 2026-04-01 becomes ready ~Aug 9.
+ */
+export function inferLatestPublicationQuarter(now = new Date()) {
+  const year = now.getFullYear();
+  const candidates = [
+    ...calendarQuartersForYear(year),
+    ...calendarQuartersForYear(year - 1),
+  ].sort((a, b) => b.localeCompare(a));
+
+  for (const q of candidates) {
+    if (now >= quarterPublicationReady(q)) return q;
   }
   return candidates[candidates.length - 1];
 }

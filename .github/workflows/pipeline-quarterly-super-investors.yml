@@ -1,15 +1,15 @@
 # Quarterly Super Investors + 1% Club SHP ingest, then rebuild and deploy.
 #
-# SEBI requires SHP within 21 days of quarter-end; inferLatestQuarter() waits +25 days.
-# Schedule: 6 AM IST on the 28th of Jan/Apr/Jul/Oct (post-SHP filing window).
+# SEBI requires SHP within 21 days of quarter-end; inferLatestPublicationQuarter() waits +40 days.
+# Schedule: 6 AM IST on the 12th of Feb/May/Aug/Nov (most listings filed).
 # Manual: Actions -> Pipeline Quarterly Super Investors.
 
 name: Pipeline Quarterly Super Investors
 
 on:
   schedule:
-    # 00:30 UTC = 06:00 IST — 28th of Jan, Apr, Jul, Oct
-    - cron: '30 0 28 1,4,7,10 *'
+    # 00:30 UTC = 06:00 IST — 12th of Feb, May, Aug, Nov
+    - cron: '30 0 12 2,5,8,11 *'
 
   workflow_dispatch:
     inputs:

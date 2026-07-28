@@ -7,7 +7,8 @@
  * then:
  *   1. Writes EVERY ≥1% holder to shareholding_pattern_holders (1% Club).
  *   2. Matches curated tracked_entities by name → writes to entity_holdings.
- *   3. Runs quality gate (row-count delta vs prior quarter).
+ *   3. Quality gate: distinct stocks with SHP ≥70% of prior quarter (DB).
+ *      Not raw row count — varies by holder count; old gate wrongly used backfill totals.
  *   4. Logs run to pipeline_runs for /health dashboard.
  *
  * One fetch → two tables. The pipeline does double duty.
@@ -19,6 +20,7 @@
  *   --stock-slug=SLUG        Process a single stock by slug (for targeted re-fetch)
  *   --bse-only               Process BSE-only listings (no nse_symbol) only
  *   --missing-only           Re-fetch stocks with no SHP rows for this quarter
+ *   --allow-early-quarter    Ingest before publication-ready window (gate still applies)
  *   --backfill-quarters=N    Backfill last N quarters (parallel cross-quarter fetch)
  *   --concurrency=N          Parallel fetch workers (default: 40; backfill auto-boosts)
  *   --max-minutes=N          Target wall-clock for backfill (default: 20 when backfilling)
@@ -32,11 +34,23 @@ import { fileURLToPath } from 'url';
 import { sql, upsertMany } from '../lib/db.mjs';
 import { requireDb } from '../lib/db-writers.mjs';
 import { buildEntityResolver } from '../lib/entity-name-resolver.mjs';
-import { startRun, endRun, qualityGateRowCount } from '../lib/pipeline-run-logger.mjs';
+import { startRun, endRun } from '../lib/pipeline-run-logger.mjs';
 import { fetchShareholdingPatternBundle, closeSIBrowser, setSiFetchThrottle, setSiFetchOptions } from '../lib/si-sources.mjs';
 import { loadOverrides } from '../lib/si-overrides.mjs';
 import { mapPool } from '../lib/pool.mjs';
-import { inferLatestQuarter, recentCalendarQuarters } from '../lib/si-quarters.mjs';
+import { inferLatestQuarter, inferLatestPublicationQuarter, quarterPublicationReady, recentCalendarQuarters } from '../lib/si-quarters.mjs';
+
+/** Exit code when filings are incomplete — cron skips compute/export/deploy. */
+const EXIT_INCOMPLETE_FILINGS = 2;
+
+/** Thrown when SPH coverage is below the prior-quarter floor (incomplete exchange filings). */
+class QualityGateError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'QualityGateError';
+    this.code = 'QUALITY_GATE';
+  }
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -45,6 +59,7 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const bseOnly = args.includes('--bse-only');
 const missingOnly = args.includes('--missing-only');
+const allowEarlyQuarter = args.includes('--allow-early-quarter');
 const stockCountLimit = parseInt((args.find((a) => a.startsWith('--stock-count=')) || '').split('=')[1] || '0', 10) || null;
 const stockSlugFilter = (args.find((a) => a.startsWith('--stock-slug=')) || '').split('=')[1] || null;
 const quarterOverride = (args.find((a) => a.startsWith('--quarter=')) || '').split('=')[1] || null;
@@ -322,6 +337,36 @@ async function aggregateFetchResults(fetchResults, quarter, resolver) {
   };
 }
 
+async function rollbackQuarter(quarter) {
+  if (dryRun) return;
+  await sql`DELETE FROM entity_holdings WHERE quarter = ${quarter}::date AND source = 'shareholding_pattern'`;
+  await sql`DELETE FROM stock_shp_summary WHERE quarter = ${quarter}::date`;
+  await sql`DELETE FROM shareholding_pattern_holders WHERE quarter = ${quarter}::date`;
+}
+
+async function quarterCoverageStats(quarter) {
+  const [{ stock_count, row_count, prior_stocks, prior_rows } = {}] = await sql`
+    WITH cur AS (
+      SELECT COUNT(DISTINCT stock_id)::int AS stocks, COUNT(*)::int AS rows
+      FROM shareholding_pattern_holders WHERE quarter = ${quarter}::date
+    ),
+    prev AS (
+      SELECT COUNT(DISTINCT stock_id)::int AS stocks, COUNT(*)::int AS rows
+      FROM shareholding_pattern_holders
+      WHERE quarter = (${quarter}::date - INTERVAL '3 months')::date
+    )
+    SELECT
+      cur.stocks AS stock_count,
+      cur.rows AS row_count,
+      prev.stocks AS prior_stocks,
+      prev.rows AS prior_rows
+    FROM cur, prev
+  `;
+  const stockRatio = prior_stocks ? stock_count / prior_stocks : 1;
+  const rowRatio = prior_rows ? row_count / prior_rows : 1;
+  return { stock_count, row_count, prior_stocks, prior_rows, stockRatio, rowRatio };
+}
+
 async function upsertQuarterRows(sphRows, ehRows, summaryRows = []) {
   if (dryRun) return;
   if (sphRows.length > 0) {
@@ -373,19 +418,36 @@ async function upsertBatchResults(batchResults, resolver) {
   return { sph, eh };
 }
 
-async function runQuarterQualityGate(ctx, quarter, rowCount) {
+/**
+ * Compare stock coverage vs prior calendar quarter in DB.
+ * Uses distinct stock_id (filings landed) not raw row count — row totals vary with
+ * how many ≥1% holders each company has, and old gates wrongly compared against
+ * pipeline_runs backfill totals (SPH+EH across multiple quarters).
+ */
+async function runQuarterQualityGate(ctx, quarter) {
   if (dryRun || missingOnly) return;
-  const count = rowCount ?? (await sql`
-    SELECT COUNT(*)::int AS count FROM shareholding_pattern_holders WHERE quarter = ${quarter}::DATE
-  `)[0].count;
-  if (count === 0) return;
-  ctx.log(`Quality gate for ${quarter} (${count} SPH rows)...`);
-  const gate = await qualityGateRowCount(
-    { ...ctx, _pipeline: 'superinvestor' },
-    { currentRows: count, minRatio: 0.70 },
+
+  const minRatio = 0.70;
+  const stats = await quarterCoverageStats(quarter);
+  if (!stats.row_count) return;
+
+  ctx.log(
+    `Quality gate for ${quarter}: ${stats.stock_count} stocks (${stats.row_count} rows) vs prior-Q ${stats.prior_stocks} stocks (${stats.prior_rows} rows)...`,
   );
-  if (!gate.pass) throw new Error(`Quality gate failed for ${quarter}: ${gate.reason}`);
-  ctx.log(`  ✅ passed (${Math.round(gate.ratio * 100)}% vs prior)`);
+
+  if (!stats.prior_stocks) {
+    ctx.log('  ⏭ no prior-quarter baseline — skipped');
+    return;
+  }
+
+  if (stats.stockRatio < minRatio) {
+    throw new QualityGateError(
+      `Quality gate failed for ${quarter}: ${stats.stock_count} stocks with SHP is only ${Math.round(stats.stockRatio * 100)}% of prior quarter ${stats.prior_stocks} (minimum ${Math.round(minRatio * 100)}%). ` +
+        `Row count ${stats.row_count} (${Math.round(stats.rowRatio * 100)}% of prior ${stats.prior_rows}). ` +
+        'SHP filings are still incomplete on NSE/BSE — re-run after more companies file (cron: 12th Feb/May/Aug/Nov), or workflow_dispatch with missing_only.',
+    );
+  }
+  ctx.log(`  ✅ passed (${Math.round(stats.stockRatio * 100)}% stocks, ${Math.round(stats.rowRatio * 100)}% rows vs prior quarter)`);
 }
 
 async function finalizeQuarter(ctx, quarter, fetchResults, resolver) {
@@ -460,7 +522,7 @@ async function finalizeQuarter(ctx, quarter, fetchResults, resolver) {
   const dedupedEh = aggregateEntityHoldings(ehRows);
 
   await upsertQuarterRows(dedupedSph, dedupedEh, dedupeRows(summaryRows, (r) => `${r.stock_id}\0${r.quarter}`));
-  await runQuarterQualityGate(ctx, quarter, dedupedSph.length);
+  await runQuarterQualityGate(ctx, quarter);
 
   return {
     sph: dedupedSph.length,
@@ -566,8 +628,17 @@ async function runParallelBackfill(quarters) {
     console.log(`     ${totalSph} ≥1% holder rows · ${totalEh} curated holdings`);
     console.log('     Next: npm run db:compute-si:all\n');
   } catch (err) {
-    await endRun(ctx, { status: 'failed', qualityGate: 'skipped', message: err.message });
-    console.error('\n  ❌ Parallel backfill failed:', err.message);
+    const gateFail = err instanceof QualityGateError || err?.code === 'QUALITY_GATE';
+    await endRun(ctx, {
+      status: gateFail ? 'aborted' : 'failed',
+      qualityGate: gateFail ? 'failed' : 'skipped',
+      message: err.message,
+    });
+    if (gateFail) {
+      console.warn(`\n  ⚠️ Parallel backfill aborted: ${err.message}`);
+      process.exit(EXIT_INCOMPLETE_FILINGS);
+    }
+    console.error(`\n  ❌ Parallel backfill failed:`, err.message);
     process.exit(1);
   } finally {
     setSiFetchOptions({ skipPuppeteer: false, timeoutMs: 20_000 });
@@ -631,8 +702,21 @@ async function runPipelineQuarter(quarter) {
     console.log(`     ${stats.sph} ≥1% holders · ${stats.eh} curated holdings`);
     console.log('     Next: npm run db:compute-si\n');
   } catch (err) {
-    await endRun(ctx, { status: 'failed', qualityGate: 'skipped', message: err.message });
-    console.error('\n  ❌ Pipeline 4 failed:', err);
+    const gateFail = err instanceof QualityGateError || err?.code === 'QUALITY_GATE';
+    if (gateFail) {
+      ctx.log(`Rolling back incomplete quarter ${quarter}...`);
+      await rollbackQuarter(quarter);
+    }
+    await endRun(ctx, {
+      status: gateFail ? 'aborted' : 'failed',
+      qualityGate: gateFail ? 'failed' : 'skipped',
+      message: err.message,
+    });
+    if (gateFail) {
+      console.warn(`\n  ⚠️ Pipeline 4 aborted: ${err.message}`);
+      process.exit(EXIT_INCOMPLETE_FILINGS);
+    }
+    console.error(`\n  ❌ Pipeline 4 failed:`, err);
     process.exit(1);
   } finally {
     setSiFetchOptions({ skipPuppeteer: false, timeoutMs: 20_000 });
@@ -662,7 +746,27 @@ async function main() {
   console.log(`  ⚡ Concurrency: ${workers}`);
   setSiFetchThrottle(workers > 1 ? 0 : 800);
 
-  const quarter = quarterOverride || inferLatestQuarter();
+  const now = new Date();
+  const ingestibleQuarter = inferLatestQuarter(now);
+  const publicationQuarter = inferLatestPublicationQuarter(now);
+
+  if (!quarterOverride && !allowEarlyQuarter && ingestibleQuarter > publicationQuarter) {
+    const readyOn = quarterPublicationReady(ingestibleQuarter).toISOString().slice(0, 10);
+    const inProgress = await quarterCoverageStats(ingestibleQuarter);
+    if (inProgress.row_count) {
+      await rollbackQuarter(ingestibleQuarter);
+      console.log(
+        `  🧹 Removed in-progress ${ingestibleQuarter} SHP (${inProgress.stock_count} stocks, ${inProgress.row_count} rows) — not publication-ready until ~${readyOn}`,
+      );
+    }
+    console.log(`\n  ⏭ Skipping: ${ingestibleQuarter} not publication-ready until ~${readyOn}`);
+    console.log(`     Latest complete quarter: ${publicationQuarter}`);
+    console.log('     Cron retries on the 12th of Feb/May/Aug/Nov, or pass --allow-early-quarter to force.\n');
+    process.exit(EXIT_INCOMPLETE_FILINGS);
+  }
+
+  const quarter = quarterOverride || publicationQuarter;
+  if (!quarterOverride) console.log(`  📆 Publication quarter: ${quarter}`);
   await runPipelineQuarter(quarter);
 }
 
